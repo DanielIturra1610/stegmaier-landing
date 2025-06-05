@@ -4,27 +4,19 @@ import { Testimonial } from '../../types';
 const testimonials: Testimonial[] = [
   {
     id: 1,
-    name: 'Alejandra Ramírez',
-    role: 'Directora de Operaciones',
+    name: 'Amilcar Arriagada',
+    role: 'CEO',
     company: 'Quality Metrics',
-    content: 'Daniel implementó un sistema centralizado de datos que revolucionó nuestra capacidad para visualizar métricas en tiempo real. Su enfoque metodológico y transparente nos permitió entender cada fase del proyecto.',
+    content: 'Daniel transformó completamente nuestra infraestructura de datos. Su capacidad para entender nuestras necesidades de negocio y traducirlas en soluciones técnicas robustas fue impresionante. El sistema que desarrolló no solo mejoró nuestra eficiencia operacional en un 40%, sino que también nos dio la capacidad de tomar decisiones estratégicas basadas en datos en tiempo real.',
     image: '/testimonial1.jpg',
   },
   {
     id: 2,
-    name: 'Rodrigo Sánchez',
-    role: 'CEO',
-    company: 'TechSolutions SpA',
-    content: 'Contraté a Daniel para desarrollar una aplicación web compleja y el resultado superó mis expectativas. Su capacidad para traducir requisitos técnicos a soluciones prácticas y su comunicación constante fueron clave para el éxito del proyecto.',
+    name: 'Rodrigo Vilches',
+    role: 'Jefe de Proyecto',
+    company: 'Quality Metrics',
+    content: 'Trabajar con Daniel fue una experiencia excepcional desde el día uno. Su metodología de trabajo es impecable: entregas puntuales, comunicación transparente y una atención al detalle que garantiza resultados de calidad. La plataforma web que desarrolló para nosotros integró perfectamente con nuestros sistemas existentes y superó todas nuestras expectativas técnicas y funcionales.',
     image: '/testimonial2.jpg',
-  },
-  {
-    id: 3,
-    name: 'Carolina Mendoza',
-    role: 'Gerente de Proyectos',
-    company: 'DataViz Chile',
-    content: 'La experiencia trabajando con Daniel fue excepcional. Su dominio técnico tanto en frontend como en backend, combinado con su comprensión de las necesidades del negocio, produjeron un sistema robusto que seguimos usando diariamente.',
-    image: '/testimonial3.jpg',
   },
 ];
 
@@ -42,7 +34,7 @@ const Testimonials: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-16 space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
+        <div className="mt-16 space-y-8 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
           {testimonials.map((testimonial) => (
             <div 
               key={testimonial.id} 

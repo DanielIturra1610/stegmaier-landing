@@ -123,7 +123,6 @@ const Projects: React.FC = () => {
                     <p className="text-lg font-bold">{project.category === 'dashboard' ? 'Dashboard' : 
                       project.category === 'database' ? 'Base de Datos' : 
                       project.category === 'web' ? 'Aplicación Web' : 'Aplicación'}</p>
-                    <p className="text-sm opacity-80">Imagen representativa</p>
                   </div>
                 </div>
               </div>
