@@ -1,137 +1,148 @@
-import React, { useState, useEffect } from 'react';
+// src/components/layout/Navbar.tsx
+import { useState, useEffect } from 'react'
+import * as Toolbar from '@radix-ui/react-toolbar'
+import * as Dropdown from '@radix-ui/react-dropdown-menu'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X } from 'lucide-react'
+import Button from '../ui/button'
 
-interface NavItem {
-  name: string;
-  href: string;
-}
+const NAV = [
+  { label: 'Inicio', href: '/' },
+  { label: 'Consultorías', href: '/consultorias' },
+  { label: 'Normativas', href: '/normativas' },
+  { label: 'Empresa', href: '/empresa' },
+  { label: 'Contacto', href: '/#contacto' },
+]
 
-const navItems: NavItem[] = [
-  { name: 'Inicio', href: '#home' },
-  { name: 'Servicios', href: '#servicios' },
-  { name: 'Proceso', href: '#proceso' },
-  { name: 'Proyectos', href: '#proyectos' },
-  { name: 'Stack', href: '#stack' },
-  { name: 'Testimonios', href: '#testimonios' },
-  { name: 'Blog', href: '#blog' },
-  { name: 'Contacto', href: '#contacto' },
-];
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
 
-const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  
-  // Controlar el cambio de estilo al hacer scroll
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+    const onScroll = () => setScrolled(window.scrollY > 64)
+    onScroll()
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const linkBase =
+    'px-3 py-2 text-sm font-medium transition-colors data-[state=active]:text-primary-600'
 
   return (
-    <nav 
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white shadow-md py-2' 
-          : 'bg-transparent py-4'
-      }`}
-      aria-label="Navegación principal"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <a href="#home" className="flex items-center">
-              <span className={`font-bold text-xl ${scrolled ? 'text-blue-700' : 'text-white'}`}>
-                Daniel Iturra
-              </span>
-              <span className={`ml-2 text-sm font-medium ${scrolled ? 'text-gray-600' : 'text-gray-300'}`}>
-                Desarrollador Fullstack
-              </span>
-            </a>
-          </div>
-          
-          {/* Menú de navegación para desktop */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-center space-x-4">
-              {navItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className={`
-                    px-3 py-2 rounded-md text-sm font-medium transition-colors
-                    ${scrolled 
-                      ? 'text-gray-700 hover:text-blue-700 hover:bg-gray-100' 
-                      : 'text-gray-200 hover:text-white hover:bg-white/10'
-                    }
-                  `}
-                >
-                  {item.name}
-                </a>
-              ))}
-            </div>
-          </div>
-          
-          {/* Botón del menú móvil */}
-          <div className="md:hidden flex items-center">
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className={`
-                inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500
-                ${scrolled 
-                  ? 'text-gray-700 hover:text-blue-700 hover:bg-gray-100' 
-                  : 'text-gray-200 hover:text-white hover:bg-white/10'
-                }
-              `}
-              aria-controls="mobile-menu"
-              aria-expanded={isOpen}
-            >
-              <span className="sr-only">Abrir menú principal</span>
-              {/* Icono de menú/cerrar */}
-              {!isOpen ? (
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              ) : (
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* ---------- Barra de progreso de scroll ---------- */}
+      {/* la añade Layout (ver abajo) */}
 
-      {/* Menú móvil, mostrar/ocultar según estado */}
-      <div
-        className={`${isOpen ? 'block' : 'hidden'} md:hidden`}
-        id="mobile-menu"
+      {/* ---------- Navbar ---------- */}
+      <header
+        className={`fixed inset-x-0 z-50 ${
+          scrolled ? 'bg-white/90 backdrop-blur shadow' : 'bg-transparent'
+        }`}
       >
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg rounded-b-lg">
-          {navItems.map((item) => (
-            <a
-              key={item.name}
-              href={item.href}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
+        <Toolbar.Root
+          className="container mx-auto flex h-16 items-center justify-between px-4"
+          aria-label="Menú principal"
+        >
+          {/* logo */}
+          <a href="/" className="flex items-end space-x-1">
+            <span
+              className={`font-heading text-xl font-bold ${
+                scrolled ? 'text-primary-700' : 'text-white'
+              }`}
             >
-              {item.name}
-            </a>
-          ))}
-        </div>
-      </div>
-    </nav>
-  );
-};
+              Stegmaier
+            </span>
+            <span
+              className={`text-sm font-semibold ${
+                scrolled ? 'text-gray-500' : 'text-blue-200'
+              }`}
+            >
+              Consulting
+            </span>
+          </a>
 
-export default Navbar;
+          {/* -------- Desktop nav -------- */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV.map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                className={`${linkBase} ${
+                  scrolled ? 'text-gray-700 hover:text-primary-700' : 'text-white hover:text-primary-100'
+                }`}
+              >
+                {label}
+              </a>
+            ))}
+
+            <Button size="sm" className="ml-2">
+              <a href="/cotizar">Cotizar</a>
+            </Button>
+          </nav>
+
+          {/* -------- Mobile button -------- */}
+          <Dropdown.Root open={open} onOpenChange={setOpen}>
+            <Dropdown.Trigger asChild>
+              <button
+                className={`md:hidden rounded p-2 ${
+                  scrolled ? 'text-gray-700' : 'text-white'
+                } focus:outline-none`}
+                aria-label="Abrir menú"
+              >
+                <AnimatePresence initial={false} mode="wait">
+                  {open ? (
+                    <motion.span
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                    >
+                      <X className="h-6 w-6" />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                    >
+                      <Menu className="h-6 w-6" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            </Dropdown.Trigger>
+
+            {/* ---------- Mobile dropdown ---------- */}
+            <Dropdown.Portal>
+              <Dropdown.Content
+                sideOffset={6}
+                align="end"
+                className="w-56 rounded-lg bg-white p-2 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out"
+              >
+                {NAV.map(({ label, href }) => (
+                  <Dropdown.Item key={href} asChild>
+                    <a
+                      href={href}
+                      className="block rounded px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-primary-50 hover:text-primary-700"
+                    >
+                      {label}
+                    </a>
+                  </Dropdown.Item>
+                ))}
+                <Dropdown.Separator className="my-1 h-px bg-gray-100" />
+                <Dropdown.Item asChild>
+                  <Button size="sm" className="w-full justify-center">
+                    <a href="/cotizar">Cotizar</a>
+                  </Button>
+                </Dropdown.Item>
+              </Dropdown.Content>
+            </Dropdown.Portal>
+          </Dropdown.Root>
+        </Toolbar.Root>
+      </header>
+    </>
+  )
+}
+
+export default Navbar

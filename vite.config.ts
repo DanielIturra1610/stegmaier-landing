@@ -1,11 +1,15 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path"; // Usa 'path' en vez de 'node:path'
 
-// https://vitejs.dev/config/
+// Esto reemplaza __dirname en ESM
+const __dirname = new URL(".", import.meta.url).pathname;
+
 export default defineConfig({
   plugins: [react()],
-  server: {
-    host: '0.0.0.0',
-    port: 5173
-  }
-})
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
+  },
+});

@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 // Tipos para proyectos
 export interface Project {
   id: number;
@@ -5,7 +6,7 @@ export interface Project {
   description: string;
   image: string;
   technologies: string[];
-  category: 'dashboard' | 'database' | 'web' | 'app';
+  category: "dashboard" | "database" | "web" | "app";
   url?: string;
 }
 
@@ -13,8 +14,8 @@ export interface Project {
 export interface Service {
   id: number;
   title: string;
-  description: string;
-  icon: JSX.Element;
+  desc: string;
+  icon: LucideIcon;
 }
 
 // Tipos para procesos
@@ -30,7 +31,7 @@ export interface TechItem {
   id: number;
   name: string;
   icon: string;
-  category: 'frontend' | 'backend' | 'database' | 'devops' | 'tools';
+  category: "frontend" | "backend" | "database" | "devops" | "tools";
   level: number; // 1-5 para representar nivel de experiencia
 }
 
@@ -57,4 +58,11 @@ export interface ContactForm {
 export interface NavItem {
   name: string;
   href: string;
+}
+
+export interface Step {
+  id: number;
+  title: string;
+  desc: string;
+  icon: LucideIcon;
 }

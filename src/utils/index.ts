@@ -44,16 +44,19 @@ export const isValidEmail = (email: string): boolean => {
  * @returns Objeto con la metadata SEO
  */
 export const generateSEOMetadata = (title: string, description: string) => {
-  const baseTitle = 'Daniel Iturra | Desarrollador Fullstack';
-  
+  const baseTitle = 'Stegmaier Consulting';
+
   return {
     title: title ? `${title} | ${baseTitle}` : baseTitle,
-    description: description || 'Analista Programador especializado en desarrollo fullstack, sistemas centralizados de datos y dashboards interactivos.',
+    description: description ||
+      'Consultorías, auditorías y capacitaciones en normas ISO 9001, 14001 y 45001 para empresas chilenas.',
     ogTitle: title ? `${title} | ${baseTitle}` : baseTitle,
-    ogDescription: description || 'Desarrollo profesional de aplicaciones web fullstack, sistemas de datos y dashboards interactivos.',
+    ogDescription: description ||
+      'Soluciones integrales de seguridad y gestión para tu empresa.',
     ogImage: '/og-image.jpg',
     twitterTitle: title ? `${title} | ${baseTitle}` : baseTitle,
-    twitterDescription: description || 'Desarrollo profesional de aplicaciones web fullstack, sistemas de datos y dashboards interactivos.',
+    twitterDescription: description ||
+      'Soluciones integrales de seguridad y gestión para tu empresa.',
     twitterImage: '/og-image.jpg',
   };
 };

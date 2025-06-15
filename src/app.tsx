@@ -1,12 +1,9 @@
-// React import no es necesario en este archivo gracias a la configuración JSX
 import Layout from './components/layout/Layout';
-import Hero from './components/home/Hero';
-import Services from './components/home/Services';
-import Process from './components/home/Process';
-import Projects from './components/home/Projects';
-import TechStack from './components/home/TechStack';
-import Testimonials from './components/home/Testimonials';
-import Contact from './components/home/Contact';
+import Hero from './components/sections/home/Hero';
+import Services from './components/sections/home/Services';
+import Process from './components/sections/home/Process';
+import Testimonials from './components/sections/home/Testimonials';
+import Contact from './components/sections/home/Contact';
 
 function App() {
   return (
@@ -14,12 +11,9 @@ function App() {
       <Hero />
       <Services />
       <Process />
-      <Projects />
-      <TechStack />
       <Testimonials />
       <Contact />
     </Layout>
   );
 }
-
 export default App;

@@ -1,0 +1,7 @@
+# ⬇️ todo esto NO debe ir al build-context
+node_modules
+dist
+.git
+Dockerfile
+docker-compose.yml
+*.log

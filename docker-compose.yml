@@ -1,13 +1,10 @@
-version: '3'
-
 services:
   web:
     build: .
+    # si quieres hot-reload monta SOLO el código, no node_modules
+    volumes:
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./tailwind.config.js:/app/tailwind.config.js
     ports:
       - "5173:5173"
-    volumes:
-      - .:/app
-    environment:
-      - NODE_ENV=development
-      - VITE_HOST=0.0.0.0
-    command: sh -c "npm install && npm run dev -- --host"
