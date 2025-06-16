@@ -15,6 +15,8 @@ export interface Service {
   id: number;
   title: string;
   desc: string;
+  benefits?: string[]; // Made optional with ?
+  timeframe: string;
   icon: LucideIcon;
 }
 
