@@ -1,5 +1,5 @@
 // src/components/sections/home/Process.tsx
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import { motion } from 'framer-motion'
 import StepItem from '../../ui/StepItem'
 import { steps } from './steps-data'
@@ -14,11 +14,37 @@ const ProcessBackgroundElements = () => (
       </svg>
     </div>
     
-    {/* Bottom left corner dots */}
+    {/* Animated flowing line */}
+    <div className="absolute left-0 right-0 h-1 top-1/3 opacity-10 overflow-hidden -z-10">
+      <motion.div 
+        className="h-full bg-gradient-to-r from-transparent via-primary-500 to-transparent" 
+        style={{ width: '30%' }}
+        animate={{
+          x: ['-100%', '400%'],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      />
+    </div>
+    
+    {/* Bottom left corner dots pattern */}
     <div className="absolute bottom-10 left-10 opacity-10 -z-10">
       <div className="grid grid-cols-6 gap-6">
         {[...Array(36)].map((_, i) => (
-          <div key={i} className="h-2 w-2 rounded-full bg-accent-500"></div>
+          <motion.div 
+            key={i} 
+            className="h-2 w-2 rounded-full bg-accent-500"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              delay: i * 0.05, 
+              ease: "easeInOut" 
+            }}
+          />
         ))}
       </div>
     </div>
@@ -26,13 +52,28 @@ const ProcessBackgroundElements = () => (
 )
 
 const Process: FC = () => {
-  // Animation for section elements
+  // State for tracking active step to enhance interactivity
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+
+  // Enhanced animations for section elements
   const titleAnimation = {
     hidden: { opacity: 0, y: -20 },
     visible: { 
       opacity: 1, 
       y: 0,
       transition: { duration: 0.6, ease: "easeOut" as const } 
+    }
+  };
+
+  // Staggered entrance animation for steps
+  const containerAnimation = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
     }
   };
 
@@ -44,64 +85,135 @@ const Process: FC = () => {
   }
 
   return (
-    <section id="proceso" className="py-24 bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+    <section id="proceso" className="py-24 bg-gradient-to-br from-primary-800/95 via-primary-700/90 to-primary-600/95 text-white relative overflow-hidden">
       <ProcessBackgroundElements />
       
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
+        {/* Enhanced Header */}
         <motion.header 
-          className="mb-20 text-center relative z-10"
+          className="mb-16 text-center relative z-10"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={titleAnimation}
         >
-          <span className="inline-block py-1 px-3 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-3">
-            Metodología
+          <span className="inline-block py-2 px-4 rounded-full bg-accent-500/20 text-accent-300 text-sm font-medium mb-3 backdrop-blur-sm">
+            <span className="mr-2">🔄</span>Metodología Certificada
           </span>
           
-          <h2 className="mt-2 text-4xl font-display font-bold text-gray-900 leading-tight">
-            Paso a paso hacia la <span className="text-primary-600">certificación</span>
+          <h2 className="mt-2 text-4xl md:text-5xl font-display font-bold text-white leading-tight">
+            Paso a paso hacia la <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-accent-300">excelencia</span>
           </h2>
           
-          <div className="mx-auto mt-3 h-1 w-20 rounded bg-accent-500"></div>
+          <div className="mx-auto mt-4 h-1 w-24 rounded bg-accent-500 opacity-70"></div>
           
-          <p className="mt-6 mx-auto max-w-2xl text-lg text-gray-600 leading-relaxed">
+          <p className="mt-8 mx-auto max-w-2xl text-lg text-white/80 leading-relaxed">
             Nuestro enfoque metódico garantiza resultados consistentes 
-            y una implementación sin sobresaltos.
+            y una implementación sin sobresaltos. <span className="font-medium text-accent-300">Certificación garantizada en primera auditoría.</span>
           </p>
         </motion.header>
 
-        {/* Desktop Timeline (4x2 grid) */}
-        <div className="hidden lg:grid grid-cols-4 gap-6">
-          {steps.slice(0, 4).map((step, index) => (
-            <StepItem 
-              key={step.id} 
-              {...step} 
-              direction="vertical" 
-              isLast={index === 3} 
-              variant={getVariant(index)}
-            />
-          ))}
-          
-          {/* Visual separator */}
-          <div className="col-span-4 flex justify-center my-4">
-            <div className="w-20 h-1 rounded-full bg-primary-200"></div>
+        {/* Interactive information panel before the steps */}
+        <div className="mb-16 bg-primary-800/50 backdrop-blur-sm rounded-xl p-6 border border-primary-600/30 shadow-xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="text-center p-4">
+              <motion.div 
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-700/70 mb-4"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(3, 105, 161, 0.9)' }}
+              >
+                <span className="text-2xl">⏱️</span>
+              </motion.div>
+              <h3 className="text-xl font-bold mb-2">Proceso Optimizado</h3>
+              <p className="text-white/70">12 semanas desde diagnóstico hasta certificación</p>
+            </div>
+            <div className="text-center p-4">
+              <motion.div 
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-500/30 mb-4"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(4, 180, 134, 0.3)' }}
+              >
+                <span className="text-2xl">🔍</span>
+              </motion.div>
+              <h3 className="text-xl font-bold mb-2">Enfoque Probado</h3>
+              <p className="text-white/70">Más de 500 empresas certificadas con éxito</p>
+            </div>
+            <div className="text-center p-4">
+              <motion.div 
+                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-700/70 mb-4"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(3, 105, 161, 0.9)' }}
+              >
+                <span className="text-2xl">🛡️</span>
+              </motion.div>
+              <h3 className="text-xl font-bold mb-2">Garantía de Certificación</h3>
+              <p className="text-white/70">100% de tasa de éxito en primera auditoría</p>
+            </div>
           </div>
-          
-          {steps.slice(4).map((step, index) => (
-            <StepItem 
-              key={step.id} 
-              {...step} 
-              direction="vertical" 
-              isLast={index === 3} 
-              variant={getVariant(index + 4)}
-            />
-          ))}
         </div>
 
-        {/* Tablet and Mobile Timeline (single column) */}
-        <div className="lg:hidden space-y-12">
+        {/* Desktop Timeline - Enhanced Interactive Version */}
+        <motion.div 
+          className="hidden lg:block"
+          initial="hidden"
+          whileInView="visible"
+          variants={containerAnimation}
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <h3 className="text-2xl font-bold mb-8 text-center">Nuestro proceso de <span className="text-accent-300">8 pasos</span></h3>
+          
+          <div className="grid grid-cols-4 gap-8">
+            {steps.slice(0, 4).map((step, index) => (
+              <StepItem 
+                key={step.id} 
+                {...step} 
+                direction="vertical" 
+                isLast={index === 3} 
+                variant={getVariant(index)}
+                onMouseEnter={() => setActiveStep(step.id)}
+                onMouseLeave={() => setActiveStep(null)}
+                isActive={activeStep === step.id}
+              />
+            ))}
+            
+            {/* Visual separator - Enhanced */}
+            <div className="col-span-4 flex justify-center my-8 relative">
+              <motion.div 
+                className="w-32 h-1 rounded-full bg-gradient-to-r from-primary-300 via-accent-400 to-primary-300"
+                animate={{ 
+                  opacity: [0.4, 0.8, 0.4],
+                  width: ["20%", "50%", "20%"] 
+                }}
+                transition={{ 
+                  duration: 3, 
+                  repeat: Infinity,
+                  ease: "easeInOut" 
+                }}
+              ></motion.div>
+            </div>
+            
+            {steps.slice(4).map((step, index) => (
+              <StepItem 
+                key={step.id} 
+                {...step} 
+                direction="vertical" 
+                isLast={index === 3} 
+                variant={getVariant(index + 4)}
+                onMouseEnter={() => setActiveStep(step.id)}
+                onMouseLeave={() => setActiveStep(null)}
+                isActive={activeStep === step.id}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Tablet and Mobile Timeline - Enhanced */}
+        <motion.div 
+          className="lg:hidden space-y-12"
+          initial="hidden"
+          whileInView="visible"
+          variants={containerAnimation}
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          <h3 className="text-xl font-bold mb-8 text-center">Nuestro proceso de <span className="text-accent-300">8 pasos</span></h3>
+          
           {steps.map((step, index) => (
             <StepItem 
               key={step.id} 
@@ -109,9 +221,12 @@ const Process: FC = () => {
               direction="vertical" 
               isLast={index === steps.length - 1} 
               variant={getVariant(index)}
+              onMouseEnter={() => setActiveStep(step.id)}
+              onMouseLeave={() => setActiveStep(null)}
+              isActive={activeStep === step.id}
             />
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

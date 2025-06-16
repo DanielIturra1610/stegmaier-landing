@@ -8,6 +8,9 @@ interface StepItemProps extends Step {
   isLast?: boolean;
   direction?: 'horizontal' | 'vertical';
   variant?: 'primary' | 'accent' | 'gold';
+  isActive?: boolean;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 const StepItem = ({ 
@@ -17,7 +20,10 @@ const StepItem = ({
   icon: Icon, 
   isLast = false,
   direction = 'vertical',
-  variant = 'primary' 
+  variant = 'primary',
+  isActive = false,
+  onMouseEnter,
+  onMouseLeave
 }: StepItemProps) => {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-50px' })
@@ -52,11 +58,14 @@ const StepItem = ({
       ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
       transition={{ duration: 0.6, delay: id * 0.1 }}
       className={cn(
         "relative",
         direction === 'vertical' ? "md:flex" : "flex flex-col items-center"
       )}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {/* Numbered circle + connector line */}
       <div className={cn(
@@ -84,8 +93,9 @@ const StepItem = ({
 
       {/* Card Content */}
       <article className={cn(
-        "group w-full rounded-xl bg-white p-6 border border-gray-100 transition-all duration-300", 
+        "group w-full rounded-xl p-6 border transition-all duration-300", 
         "shadow-card hover:shadow-elevated",
+        isActive ? "bg-white/90 border-accent-300/50 transform scale-105" : "bg-white/80 border-gray-100",
         variantStyles[variant].hover
       )}>
         {/* Icon */}
