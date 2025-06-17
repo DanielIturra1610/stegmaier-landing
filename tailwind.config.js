@@ -3,6 +3,24 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  safelist: [
+    // Clases de secciones
+    'section-hero',
+    'section-process',
+    'section-services',
+    'section-testimonials',
+    'section-contact',
+    'section-divider-top',
+    'section-divider-bottom',
+    // Fondos corporativos
+    'bg-corporate-light',
+    'bg-corporate-complete',
+    'bg-decorative-orbs',
+    'bg-lines-corporate',
+    'bg-grid-corporate',
+    'bg-dots-corporate',
+    'floating-particles'
+  ],
 
   theme: {
     extend: {

@@ -1,0 +1,494 @@
+/* ===========================================================================
+   SISTEMA DE FONDOS UNIFICADO - STEGMAIER CONSULTING
+   
+   Crear un gradiente azul corporativo coherente con figuras minimalistas
+   que fluya de manera natural entre todas las secciones de home.
+=========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. GRADIENTE BASE UNIFICADO
+--------------------------------------------------------------------------- */
+
+/* Gradiente principal que conecta todas las secciones */
+.section-unified-bg {
+    background: linear-gradient(
+      180deg,
+      rgb(var(--color-primary-900)) 0%,
+      rgb(var(--color-primary-800)) 20%,
+      rgb(var(--color-primary-700)) 40%,
+      rgb(var(--color-primary-800)) 60%,
+      rgb(var(--color-primary-900)) 100%
+    );
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Variaciones sutiles para crear profundidad visual */
+  .section-hero-bg {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-primary-900)) 0%,
+      rgb(var(--color-primary-800)) 35%,
+      rgb(var(--color-primary-700)) 70%,
+      rgb(var(--color-primary-800)) 100%
+    );
+  }
+  
+  .section-process-bg {
+    background: linear-gradient(
+      180deg,
+      rgb(var(--color-primary-800)) 0%,
+      rgb(var(--color-primary-700)) 50%,
+      rgb(var(--color-primary-800)) 100%
+    );
+  }
+  
+  .section-services-bg {
+    background: linear-gradient(
+      225deg,
+      rgb(var(--color-primary-700)) 0%,
+      rgb(var(--color-primary-800)) 50%,
+      rgb(var(--color-primary-900)) 100%
+    );
+  }
+  
+  .section-testimonials-bg {
+    background: linear-gradient(
+      45deg,
+      rgb(var(--color-primary-800)) 0%,
+      rgb(var(--color-primary-700)) 30%,
+      rgb(var(--color-primary-600)) 70%,
+      rgb(var(--color-primary-700)) 100%
+    );
+  }
+  
+  .section-contact-bg {
+    background: linear-gradient(
+      180deg,
+      rgb(var(--color-primary-700)) 0%,
+      rgb(var(--color-primary-800)) 50%,
+      rgb(var(--color-primary-900)) 100%
+    );
+  }
+  
+  /* ---------------------------------------------------------------------------
+     2. FIGURAS GEOMÉTRICAS MINIMALISTAS
+  --------------------------------------------------------------------------- */
+  
+  /* Contenedor base para elementos decorativos */
+  .minimal-decorations {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Círculos flotantes sutiles */
+  .minimal-decorations::before {
+    content: '';
+    position: absolute;
+    top: 10%;
+    right: 8%;
+    width: 120px;
+    height: 120px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    animation: float-slow 20s ease-in-out infinite;
+  }
+  
+  .minimal-decorations::after {
+    content: '';
+    position: absolute;
+    bottom: 15%;
+    left: 10%;
+    width: 80px;
+    height: 80px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    animation: float-slow 25s ease-in-out infinite reverse;
+  }
+  
+  /* Formas geométricas adicionales */
+  .geometric-accent-1 {
+    position: absolute;
+    top: 25%;
+    right: 15%;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transform: rotate(45deg);
+    animation: rotate-slow 30s linear infinite;
+  }
+  
+  .geometric-accent-2 {
+    position: absolute;
+    bottom: 30%;
+    left: 12%;
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 100%
+    );
+    animation: pulse-line 15s ease-in-out infinite;
+  }
+  
+  .geometric-accent-3 {
+    position: absolute;
+    top: 60%;
+    right: 25%;
+    width: 2px;
+    height: 50px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    animation: float-vertical 18s ease-in-out infinite;
+  }
+  
+  /* Puntos sutiles para textura */
+  .minimal-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    );
+    background-size: 30px 30px;
+    opacity: 0.6;
+  }
+  
+  /* Grid ultra sutil */
+  .minimal-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    opacity: 0.5;
+  }
+  
+  /* ---------------------------------------------------------------------------
+     3. ELEMENTOS DE TRANSICIÓN ENTRE SECCIONES
+  --------------------------------------------------------------------------- */
+  
+  /* Ondas sutiles para conectar secciones */
+  .section-wave-divider {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    overflow: hidden;
+  }
+  
+  .section-wave-divider svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .wave-top {
+    top: -1px;
+    bottom: auto;
+  }
+  
+  .wave-bottom {
+    bottom: -1px;
+    top: auto;
+  }
+  
+  /* Líneas de flujo entre secciones */
+  .flow-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--color-accent-500), 0.3) 20%,
+      rgba(var(--color-accent-500), 0.5) 50%,
+      rgba(var(--color-accent-500), 0.3) 80%,
+      transparent 100%
+    );
+    animation: flow-pulse 8s ease-in-out infinite;
+  }
+  
+  /* ---------------------------------------------------------------------------
+     4. ANIMACIONES MINIMALISTAS
+  --------------------------------------------------------------------------- */
+  
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+    50% { transform: translateY(-20px) scale(1.05); opacity: 1; }
+  }
+  
+  @keyframes rotate-slow {
+    0% { transform: rotate(45deg); }
+    100% { transform: rotate(405deg); }
+  }
+  
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleX(1); }
+    50% { opacity: 0.8; transform: scaleX(1.2); }
+  }
+  
+  @keyframes float-vertical {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-15px); opacity: 0.8; }
+  }
+  
+  @keyframes flow-pulse {
+    0%, 100% { opacity: 0.3; transform: scaleX(1); }
+    50% { opacity: 0.7; transform: scaleX(1.1); }
+  }
+  
+  /* Animación sutil de resplandor */
+  @keyframes gentle-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(var(--color-accent-500), 0.1); }
+    50% { box-shadow: 0 0 30px rgba(var(--color-accent-500), 0.2); }
+  }
+  
+  /* ---------------------------------------------------------------------------
+     5. PATRONES ESPECÍFICOS POR SECCIÓN
+  --------------------------------------------------------------------------- */
+  
+  /* Hero - Círculos principales */
+  .hero-decorations {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  
+  .hero-decorations .circle-1 {
+    position: absolute;
+    top: 20%;
+    right: 10%;
+    width: 200px;
+    height: 200px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    animation: float-slow 25s ease-in-out infinite;
+  }
+  
+  .hero-decorations .circle-2 {
+    position: absolute;
+    bottom: 25%;
+    left: 8%;
+    width: 120px;
+    height: 120px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+    animation: float-slow 30s ease-in-out infinite reverse;
+  }
+  
+  /* Process - Líneas de conexión */
+  .process-decorations .connection-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 20%,
+      rgba(var(--color-accent-500), 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 80%,
+      transparent 100%
+    );
+    animation: flow-pulse 12s ease-in-out infinite;
+  }
+  
+  /* Services - Grid pattern */
+  .services-decorations {
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  /* Testimonials - Formas orgánicas sutiles */
+  .testimonials-decorations .organic-shape {
+    position: absolute;
+    top: 15%;
+    right: 5%;
+    width: 150px;
+    height: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    animation: morph-shape 40s ease-in-out infinite;
+  }
+  
+  @keyframes morph-shape {
+    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+    50% { border-radius: 50% 30% 60% 40% / 40% 70% 60% 30%; }
+    75% { border-radius: 40% 70% 30% 60% / 70% 40% 50% 60%; }
+  }
+  
+  /* Contact - Puntos de enfoque */
+  .contact-decorations .focus-point {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(var(--color-accent-500), 0.6);
+    border-radius: 50%;
+    animation: gentle-glow 6s ease-in-out infinite;
+  }
+  
+  .contact-decorations .focus-point:nth-child(1) {
+    top: 20%;
+    left: 15%;
+    animation-delay: 0s;
+  }
+  
+  .contact-decorations .focus-point:nth-child(2) {
+    top: 70%;
+    right: 20%;
+    animation-delay: 2s;
+  }
+  
+  .contact-decorations .focus-point:nth-child(3) {
+    bottom: 30%;
+    left: 25%;
+    animation-delay: 4s;
+  }
+  
+  /* ---------------------------------------------------------------------------
+     6. RESPONSIVE DESIGN
+  --------------------------------------------------------------------------- */
+  
+  /* Tableta */
+  @media (max-width: 1024px) {
+    .minimal-decorations::before {
+      width: 100px;
+      height: 100px;
+    }
+    
+    .minimal-decorations::after {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .geometric-accent-1 {
+      width: 30px;
+      height: 30px;
+    }
+    
+    .hero-decorations .circle-1 {
+      width: 150px;
+      height: 150px;
+    }
+    
+    .hero-decorations .circle-2 {
+      width: 100px;
+      height: 100px;
+    }
+  }
+  
+  /* Móvil */
+  @media (max-width: 768px) {
+    /* Simplifica decoraciones en móvil para mejor performance */
+    .minimal-decorations::before,
+    .minimal-decorations::after {
+      display: none;
+    }
+    
+    .geometric-accent-1,
+    .geometric-accent-2,
+    .geometric-accent-3 {
+      display: none;
+    }
+    
+    /* Mantiene solo el gradiente base y grid sutil */
+    .minimal-grid {
+      background-size: 30px 30px;
+      opacity: 0.3;
+    }
+    
+    .minimal-dots {
+      background-size: 20px 20px;
+      opacity: 0.4;
+    }
+    
+    /* Simplifica animaciones para mejor batería */
+    * {
+      animation-duration: calc(var(--animation-duration, 1s) * 2) !important;
+    }
+  }
+  
+  /* ---------------------------------------------------------------------------
+     7. UTILIDADES RÁPIDAS
+  --------------------------------------------------------------------------- */
+  
+/* Aplicar el fondo unificado a cualquier sección */
+.apply-corporate-bg {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-primary-900)) 0%,
+      rgb(var(--color-primary-800)) 50%,
+      rgb(var(--color-primary-700)) 100%
+    );
+  }
+  
+  /* Decoraciones rápidas */
+  .apply-minimal-decorations {
+    position: relative;
+  }
+  
+  .apply-minimal-decorations::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    );
+    background-size: 30px 30px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Overlay de contenido para mantener legibilidad */
+  .content-overlay {
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* ---------------------------------------------------------------------------
+     8. VARIABLES PARA FÁCIL CUSTOMIZACIÓN
+  --------------------------------------------------------------------------- */
+  
+  :root {
+    /* Opacidades de elementos decorativos */
+    --decoration-opacity-primary: 0.1;
+    --decoration-opacity-secondary: 0.06;
+    --decoration-opacity-accent: 0.12;
+    
+    /* Tamaños de elementos */
+    --decoration-size-sm: 40px;
+    --decoration-size-md: 80px;
+    --decoration-size-lg: 120px;
+    --decoration-size-xl: 200px;
+    
+    /* Velocidades de animación */
+    --animation-speed-slow: 25s;
+    --animation-speed-medium: 15s;
+    --animation-speed-fast: 8s;
+    
+    /* Espaciado consistente */
+    --decoration-margin: 10%;
+    --decoration-padding: 5%;
+  }

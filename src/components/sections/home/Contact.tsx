@@ -20,82 +20,49 @@ const SmoothTopTransition = () => (
   </div>
 )
 
-// Fondo cohesivo mejorado
+// Fondo cohesivo mejorado con sistema unificado
 const EnhancedContactBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Gradiente base que conecta con el footer */}
-    <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-white to-primary-100/30" />
+  <div className="minimal-decorations">
+    {/* Figuras geométricas minimalistas del sistema unificado */}
+    <div className="geometric-accent-1"></div>
+    <div className="geometric-accent-2"></div>
+    <div className="geometric-accent-3"></div>
     
-    {/* Capa adicional para transición suave al footer */}
-    <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-primary-100/40 via-primary-50/20 to-transparent" />
+    {/* Patrón de fondo opcional */}
+    <div className="absolute inset-0 minimal-grid"></div>
     
-    {/* Orbes de gradiente animados mejorados */}
+    {/* Elementos característicos del formulario de contacto */}
+    <div className="contact-decorations">
+      <div className="focus-point"></div>
+      <div className="focus-point"></div>
+      <div className="focus-point"></div>
+    </div>
+    
+    {/* Mantenemos algunos elementos animados característicos */}
     <motion.div
       animate={{
-        scale: [1, 1.3, 1],
-        opacity: [0.1, 0.4, 0.1],
-        rotate: [0, 180, 360]
+        scale: [1, 1.1, 1],
+        opacity: [0.3, 0.5, 0.3]
       }}
       transition={{
-        duration: 25,
+        duration: 15,
         repeat: Infinity,
         ease: "easeInOut"
       }}
-      className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-r from-primary-200/40 to-accent-200/40 blur-3xl"
+      className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-white/5 blur-3xl"
     />
     
+    {/* Líneas de conexión adaptadas al sistema unificado */}
     <motion.div
-      animate={{
-        scale: [1.2, 1, 1.2],
-        opacity: [0.05, 0.3, 0.05],
-        rotate: [360, 180, 0]
-      }}
-      transition={{
-        duration: 30,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-      className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-gradient-to-r from-accent-200/30 to-primary-200/30 blur-3xl"
-    />
-
-    {/* Patrón de grid cohesivo */}
-    <div className="absolute inset-0 bg-grid-white bg-[length:40px_40px] opacity-[0.02]" />
-    
-    {/* Partículas flotantes mejoradas */}
-    {[...Array(12)].map((_, i) => (
-      <motion.div
-        key={i}
-        animate={{
-          y: [-35, -85, -35],
-          opacity: [0.1, 0.5, 0.1],
-          scale: [0.8, 1.3, 0.8]
-        }}
-        transition={{
-          duration: 8 + i * 0.4,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: i * 0.6
-        }}
-        className="absolute w-4 h-4 bg-primary-300/30 rounded-full"
-        style={{
-          left: `${15 + (i * 6)}%`,
-          top: `${20 + (i % 3) * 25}%`,
-          filter: 'blur(1px)'
-        }}
-      />
-    ))}
-
-    {/* Líneas de conexión decorativas */}
-    <motion.div
-      className="absolute top-1/3 left-0 right-0 h-px opacity-5"
+      className="absolute top-1/3 left-0 right-0 h-px"
       initial={{ scaleX: 0 }}
       animate={{ scaleX: 1 }}
       transition={{ duration: 3, delay: 1 }}
     >
       <motion.div 
-        className="h-full bg-gradient-to-r from-transparent via-primary-400 to-transparent w-2/3 mx-auto"
+        className="h-full bg-gradient-to-r from-transparent via-white/20 to-transparent w-2/3 mx-auto"
         animate={{
-          opacity: [0.2, 0.6, 0.2],
+          opacity: [0.1, 0.3, 0.1],
           scaleX: [0.7, 1.1, 0.7]
         }}
         transition={{
@@ -105,33 +72,6 @@ const EnhancedContactBackground = () => (
         }}
       />
     </motion.div>
-
-    {/* Elementos geométricos decorativos */}
-    <motion.div
-      animate={{
-        rotate: [0, 360],
-        scale: [1, 1.2, 1]
-      }}
-      transition={{
-        duration: 20,
-        repeat: Infinity,
-        ease: "linear"
-      }}
-      className="absolute top-1/4 right-1/6 w-10 h-10 border-2 border-primary-300/20 rotate-45 opacity-30"
-    />
-    
-    <motion.div
-      animate={{
-        rotate: [360, 0],
-        scale: [1.1, 1, 1.1]
-      }}
-      transition={{
-        duration: 15,
-        repeat: Infinity,
-        ease: "linear"
-      }}
-      className="absolute bottom-1/4 left-1/6 w-8 h-8 border-2 border-accent-300/20 rounded-full opacity-20"
-    />
   </div>
 )
 
@@ -518,17 +458,14 @@ const Contact: FC = () => {
   }
 
   return (
-    <section
-      id="contacto"
-      className="py-24 relative overflow-hidden"
-    >
+    <section id="contacto" className="pt-16 pb-24 section-unified-bg section-contact-bg text-white relative overflow-hidden">
       {/* Transición suave */}
       <SmoothTopTransition />
 
       {/* Fondo mejorado */}
       <EnhancedContactBackground />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 content-overlay">
         {/* Header mejorado */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

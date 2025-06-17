@@ -6,43 +6,34 @@ import ServiceCard from '../../ui/ServiceCard'
 import Button from '../../ui/button'
 import type { Service } from '../../../types'
 
-// Enhanced decorative elements
+// Enhanced decorative elements with unified background system
 const FloatingShapes = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Floating geometric shapes */}
+  <div className="minimal-decorations">
+    {/* Figuras geométricas minimalistas del sistema unificado */}
+    <div className="geometric-accent-1"></div>
+    <div className="geometric-accent-2"></div>
+    <div className="geometric-accent-3"></div>
+    
+    {/* Patrón de fondo opcional */}
+    <div className="absolute inset-0 minimal-grid"></div>
+    
+    {/* Elementos específicos de la sección servicios */}
     <motion.div
       animate={{ 
         y: [-20, 20, -20],
-        rotate: [0, 180, 360] 
+        opacity: [0.4, 0.7, 0.4] 
       }}
       transition={{ 
         duration: 12, 
         repeat: Infinity, 
         ease: "easeInOut" 
       }}
-      className="absolute top-20 right-20 w-32 h-32 opacity-5"
-    >
-      <div className="w-full h-full border-4 border-primary-300 rounded-full"></div>
-    </motion.div>
+      className="absolute top-20 right-20 w-32 h-32 border border-white/10 rounded-full"
+    />
     
-    <motion.div
-      animate={{ 
-        x: [-30, 30, -30],
-        rotate: [0, -90, 0] 
-      }}
-      transition={{ 
-        duration: 15, 
-        repeat: Infinity, 
-        ease: "easeInOut" 
-      }}
-      className="absolute bottom-32 left-16 w-24 h-24 opacity-5"
-    >
-      <div className="w-full h-full border-4 border-accent-400 rotate-45"></div>
-    </motion.div>
-
-    {/* Gradient orbs */}
-    <div className="absolute top-1/4 right-1/3 w-80 h-80 bg-gradient-to-r from-primary-100/20 to-accent-100/20 rounded-full blur-3xl opacity-60"></div>
-    <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-accent-100/20 to-gold-100/20 rounded-full blur-3xl opacity-40"></div>
+    {/* Mantener efecto blur característico de la sección */}
+    <div className="absolute top-1/4 right-1/3 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
+    <div className="absolute bottom-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
   </div>
 )
 
@@ -176,11 +167,11 @@ const Services: FC = () => {
   }
 
   return (
-    <section id="servicios" className="py-24 bg-gradient-to-br from-primary-800/90 via-primary-700/85 to-primary-600/90 text-white relative overflow-hidden">
+    <section id="servicios" className="py-20 section-unified-bg section-services-bg text-white relative overflow-hidden">
       {/* Enhanced decorative elements */}
       <FloatingShapes />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 max-w-7xl content-overlay">
         {/* Enhanced header section */}
         <div className="text-center mb-16">
           <motion.div

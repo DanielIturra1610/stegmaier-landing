@@ -6,18 +6,32 @@ import { steps } from './steps-data'
 
 // Background decorative elements
 const ProcessBackgroundElements = () => (
-  <>
-    {/* Top right corner decorative element */}
-    <div className="absolute top-0 right-0 w-1/3 h-1/3 opacity-5 -z-10">
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <path fill="#0369a1" d="M42.8,-62.9C56.9,-54.8,70.8,-43.8,75.4,-29.7C80,-15.6,75.2,1.6,69.7,18.1C64.1,34.6,57.9,50.3,46,60.1C34.2,69.9,17.1,73.8,0.7,72.8C-15.7,71.7,-31.5,65.6,-44.4,55.8C-57.3,45.9,-67.3,32.2,-71.3,16.8C-75.2,1.3,-73.1,-15.8,-65.6,-29.2C-58.1,-42.5,-45.1,-52.2,-31.9,-60.5C-18.7,-68.7,-4.4,-75.6,7.9,-86.6C20.2,-97.6,28.8,-71,42.8,-62.9Z" transform="translate(100 100)" />
-      </svg>
-    </div>
+  <div className="minimal-decorations">
+    {/* Figuras geométricas minimalistas del sistema unificado */}
+    <div className="geometric-accent-1"></div>
+    <div className="geometric-accent-2"></div>
     
-    {/* Animated flowing line */}
-    <div className="absolute left-0 right-0 h-1 top-1/3 opacity-10 overflow-hidden -z-10">
+    {/* Patrón de fondo opcional */}
+    <div className="absolute inset-0 minimal-grid"></div>
+    
+    {/* Elementos específicos de la sección process */}
+    <motion.div
+      className="absolute right-10 top-1/4 w-16 h-16 border border-white/10 rounded-full"
+      animate={{
+        scale: [1, 1.1, 1],
+        opacity: [0.5, 0.8, 0.5]
+      }}
+      transition={{
+        duration: 8,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }}
+    />
+    
+    {/* Mantenemos las líneas animadas que son características de esta sección */}
+    <div className="absolute left-0 right-0 h-1 top-1/3 overflow-hidden -z-10">
       <motion.div 
-        className="h-full bg-gradient-to-r from-transparent via-primary-500 to-transparent" 
+        className="h-full bg-gradient-to-r from-transparent via-white/20 to-transparent" 
         style={{ width: '30%' }}
         animate={{
           x: ['-100%', '400%'],
@@ -29,26 +43,7 @@ const ProcessBackgroundElements = () => (
         }}
       />
     </div>
-    
-    {/* Bottom left corner dots pattern */}
-    <div className="absolute bottom-10 left-10 opacity-10 -z-10">
-      <div className="grid grid-cols-6 gap-6">
-        {[...Array(36)].map((_, i) => (
-          <motion.div 
-            key={i} 
-            className="h-2 w-2 rounded-full bg-accent-500"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ 
-              duration: 3, 
-              repeat: Infinity, 
-              delay: i * 0.05, 
-              ease: "easeInOut" 
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  </>
+  </div>
 )
 
 const Process: FC = () => {
@@ -85,10 +80,10 @@ const Process: FC = () => {
   }
 
   return (
-    <section id="proceso" className="py-24 bg-gradient-to-br from-primary-800/95 via-primary-700/90 to-primary-600/95 text-white relative overflow-hidden">
+    <section id="proceso" className="py-24 section-unified-bg section-process-bg text-white relative overflow-hidden">
       <ProcessBackgroundElements />
       
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4 max-w-6xl content-overlay">
         {/* Enhanced Header */}
         <motion.header 
           className="mb-16 text-center relative z-10"

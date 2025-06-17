@@ -63,13 +63,20 @@ const testimonials = [
   }
 ]
 
-// Enhanced decorative background elements
+// Enhanced decorative background elements with unified system
 const TestimonialsBackground = () => (
-  <>
-    {/* Animated gradient orbs */}
+  <div className="minimal-decorations">
+    {/* Figuras geométricas minimalistas del sistema unificado */}
+    <div className="geometric-accent-1"></div>
+    <div className="geometric-accent-2"></div>
+    
+    {/* Patrones de fondo */}
+    <div className="absolute inset-0 minimal-grid"></div>
+    
+    {/* Elementos característicos de testimonials */}
     <motion.div
       animate={{
-        scale: [1, 1.2, 1],
+        scale: [1, 1.1, 1],
         opacity: [0.3, 0.5, 0.3]
       }}
       transition={{
@@ -77,7 +84,7 @@ const TestimonialsBackground = () => (
         repeat: Infinity,
         ease: "easeInOut"
       }}
-      className="absolute -left-40 -bottom-20 w-96 h-96 rounded-full bg-gradient-to-r from-accent-200 to-primary-200 opacity-20 blur-3xl"
+      className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-white/5 blur-3xl"
     />
     
     <motion.div
@@ -90,36 +97,31 @@ const TestimonialsBackground = () => (
         repeat: Infinity,
         ease: "easeInOut"
       }}
-      className="absolute -right-40 top-20 w-96 h-96 rounded-full bg-gradient-to-r from-primary-200 to-accent-200 opacity-15 blur-3xl"
+      className="absolute -right-40 top-20 w-96 h-96 rounded-full bg-white/5 blur-3xl"
     />
 
-    {/* Floating particles */}
-    <div className="absolute inset-0 overflow-hidden">
-      {[...Array(12)].map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{
-            y: [-20, -60, -20],
-            opacity: [0.3, 0.7, 0.3]
-          }}
-          transition={{
-            duration: 4 + i * 0.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.3
-          }}
-          className="absolute w-2 h-2 bg-primary-300 rounded-full opacity-30"
-          style={{
-            left: `${10 + (i * 8)}%`,
-            top: `${20 + (i % 3) * 20}%`
-          }}
-        />
-      ))}
-    </div>
-
-    {/* Grid pattern */}
-    <div className="absolute inset-0 bg-grid-white bg-[length:60px_60px] opacity-[0.02]" />
-  </>
+    {/* Partículas flotantes - mantenemos este efecto característico pero adaptado al sistema */}
+    {[...Array(8)].map((_, i) => (
+      <motion.div
+        key={i}
+        animate={{
+          y: [-20, -40, -20],
+          opacity: [0.3, 0.5, 0.3]
+        }}
+        transition={{
+          duration: 4 + i * 0.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: i * 0.3
+        }}
+        className="absolute w-2 h-2 bg-white/30 rounded-full"
+        style={{
+          left: `${15 + (i * 10)}%`,
+          top: `${20 + (i % 3) * 20}%`
+        }}
+      />
+    ))}
+  </div>
 )
 
 // Stats component for testimonials
@@ -239,11 +241,11 @@ const Testimonials: FC = () => {
   const styles = cardStyles[currentTestimonial.variant]
 
   return (
-    <section id="testimonios" className="py-24 bg-gradient-to-br from-gray-50 via-white to-primary-50/20 relative overflow-hidden">
+    <section id="testimonios" className="py-24 section-unified-bg section-testimonials-bg text-white relative overflow-hidden">
       {/* Enhanced background elements */}
       <TestimonialsBackground />
       
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 max-w-6xl content-overlay">
         {/* Enhanced header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

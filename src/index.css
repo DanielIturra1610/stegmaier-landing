@@ -1,11 +1,391 @@
 @import "./styles/tokens.css";
+@import "./styles/unified-backgrounds.css";
+/* Las siguientes directivas son estándar de Tailwind y generan advertencias en algunos linters de CSS */
+/* stylelint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable */
 
 /* Texturas y fondos personalizados para coherencia visual */
 .bg-noise {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* ===========================================================================
+   SISTEMA DE FONDOS COHERENTES - STEGMAIER CONSULTING
+   
+   Objetivo: Crear transiciones suaves y coherencia visual entre secciones
+   manteniendo la identidad corporativa y facilitando el mantenimiento.
+   
+   Estructura:
+   1. Patrones base reutilizables
+   2. Gradientes coherentes 
+   3. Elementos decorativos consistentes
+   4. Transiciones suaves entre secciones
+   5. Sistema de colores centralizado
+   
+   NOTA: Este código va DESPUÉS de los imports en index.css
+=========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. PATRONES BASE REUTILIZABLES
+--------------------------------------------------------------------------- */
+
+/* Textura sutil para dar profundidad */
+.bg-texture-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch' opacity='0.02'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Grid pattern corporativo */
+.bg-grid-corporate {
+  background-image: 
+    linear-gradient(rgba(3, 105, 161, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(3, 105, 161, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Dots pattern elegante */
+.bg-dots-corporate {
+  background-image: radial-gradient(circle, rgba(3, 105, 161, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Líneas diagonales sutiles */
+.bg-lines-corporate {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(3, 105, 161, 0.02) 8px,
+    rgba(3, 105, 161, 0.02) 16px
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   2. GRADIENTES COHERENTES DEL SISTEMA
+--------------------------------------------------------------------------- */
+
+/* Gradiente principal - Secciones hero y principales */
+.bg-gradient-primary {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-primary-800)) 0%,
+    rgb(var(--color-primary-700)) 35%,
+    rgb(var(--color-primary-600)) 100%
+  );
+}
+
+/* Gradiente alternativo - Secciones secundarias */
+.bg-gradient-secondary {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-primary-50)) 0%,
+    rgb(var(--color-gray-50)) 50%,
+    rgb(var(--color-primary-100) / 0.3) 100%
+  );
+}
+
+/* Gradiente de transición - Para secciones intermedias */
+.bg-gradient-transition {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-600) / 0.95) 0%,
+    rgb(var(--color-primary-700) / 0.85) 50%,
+    rgb(var(--color-primary-800) / 0.90) 100%
+  );
+}
+
+/* Gradiente neutro - Secciones de contenido */
+.bg-gradient-neutral {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-gray-50)) 0%,
+    rgba(255, 255, 255, 0.95) 35%,
+    rgb(var(--color-primary-50) / 0.5) 100%
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   3. ELEMENTOS DECORATIVOS CONSISTENTES
+--------------------------------------------------------------------------- */
+
+/* Orbes flotantes para dar vida a los fondos */
+.bg-decorative-orbs::before,
+.bg-decorative-orbs::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-decorative-orbs::before {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(
+    circle,
+    rgb(var(--color-accent-500)) 0%,
+    rgb(var(--color-primary-400)) 70%,
+    transparent 100%
+  );
+  top: -10%;
+  right: -5%;
+  animation: float-orb-1 20s ease-in-out infinite;
+}
+
+.bg-decorative-orbs::after {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgb(var(--color-primary-300)) 0%,
+    rgb(var(--color-accent-500)) 70%,
+    transparent 100%
+  );
+  bottom: -15%;
+  left: -10%;
+  animation: float-orb-2 25s ease-in-out infinite;
+}
+
+/* Animaciones para los orbes */
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.1); }
+  50% { transform: translate(-20px, -40px) scale(0.9); }
+  75% { transform: translate(40px, -10px) scale(1.05); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(-30px, 20px) scale(1.1); }
+  40% { transform: translate(20px, 40px) scale(0.9); }
+  60% { transform: translate(-40px, 10px) scale(1.05); }
+  80% { transform: translate(10px, -20px) scale(0.95); }
+}
+
+/* ---------------------------------------------------------------------------
+   4. CLASES ESPECÍFICAS POR SECCIÓN
+--------------------------------------------------------------------------- */
+
+/* Fondo base unificado para todas las secciones */
+.section-hero,
+.section-process,
+.section-services,
+.section-testimonials, 
+.section-contact {
+  position: relative;
+  overflow: visible;
+  color: white;
+  padding: 4rem 0;
+  margin: 0;
+  /* No background here - using site's base background */
+}
+
+/* ---------------------------------------------------------------------------
+   5. OVERLAYS Y EFECTOS DE TRANSICIÓN
+--------------------------------------------------------------------------- */
+
+/* Overlay sutil para mejorar legibilidad del texto */
+.section-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--color-primary-900), 0.02);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Separadores de sección con gradientes sutiles */
+.section-divider-top {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, rgba(14, 39, 65, 0.8), transparent);
+  z-index: 10;
+}
+
+.section-divider-bottom {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to top, rgba(14, 39, 65, 0.8), transparent);
+  z-index: 10;
+}
+
+/* ---------------------------------------------------------------------------
+   6. ELEMENTOS ADICIONALES DE PROFUNDIDAD
+--------------------------------------------------------------------------- */
+
+/* Partículas flotantes para secciones dinámicas */
+.floating-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.floating-particles::before,
+.floating-particles::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(var(--color-accent-500), 0.3);
+  border-radius: 50%;
+  animation: float-particle 8s linear infinite;
+}
+
+.floating-particles::before {
+  top: 20%;
+  left: 10%;
+  animation-delay: -2s;
+}
+
+.floating-particles::after {
+  top: 60%;
+  right: 15%;
+  animation-delay: -4s;
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0) scale(0); opacity: 0; }
+  10% { opacity: 0.5; scale: 1; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(-100vh) translateX(20px) scale(0); opacity: 0; }
+}
+
+/* ---------------------------------------------------------------------------
+   7. RESPONSIVE ADJUSTMENTS
+--------------------------------------------------------------------------- */
+
+/* Ajustes para móviles - Simplifica los fondos complejos */
+@media (max-width: 768px) {
+  .section-hero,
+  .section-process,
+  .section-services {
+    background-attachment: scroll; /* Mejor performance en móvil */
+  }
+  
+  .bg-decorative-orbs::before,
+  .bg-decorative-orbs::after {
+    animation-duration: 30s; /* Animaciones más lentas en móvil */
+  }
+  
+  .floating-particles {
+    display: none; /* Oculta partículas en móvil para mejor performance */
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   8. UTILIDADES DE COMBINACIÓN (VERSIÓN CORREGIDA)
+--------------------------------------------------------------------------- */
+
+/* Combinar textura + gradiente + decoración - SIN @apply */
+.bg-corporate-complete {
+  /* Aplicando bg-gradient-primary */
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-primary-800)) 0%,
+    rgb(var(--color-primary-700)) 35%,
+    rgb(var(--color-primary-600)) 100%
+  );
+  
+  /* Posición relativa para elementos decorativos */
+  position: relative;
+  
+  /* Overlay de textura */
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch' opacity='0.02'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+    linear-gradient(
+      135deg,
+      rgb(var(--color-primary-800)) 0%,
+      rgb(var(--color-primary-700)) 35%,
+      rgb(var(--color-primary-600)) 100%
+    );
+  }
+
+    /* Orbes decorativos para bg-corporate-complete */
+    .bg-corporate-complete::before,
+    .bg-corporate-complete::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.1;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-corporate-complete::before {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(
+        circle,
+        rgb(var(--color-accent-500)) 0%,
+        rgb(var(--color-primary-400)) 70%,
+        transparent 100%
+      );
+      top: -10%;
+      right: -5%;
+      animation: float-orb-1 20s ease-in-out infinite;
+    }
+
+    .bg-corporate-complete::after {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(
+        circle,
+        rgb(var(--color-primary-300)) 0%,
+        rgb(var(--color-accent-500)) 70%,
+        transparent 100%
+      );
+      bottom: -15%;
+      left: -10%;
+      animation: float-orb-2 25s ease-in-out infinite;
+    }
+/* ---------------------------------------------------------------------------
+   9. VARIABLES CSS CUSTOM PARA FÁCIL MANTENIMIENTO
+--------------------------------------------------------------------------- */
+
+:root {
+  /* Opacidades consistentes */
+  --bg-overlay-opacity: 0.02;
+  --bg-orb-opacity: 0.1;
+  --bg-pattern-opacity: 0.03;
+  
+  /* Tamaños de patrones */
+  --bg-grid-size: 40px;
+  --bg-dots-size: 24px;
+  --bg-orb-size-sm: 300px;
+  --bg-orb-size-lg: 400px;
+  
+  /* Duración de animaciones */
+  --bg-animation-slow: 25s;
+  --bg-animation-medium: 20s;
+  --bg-animation-fast: 15s;
+}
+
+/* Para cambios rápidos de tema */
+[data-theme="blue"] {
+  --bg-primary-start: var(--color-primary-900);
+  --bg-primary-middle: var(--color-primary-800);
+  --bg-primary-end: var(--color-primary-700);
+}
+
+[data-theme="green"] {
+  --bg-primary-start: var(--color-accent-700);
+  --bg-primary-middle: var(--color-accent-500);
+  --bg-primary-end: var(--color-primary-600);
 }
 
 @layer base {

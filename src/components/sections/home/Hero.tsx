@@ -4,62 +4,7 @@ import Button from '../../ui/button'
 import IsoBadge from '../../ui/IsoBadge'
 import { cn } from '../../../lib/utils'
 
-// Enhanced Abstract shape SVG with more dynamic curves
-const AbstractShape = () => (
-  <svg 
-    className="absolute -bottom-1 left-0 w-full text-primary-800/40 opacity-60"
-    viewBox="0 0 1440 320"
-    fill="currentColor"
-    preserveAspectRatio="none"
-  >
-    <path d="M0,160L48,154.7C96,149,192,139,288,149.3C384,160,480,192,576,197.3C672,203,768,181,864,170.7C960,160,1056,160,1152,176C1248,192,1344,224,1392,240L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-  </svg>
-)
-
-// Enhanced floating elements
-const FloatingElements = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Floating circles */}
-    <motion.div
-      animate={{ y: [-10, 10, -10] }}
-      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute top-1/4 right-1/4 w-20 h-20 rounded-full bg-accent-500/10 backdrop-blur-sm"
-    />
-    <motion.div
-      animate={{ y: [15, -15, 15] }}
-      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      className="absolute top-3/4 left-1/3 w-32 h-32 rounded-full bg-primary-400/10 backdrop-blur-sm"
-    />
-    
-    {/* Geometric shapes */}
-    <motion.div
-      animate={{ rotate: [0, 360] }}
-      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-      className="absolute top-1/3 right-1/6 w-6 h-6 border-2 border-white/20 rotate-45"
-    />
-    
-    {/* Dots pattern */}
-    <div className="absolute right-10 top-1/4 w-40 h-40 opacity-20">
-      <div className="absolute w-full h-full inset-0 grid grid-cols-8 gap-2">
-        {Array.from({ length: 64 }).map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0.3 }}
-            animate={{ opacity: [0.3, 0.8, 0.3] }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              delay: i * 0.1,
-            }}
-            className="w-1 h-1 bg-white rounded-full"
-          />
-        ))}
-      </div>
-    </div>
-  </div>
-)
-
-// Stats counter component
+// Stats counter component (sin cambios)
 const StatsCounter = ({ number, label }: { number: string; label: string }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -81,21 +26,22 @@ const Hero: FC = () => {
   return (
     <section
       id="home"
-      className="relative bg-hero-pattern text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
+      className="section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
     >
-      {/* Enhanced grid pattern background */}
-      <div className="absolute inset-0 bg-grid-white bg-[length:40px_40px] opacity-[0.08]" />
+      {/* Decoraciones específicas del Hero */}
+      <div className="hero-decorations">
+        <div className="circle-1"></div>
+        <div className="circle-2"></div>
+      </div>
       
-      {/* Gradient overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-900/90 via-primary-800/80 to-primary-700/90" />
+      {/* Grid sutil de fondo */}
+      <div className="minimal-grid"></div>
       
-      {/* Floating decorative elements */}
-      <FloatingElements />
-      
-      {/* Wave shape at the bottom */}
-      <AbstractShape />
+      {/* Elementos geométricos minimalistas */}
+      <div className="geometric-accent-1"></div>
+      <div className="geometric-accent-2"></div>
 
-      <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16">
+      <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16 z-10">
         {/* -------- Enhanced Text content -------- */}
         <motion.div
           style={{ y: y1 }}
