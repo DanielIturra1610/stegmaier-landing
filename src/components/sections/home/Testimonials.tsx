@@ -259,16 +259,16 @@ const Testimonials: FC = () => {
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center py-2 px-4 rounded-full bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700 text-sm font-semibold mb-4 shadow-sm"
+            className="inline-flex items-center py-2 px-4 rounded-full bg-gradient-to-r from-white to-accent-100 text-primary-700 text-sm font-bold mb-4 shadow-md"
           >
             <span className="mr-2">💬</span>
             Testimonios de Clientes
           </motion.span>
           
-          <h2 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-black text-gray-900 leading-tight">
+          <h2 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
             Historias de{' '}
             <span className="relative">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
                 éxito
               </span>
               <motion.span
@@ -282,9 +282,9 @@ const Testimonials: FC = () => {
             <br />que nos inspiran
           </h2>
           
-          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-gray-600 leading-relaxed">
+          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-white/80 leading-relaxed">
             Descubre cómo hemos ayudado a empresas de diferentes industrias a alcanzar 
-            la <span className="font-semibold text-primary-700">excelencia operacional</span> a través de certificaciones ISO.
+            la <span className="font-semibold text-accent-300">excelencia operacional</span> a través de certificaciones ISO.
           </p>
         </motion.div>
 
@@ -501,7 +501,7 @@ const Testimonials: FC = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
-                className="bg-white text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <span className="mr-2">🚀</span>
                 Comenzar mi transformación

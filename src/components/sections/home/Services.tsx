@@ -185,7 +185,7 @@ const Services: FC = () => {
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center py-2 px-4 rounded-full bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700 text-sm font-semibold mb-4 shadow-sm"
+              className="inline-flex items-center py-2 px-4 rounded-full bg-gradient-to-r from-white to-accent-100 text-primary-700 text-sm font-bold mb-4 shadow-md"
             >
               <span className="mr-2">🚀</span>
               Nuestros Servicios
@@ -194,7 +194,7 @@ const Services: FC = () => {
             <h2 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
               Soluciones que{' '}
               <span className="relative">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-accent-300">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
                   transforman
                 </span>
                 <motion.span
@@ -202,7 +202,7 @@ const Services: FC = () => {
                   whileInView={{ width: "100%" }}
                   viewport={{ once: true }}
                   transition={{ duration: 1, delay: 0.5 }}
-                  className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-accent-500 to-accent-400 rounded-lg opacity-70"
+                  className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-primary-200 to-accent-200 rounded-lg"
                 />
               </span>
               <br />tu empresa

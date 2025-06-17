@@ -92,12 +92,12 @@ const Process: FC = () => {
           viewport={{ once: true }}
           variants={titleAnimation}
         >
-          <span className="inline-block py-2 px-4 rounded-full bg-accent-500/20 text-accent-300 text-sm font-medium mb-3 backdrop-blur-sm">
+          <span className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm">
             <span className="mr-2">🔄</span>Metodología Certificada
           </span>
           
           <h2 className="mt-2 text-4xl md:text-5xl font-display font-bold text-white leading-tight">
-            Paso a paso hacia la <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 to-accent-300">excelencia</span>
+            Paso a paso hacia la <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">excelencia</span>
           </h2>
           
           <div className="mx-auto mt-4 h-1 w-24 rounded bg-accent-500 opacity-70"></div>
@@ -152,7 +152,7 @@ const Process: FC = () => {
           variants={containerAnimation}
           viewport={{ once: true, margin: "-100px" }}
         >
-          <h3 className="text-2xl font-bold mb-8 text-center">Nuestro proceso de <span className="text-accent-300">8 pasos</span></h3>
+          <h3 className="text-2xl font-bold mb-8 text-center text-white">Nuestro proceso de <span className="text-accent-300 font-extrabold">8 pasos</span></h3>
           
           <div className="grid grid-cols-4 gap-8">
             {steps.slice(0, 4).map((step, index) => (

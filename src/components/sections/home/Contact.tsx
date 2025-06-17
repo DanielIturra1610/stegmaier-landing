@@ -479,16 +479,16 @@ const Contact: FC = () => {
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center py-3 px-6 rounded-full bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700 text-sm font-semibold mb-4 shadow-lg border border-primary-200/50"
+            className="inline-flex items-center py-3 px-6 rounded-full bg-gradient-to-r from-white to-accent-100 text-primary-700 text-sm font-bold mb-4 shadow-lg"
           >
             <span className="mr-2">📞</span>
             Contáctanos
           </motion.span>
 
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-gray-900 leading-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
             ¿Listo para{' '}
             <span className="relative">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
                 comenzar
               </span>
               <motion.span
@@ -502,8 +502,8 @@ const Contact: FC = () => {
             <br />tu transformación?
           </h2>
 
-          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-gray-600 leading-relaxed">
-            Agenda una <span className="font-semibold text-primary-700">consulta gratuita</span> y 
+          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-white/80 leading-relaxed">
+            Agenda una <span className="font-semibold text-accent-300">consulta gratuita</span> y 
             descubre cómo podemos ayudarte a certificar tu empresa en tiempo récord.
           </p>
         </motion.div>
@@ -666,7 +666,7 @@ const Contact: FC = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
-                className="bg-white text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <span className="mr-2">📞</span>
                 Solicitar llamada
