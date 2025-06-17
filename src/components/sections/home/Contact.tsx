@@ -5,66 +5,138 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Button from '../../ui/button'
 import { cn } from '../../../lib/utils'
 
-// Enhanced decorative background
-const ContactBackground = () => (
+// Transición suave desde Testimonials
+const SmoothTopTransition = () => (
+  <div className="absolute top-0 left-0 right-0 h-32 -z-10">
+    <svg 
+      className="absolute top-0 left-0 w-full text-primary-50" 
+      viewBox="0 0 1440 120" 
+      fill="currentColor"
+      preserveAspectRatio="none"
+      style={{ height: '80px' }}
+    >
+      <path d="M0,96L48,90.7C96,85,192,75,288,85.3C384,96,480,128,576,133.3C672,139,768,117,864,106.7C960,96,1056,96,1152,112C1248,128,1344,160,1392,176L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+    </svg>
+  </div>
+)
+
+// Fondo cohesivo mejorado
+const EnhancedContactBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Animated gradient orbs */}
+    {/* Gradiente base que conecta con el footer */}
+    <div className="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-white to-primary-100/30" />
+    
+    {/* Capa adicional para transición suave al footer */}
+    <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-primary-100/40 via-primary-50/20 to-transparent" />
+    
+    {/* Orbes de gradiente animados mejorados */}
     <motion.div
       animate={{
-        scale: [1, 1.2, 1],
-        opacity: [0.3, 0.6, 0.3]
+        scale: [1, 1.3, 1],
+        opacity: [0.1, 0.4, 0.1],
+        rotate: [0, 180, 360]
       }}
       transition={{
-        duration: 8,
+        duration: 25,
         repeat: Infinity,
         ease: "easeInOut"
       }}
-      className="absolute -top-20 -left-20 w-80 h-80 rounded-full bg-gradient-to-r from-primary-200/40 to-accent-200/40 blur-3xl"
+      className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-r from-primary-200/40 to-accent-200/40 blur-3xl"
     />
     
     <motion.div
       animate={{
         scale: [1.2, 1, 1.2],
-        opacity: [0.2, 0.5, 0.2]
+        opacity: [0.05, 0.3, 0.05],
+        rotate: [360, 180, 0]
       }}
       transition={{
-        duration: 10,
+        duration: 30,
         repeat: Infinity,
         ease: "easeInOut"
       }}
-      className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-r from-accent-200/40 to-primary-200/40 blur-3xl"
+      className="absolute -bottom-20 -right-20 w-80 h-80 rounded-full bg-gradient-to-r from-accent-200/30 to-primary-200/30 blur-3xl"
     />
 
-    {/* Grid pattern */}
-    <div className="absolute inset-0 bg-grid-white bg-[length:40px_40px] opacity-[0.03]" />
+    {/* Patrón de grid cohesivo */}
+    <div className="absolute inset-0 bg-grid-white bg-[length:40px_40px] opacity-[0.02]" />
     
-    {/* Floating particles */}
-    {[...Array(8)].map((_, i) => (
+    {/* Partículas flotantes mejoradas */}
+    {[...Array(12)].map((_, i) => (
       <motion.div
         key={i}
         animate={{
-          y: [-30, -80, -30],
-          opacity: [0.2, 0.6, 0.2],
-          scale: [1, 1.2, 1]
+          y: [-35, -85, -35],
+          opacity: [0.1, 0.5, 0.1],
+          scale: [0.8, 1.3, 0.8]
         }}
         transition={{
-          duration: 6 + i * 0.5,
+          duration: 8 + i * 0.4,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: i * 0.8
+          delay: i * 0.6
         }}
-        className="absolute w-3 h-3 bg-primary-300/50 rounded-full"
+        className="absolute w-4 h-4 bg-primary-300/30 rounded-full"
         style={{
-          left: `${15 + (i * 10)}%`,
-          top: `${20 + (i % 3) * 25}%`
+          left: `${15 + (i * 6)}%`,
+          top: `${20 + (i % 3) * 25}%`,
+          filter: 'blur(1px)'
         }}
       />
     ))}
+
+    {/* Líneas de conexión decorativas */}
+    <motion.div
+      className="absolute top-1/3 left-0 right-0 h-px opacity-5"
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      transition={{ duration: 3, delay: 1 }}
+    >
+      <motion.div 
+        className="h-full bg-gradient-to-r from-transparent via-primary-400 to-transparent w-2/3 mx-auto"
+        animate={{
+          opacity: [0.2, 0.6, 0.2],
+          scaleX: [0.7, 1.1, 0.7]
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+    </motion.div>
+
+    {/* Elementos geométricos decorativos */}
+    <motion.div
+      animate={{
+        rotate: [0, 360],
+        scale: [1, 1.2, 1]
+      }}
+      transition={{
+        duration: 20,
+        repeat: Infinity,
+        ease: "linear"
+      }}
+      className="absolute top-1/4 right-1/6 w-10 h-10 border-2 border-primary-300/20 rotate-45 opacity-30"
+    />
+    
+    <motion.div
+      animate={{
+        rotate: [360, 0],
+        scale: [1.1, 1, 1.1]
+      }}
+      transition={{
+        duration: 15,
+        repeat: Infinity,
+        ease: "linear"
+      }}
+      className="absolute bottom-1/4 left-1/6 w-8 h-8 border-2 border-accent-300/20 rounded-full opacity-20"
+    />
   </div>
 )
 
-// Contact form component
-const ContactForm = () => {
+// Formulario de contacto mejorado
+const EnhancedContactForm = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -91,13 +163,11 @@ const ContactForm = () => {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 2000))
     
     setIsSubmitting(false)
     setIsSubmitted(true)
     
-    // Reset form after success message
     setTimeout(() => {
       setIsSubmitted(false)
       setFormData({
@@ -108,7 +178,7 @@ const ContactForm = () => {
         service: '',
         message: ''
       })
-    }, 3000)
+    }, 4000)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -124,10 +194,14 @@ const ContactForm = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 relative overflow-hidden"
+      className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-100 relative overflow-hidden"
     >
-      {/* Form decoration */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-accent-500" />
+      {/* Decoración superior mejorada */}
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500" />
+      
+      {/* Elementos decorativos en las esquinas */}
+      <div className="absolute top-4 right-4 w-20 h-20 border border-primary-200/30 rounded-full opacity-20" />
+      <div className="absolute bottom-4 left-4 w-16 h-16 border border-accent-200/30 rounded-full opacity-15" />
       
       <AnimatePresence mode="wait">
         {isSubmitted ? (
@@ -142,15 +216,15 @@ const ContactForm = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
             >
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-10 h-10 text-green-600" />
             </motion.div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Mensaje enviado!</h3>
-            <p className="text-gray-600 mb-4">
+            <h3 className="text-3xl font-bold text-gray-900 mb-3">¡Mensaje enviado!</h3>
+            <p className="text-gray-600 mb-6 text-lg">
               Gracias por contactarnos. Te responderemos en menos de 24 horas.
             </p>
-            <div className="inline-flex items-center text-sm text-green-600 font-semibold">
+            <div className="inline-flex items-center text-sm text-green-600 font-semibold bg-green-50 px-4 py-2 rounded-full">
               <Clock className="w-4 h-4 mr-2" />
               Respuesta garantizada en 24h
             </div>
@@ -165,16 +239,26 @@ const ContactForm = () => {
             className="space-y-6"
           >
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Solicita tu cotización gratuita
-              </h3>
-              <p className="text-gray-600">
-                Completa el formulario y te contactaremos en menos de 24 horas
-              </p>
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <h3 className="text-3xl font-bold text-gray-900 mb-3">
+                  Solicita tu cotización gratuita
+                </h3>
+                <p className="text-gray-600 text-lg">
+                  Completa el formulario y te contactaremos en menos de 24 horas
+                </p>
+              </motion.div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Nombre completo *
                 </label>
@@ -184,12 +268,16 @@ const ContactForm = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
                   placeholder="Tu nombre completo"
                 />
-              </div>
+              </motion.div>
               
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Email corporativo *
                 </label>
@@ -199,14 +287,18 @@ const ContactForm = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
                   placeholder="nombre@empresa.com"
                 />
-              </div>
+              </motion.div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Empresa *
                 </label>
@@ -216,12 +308,16 @@ const ContactForm = () => {
                   value={formData.company}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
                   placeholder="Nombre de tu empresa"
                 />
-              </div>
+              </motion.div>
               
-              <div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Teléfono
                 </label>
@@ -230,13 +326,17 @@ const ContactForm = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
                   placeholder="+56 9 1234 5678"
                 />
-              </div>
+              </motion.div>
             </div>
 
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Servicio de interés
               </label>
@@ -244,7 +344,7 @@ const ContactForm = () => {
                 name="service"
                 value={formData.service}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
               >
                 <option value="">Selecciona un servicio</option>
                 {services.map((service) => (
@@ -253,9 +353,13 @@ const ContactForm = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </motion.div>
 
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Mensaje
               </label>
@@ -264,29 +368,35 @@ const ContactForm = () => {
                 value={formData.message}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none resize-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none resize-none hover:border-gray-300"
                 placeholder="Cuéntanos sobre tu proyecto y cómo podemos ayudarte..."
               />
-            </div>
+            </motion.div>
 
-            <Button
-              type="submit"
-              size="lg"
-              disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
             >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
-                  Enviando...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <Send className="w-5 h-5 mr-2" />
-                  Enviar solicitud
-                </div>
-              )}
-            </Button>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
+                    Enviando...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <Send className="w-5 h-5 mr-2" />
+                    Enviar solicitud
+                  </div>
+                )}
+              </Button>
+            </motion.div>
 
             <p className="text-xs text-gray-500 text-center">
               Al enviar este formulario, aceptas que nos pongamos en contacto contigo para brindarte información sobre nuestros servicios.
@@ -298,8 +408,8 @@ const ContactForm = () => {
   )
 }
 
-// Contact info card component
-const ContactCard = ({ 
+// Tarjeta de contacto mejorada
+const EnhancedContactCard = ({ 
   icon: Icon, 
   title, 
   subtitle, 
@@ -318,17 +428,20 @@ const ContactCard = ({
     primary: {
       bg: 'from-primary-50 to-primary-100/50',
       icon: 'bg-primary-100 text-primary-700',
-      hover: 'hover:from-primary-100 hover:to-primary-50'
+      hover: 'hover:from-primary-100 hover:to-primary-50',
+      border: 'border-primary-200/50'
     },
     accent: {
       bg: 'from-accent-50 to-accent-100/50',
       icon: 'bg-accent-100 text-accent-700',
-      hover: 'hover:from-accent-100 hover:to-accent-50'
+      hover: 'hover:from-accent-100 hover:to-accent-50',
+      border: 'border-accent-200/50'
     },
     success: {
       bg: 'from-green-50 to-green-100/50',
       icon: 'bg-green-100 text-green-700',
-      hover: 'hover:from-green-100 hover:to-green-50'
+      hover: 'hover:from-green-100 hover:to-green-50',
+      border: 'border-green-200/50'
     }
   }
 
@@ -339,31 +452,46 @@ const ContactCard = ({
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      whileHover={{ y: -5, scale: 1.02 }}
+      whileHover={{ y: -8, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "flex items-center gap-4 rounded-2xl p-6 bg-gradient-to-br border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 group",
+        "flex items-center gap-4 rounded-2xl p-6 bg-gradient-to-br border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden",
         style.bg,
-        style.hover
+        style.hover,
+        style.border
       )}
     >
+      {/* Decoración superior */}
       <div className={cn(
-        "rounded-xl p-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
-        style.icon
-      )}>
+        "absolute top-0 left-0 right-0 h-1 bg-gradient-to-r opacity-60",
+        variant === 'primary' ? 'from-primary-500 to-primary-600' :
+        variant === 'accent' ? 'from-accent-500 to-accent-600' :
+        'from-green-500 to-green-600'
+      )} />
+      
+      <motion.div 
+        className={cn(
+          "rounded-xl p-3 transition-all duration-300 shadow-md",
+          style.icon
+        )}
+        whileHover={{ scale: 1.1, rotate: 5 }}
+      >
         <Icon className="h-6 w-6" />
-      </div>
-      <div>
+      </motion.div>
+      <div className="flex-1">
         <h3 className="font-bold text-gray-900 group-hover:text-primary-700 transition-colors">
           {title}
         </h3>
-        <p className="text-sm text-gray-600">{subtitle}</p>
+        <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors">{subtitle}</p>
       </div>
-      <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center">
+      <motion.div 
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        whileHover={{ scale: 1.1 }}
+      >
+        <div className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center shadow-sm">
           <Send className="w-4 h-4 text-gray-600" />
         </div>
-      </div>
+      </motion.div>
     </motion.a>
   )
 }
@@ -392,13 +520,16 @@ const Contact: FC = () => {
   return (
     <section
       id="contacto"
-      className="py-24 bg-gradient-to-br from-primary-50/50 via-white to-accent-50/30 relative overflow-hidden"
+      className="py-24 relative overflow-hidden"
     >
-      {/* Enhanced background */}
-      <ContactBackground />
+      {/* Transición suave */}
+      <SmoothTopTransition />
+
+      {/* Fondo mejorado */}
+      <EnhancedContactBackground />
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Enhanced header */}
+        {/* Header mejorado */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -411,7 +542,7 @@ const Contact: FC = () => {
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center py-2 px-4 rounded-full bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700 text-sm font-semibold mb-4 shadow-sm"
+            className="inline-flex items-center py-3 px-6 rounded-full bg-gradient-to-r from-primary-100 to-accent-100 text-primary-700 text-sm font-semibold mb-4 shadow-lg border border-primary-200/50"
           >
             <span className="mr-2">📞</span>
             Contáctanos
@@ -442,12 +573,12 @@ const Contact: FC = () => {
 
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-12 items-start">
-            {/* Contact form */}
+            {/* Formulario de contacto */}
             <div className="lg:col-span-7">
-              <ContactForm />
+              <EnhancedContactForm />
             </div>
 
-            {/* Contact information */}
+            {/* Información de contacto */}
             <div className="lg:col-span-5">
               <motion.div
                 variants={containerAnimation}
@@ -463,7 +594,7 @@ const Contact: FC = () => {
                 </motion.div>
 
                 <motion.div variants={itemAnimation}>
-                  <ContactCard
+                  <EnhancedContactCard
                     icon={MessageSquare}
                     title="WhatsApp Business"
                     subtitle="Respuesta inmediata en horario laboral"
@@ -474,7 +605,7 @@ const Contact: FC = () => {
                 </motion.div>
 
                 <motion.div variants={itemAnimation}>
-                  <ContactCard
+                  <EnhancedContactCard
                     icon={Phone}
                     title="+56 2 2345 6789"
                     subtitle="Llámanos de Lun-Vie 9:00-18:00"
@@ -484,7 +615,7 @@ const Contact: FC = () => {
                 </motion.div>
 
                 <motion.div variants={itemAnimation}>
-                  <ContactCard
+                  <EnhancedContactCard
                     icon={Mail}
                     title="contacto@stegmaierconsulting.cl"
                     subtitle="Envíanos un email detallado"
@@ -494,7 +625,7 @@ const Contact: FC = () => {
                 </motion.div>
 
                 <motion.div variants={itemAnimation}>
-                  <ContactCard
+                  <EnhancedContactCard
                     icon={Calendar}
                     title="Agendar reunión"
                     subtitle="Reserva una cita de 30 min sin costo"
@@ -503,15 +634,21 @@ const Contact: FC = () => {
                   />
                 </motion.div>
 
-                {/* Office info */}
+                {/* Información de oficina mejorada */}
                 <motion.div 
                   variants={itemAnimation}
-                  className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg mt-8"
+                  className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg mt-8 relative overflow-hidden"
                 >
+                  {/* Decoración superior */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-accent-500" />
+                  
                   <div className="flex items-start gap-4">
-                    <div className="bg-primary-100 p-3 rounded-xl">
+                    <motion.div 
+                      className="bg-primary-100 p-3 rounded-xl shadow-md"
+                      whileHover={{ scale: 1.05, rotate: 5 }}
+                    >
                       <MapPin className="w-6 h-6 text-primary-700" />
-                    </div>
+                    </motion.div>
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Nuestras oficinas</h4>
                       <p className="text-gray-600 mb-1">Santiago, Chile</p>
@@ -519,7 +656,7 @@ const Contact: FC = () => {
                         Atendemos presencial y remoto en todo Chile
                       </p>
                       
-                      <div className="flex items-center text-sm text-primary-600 font-semibold">
+                      <div className="flex items-center text-sm text-primary-600 font-semibold bg-primary-50 px-3 py-2 rounded-full">
                         <Clock className="w-4 h-4 mr-2" />
                         Lun-Vie 9:00-18:00
                       </div>
@@ -527,20 +664,30 @@ const Contact: FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Trust indicators */}
+                {/* Indicadores de confianza mejorados */}
                 <motion.div 
                   variants={itemAnimation}
                   className="grid grid-cols-3 gap-4 pt-6"
                 >
                   {[
-                    { icon: "⚡", label: "Respuesta < 24h" },
-                    { icon: "🔒", label: "Información segura" },
-                    { icon: "✅", label: "Sin compromiso" }
+                    { icon: "⚡", label: "Respuesta < 24h", color: "text-yellow-600" },
+                    { icon: "🔒", label: "Información segura", color: "text-green-600" },
+                    { icon: "✅", label: "Sin compromiso", color: "text-blue-600" }
                   ].map((item, index) => (
-                    <div key={index} className="text-center">
-                      <div className="text-2xl mb-2">{item.icon}</div>
+                    <motion.div 
+                      key={index}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      className="text-center p-4 bg-white/70 rounded-xl border border-gray-100 shadow-sm"
+                    >
+                      <motion.div 
+                        className="text-3xl mb-2"
+                        animate={{ rotate: [0, 10, -10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
+                      >
+                        {item.icon}
+                      </motion.div>
                       <div className="text-xs text-gray-600 font-medium">{item.label}</div>
-                    </div>
+                    </motion.div>
                   ))}
                 </motion.div>
               </motion.div>
@@ -548,30 +695,46 @@ const Contact: FC = () => {
           </div>
         </div>
 
-        {/* Bottom CTA */}
+        {/* CTA final mejorado */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-center mt-16 p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden"
+          className="text-center mt-16 p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden shadow-2xl"
         >
+          {/* Patrón de fondo */}
           <div className="absolute inset-0 bg-grid-white bg-[length:20px_20px] opacity-10" />
           
+          {/* Elementos decorativos */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent-400 via-white/30 to-accent-400" />
+          <div className="absolute -top-10 -right-10 w-40 h-40 border border-white/10 rounded-full" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 border border-white/10 rounded-full" />
+          
           <div className="relative z-10">
-            <h3 className="text-2xl md:text-3xl font-bold mb-4">
-              ¿Prefieres que te llamemos nosotros?
-            </h3>
-            <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
-              Déjanos tu número y un consultor senior te contactará en el horario que prefieras.
-            </p>
-            <Button
-              size="lg"
-              className="bg-white text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            <motion.div
+              initial={{ scale: 0.8 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
             >
-              <span className="mr-2">📞</span>
-              Solicitar llamada
-            </Button>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                ¿Prefieres que te llamemos nosotros?
+              </h3>
+              <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
+                Déjanos tu número y un consultor senior te contactará en el horario que prefieras.
+              </p>
+            </motion.div>
+            
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                size="lg"
+                className="bg-white text-primary-700 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <span className="mr-2">📞</span>
+                Solicitar llamada
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
       </div>
