@@ -314,10 +314,10 @@ const Testimonials: FC = () => {
                   key={index}
                   onClick={() => setCurrentIndex(index)}
                   className={cn(
-                    "w-3 h-3 rounded-full transition-all duration-300",
+                    "w-3 h-3 rounded-full transition-all duration-300 border",
                     index === currentIndex 
-                      ? "bg-primary-600 w-8" 
-                      : "bg-gray-300 hover:bg-primary-400"
+                      ? "bg-white border-white w-8 shadow-md" 
+                      : "bg-white/40 border-white/60 hover:bg-white hover:border-white"
                   )}
                 />
               ))}
@@ -420,8 +420,8 @@ const Testimonials: FC = () => {
                           <div className="flex flex-wrap gap-2">
                             {currentTestimonial.certifications.map((cert, idx) => (
                               <span key={idx} className={cn(
-                                "px-3 py-1 rounded-full text-xs font-semibold",
-                                styles.icon
+                                "px-3 py-1 rounded-full text-xs font-semibold border border-white/70 shadow-sm",
+                                "bg-accent-500/60 text-white backdrop-blur-sm"
                               )}>
                                 {cert}
                               </span>
