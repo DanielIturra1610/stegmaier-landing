@@ -5,6 +5,8 @@ import * as Dropdown from '@radix-ui/react-dropdown-menu'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Phone, Calendar, Award } from 'lucide-react'
 import Button from '../ui/button'
+import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'
+import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png'
 
 const NAV = [
   { label: 'Inicio', href: '/' },
@@ -46,27 +48,13 @@ const Navbar = () => {
           aria-label="Menú principal"
         >
           {/* logo - modernized with visual elements */}
-          <a href="/" className="flex items-center space-x-2 group">
-            <div className="relative w-8 h-8 flex items-center justify-center">
-              <span className="absolute inset-0 rounded-md bg-primary-600 rotate-45 transform transition-transform group-hover:rotate-90 duration-300"></span>
-              <span className="absolute inset-1 rounded-sm bg-white rotate-45"></span>
-              <Award className={`w-4 h-4 z-10 ${scrolled ? 'text-primary-600' : 'text-primary-500'} relative`} />
-            </div>
-            <div className="flex flex-col">
-              <span
-                className={`font-heading text-xl font-bold tracking-tight leading-none ${
-                  scrolled ? 'text-primary-700' : 'text-white'
-                }`}
-              >
-                Stegmaier
-              </span>
-              <span
-                className={`text-xs font-semibold tracking-wider ${
-                  scrolled ? 'text-gray-500' : 'text-blue-200'
-                } uppercase leading-none`}
-              >
-                Consulting
-              </span>
+          <a href="/" className="flex items-center group">
+            <div className="relative w-36 h-42 flex items-center justify-center">
+              <img 
+                src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
+                alt="Stegmaier Consulting Logo" 
+                className="w-full h-full object-contain transition-opacity duration-300"
+              />
             </div>
           </a>
 
@@ -154,6 +142,11 @@ const Navbar = () => {
               >
                 {/* Mobile logo */}
                 <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
+                  <img 
+                    src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
+                    alt="Stegmaier Consulting Logo" 
+                    className="w-7 h-7 object-contain mr-2"
+                  />
                   <span className="font-heading text-lg font-bold text-primary-600">Stegmaier</span>
                   <span className="text-xs font-medium text-gray-500 ml-1">Consulting</span>
                 </div>
