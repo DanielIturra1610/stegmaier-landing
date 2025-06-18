@@ -479,7 +479,7 @@ const Contact: FC = () => {
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center py-3 px-6 rounded-full bg-gradient-to-r from-white to-accent-100 text-primary-700 text-sm font-bold mb-4 shadow-lg"
+            className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm"
           >
             <span className="mr-2">📞</span>
             Contáctanos
