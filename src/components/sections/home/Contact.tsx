@@ -525,7 +525,7 @@ const Contact: FC = () => {
                 className="space-y-6"
               >
                 <motion.div variants={itemAnimation}>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-6">
                     Otras formas de contacto
                   </h3>
                 </motion.div>
