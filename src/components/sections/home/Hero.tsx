@@ -28,27 +28,28 @@ const Hero: FC = () => {
       id="home"
       className="section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
     >
-      {/* Decoraciones específicas del Hero */}
-      <div className="hero-decorations">
+      {/* Decoraciones específicas del Hero - Ajustado z-index para que esté por debajo del contenido */}
+      <div className="hero-decorations z-0">
         <div className="circle-1"></div>
         <div className="circle-2"></div>
       </div>
       
-      {/* Grid sutil de fondo */}
-      <div className="minimal-grid"></div>
+      {/* Grid sutil de fondo - Ajustado z-index */}
+      <div className="minimal-grid z-0"></div>
       
-      {/* Elementos geométricos minimalistas */}
-      <div className="geometric-accent-1"></div>
-      <div className="geometric-accent-2"></div>
+      {/* Elementos geométricos minimalistas - Ajustado z-index */}
+      <div className="geometric-accent-1 z-0"></div>
+      <div className="geometric-accent-2 z-0"></div>
 
-      <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16 z-10">
+      {/* Aumentado z-index del contenedor principal para asegurar que esté sobre los elementos decorativos */}
+      <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16 z-20">
         {/* -------- Enhanced Text content -------- */}
         <motion.div
           style={{ y: y1 }}
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          className="lg:col-span-7 xl:col-span-7"
+          className="lg:col-span-7 xl:col-span-7 relative z-10"
         >
           {/* Trust badge with enhanced styling */}
           <motion.div
@@ -122,7 +123,7 @@ const Hero: FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
-            className="flex flex-col sm:flex-row gap-4 mb-12"
+            className="flex flex-col sm:flex-row gap-4 mb-12 pointer-events-auto relative z-20"
           >
             <Button 
               size="lg"
@@ -170,13 +171,14 @@ const Hero: FC = () => {
           initial={{ opacity: 0, scale: 0.8, rotateY: -15 }}
           animate={{ opacity: 1, scale: 1, rotateY: 0 }}
           transition={{ duration: 1, delay: 0.4 }}
-          className="mt-16 lg:mt-0 lg:col-span-5 xl:col-span-5 flex items-center justify-center"
+          className="mt-16 lg:mt-0 lg:col-span-5 xl:col-span-5 flex items-center justify-center relative z-10"
         >
           <div className={cn(
             "relative w-full max-w-lg mx-auto",
             "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-lg", 
             "border border-white/30 shadow-2xl rounded-3xl p-8 lg:p-10",
-            "transform hover:scale-105 transition-all duration-500"
+            "transform hover:scale-105 transition-all duration-500",
+            "pointer-events-auto" // Asegurarse de que sea interactivo
           )}>
             {/* Glowing effect */}
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-accent-500/20 to-primary-400/20 blur-xl opacity-50 -z-10" />
@@ -245,13 +247,15 @@ const Hero: FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.4 }}
-              className="text-center"
+              className="text-center relative z-10 pointer-events-auto"
             >
               <Button
                 size="lg"
                 className="w-full text-primary-800 hover:bg-gray-100 font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Comenzar mi certificación
+                <a href="/cotizar" className="w-full h-full flex items-center justify-center">
+                  Comenzar mi certificación
+                </a>
               </Button>
             </motion.div>
             
