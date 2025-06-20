@@ -5,17 +5,25 @@
 @layer base {
   :root {
     /* --- Brand / Colour -------------------------------------------------- */
-    /* Paleta extendida de azules corporativos */
-    --color-primary-50:     240 249 255;  /* #f0f9ff - azul ultraclaro */
-    --color-primary-100:    224 242 254;  /* #e0f2fe - azul muy claro */
-    --color-primary-200:    186 230 253;  /* #bae6fd - azul claro */
-    --color-primary-300:    125 211 252;  /* #7dd3fc - azul medio claro */
-    --color-primary-400:     56 189 248;  /* #38bdf8 - azul medio */
-    --color-primary-500:      3 105 161;  /* #0369a1 - azul principal */
-    --color-primary-600:      2  80 124;  /* #02507c - azul medio oscuro */
-    --color-primary-700:     12  74 110;  /* #0c4a6e - azul oscuro */
-    --color-primary-800:      7  54  81;  /* #073651 - azul muy oscuro */
-    --color-primary-900:      8  39  59;  /* #08273b - azul ultra oscuro */
+    /* Paleta extendida de azules corporativos con tonos ultra-finos */
+    --color-primary-900: 8 39 59;    /* Más oscuro */
+    --color-primary-875: 7 42 63;    /* Ultra-fino entre 900-850 */
+    --color-primary-850: 7 46 68;    /* Intermedio oscuro */
+    --color-primary-825: 8 50 74;    /* Ultra-fino entre 850-800 */
+    --color-primary-800: 7 54 81;
+    --color-primary-775: 8 59 85;    /* Ultra-fino entre 800-750 */
+    --color-primary-750: 9 64 90;    /* Intermedio medio */
+    --color-primary-725: 10 69 100;  /* Ultra-fino entre 750-700 */
+    --color-primary-700: 12 74 110;
+    --color-primary-675: 10 70 101;  /* Ultra-fino para Process */
+    --color-primary-650: 7 67 92;    /* Intermedio claro */
+    --color-primary-600: 2 80 124;
+    --color-primary-500: 3 105 161;  /* Color principal */
+    --color-primary-400: 56 189 248;
+    --color-primary-300: 125 211 252;
+    --color-primary-200: 186 230 253;
+    --color-primary-100: 224 242 254;
+    --color-primary-50: 240 249 255;  /* Más claro */
 
     /* Color acento para puntos focales */
     --color-accent-50:      236 253 245;  /* #ecfdf5 - verde ultraclaro */
@@ -45,7 +53,6 @@
     --color-primary-dark:   12 74 110;    /* #0c4a6e - dark blue */
     --color-secondary:      100 116 139;  /* #64748b - slate-500 */
     --color-gray-light:     248 250 252;  /* #f8fafc - slate-50 */
-    --color-gray-dark:      15 23 42;     /* #0f172a - slate-900 */
 
     /* --- Radius --------------------------------------------------------- */
     --radius-sm:  .375rem;  /* 6 px  */

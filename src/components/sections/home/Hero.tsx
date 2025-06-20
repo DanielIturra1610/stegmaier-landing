@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import Button from '../../ui/button'
 import IsoBadge from '../../ui/IsoBadge'
 import { cn } from '../../../lib/utils'
+import SectionConnector from '../../ui/SectionConnector'
 
 // Stats counter component (sin cambios)
 const StatsCounter = ({ number, label }: { number: string; label: string }) => (
@@ -26,8 +27,14 @@ const Hero: FC = () => {
   return (
     <section
       id="home"
-      className="section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
+      className="section-unified-bg section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
     >
+      {/* Patrón de fondo sutil */}
+      <div className="section-overlay-pattern bg-noise-pattern"></div>
+
+      {/* Punto decorativo difuminado en la parte inferior */}
+      <div className="blur-transition-element blur-transition-bottom floating-transition"></div>
+      
       {/* Decoraciones específicas del Hero - Ajustado z-index para que esté por debajo del contenido */}
       <div className="hero-decorations z-0">
         <div className="circle-1"></div>
@@ -269,6 +276,13 @@ const Hero: FC = () => {
           </div>
         </motion.div>
       </div>
+      {/* Transición ultra-sutil hacia Services */}
+      <SectionConnector 
+        fromSection="hero" 
+        toSection="services" 
+        type="minimal"
+        height={40}
+      />
     </section>
   )
 }

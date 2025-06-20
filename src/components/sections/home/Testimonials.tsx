@@ -3,6 +3,7 @@ import { Quote, Star, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../../lib/utils'
 import Button from '../../ui/button'
+import SectionConnector from '../../ui/SectionConnector'
 
 const testimonials = [
   {
@@ -241,7 +242,24 @@ const Testimonials: FC = () => {
   const styles = cardStyles[currentTestimonial.variant]
 
   return (
-    <section id="testimonios" className="py-24 section-unified-bg section-testimonials-bg text-white relative overflow-hidden">
+    <section
+      id="testimonials"
+      className="section-unified-bg section-testimonials-bg content-overlay relative py-16 md:py-20 lg:py-24"
+    >
+      {/* Patrón de fondo sutil */}
+      <div className="section-overlay-pattern bg-dots-pattern"></div>
+      
+      {/* Elementos difuminados para suavizar la transición desde Process */}
+      <div className="blur-transition-element blur-transition-top floating-transition"></div>
+
+      {/* Animación de ondas sutiles */}
+      <div className="absolute inset-0 opacity-30">
+        <svg className="absolute left-0 w-full" style={{ top: '15%' }} viewBox="0 0 1440 30" preserveAspectRatio="none">
+          <path d="M0,20L48,18.7C96,17,192,13,288,13.3C384,13,480,17,576,20C672,23,768,27,864,23.3C960,20,1056,10,1152,6.7C1248,3,1344,7,1392,8.7L1440,10L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" 
+                fill="rgba(255,255,255,0.1)" />
+        </svg>
+      </div>
+
       {/* Enhanced background elements */}
       <TestimonialsBackground />
       
@@ -518,6 +536,13 @@ const Testimonials: FC = () => {
           </div>
         </motion.div>
       </div>
+      {/* Transición ultra-sutil hacia Contact */}
+      <SectionConnector 
+        fromSection="testimonials" 
+        toSection="contact" 
+        type="minimal"
+        height={40}
+      />
     </section>
   )
 }

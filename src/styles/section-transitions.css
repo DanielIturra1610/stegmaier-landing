@@ -1,0 +1,162 @@
+/* Efectos de transición entre secciones */
+.section-transition {
+  position: relative;
+  z-index: 10;
+}
+
+/* Transición tipo onda */
+.transition-wave {
+  position: relative;
+  overflow: hidden;
+}
+
+.transition-wave svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: translateY(-2px); /* Solapa ligeramente para evitar espacios */
+}
+
+.transition-wave path {
+  transition: all 0.5s ease;
+  filter: blur(0.5px); /* Suavizado sutil de bordes */
+}
+
+/* Transición tipo diagonal */
+.transition-diagonal {
+  position: relative;
+  overflow: hidden;
+}
+
+.transition-diagonal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150%;
+  height: 100%;
+  background: currentColor;
+  transform: rotate(1.5deg) translateY(-50%) translateX(-10%);
+  filter: blur(5px); /* Mayor desenfoque para suavizar bordes */
+}
+
+/* Transición tipo puntos */
+.transition-dots {
+  position: relative;
+  overflow: hidden;
+}
+
+.dots-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.7; /* Aumentamos opacidad para mejor efecto visual */
+  mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.8) 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.8) 70%, transparent 100%);
+}
+
+.dots-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  background-image: radial-gradient(circle, currentColor 2px, transparent 2px);
+  background-size: 30px 30px;
+  animation: floatDots 30s infinite linear;
+  filter: blur(1.5px); /* Mayor desenfoque para eliminar bordes duros */
+}
+
+@keyframes floatDots {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+/* Transición tipo gradiente */
+.transition-gradient {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Elementos difuminados para transiciones */
+.blur-transition-element {
+  position: absolute;
+  width: 100%;
+  max-width: 1200px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  filter: blur(60px); /* Aumento significativo del desenfoque */
+  opacity: 0.6; /* Mayor opacidad para efecto más visible */
+  border-radius: 100%;
+  background: rgba(255,255,255,0.15);
+}
+
+.blur-transition-top {
+  top: -20px;
+  height: 180px;
+}
+
+.blur-transition-bottom {
+  bottom: -20px;
+  height: 180px;
+}
+
+.floating-transition {
+  animation: floatAnimation 10s ease-in-out infinite;
+}
+
+@keyframes floatAnimation {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(15px); }
+}
+
+/* Patrones de fondo */
+.section-overlay-pattern {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0.05; /* Más sutil */
+  pointer-events: none;
+}
+
+/* Asegura que las secciones no tengan espacios visibles */
+section {
+  margin-top: -1px;
+  margin-bottom: -1px;
+  position: relative;
+}
+
+/* Contenedor para elementos que sobrepasan límites de sección */
+.overlap-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 200px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.overlap-top {
+  top: -100px;
+}
+
+.overlap-bottom {
+  bottom: -100px;
+}
+
+/* Pseudo superposición para secciones adyacentes */
+.section-unified-bg::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background-color: inherit;
+  z-index: 15;
+}
+
+.section-unified-bg::before {
+  top: -2px;
+}

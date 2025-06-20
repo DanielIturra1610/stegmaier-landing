@@ -3,6 +3,7 @@ import { FC, useState } from 'react'
 import { motion } from 'framer-motion'
 import StepItem from '../../ui/StepItem'
 import { steps } from './steps-data'
+import SectionConnector from '../../ui/SectionConnector'
 
 // Background decorative elements
 const ProcessBackgroundElements = () => (
@@ -80,7 +81,17 @@ const Process: FC = () => {
   }
 
   return (
-    <section id="proceso" className="py-24 section-unified-bg section-process-bg text-white relative overflow-hidden">
+    <section
+      id="process"
+      className="section-unified-bg section-process-bg content-overlay relative py-16 md:py-20 lg:py-24"
+    >
+      {/* Patrón de fondo sutil */}
+      <div className="section-overlay-pattern bg-grid-pattern"></div>
+      
+      {/* Elementos difuminados para suavizar la transición desde Services */}
+      <div className="blur-transition-element blur-transition-top floating-transition"></div>
+
+      {/* Elementos de fondo existentes */}
       <ProcessBackgroundElements />
       
       <div className="container mx-auto px-4 max-w-6xl content-overlay">
@@ -223,6 +234,13 @@ const Process: FC = () => {
           ))}
         </motion.div>
       </div>
+      {/* Transición ultra-sutil hacia Testimonials */}
+      <SectionConnector 
+        fromSection="process" 
+        toSection="testimonials" 
+        type="minimal"
+        height={40}
+      />
     </section>
   )
 }

@@ -458,14 +458,18 @@ const Contact: FC = () => {
   }
 
   return (
-    <section id="contacto" className="pt-16 pb-24 section-unified-bg section-contact-bg text-white relative overflow-hidden">
-      {/* Transición suave */}
-      <SmoothTopTransition />
+    <section
+      id="contact"
+      className="section-unified-bg section-contact-bg content-overlay relative py-16 md:py-20 lg:py-24"
+    >
+      {/* Patrón de fondo sutil */}
+      <div className="section-overlay-pattern bg-noise-pattern opacity-30"></div>
+      
+      {/* Elementos difuminados para suavizar la transición desde Testimonials */}
+      <div className="blur-transition-element blur-transition-top floating-transition"></div>
 
-      {/* Fondo mejorado */}
-      <EnhancedContactBackground />
-
-      <div className="container mx-auto px-4 content-overlay">
+      {/* Contenido de la sección */}
+      <div className="container mx-auto px-4 max-w-7xl content-overlay">
         {/* Header mejorado */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}

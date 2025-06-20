@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ServiceCard from '../../ui/ServiceCard'
 import Button from '../../ui/button'
 import type { Service } from '../../../types'
+import SectionConnector from '../../ui/SectionConnector'
 
 // Enhanced decorative elements with unified background system
 const FloatingShapes = () => (
@@ -167,8 +168,17 @@ const Services: FC = () => {
   }
 
   return (
-    <section id="servicios" className="py-20 section-unified-bg section-services-bg text-white relative overflow-hidden">
-      {/* Enhanced decorative elements */}
+    <section
+      id="services"
+      className="section-unified-bg section-services-bg content-overlay relative py-16 md:py-20 lg:py-24"
+    >
+      {/* Patrón de fondo sutil */}
+      <div className="section-overlay-pattern bg-diagonal-lines"></div>
+      
+      {/* Elementos difuminados para suavizar la transición desde Hero */}
+      <div className="blur-transition-element blur-transition-top floating-transition"></div>
+
+      {/* Contenido de la sección */}
       <FloatingShapes />
 
       <div className="container mx-auto px-4 max-w-7xl content-overlay">
@@ -346,6 +356,8 @@ const Services: FC = () => {
           </div>
         </motion.div>
       </div>
+      {/* Conector a la siguiente sección con patrón de puntos */}
+      <SectionConnector fromSection="services" toSection="process" type="dots" height={250} />
     </section>
   )
 }
