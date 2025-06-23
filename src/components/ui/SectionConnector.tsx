@@ -2,8 +2,8 @@
 import { FC } from 'react';
 
 interface SectionConnectorProps {
-  fromSection: 'hero' | 'services' | 'process' | 'testimonials';
-  toSection: 'services' | 'process' | 'testimonials' | 'contact';
+  fromSection: 'hero' | 'services' | 'process' | 'testimonials' | 'company' | 'history' | 'values' | 'team' | 'certifications';
+  toSection: 'services' | 'process' | 'testimonials' | 'contact' | 'history' | 'values' | 'team' | 'certifications' | 'footer';
   type?: 'wave' | 'curve' | 'dots' | 'diagonal' | 'gradient' | 'minimal';
   height?: number;
 }
@@ -33,6 +33,27 @@ const SectionConnector: FC<SectionConnectorProps> = ({
       'testimonials-contact': {
         from: 'rgba(var(--color-primary-700), 0.2)',
         to: 'rgba(var(--color-primary-800), 0.3)'
+      },
+      // Nuevas transiciones para secciones de empresa
+      'company-history': {
+        from: 'rgba(var(--color-primary-800), 0.3)',
+        to: 'rgba(var(--color-primary-750), 0.2)'
+      },
+      'history-values': {
+        from: 'rgba(var(--color-primary-750), 0.2)',
+        to: 'rgba(var(--color-primary-700), 0.1)'
+      },
+      'values-team': {
+        from: 'rgba(var(--color-primary-700), 0.1)',
+        to: 'rgba(var(--color-primary-750), 0.2)'
+      },
+      'team-certifications': {
+        from: 'rgba(var(--color-primary-750), 0.2)',
+        to: 'rgba(var(--color-primary-800), 0.3)'
+      },
+      'certifications-footer': {
+        from: 'rgba(var(--color-primary-800), 0.3)',
+        to: 'rgba(var(--color-primary-900), 0.2)'
       }
     };
     

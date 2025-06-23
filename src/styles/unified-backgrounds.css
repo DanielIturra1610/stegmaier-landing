@@ -79,6 +79,80 @@
   overflow: hidden;
 }
 
+/* ---------------------------------------------------------------------------
+   FONDOS PARA SECCIONES DE LA PÁGINA EMPRESA
+--------------------------------------------------------------------------- */
+
+/* Company Hero - Inicio de la página Empresa */
+.section-company-bg {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-900)) 0%,
+    rgb(var(--color-primary-875)) 25%,
+    rgb(var(--color-primary-850)) 50%,
+    rgb(var(--color-primary-825)) 75%,
+    rgb(var(--color-primary-800)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* History - Transición desde CompanyHero hacia Values */
+.section-history-bg {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-800)) 0%,
+    rgb(var(--color-primary-775)) 25%,
+    rgb(var(--color-primary-750)) 50%,
+    rgb(var(--color-primary-725)) 75%,
+    rgb(var(--color-primary-700)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* Values - Transición desde History hacia Team */
+.section-values-bg {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-700)) 0%,
+    rgb(var(--color-primary-700)) 20%,
+    rgb(var(--color-primary-675)) 50%,
+    rgb(var(--color-primary-700)) 80%,
+    rgb(var(--color-primary-700)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* Team - Transición desde Values hacia Certifications */
+.section-team-bg {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-700)) 0%,
+    rgb(var(--color-primary-725)) 25%,
+    rgb(var(--color-primary-750)) 50%,
+    rgb(var(--color-primary-775)) 75%,
+    rgb(var(--color-primary-800)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* Certifications - Transición desde Team hacia Footer */
+.section-certifications-bg {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-primary-800)) 0%,
+    rgb(var(--color-primary-825)) 25%,
+    rgb(var(--color-primary-850)) 50%,
+    rgb(var(--color-primary-875)) 75%,
+    rgb(var(--color-primary-900)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
 /* Clase base para todas las secciones con transición ultra-suave */
 .section-unified-bg {
   position: relative;
@@ -103,7 +177,12 @@
 .section-services-bg,
 .section-process-bg,
 .section-testimonials-bg,
-.section-contact-bg {
+.section-contact-bg,
+.section-company-bg,
+.section-history-bg,
+.section-values-bg,
+.section-team-bg,
+.section-certifications-bg {
   /* Filtro sutil para suavizar aún más los bordes */
   filter: blur(0.5px);
   transform: translateZ(0); /* Optimización de renderizado */
