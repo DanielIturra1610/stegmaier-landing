@@ -539,7 +539,7 @@ const Contact: FC = () => {
                     icon={MessageSquare}
                     title="WhatsApp Business"
                     subtitle="Respuesta inmediata en horario laboral"
-                    href="https://wa.me/56223456789"
+                    href="https://wa.me/+56987501114"
                     variant="success"
                     external
                   />
@@ -548,9 +548,9 @@ const Contact: FC = () => {
                 <motion.div variants={itemAnimation}>
                   <EnhancedContactCard
                     icon={Phone}
-                    title="+56 2 2345 6789"
+                    title="+56 9 8750 1114"
                     subtitle="Llámanos de Lun-Vie 9:00-18:00"
-                    href="tel:+56223456789"
+                    href="tel:+56987501114"
                     variant="primary"
                   />
                 </motion.div>
@@ -592,7 +592,7 @@ const Contact: FC = () => {
                     </motion.div>
                     <div>
                       <h4 className="font-bold text-gray-900 mb-2">Nuestras oficinas</h4>
-                      <p className="text-gray-600 mb-1">Santiago, Chile</p>
+                      <p className="text-gray-600 mb-1">Peñuelas 2440, Quilpué</p>
                       <p className="text-sm text-gray-500 mb-3">
                         Atendemos presencial y remoto en todo Chile
                       </p>
