@@ -129,7 +129,7 @@ const Process: FC = () => {
               >
                 <span className="text-2xl">⏱️</span>
               </motion.div>
-              <h3 className="text-xl font-bold mb-2">Proceso Optimizado</h3>
+              <h3 className="text-white text-xl font-bold mb-2">Proceso Optimizado</h3>
               <p className="text-white/70">12 semanas desde diagnóstico hasta certificación</p>
             </div>
             <div className="text-center p-4">
@@ -139,7 +139,7 @@ const Process: FC = () => {
               >
                 <span className="text-2xl">🔍</span>
               </motion.div>
-              <h3 className="text-xl font-bold mb-2">Enfoque Probado</h3>
+              <h3 className="text-white text-xl font-bold mb-2">Enfoque Probado</h3>
               <p className="text-white/70">Más de 500 empresas certificadas con éxito</p>
             </div>
             <div className="text-center p-4">
@@ -149,7 +149,7 @@ const Process: FC = () => {
               >
                 <span className="text-2xl">🛡️</span>
               </motion.div>
-              <h3 className="text-xl font-bold mb-2">Garantía de Certificación</h3>
+              <h3 className="text-white text-xl font-bold mb-2">Garantía de Certificación</h3>
               <p className="text-white/70">100% de tasa de éxito en primera auditoría</p>
             </div>
           </div>
