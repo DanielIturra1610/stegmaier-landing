@@ -193,15 +193,6 @@ const Testimonials: FC = () => {
     }
   }
 
-  const itemAnimation = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" as const }
-    }
-  }
-
   // Generate star rating with animation
   const renderStars = (count: number) => {
     return Array(count).fill(0).map((_, i) => (

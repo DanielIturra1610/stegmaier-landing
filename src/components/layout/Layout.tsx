@@ -1,4 +1,4 @@
-import type { ReactNode, FC } from 'react';
+import type { ReactNode } from 'react';
 import Navbar from './Navbar';
 import { ScrollProgressBar } from '../../hooks/ScrollProgressBar';
 

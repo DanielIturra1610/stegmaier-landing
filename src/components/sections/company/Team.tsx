@@ -24,12 +24,6 @@ const teamMembers = [
   },
 ];
 
-// Departamentos para el filtro
-const departments = [
-  { id: 'todos', name: 'Todos' },
-  { id: 'dirección', name: 'Dirección' }
-];
-
 const TeamMemberCard: FC<{
   name: string;
   role: string;

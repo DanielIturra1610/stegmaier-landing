@@ -11,7 +11,6 @@ interface SectionConnectorProps {
 const SectionConnector: FC<SectionConnectorProps> = ({ 
   fromSection, 
   toSection, 
-  type = 'minimal',
   height = 40 
 }) => {
   

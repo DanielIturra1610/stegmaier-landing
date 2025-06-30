@@ -22,7 +22,6 @@ const Hero: FC = () => {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, -80]);
   const y2 = useTransform(scrollY, [0, 500], [0, -40]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0.3]);
 
   return (
     <section
