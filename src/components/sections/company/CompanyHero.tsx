@@ -62,15 +62,6 @@ const subtitleAnimation: Variants = {
   }
 };
 
-const decorationAnimation: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
-    scale: 1,
-    transition: { duration: 0.8, ease: "easeOut" as const } 
-  }
-};
-
 const CompanyHero: FC = () => {
   return (
     <section className="section-unified-bg section-company-bg content-overlay relative py-20 lg:py-32">

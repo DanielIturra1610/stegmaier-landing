@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import SectionConnector from '../../ui/SectionConnector';
 import ConsultingBackground from '../../ui/ConsultingBackground';
 import { motion, AnimatePresence } from 'framer-motion';
 
