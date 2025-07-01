@@ -30,8 +30,17 @@ const Navbar = () => {
 
   const linkBase =
     `px-3 py-2 text-sm font-medium transition-colors data-[state=active]:text-primary-600 relative group ${
-      scrolled ? 'text-gray-700' : 'text-white'
+      scrolled ? 'text-primary-700' : 'text-white'
     }`
+
+  // Estilo profesional con fondo claro y sutil
+  const navbarStyle = {
+    background: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
+    backdropFilter: scrolled ? 'blur(8px)' : 'none',
+    boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
+    borderBottom: scrolled ? '1px solid rgba(226, 232, 240, 0.8)' : 'none',
+    transition: 'all 0.3s ease-in-out',
+  }
 
   return (
     <>
@@ -40,9 +49,8 @@ const Navbar = () => {
 
       {/* ---------- Navbar ---------- */}
       <header
-        className={`fixed inset-x-0 z-50 ${
-          scrolled ? 'bg-white/95 backdrop-blur-md shadow-md' : 'bg-transparent'
-        } transition-all duration-300`}
+        className="fixed inset-x-0 z-50"
+        style={navbarStyle}
       >
         <Toolbar.Root
           className="container mx-auto flex h-16 items-center justify-between px-4"
@@ -78,7 +86,7 @@ const Navbar = () => {
             <Button 
               variant="ghost" 
               size="sm"
-              className={scrolled ? "text-gray-700" : "text-white hover:text-white/90"}
+              className={scrolled ? "text-primary-600 hover:bg-primary-50" : "text-white hover:text-white/90"}
               asChild
             >
               <a href="/calendario" className="flex items-center">
@@ -102,7 +110,7 @@ const Navbar = () => {
             <Dropdown.Trigger asChild>
               <button
                 className={`md:hidden rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  scrolled ? 'text-gray-700' : 'text-white'
+                  scrolled ? 'text-primary-600' : 'text-white'
                 }`}
                 aria-label="Abrir menú"
               >
@@ -117,11 +125,13 @@ const Navbar = () => {
               <Dropdown.Content
                 align="end"
                 sideOffset={8}
-                className="md:hidden w-screen max-w-[280px] rounded-xl bg-white p-4 shadow-lg border border-gray-100 z-[100] fixed right-4 top-16"
+                className="md:hidden w-screen max-w-[280px] rounded-xl p-4 shadow-lg border border-gray-100 z-[100] fixed right-4 top-16"
                 style={{
                   maxHeight: 'calc(100vh - 80px)', 
                   overflowY: 'auto',
-                  display: open ? 'block' : 'none'
+                  display: open ? 'block' : 'none',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(8px)',
                 }}
               >
                 <div className="mb-4 flex items-center">
@@ -137,15 +147,15 @@ const Navbar = () => {
                   <Dropdown.Item key={href}>
                     <a
                       href={href}
-                      className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-primary-50 hover:text-primary-700 mb-1"
+                      className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 hover:text-primary-600 mb-1"
                     >
                       {label}
                     </a>
                   </Dropdown.Item>
                 ))}
-                <Dropdown.Separator className="my-3 h-px bg-gray-100" />
+                <Dropdown.Separator className="my-3 h-px bg-gray-200" />
                 <div className="space-y-2">
-                  <div className="flex items-center text-sm text-gray-500 mb-2 px-2">
+                  <div className="flex items-center text-sm text-gray-600 mb-2 px-2">
                     <Phone className="w-4 h-4 mr-2 text-primary-500" />
                     <a href="tel:+56223456789" className="hover:text-primary-600">+56 2 2345 6789</a>
                   </div>
@@ -155,7 +165,7 @@ const Navbar = () => {
                     </a>
                   </Dropdown.Item>
                   <Dropdown.Item>
-                    <a href="/calendario" className="block w-full rounded-lg border border-gray-300 hover:bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 text-center mt-2">
+                    <a href="/calendario" className="block w-full rounded-lg border border-gray-200 hover:bg-gray-50 px-4 py-2 text-sm font-medium text-primary-600 text-center mt-2">
                       Agendar Reunión
                     </a>
                   </Dropdown.Item>
