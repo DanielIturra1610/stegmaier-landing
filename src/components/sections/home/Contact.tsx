@@ -1,22 +1,39 @@
 import type { FC } from 'react'
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Calendar, MessageSquare } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Calendar, MessageSquare, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '../../ui/button'
 import { cn } from '../../../lib/utils'
+import { Formik, Form, Field, ErrorMessage } from 'formik'
+import { toast, Toaster } from 'react-hot-toast'
+import * as Yup from 'yup'
 
-// Formulario de contacto mejorado
-const EnhancedContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    company: '',
-    phone: '',
-    service: '',
-    message: ''
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+
+interface ContactFormValues {
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  service: string;
+  message: string;
+  website: string; // Campo honeypot
+}
+
+// Esquema de validación con Yup
+const ContactFormSchema = Yup.object().shape({
+  name: Yup.string().required('El nombre es requerido'),
+  email: Yup.string().email('Email inválido').required('El email es requerido'),
+  company: Yup.string().required('La empresa es requerida'),
+  phone: Yup.string(),
+  service: Yup.string().required('Por favor selecciona un servicio'),
+  message: Yup.string().required('El mensaje es requerido').min(10, 'El mensaje es demasiado corto'),
+  website: Yup.string() // Honeypot field
+});
+
+
+// Formulario de contacto mejorado con Formik
+const EnhancedContactForm: FC = () => {
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const services = [
     'Consultoría ISO 9001',
@@ -27,36 +44,60 @@ const EnhancedContactForm = () => {
     'Protocolos MINSAL',
     'Gestión de Riesgos',
     'Otro'
-  ]
+  ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    setIsSubmitting(false)
-    setIsSubmitted(true)
-    
-    setTimeout(() => {
-      setIsSubmitted(false)
-      setFormData({
-        name: '',
-        email: '',
-        company: '',
-        phone: '',
-        service: '',
-        message: ''
-      })
-    }, 4000)
-  }
+  // Valores iniciales para Formik
+  const initialValues: ContactFormValues = {
+    name: '',
+    email: '',
+    company: '',
+    phone: '',
+    service: '',
+    message: '',
+    website: '', // Campo honeypot
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+    // Manejador de envío del formulario
+    const handleSubmit = async (values: ContactFormValues, { setSubmitting, resetForm }: any) => {
+      // Si el campo honeypot está lleno, es probable que sea un bot
+      if (values.website) {
+        // Simular éxito pero no enviar el formulario
+        setSubmitting(false);
+        resetForm();
+        return;
+      }
+  
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(values)
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          // Mostrar toast de éxito
+          toast.success('¡Mensaje enviado con éxito!');
+          setIsSubmitted(true);
+          resetForm();
+  
+          // Después de 4 segundos, volver al formulario
+          setTimeout(() => {
+            setIsSubmitted(false);
+          }, 4000);
+        } else {
+          // Mostrar toast de error
+          toast.error(data.message || 'Error al enviar el mensaje');
+        }
+      } catch (error) {
+        toast.error('Error de conexión. Por favor intenta nuevamente.');
+      } finally {
+        setSubmitting(false);
+      }
+    };
 
   return (
     <motion.div
@@ -75,6 +116,7 @@ const EnhancedContactForm = () => {
       
       <AnimatePresence mode="wait">
         {isSubmitted ? (
+          // Mensaje de éxito (sin cambios)
           <motion.div
             key="success"
             initial={{ opacity: 0, scale: 0.8 }}
@@ -100,183 +142,196 @@ const EnhancedContactForm = () => {
             </div>
           </motion.div>
         ) : (
-          <motion.form
-            key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          // Formulario mejorado con Formik
+          <Formik
+            initialValues={initialValues}
+            validationSchema={ContactFormSchema}
             onSubmit={handleSubmit}
-            className="space-y-6"
           >
-            <div className="text-center mb-8">
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">
-                  Solicita tu cotización gratuita
-                </h3>
-                <p className="text-gray-600 text-lg">
-                  Completa el formulario y te contactaremos en menos de 24 horas
+            {({ isSubmitting }) => (
+              <Form className="space-y-6">
+                <div className="text-center mb-8">
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <h3 className="text-3xl font-bold text-gray-900 mb-3">
+                      Solicita tu cotización gratuita
+                    </h3>
+                    <p className="text-gray-600 text-lg">
+                      Completa el formulario y te contactaremos en menos de 24 horas
+                    </p>
+                  </motion.div>
+                </div>
+
+                {/* Agregar el componente Toaster */}
+                <Toaster position="top-center" />
+                
+                {/* Campo honeypot oculto para detectar bots */}
+                <div className="hidden">
+                  <Field 
+                    type="text" 
+                    name="website" 
+                    className="hidden" 
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="flex flex-col"
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Nombre completo *
+                    </label>
+                    <Field
+                      type="text"
+                      name="name"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
+                      placeholder="Tu nombre completo"
+                    />
+                    <ErrorMessage name="name" component="div" className="text-red-500 text-sm mt-1" />
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex flex-col"
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email corporativo *
+                    </label>
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
+                      placeholder="nombre@empresa.com"
+                    />
+                    <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-1" />
+                  </motion.div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex flex-col"
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Empresa *
+                    </label>
+                    <Field
+                      type="text"
+                      name="company"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
+                      placeholder="Nombre de tu empresa"
+                    />
+                    <ErrorMessage name="company" component="div" className="text-red-500 text-sm mt-1" />
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="flex flex-col"
+                  >
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Teléfono
+                    </label>
+                    <Field
+                      type="tel"
+                      name="phone"
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
+                      placeholder="+56 9 1234 5678"
+                    />
+                    <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col"
+                >
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Servicio de interés *
+                  </label>
+                  <Field
+                    as="select"
+                    name="service"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
+                  >
+                    <option value="">Selecciona un servicio</option>
+                    {services.map((service) => (
+                      <option key={service} value={service}>
+                        {service}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage name="service" component="div" className="text-red-500 text-sm mt-1" />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex flex-col"
+                >
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Mensaje *
+                  </label>
+                  <Field
+                    as="textarea"
+                    name="message"
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none resize-none hover:border-gray-300"
+                    placeholder="Cuéntanos sobre tu proyecto y cómo podemos ayudarte..."
+                  />
+                  <ErrorMessage name="message" component="div" className="text-red-500 text-sm mt-1" />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Enviando...
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center">
+                        <Send className="w-5 h-5 mr-2" />
+                        Enviar solicitud
+                      </div>
+                    )}
+                  </Button>
+                </motion.div>
+
+                <p className="text-xs text-gray-500 text-center">
+                  Al enviar este formulario, aceptas que nos pongamos en contacto contigo para brindarte información sobre nuestros servicios.
                 </p>
-              </motion.div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nombre completo *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="Tu nombre completo"
-                />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email corporativo *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="nombre@empresa.com"
-                />
-              </motion.div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Empresa *
-                </label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="Nombre de tu empresa"
-                />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Teléfono
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="+56 9 1234 5678"
-                />
-              </motion.div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servicio de interés
-              </label>
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-              >
-                <option value="">Selecciona un servicio</option>
-                {services.map((service) => (
-                  <option key={service} value={service}>
-                    {service}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mensaje
-              </label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none resize-none hover:border-gray-300"
-                placeholder="Cuéntanos sobre tu proyecto y cómo podemos ayudarte..."
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-            >
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
-                    Enviando...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Send className="w-5 h-5 mr-2" />
-                    Enviar solicitud
-                  </div>
-                )}
-              </Button>
-            </motion.div>
-
-            <p className="text-xs text-gray-500 text-center">
-              Al enviar este formulario, aceptas que nos pongamos en contacto contigo para brindarte información sobre nuestros servicios.
-            </p>
-          </motion.form>
+              </Form>
+            )}
+          </Formik>
         )}
       </AnimatePresence>
     </motion.div>
-  )
-}
+  );
+};
 
 // Tarjeta de contacto mejorada
 const EnhancedContactCard = ({ 
