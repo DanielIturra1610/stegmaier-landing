@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import * as Toolbar from '@radix-ui/react-toolbar'
 import * as Dropdown from '@radix-ui/react-dropdown-menu'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Phone, Calendar } from 'lucide-react'
 import Button from '../ui/button'
 import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'
@@ -30,7 +29,9 @@ const Navbar = () => {
   }, [])
 
   const linkBase =
-    'px-3 py-2 text-sm font-medium transition-colors data-[state=active]:text-primary-600 relative group'
+    `px-3 py-2 text-sm font-medium transition-colors data-[state=active]:text-primary-600 relative group ${
+      scrolled ? 'text-gray-700' : 'text-white'
+    }`
 
   return (
     <>
@@ -53,97 +54,79 @@ const Navbar = () => {
               <img 
                 src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
                 alt="Stegmaier Consulting Logo" 
-                className="w-full h-full object-contain transition-opacity duration-300"
+                className="w-36 h-10 object-contain"
               />
             </div>
           </a>
 
-          {/* -------- Desktop nav - enhanced with hover effects -------- */}
-          <nav className="hidden md:flex items-center gap-2">
+          {/* desktop links */}
+          <div className="hidden md:flex items-center space-x-1">
             {NAV.map(({ label, href }) => (
               <a
                 key={href}
                 href={href}
-                className={`${linkBase} ${
-                  scrolled ? 'text-gray-700 hover:text-primary-700' : 'text-white hover:text-primary-100'
-                }`}
+                className={linkBase}
               >
                 {label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-500 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-primary-500 scale-x-0 group-hover:scale-x-100 origin-center transition-transform" />
               </a>
             ))}
-
-            {/* Quick contact buttons */}
-            <div className="flex items-center gap-3 border-l ml-4 pl-4 border-gray-200/20">
-              <a 
-                href="tel:+56223456789" 
-                className={`flex items-center ${scrolled ? 'text-primary-600' : 'text-white'} hover:opacity-80 transition-opacity`}
-                title="Llámanos"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
-              <a 
-                href="/calendario" 
-                className={`flex items-center ${scrolled ? 'text-primary-600' : 'text-white'} hover:opacity-80 transition-opacity`}
-                title="Agendar reunión"
-              >
-                <Calendar className="w-4 h-4" />
-              </a>
-            </div>
-            
-            {/* CTA Button - more prominent */}
+          </div>
+          
+          {/* desktop CTAs */}
+          <div className="hidden md:flex items-center space-x-3">
             <Button 
-              size="sm" 
-              className={`ml-3 ${scrolled ? 'bg-accent-500' : 'bg-accent-500'} hover:bg-accent-600 hover:shadow-lg hover:shadow-accent-500/20 transition-all`}
+              variant="ghost" 
+              size="sm"
+              className={scrolled ? "text-gray-700" : "text-white hover:text-white/90"}
+              asChild
             >
-              <a href="/cotizar">Cotización Gratuita</a>
+              <a href="/calendario" className="flex items-center">
+                <Calendar className="w-4 h-4 mr-1.5" />
+                <span>Agendar</span>
+              </a>
             </Button>
-          </nav>
-
-          {/* -------- Mobile button - enhanced -------- */}
+            <Button 
+              size="sm"
+              asChild
+              className={!scrolled ? "text-primary-700 hover:bg-white/90" : ""}
+            >
+              <a href="/cotizar" className="flex items-center">
+                <span>Cotización</span>
+              </a>
+            </Button>
+          </div>
+          
+          {/* mobile menu toggle */}
           <Dropdown.Root open={open} onOpenChange={setOpen}>
             <Dropdown.Trigger asChild>
               <button
-                className={`md:hidden rounded-lg p-2 ${
-                  scrolled ? 'bg-gray-100 text-primary-600' : 'bg-white/10 text-white'
-                } hover:bg-opacity-80 focus:outline-none transition-all duration-300`}
+                className={`md:hidden rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  scrolled ? 'text-gray-700' : 'text-white'
+                }`}
                 aria-label="Abrir menú"
               >
-                <AnimatePresence initial={false} mode="wait">
-                  {open ? (
-                    <motion.span
-                      key="close"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                    >
-                      <X className="h-6 w-6" />
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="menu"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                    >
-                      <Menu className="h-6 w-6" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                {open ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </button>
             </Dropdown.Trigger>
-
-            {/* ---------- Mobile dropdown ---------- */}
             <Dropdown.Portal>
               <Dropdown.Content
-                sideOffset={6}
                 align="end"
-                className="w-64 rounded-xl bg-white p-4 shadow-elevated border border-gray-100 data-[state=open]:animate-in data-[state=closed]:animate-out"
+                sideOffset={8}
+                className="md:hidden w-screen max-w-[280px] rounded-xl bg-white p-4 shadow-lg border border-gray-100 z-[100] fixed right-4 top-16"
+                style={{
+                  maxHeight: 'calc(100vh - 80px)', 
+                  overflowY: 'auto',
+                  display: open ? 'block' : 'none'
+                }}
               >
-                {/* Mobile logo */}
-                <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
+                <div className="mb-4 flex items-center">
                   <img 
-                    src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
+                    src={StegmaierLogo} 
                     alt="Stegmaier Consulting Logo" 
                     className="w-7 h-7 object-contain mr-2"
                   />
@@ -151,7 +134,7 @@ const Navbar = () => {
                   <span className="text-xs font-medium text-gray-500 ml-1">Consulting</span>
                 </div>
                 {NAV.map(({ label, href }) => (
-                  <Dropdown.Item key={href} asChild>
+                  <Dropdown.Item key={href}>
                     <a
                       href={href}
                       className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-primary-50 hover:text-primary-700 mb-1"
@@ -166,15 +149,15 @@ const Navbar = () => {
                     <Phone className="w-4 h-4 mr-2 text-primary-500" />
                     <a href="tel:+56223456789" className="hover:text-primary-600">+56 2 2345 6789</a>
                   </div>
-                  <Dropdown.Item asChild>
-                    <Button size="sm" className="w-full justify-center bg-accent-500 hover:bg-accent-600">
-                      <a href="/cotizar">Cotización Gratuita</a>
-                    </Button>
+                  <Dropdown.Item>
+                    <a href="/cotizar" className="block w-full rounded-lg bg-accent-500 hover:bg-accent-600 px-4 py-2 text-sm font-medium text-white text-center">
+                      Cotización Gratuita
+                    </a>
                   </Dropdown.Item>
-                  <Dropdown.Item asChild>
-                    <Button size="sm" className="w-full justify-center mt-2" variant="ghost">
-                      <a href="/calendario">Agendar Reunión</a>
-                    </Button>
+                  <Dropdown.Item>
+                    <a href="/calendario" className="block w-full rounded-lg border border-gray-300 hover:bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 text-center mt-2">
+                      Agendar Reunión
+                    </a>
                   </Dropdown.Item>
                 </div>
               </Dropdown.Content>
