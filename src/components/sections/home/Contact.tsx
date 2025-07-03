@@ -64,7 +64,7 @@ const EnhancedContactForm = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-100 relative overflow-hidden"
+      className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden mx-auto w-full"
     >
       {/* Decoración superior mejorada */}
       <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500" />
@@ -389,73 +389,68 @@ const Contact: FC = () => {
 
   return (
     <section
-      id="contact"
-      className="section-unified-bg section-contact-bg content-overlay relative py-16 md:py-20 lg:py-24"
+      id="contacto"
+      className="section-unified-bg section-contact-bg minimal-decorations content-overlay relative text-white py-16 md:py-20 lg:py-24 overflow-hidden"
     >
       {/* Patrón de fondo sutil */}
-      <div className="section-overlay-pattern bg-noise-pattern opacity-30"></div>
+      <div className="section-overlay-pattern bg-noise-pattern"></div>
       
-      {/* Elementos difuminados para suavizar la transición desde Testimonials */}
-      <div className="blur-transition-element blur-transition-top floating-transition"></div>
-
-      {/* Contenido de la sección */}
-      <div className="container mx-auto px-4 max-w-7xl content-overlay">
-        {/* Header mejorado */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <motion.span 
-            initial={{ scale: 0.8, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm"
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl content-overlay">
+        {/* Header Section con patrón de separación de transformaciones */}
+        <div className="text-center mb-12 md:mb-16 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="relative z-10"
           >
-            <span className="mr-2">📞</span>
-            Contáctanos
-          </motion.span>
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm"
+            >
+              <span className="mr-2">📞</span>
+              Contáctanos
+            </motion.span>
 
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
-            ¿Listo para{' '}
-            <span className="relative">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
-                comenzar
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
+              ¿Listo para{' '}
+              <span className="relative">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
+                  comenzar
+                </span>
+                <motion.span
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-primary-200 to-accent-200 rounded-lg"
+                />
               </span>
-              <motion.span
-                initial={{ width: 0 }}
-                whileInView={{ width: "100%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, delay: 0.5 }}
-                className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-primary-200 to-accent-200 rounded-lg"
-              />
-            </span>
-            <br />tu transformación?
-          </h2>
+              <br />tu transformación?
+            </h2>
 
-          <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-white/80 leading-relaxed">
-            Agenda una <span className="font-semibold text-accent-300">consulta gratuita</span> y 
-            descubre cómo podemos ayudarte a certificar tu empresa en tiempo récord.
-          </p>
-        </motion.div>
+            <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-white/80 leading-relaxed">
+              Agenda una <span className="font-semibold text-accent-300">consulta gratuita</span> y 
+              descubre cómo podemos ayudarte a certificar tu empresa en tiempo récord.
+            </p>
+          </motion.div>
+        </div>
 
+        {/* Form Section - Mejorado para móviles */}
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-12 gap-12 items-start">
+          <div className="grid lg:grid-cols-12 gap-8 items-start">
             {/* Formulario de contacto */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 w-full">
               <EnhancedContactForm />
             </div>
 
             {/* Información de contacto */}
-            <div className="lg:col-span-5">
+            <div className="lg:col-span-5 w-full">
               <motion.div
                 variants={containerAnimation}
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
+                animate="visible"
                 className="space-y-6"
               >
                 <motion.div variants={itemAnimation}>
@@ -464,59 +459,63 @@ const Contact: FC = () => {
                   </h3>
                 </motion.div>
 
-                <motion.div variants={itemAnimation}>
-                  <EnhancedContactCard
-                    icon={MessageSquare}
-                    title="WhatsApp Business"
-                    subtitle="Respuesta inmediata en horario laboral"
-                    href="https://wa.me/+56987501114"
-                    variant="success"
-                    external
-                  />
-                </motion.div>
+                {/* Tarjetas de contacto con mejor responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <motion.div variants={itemAnimation}>
+                    <EnhancedContactCard
+                      icon={MessageSquare}
+                      title="WhatsApp Business"
+                      subtitle="Respuesta inmediata en horario laboral"
+                      href="https://wa.me/+56987501114"
+                      variant="success"
+                      external
+                    />
+                  </motion.div>
 
-                <motion.div variants={itemAnimation}>
-                  <EnhancedContactCard
-                    icon={Phone}
-                    title="+56 9 8750 1114"
-                    subtitle="Llámanos de Lun-Vie 9:00-18:00"
-                    href="tel:+56987501114"
-                    variant="primary"
-                  />
-                </motion.div>
+                  <motion.div variants={itemAnimation}>
+                    <EnhancedContactCard
+                      icon={Phone}
+                      title="+56 9 8750 1114"
+                      subtitle="Llámanos de Lun-Vie 9:00-18:00"
+                      href="tel:+56987501114"
+                      variant="primary"
+                    />
+                  </motion.div>
 
-                <motion.div variants={itemAnimation}>
-                  <EnhancedContactCard
-                    icon={Mail}
-                    title="contacto@stegmaierconsulting.cl"
-                    subtitle="Envíanos un email detallado"
-                    href="mailto:contacto@stegmaierconsulting.cl"
-                    variant="accent"
-                  />
-                </motion.div>
+                  <motion.div variants={itemAnimation}>
+                    <EnhancedContactCard
+                      icon={Mail}
+                      title="contacto@stegmaierconsulting.cl"
+                      subtitle="Envíanos un email detallado"
+                      href="mailto:contacto@stegmaierconsulting.cl"
+                      variant="accent"
+                    />
+                  </motion.div>
 
-                <motion.div variants={itemAnimation}>
-                  <EnhancedContactCard
-                    icon={Calendar}
-                    title="Agendar reunión"
-                    subtitle="Reserva una cita de 30 min sin costo"
-                    href="#"
-                    variant="primary"
-                  />
-                </motion.div>
+                  <motion.div variants={itemAnimation}>
+                    <EnhancedContactCard
+                      icon={Calendar}
+                      title="Agendar reunión"
+                      subtitle="Reserva una cita de 30 min sin costo"
+                      href="#"
+                      variant="primary"
+                    />
+                  </motion.div>
+                </div>
 
                 {/* Información de oficina mejorada */}
                 <motion.div 
                   variants={itemAnimation}
-                  className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg mt-8 relative overflow-hidden"
+                  className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg mt-4 relative overflow-hidden"
                 >
                   {/* Decoración superior */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-accent-500" />
                   
-                  <div className="flex items-start gap-4">
-                    <motion.div 
-                      className="bg-primary-100 p-3 rounded-xl shadow-md"
-                      whileHover={{ scale: 1.05, rotate: 5 }}
+                  {/* Contenido */}
+                  <div className="flex items-start">
+                    <motion.div
+                      whileHover={{ rotate: 15 }}
+                      className="bg-primary-50 rounded-full p-3 mr-4 text-primary-700"
                     >
                       <MapPin className="w-6 h-6 text-primary-700" />
                     </motion.div>
@@ -538,7 +537,7 @@ const Contact: FC = () => {
                 {/* Indicadores de confianza mejorados */}
                 <motion.div 
                   variants={itemAnimation}
-                  className="grid grid-cols-3 gap-4 pt-6"
+                  className="grid grid-cols-3 gap-3 pt-4"
                 >
                   {[
                     { icon: "⚡", label: "Respuesta < 24h", color: "text-yellow-600" },
@@ -548,16 +547,16 @@ const Contact: FC = () => {
                     <motion.div 
                       key={index}
                       whileHover={{ scale: 1.05, y: -2 }}
-                      className="text-center p-4 bg-white/70 rounded-xl border border-gray-100 shadow-sm"
+                      className="text-center p-3 bg-white/70 rounded-xl border border-gray-100 shadow-sm"
                     >
                       <motion.div 
-                        className="text-3xl mb-2"
+                        className="text-2xl md:text-3xl mb-1 md:mb-2"
                         animate={{ rotate: [0, 10, -10, 0] }}
                         transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
                       >
                         {item.icon}
                       </motion.div>
-                      <div className="text-xs text-gray-600 font-medium">{item.label}</div>
+                      <div className="text-[10px] md:text-xs text-gray-600 font-medium">{item.label}</div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -565,14 +564,13 @@ const Contact: FC = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA final mejorado */}
+        
+        {/* CTA Final */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-center mt-16 p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden shadow-2xl"
+          className="text-center mt-16 p-6 md:p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden shadow-2xl mx-4 sm:mx-auto max-w-4xl"
         >
           {/* Patrón de fondo */}
           <div className="absolute inset-0 bg-grid-white bg-[length:20px_20px] opacity-10" />
@@ -585,8 +583,7 @@ const Contact: FC = () => {
           <div className="relative z-10">
             <motion.div
               initial={{ scale: 0.8 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
+              animate={{ scale: 1 }}
               transition={{ duration: 0.5 }}
             >
               <h3 className="text-2xl md:text-3xl font-bold mb-4">
