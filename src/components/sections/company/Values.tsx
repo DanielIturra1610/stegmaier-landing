@@ -161,7 +161,7 @@ const Values: FC = () => {
             en cada interacción con un cliente y en cada certificación que logramos."
           </p>
           <footer className="mt-4 text-white/70">
-            — Klaus Stegmaier, <cite>Fundador y CEO</cite>
+            — Cecilia Stegmaier, <cite>Fundadora y CEO</cite>
           </footer>
         </motion.blockquote>
       </div>
