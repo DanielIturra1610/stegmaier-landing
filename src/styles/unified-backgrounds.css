@@ -14,9 +14,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-900)) 0%,
-    rgb(var(--color-primary-875)) 25%,
-    rgb(var(--color-primary-850)) 50%,
-    rgb(var(--color-primary-825)) 75%,
+    rgb(var(--color-primary-875)) 30%,
     rgb(var(--color-primary-800)) 100%
   );
   position: relative;
@@ -28,9 +26,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-800)) 0%,
-    rgb(var(--color-primary-775)) 25%,
     rgb(var(--color-primary-750)) 50%,
-    rgb(var(--color-primary-725)) 75%,
     rgb(var(--color-primary-700)) 100%
   );
   position: relative;
@@ -42,9 +38,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-700)) 0%,
-    rgb(var(--color-primary-700)) 20%,
     rgb(var(--color-primary-675)) 50%,
-    rgb(var(--color-primary-700)) 80%,
     rgb(var(--color-primary-700)) 100%
   );
   position: relative;
@@ -56,9 +50,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-700)) 0%,
-    rgb(var(--color-primary-725)) 25%,
-    rgb(var(--color-primary-750)) 50%,
-    rgb(var(--color-primary-775)) 75%,
+    rgb(var(--color-primary-725)) 50%,
     rgb(var(--color-primary-800)) 100%
   );
   position: relative;
@@ -70,9 +62,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-800)) 0%,
-    rgb(var(--color-primary-825)) 25%,
-    rgb(var(--color-primary-850)) 50%,
-    rgb(var(--color-primary-875)) 75%,
+    rgb(var(--color-primary-825)) 30%,
     rgb(var(--color-primary-900)) 100%
   );
   position: relative;
@@ -88,9 +78,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-900)) 0%,
-    rgb(var(--color-primary-875)) 25%,
-    rgb(var(--color-primary-850)) 50%,
-    rgb(var(--color-primary-825)) 75%,
+    rgb(var(--color-primary-875)) 30%,
     rgb(var(--color-primary-800)) 100%
   );
   position: relative;
@@ -102,9 +90,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-800)) 0%,
-    rgb(var(--color-primary-775)) 25%,
     rgb(var(--color-primary-750)) 50%,
-    rgb(var(--color-primary-725)) 75%,
     rgb(var(--color-primary-700)) 100%
   );
   position: relative;
@@ -116,9 +102,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-700)) 0%,
-    rgb(var(--color-primary-700)) 20%,
     rgb(var(--color-primary-675)) 50%,
-    rgb(var(--color-primary-700)) 80%,
     rgb(var(--color-primary-700)) 100%
   );
   position: relative;
@@ -130,9 +114,7 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-700)) 0%,
-    rgb(var(--color-primary-725)) 25%,
-    rgb(var(--color-primary-750)) 50%,
-    rgb(var(--color-primary-775)) 75%,
+    rgb(var(--color-primary-725)) 50%,
     rgb(var(--color-primary-800)) 100%
   );
   position: relative;
@@ -144,20 +126,40 @@
   background: linear-gradient(
     180deg,
     rgb(var(--color-primary-800)) 0%,
-    rgb(var(--color-primary-825)) 25%,
-    rgb(var(--color-primary-850)) 50%,
-    rgb(var(--color-primary-875)) 75%,
+    rgb(var(--color-primary-825)) 30%,
     rgb(var(--color-primary-900)) 100%
   );
   position: relative;
   overflow: hidden;
 }
 
-/* Clase base para todas las secciones con transición ultra-suave */
+/* Clase base para todas las secciones con fondo unificado */
 .section-unified-bg {
   position: relative;
-  overflow: hidden;
-  /* Eliminamos el ::after que podría crear separaciones */
+  z-index: 1;
+  isolation: isolate; /* Crea un nuevo contexto de apilamiento */
+}
+
+/* Ajuste para mejoras de rendimiento en móviles */
+@media (max-width: 768px) {
+  .section-unified-bg::before {
+    filter: none !important; /* Eliminar blur en móvil */
+    backdrop-filter: none !important; /* Eliminar backdrop-filter en móvil */
+  }
+  
+  /* Reducir complejidad visual en móvil */
+  .floating-element,
+  .geometric-accent,
+  .minimal-dots {
+    opacity: 0.3 !important;
+    animation-duration: 30s !important; /* Ralentizar animaciones */
+  }
+  
+  /* Simplificar grids y patrones */
+  .minimal-grid {
+    background-size: 80px 80px !important;
+    opacity: 0.3 !important;
+  }
 }
 
 /* Clase complementaria para contenido con z-index adecuado */
@@ -183,9 +185,27 @@
 .section-values-bg,
 .section-team-bg,
 .section-certifications-bg {
-  /* Filtro sutil para suavizar aún más los bordes */
-  filter: blur(0.5px);
-  transform: translateZ(0); /* Optimización de renderizado */
+  position: relative;
+}
+
+/* Nuevo enfoque: aplicar blur solo al fondo usando pseudo-elementos */
+.section-hero-bg::before,
+.section-services-bg::before,
+.section-process-bg::before,
+.section-testimonials-bg::before,
+.section-contact-bg::before,
+.section-company-bg::before,
+.section-history-bg::before,
+.section-values-bg::before,
+.section-team-bg::before,
+.section-certifications-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0; /* Equivalente a top:0; right:0; bottom:0; left:0 */
+  z-index: -1; /* Colocar detrás del contenido */
+  background: inherit; /* Heredar el gradiente del padre */
+  filter: blur(0.5px); /* Aplicar el mismo efecto de suavizado pero solo al fondo */
+  pointer-events: none; /* No interferir con eventos del contenido */
 }
 
 /* ---------------------------------------------------------------------------
@@ -582,6 +602,7 @@
 .content-overlay {
   position: relative;
   z-index: 10;
+  isolation: isolate;
 }
 
 /* ---------------------------------------------------------------------------
@@ -608,4 +629,30 @@
   /* Espaciado consistente */
   --decoration-margin: 10%;
   --decoration-padding: 5%;
+}
+
+/* Ajuste de los backdrop-filters para mejorar rendimiento */
+.backdrop-blur {
+  backdrop-filter: blur(4px); /* Reducido de valores más altos */
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(2px); /* Reducido para mejor rendimiento */
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.backdrop-blur-lg {
+  backdrop-filter: blur(6px); /* Reducido para mejor rendimiento */
+  -webkit-backdrop-filter: blur(6px);
+}
+
+@media (max-width: 768px) {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-lg {
+    backdrop-filter: none; /* Desactivar en móviles */
+    -webkit-backdrop-filter: none;
+    background-color: rgba(var(--color-primary-800), 0.85); /* Alternativa sin blur */
+  }
 }

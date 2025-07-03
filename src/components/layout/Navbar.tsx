@@ -1,187 +1,263 @@
 // src/components/layout/Navbar.tsx
 import { useState, useEffect } from 'react'
 import * as Toolbar from '@radix-ui/react-toolbar'
-import * as Dropdown from '@radix-ui/react-dropdown-menu'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Phone, Calendar } from 'lucide-react'
 import Button from '../ui/button'
 import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'
 import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png'
+import { AnimatePresence, motion } from 'framer-motion'
 
 const NAV = [
   { label: 'Inicio', href: '/' },
   { label: 'Consultorías ISO', href: '/consultorias' },
-  { label: 'Normativas', href: '/normativas' },
-  { label: 'Proceso', href: '/#proceso' },
-  { label: 'Casos de Éxito', href: '/casos' },
   { label: 'Empresa', href: '/empresa' },
-  { label: 'Contacto', href: '/#contacto' },
 ]
+
+// Hook personalizado para detectar el tamaño de la ventana
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 768,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+  });
+  
+  useEffect(() => {
+    // Solo ejecutar en el cliente
+    if (typeof window === 'undefined') return;
+    
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return windowSize;
+};
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const [currentPath, setCurrentPath] = useState('/')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 64)
     onScroll()
     window.addEventListener('scroll', onScroll)
+    
+    // Detectar la ruta actual
+    const path = window.location.pathname
+    // Manejar rutas con hash
+    if (window.location.hash) {
+      setCurrentPath(path + window.location.hash)
+    } else {
+      setCurrentPath(path)
+    }
+    
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const isActive = (href: string) => {
+    // Manejo especial para la ruta principal
+    if (href === '/' && currentPath === '/') return true
+    
+    // Para otras rutas, verificar si coinciden exactamente o si es una ruta con hash
+    if (href !== '/') {
+      return currentPath === href || (href.includes('#') && currentPath.includes(href))
+    }
+    
+    return false
+  }
+
   const linkBase =
-    'px-3 py-2 text-sm font-medium transition-colors data-[state=active]:text-primary-600 relative group'
+    `px-3 py-2 text-sm font-medium transition-colors relative group ${
+      scrolled ? 'text-primary-700' : 'text-white'
+    }`
+
+  // Estilo profesional con fondo claro y sutil
+  const navbarStyle = {
+    background: scrolled ? 'rgba(255, 255, 255, 0.92)' : 'transparent',
+    backdropFilter: scrolled ? 'blur(4px)' : 'none',
+    WebkitBackdropFilter: scrolled ? 'blur(4px)' : 'none',
+    boxShadow: scrolled ? '0 1px 2px 0 rgba(0, 0, 0, 0.05)' : 'none',
+    borderBottom: scrolled ? '1px solid rgba(226, 232, 240, 0.9)' : 'none',
+    transition: 'all 0.2s ease-out',
+    width: '100%',
+    zIndex: 50
+  }
 
   return (
     <>
-      {/* ---------- Barra de progreso de scroll ---------- */}
-      {/* la añade Layout (ver abajo) */}
-
-      {/* ---------- Navbar ---------- */}
+      {/* ---------- Navbar principal ---------- */}
       <header
-        className={`fixed inset-x-0 z-50 ${
-          scrolled ? 'bg-white/95 backdrop-blur-md shadow-md' : 'bg-transparent'
-        } transition-all duration-300`}
+        className="fixed top-0 left-0 right-0 w-full"
+        style={navbarStyle}
       >
         <Toolbar.Root
           className="container mx-auto flex h-16 items-center justify-between px-4"
           aria-label="Menú principal"
         >
-          {/* logo - modernized with visual elements */}
-          <a href="/" className="flex items-center group">
-            <div className="relative w-36 h-42 flex items-center justify-center">
+          {/* Logo */}
+          <a href="/" className="flex items-center z-20 relative">
+            <div className="w-36 h-10 flex items-center justify-center">
               <img 
                 src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
                 alt="Stegmaier Consulting Logo" 
-                className="w-full h-full object-contain transition-opacity duration-300"
+                className="w-36 h-10 object-contain"
               />
             </div>
           </a>
 
-          {/* -------- Desktop nav - enhanced with hover effects -------- */}
-          <nav className="hidden md:flex items-center gap-2">
-            {NAV.map(({ label, href }) => (
-              <a
-                key={href}
-                href={href}
-                className={`${linkBase} ${
-                  scrolled ? 'text-gray-700 hover:text-primary-700' : 'text-white hover:text-primary-100'
-                }`}
-              >
-                {label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent-500 group-hover:w-full transition-all duration-300"></span>
-              </a>
-            ))}
-
-            {/* Quick contact buttons */}
-            <div className="flex items-center gap-3 border-l ml-4 pl-4 border-gray-200/20">
-              <a 
-                href="tel:+56223456789" 
-                className={`flex items-center ${scrolled ? 'text-primary-600' : 'text-white'} hover:opacity-80 transition-opacity`}
-                title="Llámanos"
-              >
-                <Phone className="w-4 h-4" />
-              </a>
-              <a 
-                href="/calendario" 
-                className={`flex items-center ${scrolled ? 'text-primary-600' : 'text-white'} hover:opacity-80 transition-opacity`}
-                title="Agendar reunión"
-              >
-                <Calendar className="w-4 h-4" />
-              </a>
-            </div>
-            
-            {/* CTA Button - more prominent */}
+          {/* Links escritorio */}
+          <div className="hidden md:flex items-center justify-center space-x-4 flex-1 ml-8">
+            {NAV.map(({ label, href }) => {
+              const active = isActive(href)
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  className={`${linkBase} ${active ? (scrolled ? 'text-primary-600 font-semibold' : 'text-white font-semibold') : ''}`}
+                >
+                  {label}
+                  <span className={`absolute left-0 right-0 bottom-0 h-[2px] bg-primary-500 transition-transform ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} origin-center`} />
+                </a>
+              )
+            })}
+          </div>
+          
+          {/* CTAs escritorio */}
+          <div className="hidden md:flex items-center space-x-3">
             <Button 
-              size="sm" 
-              className={`ml-3 ${scrolled ? 'bg-accent-500' : 'bg-accent-500'} hover:bg-accent-600 hover:shadow-lg hover:shadow-accent-500/20 transition-all`}
+              variant="ghost" 
+              size="sm"
+              className={scrolled ? "text-primary-600 hover:bg-primary-50" : "text-white hover:text-white/90"}
+              asChild
             >
-              <a href="/cotizar">Cotización Gratuita</a>
+              <a href="/calendario" className="flex items-center">
+                <Calendar className="w-4 h-4 mr-1.5" />
+                <span>Agendar</span>
+              </a>
             </Button>
-          </nav>
-
-          {/* -------- Mobile button - enhanced -------- */}
-          <Dropdown.Root open={open} onOpenChange={setOpen}>
-            <Dropdown.Trigger asChild>
-              <button
-                className={`md:hidden rounded-lg p-2 ${
-                  scrolled ? 'bg-gray-100 text-primary-600' : 'bg-white/10 text-white'
-                } hover:bg-opacity-80 focus:outline-none transition-all duration-300`}
-                aria-label="Abrir menú"
-              >
-                <AnimatePresence initial={false} mode="wait">
-                  {open ? (
-                    <motion.span
-                      key="close"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                    >
-                      <X className="h-6 w-6" />
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="menu"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                    >
-                      <Menu className="h-6 w-6" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </button>
-            </Dropdown.Trigger>
-
-            {/* ---------- Mobile dropdown ---------- */}
-            <Dropdown.Portal>
-              <Dropdown.Content
-                sideOffset={6}
-                align="end"
-                className="w-64 rounded-xl bg-white p-4 shadow-elevated border border-gray-100 data-[state=open]:animate-in data-[state=closed]:animate-out"
-              >
-                {/* Mobile logo */}
-                <div className="flex items-center mb-4 pb-3 border-b border-gray-100">
-                  <img 
-                    src={scrolled ? StegmaierLogo : StegmaierLogoBlanco} 
-                    alt="Stegmaier Consulting Logo" 
-                    className="w-7 h-7 object-contain mr-2"
-                  />
+            <Button 
+              size="sm"
+              asChild
+              className={!scrolled ? "text-primary-700 hover:bg-white/90" : ""}
+            >
+              <a href="/cotizar" className="flex items-center">
+                <span>Cotización</span>
+              </a>
+            </Button>
+          </div>
+          
+          {/* Botón de menú móvil */}
+          <button
+            className={`md:hidden rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary-500 z-50 relative ${
+              scrolled ? 'text-primary-600' : 'text-white'
+            }`}
+            onClick={() => setOpen(!open)}
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            style={{ position: 'relative', zIndex: 50 }}
+          >
+            {open ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+        </Toolbar.Root>
+      </header>
+      
+      {/* Menú móvil (fuera del header para evitar conflictos) */}
+      <AnimatePresence>
+        {open && (
+          <div className="fixed inset-0 z-[100] md:hidden">
+            {/* Overlay oscuro */}
+            <motion.div 
+              className="fixed inset-0 bg-black/50 z-[100]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+            />
+            
+            {/* Panel deslizante */}
+            <motion.div
+              className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-[280px] bg-white shadow-xl z-[110] flex flex-col"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.25 }}
+            >
+              {/* Header del menú */}
+              <div className="px-4 py-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center">
                   <span className="font-heading text-lg font-bold text-primary-600">Stegmaier</span>
                   <span className="text-xs font-medium text-gray-500 ml-1">Consulting</span>
                 </div>
-                {NAV.map(({ label, href }) => (
-                  <Dropdown.Item key={href} asChild>
-                    <a
-                      href={href}
-                      className="block rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-primary-50 hover:text-primary-700 mb-1"
-                    >
-                      {label}
-                    </a>
-                  </Dropdown.Item>
-                ))}
-                <Dropdown.Separator className="my-3 h-px bg-gray-100" />
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm text-gray-500 mb-2 px-2">
-                    <Phone className="w-4 h-4 mr-2 text-primary-500" />
-                    <a href="tel:+56223456789" className="hover:text-primary-600">+56 2 2345 6789</a>
-                  </div>
-                  <Dropdown.Item asChild>
-                    <Button size="sm" className="w-full justify-center bg-accent-500 hover:bg-accent-600">
-                      <a href="/cotizar">Cotización Gratuita</a>
-                    </Button>
-                  </Dropdown.Item>
-                  <Dropdown.Item asChild>
-                    <Button size="sm" className="w-full justify-center mt-2" variant="ghost">
-                      <a href="/calendario">Agendar Reunión</a>
-                    </Button>
-                  </Dropdown.Item>
+                <button 
+                  className="rounded-lg p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-50"
+                  onClick={() => setOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              {/* Contenido del menú */}
+              <div className="flex-1 overflow-y-auto py-3">
+                <nav className="px-2">
+                  {NAV.map(({ label, href }) => {
+                    const active = isActive(href);
+                    return (
+                      <a
+                        key={href}
+                        href={href}
+                        className={`flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-all mb-1 w-full ${
+                          active 
+                            ? 'bg-primary-50 text-primary-600 font-medium' 
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-primary-600'
+                        }`}
+                        onClick={() => setOpen(false)}
+                      >
+                        {label}
+                      </a>
+                    );
+                  })}
+                </nav>
+              </div>
+              
+              {/* Footer con acciones */}
+              <div className="px-4 py-4 border-t border-gray-100 space-y-3">
+                <div className="flex items-center text-sm text-gray-600 mb-3 px-2">
+                  <Phone className="w-4 h-4 mr-2 text-primary-500 flex-shrink-0" />
+                  <a href="tel:+56223456789" className="hover:text-primary-600 truncate">
+                    +56 2 2345 6789
+                  </a>
                 </div>
-              </Dropdown.Content>
-            </Dropdown.Portal>
-          </Dropdown.Root>
-        </Toolbar.Root>
-      </header>
+                <a 
+                  href="/cotizar" 
+                  className="flex justify-center w-full rounded-lg bg-accent-500 hover:bg-accent-600 active:bg-accent-700 px-4 py-2.5 text-sm font-medium text-white text-center transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  Cotización Gratuita
+                </a>
+                <a 
+                  href="/calendario" 
+                  className="flex items-center justify-center w-full rounded-lg border border-gray-200 hover:bg-gray-50 active:bg-gray-100 px-4 py-2.5 text-sm font-medium text-primary-600 text-center transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  <Calendar className="w-4 h-4 mr-1.5" />
+                  Agendar Reunión
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
