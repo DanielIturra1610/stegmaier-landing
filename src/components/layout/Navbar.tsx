@@ -13,33 +13,6 @@ const NAV = [
   { label: 'Empresa', href: '/empresa' },
 ]
 
-// Hook personalizado para detectar el tamaño de la ventana
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 768,
-    height: typeof window !== 'undefined' ? window.innerHeight : 800,
-  });
-  
-  useEffect(() => {
-    // Solo ejecutar en el cliente
-    if (typeof window === 'undefined') return;
-    
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-    
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  return windowSize;
-};
-
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
