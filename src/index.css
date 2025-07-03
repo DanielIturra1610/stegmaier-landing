@@ -8,26 +8,87 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos base */
-body {
-  @apply bg-primary-900 text-white;
+@layer base {
+  html {
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Prevenir escalado de texto en iOS */
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    @apply bg-primary-900 text-white;
+    font-synthesis: none;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Mejora subpíxel rendering para elementos clave, no para todos */
+  h1, h2, h3, h4, h5, h6, p, span, a {
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+  }
+  
+  /* Corregir clase que antes causaba borrosidad */
+  .text-rendering-optimizeSpeed {
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: subpixel-antialiased !important;
+  }
+  
+  /* Clase para garantizar texto nítido */
+  .crisp-text {
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: subpixel-antialiased !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+  
+  /* Clase para elementos con efectos visuales sin afectar texto */
+  .visual-effect-container {
+    isolation: isolate; /* Crea un contexto de apilamiento nuevo */
+    will-change: auto !important;
+    filter: blur(50px);
+    pointer-events: none;
+    transform: none !important;
+    -webkit-transform: none !important;
+    backface-visibility: hidden;
+  }
+  
+  /* Prevenir problemas de blur que afectan texto */
+  .blur-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
 }
 
 /* Clases de sección base */
 .section-hero,
 .section-process,
 .section-services,
-.section-testimonials, 
+.section-testimonials,
 .section-contact {
+  @apply py-20;
   position: relative;
-  overflow: visible;
-  color: white;
-  padding: 4rem 0;
-  margin: 0;
 }
 
-/* Overlay para contenido */
 .content-overlay {
   position: relative;
   z-index: 10;
+  /* Eliminado transform: translateZ(0) que causaba borrosidad */
+}
+
+/* Proporciones y responsive */
+@media (max-width: 640px) {
+  .section-hero,
+  .section-process,
+  .section-services,
+  .section-testimonials,
+  .section-contact {
+    @apply py-10;
+  }
 }

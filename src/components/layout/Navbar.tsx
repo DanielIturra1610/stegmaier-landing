@@ -57,13 +57,26 @@ const Navbar = () => {
     }`
 
   // Estilo profesional con fondo claro y sutil
+  // Reducir blur para mayor nitidez
   const navbarStyle = {
-    background: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
-    backdropFilter: scrolled ? 'blur(8px)' : 'none',
-    boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
-    borderBottom: scrolled ? '1px solid rgba(226, 232, 240, 0.8)' : 'none',
-    transition: 'all 0.3s ease-in-out',
+    background: scrolled ? 'rgba(255, 255, 255, 0.92)' : 'transparent',
+    backdropFilter: scrolled ? 'blur(4px)' : 'none',
+    WebkitBackdropFilter: scrolled ? 'blur(4px)' : 'none', // Safari support
+    boxShadow: scrolled ? '0 1px 2px 0 rgba(0, 0, 0, 0.05)' : 'none',
+    borderBottom: scrolled ? '1px solid rgba(226, 232, 240, 0.9)' : 'none',
+    transition: 'all 0.2s ease-out',
+    transform: 'translateZ(0)', // Forzar aceleración por hardware
   }
+
+  // Estilo optimizado para móviles
+  const mobileMenuOverlayStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backdropFilter: 'blur(3px)',
+    WebkitBackdropFilter: 'blur(3px)',
+  }
+
+  // Detectar si estamos en un dispositivo móvil para ajustar estilos
+  const isMobileDevice = window.innerWidth < 768
 
   return (
     <>
@@ -152,11 +165,12 @@ const Navbar = () => {
                 <>
                   {/* Overlay de fondo que cubre toda la pantalla */}
                   <motion.div 
-                    className="fixed inset-0 bg-black/30 z-40 md:hidden"
+                    className="fixed inset-0 bg-black/40 z-40 md:hidden"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setOpen(false)}
+                    style={isMobileDevice ? { backdropFilter: 'blur(0px)' } : mobileMenuOverlayStyle}
                   />
                 
                   {/* Panel deslizante desde la derecha */}
@@ -165,7 +179,8 @@ const Navbar = () => {
                     initial={{ x: '100%' }}
                     animate={{ x: 0 }}
                     exit={{ x: '100%' }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    transition={{ type: 'tween', duration: 0.25 }}
+                    style={{ transform: 'translateZ(0)' }} /* Mejora renderizado */
                   >
                     {/* Header del menú */}
                     <div className="px-4 py-5 border-b border-gray-100 flex items-center justify-between">
@@ -215,14 +230,22 @@ const Navbar = () => {
                       <a 
                         href="/cotizar" 
                         className="flex justify-center w-full rounded-lg bg-accent-500 hover:bg-accent-600 active:bg-accent-700 px-4 py-2.5 text-sm font-medium text-white text-center transition-colors"
-                        onClick={() => setOpen(false)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpen(false);
+                        }}
+                        style={{ willChange: 'transform', transform: 'translateZ(0)' }}
                       >
                         Cotización Gratuita
                       </a>
                       <a 
                         href="/calendario" 
                         className="flex items-center justify-center w-full rounded-lg border border-gray-200 hover:bg-gray-50 active:bg-gray-100 px-4 py-2.5 text-sm font-medium text-primary-600 text-center transition-colors"
-                        onClick={() => setOpen(false)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpen(false);
+                        }}
+                        style={{ willChange: 'transform', transform: 'translateZ(0)' }}
                       >
                         <Calendar className="w-4 h-4 mr-1.5" />
                         Agendar Reunión
