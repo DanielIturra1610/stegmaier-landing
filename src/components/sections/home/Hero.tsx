@@ -1,5 +1,5 @@
-import { FC } from 'react'
-import { motion } from 'framer-motion'
+import { FC, useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import Button from '../../ui/button'
 import IsoBadge from '../../ui/IsoBadge'
 import SectionConnector from '../../ui/SectionConnector'
@@ -18,44 +18,24 @@ const StatsCounter = ({ number, label }: { number: string; label: string }) => (
 )
 
 const Hero: FC = () => {
-  // Movemos el efecto visual a un elemento separado
-  const ParallaxDecorations = () => {
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, -80]);
+  const y2 = useTransform(scrollY, [0, 500], [0, -40]);
 
-    return (
-      <>
-        <div 
-          id="parallax-deco-1" 
-          className="absolute z-0 pointer-events-none"
-          style={{ top: 0, left: 0, width: '100%', height: '100%' }}
-        >
-          <div className="absolute top-20 left-10 w-72 h-72 rounded-full bg-gradient-to-r from-primary-400/10 to-primary-600/10 animate-pulse"></div>
-          <div className="absolute bottom-40 right-20 w-96 h-96 rounded-full bg-gradient-to-r from-accent-400/10 to-accent-500/10 animate-pulse"></div>
-        </div>
-        <div 
-          id="parallax-deco-2" 
-          className="absolute z-0 pointer-events-none"
-          style={{ top: 0, left: 0, width: '100%', height: '100%' }}
-        >
-          <div className="absolute top-1/4 right-1/4 w-60 h-60 rounded-full bg-gradient-to-r from-accent-500/10 to-primary-500/10 animate-pulse"></div>
-        </div>
-      </>
-    );
-  };
+  // Referencias para acceder al contenedor real donde aplicaremos los efectos visuales
+  const textEffectsContainerRef = useRef<HTMLDivElement>(null);
+  const certificationsEffectsContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <section
       id="home"
-      className="section-unified-bg section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
+      className="section-unified-bg section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-10 lg:pb-24"
     >
       {/* Patrón de fondo sutil */}
       <div className="section-overlay-pattern bg-noise-pattern"></div>
 
-      {/* Punto decorativo difuminado en la parte inferior - Aislado en elemento decorativo */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-0">
-        <div className="absolute left-1/2 bottom-0 w-full max-w-1200px" style={{ marginLeft: '-600px' }}>
-          <div className="blur-3xl h-[180px] w-full rounded-full bg-white/15 opacity-60"></div>
-        </div>
-      </div>
+      {/* Punto decorativo difuminado en la parte inferior */}
+      <div className="blur-transition-element blur-transition-bottom floating-transition"></div>
       
       {/* Decoraciones específicas del Hero - Ajustado z-index para que esté por debajo del contenido */}
       <div className="hero-decorations z-0">
@@ -70,29 +50,32 @@ const Hero: FC = () => {
       <div className="geometric-accent-1 z-0"></div>
       <div className="geometric-accent-2 z-0"></div>
 
-      {/* Parallax decorations */}
-      <ParallaxDecorations />
-
       {/* Aumentado z-index del contenedor principal para asegurar que esté sobre los elementos decorativos */}
       <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16 z-20">
-        {/* -------- Enhanced Text content -------- */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className="lg:col-span-7 xl:col-span-7 relative z-10"
-        >
+        
+        {/* NUEVA ESTRUCTURA: Capa de efectos visuales separada del texto */}
+        <div className="lg:col-span-7 xl:col-span-7 relative z-0">
+          {/* Capa para efectos visuales y transformaciones - NO contiene texto */}
+          <motion.div 
+            ref={textEffectsContainerRef}
+            style={{ y: y1 }} 
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+          >
+            {/* Esta capa solo recibe transformaciones pero no contiene texto */}
+          </motion.div>
+        </div>
+
+        {/* -------- Contenido de texto en una capa estática sin transformaciones -------- */}
+        <div className="lg:col-span-7 xl:col-span-7 relative z-10">
           {/* Trust badge with enhanced styling */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="inline-flex items-center mb-6 py-2 px-4 rounded-full bg-gradient-to-r from-accent-500/20 to-primary-400/20 border border-accent-500/30 shadow-lg"
+            className="inline-flex items-center mb-6 py-2 px-4 rounded-full bg-gradient-to-r from-accent-500/20 to-primary-400/20 backdrop-blur-sm border border-accent-500/30 shadow-lg"
           >
-            <div className="relative">
-              <span className="inline-block w-2 h-2 rounded-full bg-accent-500 mr-3 animate-pulse"></span>
-              <div className="absolute inset-0 backdrop-blur-sm -z-10"></div>
-            </div>
+            <span className="inline-block w-2 h-2 rounded-full bg-accent-500 mr-3 animate-pulse"></span>
             <span className="text-sm font-semibold text-white">🏆 Líderes en Certificación ISO desde 2008</span>
           </motion.div>
 
@@ -106,7 +89,7 @@ const Hero: FC = () => {
             Tu socio{' '}
             <span className="relative inline-block">
               <span className="relative z-10 text-white">estratégico</span>
-              <motion.div
+              <motion.span
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 1, delay: 1 }}
@@ -197,26 +180,27 @@ const Hero: FC = () => {
             <StatsCounter number="15+" label="Años de experiencia" />
             <StatsCounter number="6" label="Meses promedio" />
           </motion.div>
-        </motion.div>
+        </div>
 
-        {/* -------- Enhanced certification showcase -------- */}
-        <div className="lg:col-span-5 xl:col-span-5 mt-12 lg:mt-0 relative z-10">
-          {/* Card with key features and statistics */}
-          <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 relative">
-            <div className="absolute inset-0 backdrop-blur-sm rounded-2xl -z-10"></div>
-            
-            {/* Hero stats */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <StatsCounter number="15+" label="Años de experiencia" />
-              <StatsCounter number="500+" label="Proyectos exitosos" />
-              <StatsCounter number="98%" label="Tasa de certificación" />
-            </div>
+        {/* -------- Certifications showcase -------- */}
+        <div className="lg:col-span-5 xl:col-span-5 relative mt-12 lg:mt-0 z-10">
+          {/* Capa para efectos visuales y transformaciones - NO contiene texto */}
+          <motion.div 
+            ref={certificationsEffectsContainerRef}
+            style={{ y: y2 }} 
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+          >
+            {/* Esta capa solo recibe transformaciones pero no contiene texto */}
+          </motion.div>
 
-            {/* Feature highlight */}
+          {/* Certifications content - sin transformaciones de scroll */}
+          <div className="bg-gradient-to-br from-white/10 to-transparent backdrop-blur-sm rounded-2xl border border-white/20 p-6 lg:p-8 shadow-xl">
+            {/* Header */}
             <div className="text-center mb-8">
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
                 className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-accent-500 to-accent-600 mb-4 shadow-lg"
               >

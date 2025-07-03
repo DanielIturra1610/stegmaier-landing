@@ -62,6 +62,23 @@ const subtitleAnimation: Variants = {
   }
 };
 
+// Versiones modificadas de animaciones que solo afectan a opacidad, sin transformaciones
+const titleAnimationSafe: Variants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.7, ease: "easeOut" as const } 
+  }
+};
+
+const subtitleAnimationSafe: Variants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.7, delay: 0.3, ease: "easeOut" as const } 
+  }
+};
+
 const CompanyHero: FC = () => {
   return (
     <section className="section-unified-bg section-company-bg content-overlay relative py-20 lg:py-32">
@@ -73,36 +90,75 @@ const CompanyHero: FC = () => {
       
       <div className="container mx-auto px-4 max-w-6xl content-overlay">
         <div className="flex flex-col items-center justify-center text-center">
-          <motion.span 
-            className="inline-block py-2 px-4 rounded-full bg-accent-500/20 text-white text-sm font-medium mb-3 backdrop-blur-sm"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="mr-2">🏢</span>Conócenos
-          </motion.span>
+          {/* Badge - separamos animación inicial de y */}
+          <div className="relative">
+            {/* Capa de efectos visuales para animaciones con transformación */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 0, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+            />
+            
+            {/* Contenido real sin transformaciones */}
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-block py-2 px-4 rounded-full bg-accent-500/20 text-white text-sm font-medium mb-3 backdrop-blur-sm"
+            >
+              <span className="mr-2">🏢</span>Conócenos
+            </motion.span>
+          </div>
           
-          <motion.h1 
-            className="mt-2 text-4xl md:text-5xl xl:text-6xl font-display font-bold text-white leading-tight"
-            initial="hidden"
-            animate="visible"
-            variants={titleAnimation}
-          >
-            Sobre <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">Stegmaier</span> Consulting
-          </motion.h1>
+          {/* Título - separamos animación de transformación */}
+          <div className="relative">
+            {/* Capa de efectos visuales para animaciones con transformación */}
+            <motion.div
+              variants={titleAnimation}
+              initial="hidden"
+              animate="visible"
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+            />
+            
+            {/* Contenido real sin transformaciones */}
+            <motion.h1 
+              className="mt-2 text-4xl md:text-5xl xl:text-6xl font-display font-bold text-white leading-tight"
+              variants={titleAnimationSafe}
+              initial="hidden"
+              animate="visible"
+            >
+              Sobre <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">Stegmaier</span> Consulting
+            </motion.h1>
+          </div>
           
           <div className="mx-auto mt-4 h-1 w-24 rounded bg-accent-500 opacity-70"></div>
           
-          <motion.p 
-            className="mt-6 text-lg text-white/80 max-w-3xl mx-auto"
-            initial="hidden"
-            animate="visible"
-            variants={subtitleAnimation}
-          >
-            Más de 15 años de experiencia en consultoría y certificación de sistemas de gestión.
-            Somos líderes en implementación de normativas ISO para empresas en toda Latinoamérica.
-          </motion.p>
-
+          {/* Subtítulo - separamos animación de transformación */}
+          <div className="relative">
+            {/* Capa de efectos visuales para animaciones con transformación */}
+            <motion.div
+              variants={subtitleAnimation}
+              initial="hidden"
+              animate="visible"
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+            />
+            
+            {/* Contenido real sin transformaciones */}
+            <motion.p 
+              className="mt-6 text-lg text-white/80 max-w-3xl mx-auto"
+              variants={subtitleAnimationSafe}
+              initial="hidden"
+              animate="visible"
+            >
+              Más de 15 años de experiencia en consultoría y certificación de sistemas de gestión.
+              Somos líderes en implementación de normativas ISO para empresas en toda Latinoamérica.
+            </motion.p>
+          </div>
+          
           <motion.div 
             className="mt-8 flex flex-wrap justify-center gap-4"
             initial={{ opacity: 0, y: 20 }}

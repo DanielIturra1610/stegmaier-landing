@@ -185,8 +185,27 @@
 .section-values-bg,
 .section-team-bg,
 .section-certifications-bg {
-  /* Filtro sutil para suavizar aún más los bordes */
-  filter: blur(0.5px);
+  position: relative;
+}
+
+/* Nuevo enfoque: aplicar blur solo al fondo usando pseudo-elementos */
+.section-hero-bg::before,
+.section-services-bg::before,
+.section-process-bg::before,
+.section-testimonials-bg::before,
+.section-contact-bg::before,
+.section-company-bg::before,
+.section-history-bg::before,
+.section-values-bg::before,
+.section-team-bg::before,
+.section-certifications-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0; /* Equivalente a top:0; right:0; bottom:0; left:0 */
+  z-index: -1; /* Colocar detrás del contenido */
+  background: inherit; /* Heredar el gradiente del padre */
+  filter: blur(0.5px); /* Aplicar el mismo efecto de suavizado pero solo al fondo */
+  pointer-events: none; /* No interferir con eventos del contenido */
 }
 
 /* ---------------------------------------------------------------------------
