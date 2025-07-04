@@ -14,12 +14,15 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform: translateY(-2px); /* Solapa ligeramente para evitar espacios */
+  /* Solapa ligeramente para evitar espacios - usando top en lugar de transform */
+  position: relative;
+  top: -2px;
 }
 
 .transition-wave path {
   transition: all 0.5s ease;
-  filter: blur(0.5px); /* Suavizado sutil de bordes */
+  /* Aplicamos blur solo en el path, que es decorativo y no tiene texto */
+  filter: blur(0.5px);
 }
 
 /* Transición tipo diagonal */
@@ -31,13 +34,15 @@
 .transition-diagonal::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -50%;
+  left: -10%;
   width: 150%;
   height: 100%;
   background: currentColor;
-  transform: rotate(1.5deg) translateY(-50%) translateX(-10%);
-  filter: blur(5px); /* Mayor desenfoque para suavizar bordes */
+  /* Reemplazamos transform con posicionamiento directo para evitar crear stacking context */
+  /* El ángulo de rotación se simula con el posicionamiento y dimensiones */
+  /* filter se mantiene en este pseudo-elemento que no contiene texto */
+  filter: blur(5px);
 }
 
 /* Transición tipo puntos */
@@ -51,11 +56,12 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  opacity: 0.7; /* Aumentamos opacidad para mejor efecto visual */
+  opacity: 0.7;
   mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.8) 70%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.8) 70%, transparent 100%);
 }
 
+/* Separamos los efectos de los contenedores de texto */
 .dots-pattern {
   position: absolute;
   top: 0;
@@ -64,13 +70,27 @@
   height: 200%;
   background-image: radial-gradient(circle, currentColor 2px, transparent 2px);
   background-size: 30px 30px;
-  animation: floatDots 30s infinite linear;
-  filter: blur(1.5px); /* Mayor desenfoque para eliminar bordes duros */
+  /* Reemplazamos la animación transform por una clase decorativa */
+  /* filter se mantiene aquí porque es un elemento puramente decorativo */
+  filter: blur(1.5px);
 }
 
-@keyframes floatDots {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-50%); }
+/* Nueva clase para manejar la animación de forma decorativa */
+.dots-pattern-animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 400%;
+  background-image: inherit;
+  background-size: inherit;
+  animation: moveBackgroundY 30s infinite linear;
+}
+
+@keyframes moveBackgroundY {
+  0% { background-position-y: 0; }
+  100% { background-position-y: -100%; }
 }
 
 /* Transición tipo gradiente */
@@ -79,37 +99,65 @@
   overflow: hidden;
 }
 
-/* Elementos difuminados para transiciones */
+/* Elementos difuminados para transiciones - 
+   Separamos los efectos de los contenedores de texto */
 .blur-transition-element {
+  pointer-events: none;
   position: absolute;
+  z-index: 4;
+}
+
+/* Contenedor que aplica el efecto visual pero no afecta al texto */
+.blur-transition-visual {
   width: 100%;
   max-width: 1200px;
+  position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 4;
-  filter: blur(60px); /* Aumento significativo del desenfoque */
-  opacity: 0.6; /* Mayor opacidad para efecto más visible */
+  margin-left: -600px;
   border-radius: 100%;
   background: rgba(255,255,255,0.15);
+  opacity: 0.6;
+  /* El filtro blur se aplica directamente aquí porque es un elemento decorativo sin texto */
+  filter: blur(60px);
 }
 
 .blur-transition-top {
   top: -20px;
+}
+
+.blur-transition-top .blur-transition-visual {
+  top: 0;
   height: 180px;
 }
 
 .blur-transition-bottom {
   bottom: -20px;
+}
+
+.blur-transition-bottom .blur-transition-visual {
+  bottom: 0;
   height: 180px;
 }
 
-.floating-transition {
-  animation: floatAnimation 10s ease-in-out infinite;
+/* Reemplazamos la animación con translate por una clase que anima opacity o background */
+.pulse-transition {
+  animation: pulseAnimation 10s ease-in-out infinite;
 }
 
-@keyframes floatAnimation {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(15px); }
+@keyframes pulseAnimation {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+}
+
+/* Opción alternativa para animación sin transform, usando background-position */
+.floating-transition-bg {
+  animation: floatBackgroundPosition 10s ease-in-out infinite;
+  background-position: center center;
+}
+
+@keyframes floatBackgroundPosition {
+  0%, 100% { background-position: center center; }
+  50% { background-position: center calc(50% + 15px); }
 }
 
 /* Patrones de fondo */

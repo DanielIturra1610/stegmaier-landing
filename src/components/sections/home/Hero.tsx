@@ -1,8 +1,7 @@
-import { FC } from 'react'
+import { FC, useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import Button from '../../ui/button'
 import IsoBadge from '../../ui/IsoBadge'
-import { cn } from '../../../lib/utils'
 import SectionConnector from '../../ui/SectionConnector'
 
 // Stats counter component (sin cambios)
@@ -23,10 +22,14 @@ const Hero: FC = () => {
   const y1 = useTransform(scrollY, [0, 500], [0, -80]);
   const y2 = useTransform(scrollY, [0, 500], [0, -40]);
 
+  // Referencias para acceder al contenedor real donde aplicaremos los efectos visuales
+  const textEffectsContainerRef = useRef<HTMLDivElement>(null);
+  const certificationsEffectsContainerRef = useRef<HTMLDivElement>(null);
+
   return (
     <section
       id="home"
-      className="section-unified-bg section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-28 lg:pb-24"
+      className="section-unified-bg section-hero-bg minimal-decorations content-overlay relative text-white overflow-hidden pt-20 pb-16 md:pt-24 md:pb-20 lg:pt-10 lg:pb-24"
     >
       {/* Patrón de fondo sutil */}
       <div className="section-overlay-pattern bg-noise-pattern"></div>
@@ -49,14 +52,22 @@ const Hero: FC = () => {
 
       {/* Aumentado z-index del contenedor principal para asegurar que esté sobre los elementos decorativos */}
       <div className="relative container mx-auto px-4 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16 z-20">
-        {/* -------- Enhanced Text content -------- */}
-        <motion.div
-          style={{ y: y1 }}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className="lg:col-span-7 xl:col-span-7 relative z-10"
-        >
+        
+        {/* NUEVA ESTRUCTURA: Capa de efectos visuales separada del texto */}
+        <div className="lg:col-span-7 xl:col-span-7 relative z-0">
+          {/* Capa para efectos visuales y transformaciones - NO contiene texto */}
+          <motion.div 
+            ref={textEffectsContainerRef}
+            style={{ y: y1 }} 
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+          >
+            {/* Esta capa solo recibe transformaciones pero no contiene texto */}
+          </motion.div>
+        </div>
+
+        {/* -------- Contenido de texto en una capa estática sin transformaciones -------- */}
+        <div className="lg:col-span-7 xl:col-span-7 relative z-10">
           {/* Trust badge with enhanced styling */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -169,26 +180,22 @@ const Hero: FC = () => {
             <StatsCounter number="15+" label="Años de experiencia" />
             <StatsCounter number="6" label="Meses promedio" />
           </motion.div>
-        </motion.div>
+        </div>
 
-        {/* -------- Enhanced certification showcase -------- */}
-        <motion.div
-          style={{ y: y2 }}
-          initial={{ opacity: 0, scale: 0.8, rotateY: -15 }}
-          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-          transition={{ duration: 1, delay: 0.4 }}
-          className="mt-16 lg:mt-0 lg:col-span-5 xl:col-span-5 flex items-center justify-center relative z-10"
-        >
-          <div className={cn(
-            "relative w-full max-w-lg mx-auto",
-            "bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-lg", 
-            "border border-white/30 shadow-2xl rounded-3xl p-8 lg:p-10",
-            "transform hover:scale-105 transition-all duration-500",
-            "pointer-events-auto" // Asegurarse de que sea interactivo
-          )}>
-            {/* Glowing effect */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-accent-500/20 to-primary-400/20 blur-xl opacity-50 -z-10" />
-            
+        {/* -------- Certifications showcase -------- */}
+        <div className="lg:col-span-5 xl:col-span-5 relative mt-12 lg:mt-0 z-10">
+          {/* Capa para efectos visuales y transformaciones - NO contiene texto */}
+          <motion.div 
+            ref={certificationsEffectsContainerRef}
+            style={{ y: y2 }} 
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+          >
+            {/* Esta capa solo recibe transformaciones pero no contiene texto */}
+          </motion.div>
+
+          {/* Certifications content - sin transformaciones de scroll */}
+          <div className="bg-gradient-to-br from-white/10 to-transparent backdrop-blur-sm rounded-2xl border border-white/20 p-6 lg:p-8 shadow-xl">
             {/* Header */}
             <div className="text-center mb-8">
               <motion.div
@@ -273,7 +280,7 @@ const Hero: FC = () => {
             <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-accent-500/50 rounded-tr-3xl" />
             <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-primary-400/50 rounded-bl-3xl" />
           </div>
-        </motion.div>
+        </div>
       </div>
       {/* Transición ultra-sutil hacia Services */}
       <SectionConnector 

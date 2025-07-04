@@ -39,11 +39,21 @@
 .blur-element {
   position: absolute;
   border-radius: 50%;
-  filter: blur(50px);
   opacity: 0.07;
   background: rgba(255, 255, 255, 0.3);
   mix-blend-mode: overlay;
   z-index: 2;
+}
+
+/* Aplicamos el filtro blur a un pseudo-elemento para evitar afectar al texto */
+.blur-element::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  filter: blur(50px);
+  background: inherit;
+  mix-blend-mode: inherit;
 }
 
 /* Tamaños diferentes para elementos difuminados */
@@ -106,17 +116,25 @@
   background: linear-gradient(to bottom, transparent, rgba(var(--color-primary-900), 0.1));
 }
 
-/* Superposición difusa específica para mejorar transiciones entre secciones */
+/* Superposición difusa específica para mejorar transiciones entre secciones 
+   Refactorizado para evitar blur directo sobre texto y eliminar transform */
 .section-blur-connector {
   position: absolute;
   left: 0;
   right: 0;
   height: 400px; /* Mayor altura para difusión extendida */
   z-index: 5;
-  filter: blur(80px); /* Desenfoque muy intenso */
   opacity: 0.6;
   pointer-events: none;
-  transform: translateZ(0); /* Mejora de rendimiento */
+}
+
+/* Pseudo-elemento que contiene el filtro de blur para evitar afectar texto */
+.section-blur-connector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  filter: blur(80px); /* Desenfoque aplicado al pseudo-elemento */
+  background: inherit;
 }
 
 .blur-connector-hero-services {
