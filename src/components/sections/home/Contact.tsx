@@ -13,21 +13,34 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '../../ui/button'
 import { cn } from '../../../lib/utils'
+import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik'
+import * as Yup from 'yup'
+import toast from 'react-hot-toast'
 
 // ───────────────────────────────────────────────────────────
 //  FORMULARIO DE CONTACTO
 // ───────────────────────────────────────────────────────────
 const EnhancedContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    company: '',
-    phone: '',
-    service: '',
-    message: ''
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  
+  // Schema de validación con Yup
+  const contactSchema = Yup.object().shape({
+    name: Yup.string()
+      .min(2, 'El nombre debe tener al menos 2 caracteres')
+      .required('El nombre es obligatorio'),
+    email: Yup.string()
+      .email('Email inválido')
+      .required('El email es obligatorio'),
+    phone: Yup.string()
+      .matches(/^[0-9+\s()-]{0,20}$/, 'Formato de teléfono inválido')
+      .notRequired(),
+    service: Yup.string()
+      .required('Por favor selecciona un servicio'),
+    message: Yup.string()
+      .min(10, 'El mensaje es demasiado corto (mínimo 10 caracteres)')
+      .required('El mensaje es obligatorio'),
+    _gotcha: Yup.string() // Campo honeypot oculto
+  });
 
   const services = [
     'Consultoría ISO 9001',
@@ -40,36 +53,63 @@ const EnhancedContactForm = () => {
     'Otro'
   ]
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setIsSubmitting(false)
-    setIsSubmitted(true)
-
-    setTimeout(() => {
-      setIsSubmitted(false)
-      setFormData({
-        name: '',
-        email: '',
-        company: '',
-        phone: '',
-        service: '',
-        message: ''
-      })
-    }, 4000)
+  // Definir la interfaz para los valores del formulario
+  interface ContactFormValues {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    service: string;
+    message: string;
+    gotcha: string;
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+  // URL base para API
+  const API_URL = typeof window !== 'undefined' ? 
+    window.location.origin : 
+    'https://stegmaier-landing.vercel.app';
+
+  const handleSubmit = async (
+    values: ContactFormValues, 
+    { setSubmitting, resetForm }: FormikHelpers<ContactFormValues>
   ) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+    try {
+      const response = await fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+      setSubmitting(false);
+      
+      if (data.success) {
+        // Mostrar toast de éxito
+        toast.success('¡Mensaje enviado! Responderemos en menos de 24h');
+        setIsSubmitted(true);
+        resetForm();
+        
+        // Resetear después de 4 segundos
+        setTimeout(() => {
+          setIsSubmitted(false);
+        }, 4000);
+        
+        // Loguear el messageId para debug si existe
+        if (data.messageId) {
+          console.log('Email enviado con ID:', data.messageId);
+        }
+      } else {
+        console.error('Error en la respuesta:', data);
+        toast.error(data.message || 'Error al enviar el mensaje');
+      }
+    } catch (error) {
+      console.error('Error al enviar el formulario:', error);
+      toast.error('Error de conexión. Por favor intenta nuevamente.');
+      setSubmitting(false);
+    }
+  };
 
   return (
     <motion.div
@@ -77,8 +117,8 @@ const EnhancedContactForm = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
-      // ⭐ centrado y ancho máximo en dispositivos pequeños
-      className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-100 relative overflow-hidden w-full max-w-md lg:max-w-none mx-auto"
+      // Mejorando responsive para dispositivos móviles
+      className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-gray-100 relative overflow-hidden w-full max-w-md lg:max-w-none mx-auto"
     >
       {/* Decoración superior */}
       <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500" />
@@ -93,208 +133,243 @@ const EnhancedContactForm = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="text-center py-12"
+            className="text-center py-8 md:py-12"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+              className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg"
             >
-              <CheckCircle className="w-10 h-10 text-green-600" />
+              <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
             </motion.div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
               ¡Mensaje enviado!
             </h3>
-            <p className="text-gray-600 mb-6 text-lg">
+            <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6">
               Gracias por contactarnos. Te responderemos en menos de 24 horas.
             </p>
-            <div className="inline-flex items-center text-sm text-green-600 font-semibold bg-green-50 px-4 py-2 rounded-full">
-              <Clock className="w-4 h-4 mr-2" />
+            <div className="inline-flex items-center text-xs sm:text-sm text-green-600 font-semibold bg-green-50 px-3 sm:px-4 py-1 sm:py-2 rounded-full">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Respuesta garantizada en 24h
             </div>
           </motion.div>
         ) : (
-          <motion.form
-            key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <Formik
+            initialValues={{
+              name: '',
+              email: '',
+              phone: '',
+              company: '',
+              service: '',
+              message: '',
+              gotcha: '' // Campo honeypot
+            }}
+            validationSchema={contactSchema}
             onSubmit={handleSubmit}
-            className="space-y-6"
           >
-            {/* Título */}
-            <div className="text-center mb-8">
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">
-                  Solicita tu cotización gratuita
-                </h3>
-                <p className="text-gray-600 text-lg">
-                  Completa el formulario y te contactaremos en menos de 24
-                  horas
-                </p>
-              </motion.div>
-            </div>
+            {({ isSubmitting, errors, touched }) => (
+              <Form className="px-1 sm:px-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
+                  ¿Cómo podemos ayudarte?
+                </h2>
 
-            {/* Nombre + Email */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nombre completo *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="Tu nombre completo"
-                />
-              </motion.div>
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Campo honeypot oculto */}
+                  <Field 
+                    type="text" 
+                    name="_gotcha" 
+                    style={{ opacity: 0, position: 'absolute', top: 0, left: 0, height: 0, width: 0, zIndex: -1 }} 
+                  />
 
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email corporativo *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="nombre@empresa.com"
-                />
-              </motion.div>
-            </div>
-
-            {/* Empresa + Teléfono */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Empresa *
-                </label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="Nombre de tu empresa"
-                />
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Teléfono
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-                  placeholder="+56 9 1234 5678"
-                />
-              </motion.div>
-            </div>
-
-            {/* Servicio */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Servicio de interés
-              </label>
-              <select
-                name="service"
-                value={formData.service}
-                onChange={handleChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none hover:border-gray-300"
-              >
-                <option value="">Selecciona un servicio</option>
-                {services.map(service => (
-                  <option key={service} value={service}>
-                    {service}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
-
-            {/* Mensaje */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Mensaje
-              </label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none resize-none hover:border-gray-300"
-                placeholder="Cuéntanos sobre tu proyecto y cómo podemos ayudarte..."
-              />
-            </motion.div>
-
-            {/* Botón */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-            >
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
-                    Enviando...
+                  {/* Nombre */}
+                  <div>
+                    <label 
+                      htmlFor="name" 
+                      className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Nombre completo <span className="text-red-500">*</span>
+                    </label>
+                    <Field
+                      name="name"
+                      type="text"
+                      className={cn(
+                        "w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border focus:outline-none focus:ring-2 transition-shadow", 
+                        errors.name && touched.name ? 
+                          "border-red-300 focus:ring-red-200" : 
+                          "border-gray-300 focus:ring-primary-200"
+                      )}
+                      placeholder="Ingresa tu nombre"
+                    />
+                    <ErrorMessage 
+                      name="name" 
+                      component="div" 
+                      className="text-xs sm:text-sm text-red-600 mt-1" 
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Send className="w-5 h-5 mr-2" />
-                    Enviar solicitud
-                  </div>
-                )}
-              </Button>
-            </motion.div>
 
-            <p className="text-xs text-gray-500 text-center">
-              Al enviar este formulario, aceptas que nos pongamos en contacto
-              contigo para brindarte información sobre nuestros servicios.
-            </p>
-          </motion.form>
+                  {/* Email y Teléfono en grid responsive */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                      <label 
+                        htmlFor="email" 
+                        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <Field
+                        name="email"
+                        type="email"
+                        className={cn(
+                          "w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border focus:outline-none focus:ring-2 transition-shadow", 
+                          errors.email && touched.email ? 
+                            "border-red-300 focus:ring-red-200" : 
+                            "border-gray-300 focus:ring-primary-200"
+                        )}
+                        placeholder="tu@email.com"
+                      />
+                      <ErrorMessage 
+                        name="email" 
+                        component="div" 
+                        className="text-xs sm:text-sm text-red-600 mt-1" 
+                      />
+                    </div>
+
+                    <div>
+                      <label 
+                        htmlFor="phone" 
+                        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Teléfono <span className="text-gray-400 text-xs">(opcional)</span>
+                      </label>
+                      <Field
+                        name="phone"
+                        type="text"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-200 transition-shadow"
+                        placeholder="+56 9 1234 5678"
+                      />
+                      <ErrorMessage 
+                        name="phone" 
+                        component="div" 
+                        className="text-xs sm:text-sm text-red-600 mt-1" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Empresa y Servicio en grid responsive */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                      <label 
+                        htmlFor="company" 
+                        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Empresa <span className="text-gray-400 text-xs">(opcional)</span>
+                      </label>
+                      <Field
+                        name="company"
+                        type="text"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-200 transition-shadow"
+                        placeholder="Nombre de tu empresa"
+                      />
+                    </div>
+
+                    <div>
+                      <label 
+                        htmlFor="service" 
+                        className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Servicio <span className="text-red-500">*</span>
+                      </label>
+                      <Field
+                        as="select"
+                        name="service"
+                        className={cn(
+                          "w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border focus:outline-none focus:ring-2 transition-shadow appearance-none", 
+                          errors.service && touched.service ? 
+                            "border-red-300 focus:ring-red-200" : 
+                            "border-gray-300 focus:ring-primary-200"
+                        )}
+                      >
+                        <option value="">Selecciona un servicio</option>
+                        {services.map((service, index) => (
+                          <option key={index} value={service}>
+                            {service}
+                          </option>
+                        ))}
+                      </Field>
+                      <ErrorMessage 
+                        name="service" 
+                        component="div" 
+                        className="text-xs sm:text-sm text-red-600 mt-1" 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mensaje */}
+                  <div>
+                    <label 
+                      htmlFor="message" 
+                      className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Mensaje <span className="text-red-500">*</span>
+                    </label>
+                    <Field
+                      as="textarea"
+                      name="message"
+                      className={cn(
+                        "w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base bg-white rounded-lg border focus:outline-none focus:ring-2 transition-shadow resize-none", 
+                        errors.message && touched.message ? 
+                          "border-red-300 focus:ring-red-200" : 
+                          "border-gray-300 focus:ring-primary-200"
+                      )}
+                      placeholder="¿En qué podemos ayudarte?"
+                      rows={4}
+                    />
+                    <ErrorMessage 
+                      name="message" 
+                      component="div" 
+                      className="text-xs sm:text-sm text-red-600 mt-1" 
+                    />
+                  </div>
+
+                  {/* Botón de envío */}
+                  <div className="pt-2">
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={cn(
+                        "w-full flex items-center justify-center px-4 py-3 rounded-xl bg-gradient-to-r from-primary-600 to-accent-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all",
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:translate-y-[-2px]"
+                      )}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-5 w-5" />
+                          Enviar Mensaje
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Política de privacidad */}
+                  <p className="text-center text-xs sm:text-sm text-gray-500 mt-4">
+                    Al enviar este formulario, aceptas nuestra{' '}
+                    <a href="#" className="text-primary-600 hover:text-primary-500 hover:underline">
+                      Política de Privacidad
+                    </a>
+                  </p>
+                </div>
+              </Form>
+            )}
+          </Formik>
         )}
       </AnimatePresence>
     </motion.div>

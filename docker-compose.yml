@@ -1,10 +1,19 @@
+version: '3.8'
+
 services:
   web:
     build: .
     # si quieres hot-reload monta SOLO el código, no node_modules
     volumes:
       - ./src:/app/src
+      - ./api:/app/api
       - ./index.html:/app/index.html
       - ./tailwind.config.js:/app/tailwind.config.js
+      # Quitamos el montaje de .env.docker que estaba causando el error
     ports:
-      - "5173:5173"
+      - "5173:5173"  # Puerto para frontend
+      - "8000:8000"  # Puerto para backend API
+    env_file:
+      - .env.docker
+    environment:
+      - NODE_ENV=development

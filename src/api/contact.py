@@ -7,11 +7,8 @@ import time
 import os
 from cachetools import TTLCache
 import re
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import sendgrid
-from sendgrid.helpers.mail import Mail, Email, To, Content
+from sendgrid.helpers.mail import Mail, Email, To, Content, HtmlContent
 
 app = FastAPI()
 
@@ -37,7 +34,7 @@ class ContactForm(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     service: str = Field(..., max_length=100)
     message: str = Field(..., min_length=10, max_length=2000)
-    website: Optional[str] = Field(None)  # Honeypot
+    gotcha: Optional[str] = Field(None)  # Honeypot field
 
     @validator('name')
     def name_must_contain_only_letters(cls, v):
@@ -92,53 +89,71 @@ def sanitize_input(input: str) -> str:
 
 # Función para enviar email (SendGrid)
 async def send_email(form_data: ContactForm):
-    if os.environ.get("EMAIL_PROVIDER", "sendgrid").lower() == "sendgrid":
-        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_KEY"))
+    # Usar la API key específica
+    api_key = os.environ.get("SENDGRID_API_KEY")
+    if not api_key:
+        print("Error: SENDGRID_API_KEY no encontrada")
+        return {"success": False, "message": "Configuración de API incorrecta"}
         
-        from_email = Email(os.environ.get("EMAIL_FROM", "noreply@example.com"))
-        to_email = To(os.environ.get("EMAIL_TO", "contact@example.com"))
-        subject = f"Nuevo contacto: {form_data.service}"
-        
-        # Crear mensaje HTML
-        html_content = f"""
-        <h2>Nuevo mensaje de contacto</h2>
-        <p><strong>Nombre:</strong> {sanitize_input(form_data.name)}</p>
-        <p><strong>Email:</strong> {sanitize_input(form_data.email)}</p>
-        <p><strong>Empresa:</strong> {sanitize_input(form_data.company or 'No especificada')}</p>
-        <p><strong>Teléfono:</strong> {sanitize_input(form_data.phone or 'No especificado')}</p>
-        <p><strong>Servicio:</strong> {sanitize_input(form_data.service)}</p>
-        <p><strong>Mensaje:</strong></p>
-        <div style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #0070f3;">
-            {sanitize_input(form_data.message).replace("\n", "<br>")}
-        </div>
-        """
-        
-        # Crear mensaje texto plano
-        text_content = f"""
-        Nuevo mensaje de contacto:
-        
-        Nombre: {form_data.name}
-        Email: {form_data.email}
-        Empresa: {form_data.company or 'No especificada'}
-        Teléfono: {form_data.phone or 'No especificado'}
-        Servicio: {form_data.service}
-        
-        Mensaje:
-        {form_data.message}
-        """
-        
-        content = Content("text/html", html_content)
-        mail = Mail(from_email, to_email, subject, content)
-        
-        try:
-            response = sg.client.mail.send.post(request_body=mail.get())
-            return {"success": True, "message": "Email enviado correctamente"}
-        except Exception as e:
-            print(f"Error al enviar email: {str(e)}")
-            return {"success": False, "message": "Error al enviar el email", "error": str(e)}
-    else:
-        # Implementación futura para otros proveedores
-        return {"success": False, "message": "Proveedor de email no soportado"}
+    sg = sendgrid.SendGridAPIClient(api_key=api_key)
+    
+    from_email = Email(os.environ.get("SENDGRID_FROM", "daniel.eduardo1610@gmail.com"))
+    to_email = To(os.environ.get("SENDGRID_TO", "contacto@stegmaierconsulting.cl"))
+    subject = f"Nuevo contacto de {form_data.name}"
+    
+    # Crear mensaje HTML
+    message_with_br = sanitize_input(form_data.message).replace("\n", "<br>")
+    html_content = f"""
+    <h2>Nuevo mensaje desde stegmaierconsulting.cl</h2>
+    <p><strong>Nombre:</strong> {sanitize_input(form_data.name)}</p>
+    <p><strong>Email:</strong> {sanitize_input(form_data.email)}</p>
+    <p><strong>Empresa:</strong> {sanitize_input(form_data.company or 'No especificada')}</p>
+    <p><strong>Teléfono:</strong> {sanitize_input(form_data.phone or 'No especificado')}</p>
+    <p><strong>Servicio:</strong> {sanitize_input(form_data.service)}</p>
+    <p><strong>Mensaje:</strong></p>
+    <div style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #0070f3;">
+        {message_with_br}
+    </div>
+    """
+    
+    # Crear mensaje texto plano
+    text_content = f"""
+    Nuevo mensaje de contacto:
+    
+    Nombre: {form_data.name}
+    Email: {form_data.email}
+    Empresa: {form_data.company or 'No especificada'}
+    Teléfono: {form_data.phone or 'No especificado'}
+    Servicio: {form_data.service}
+    
+    Mensaje:
+    {form_data.message}
+    """
+    
+    content = Content("text/html", html_content)
+    mail = Mail(from_email, to_email, subject, content)
+    mail.reply_to = form_data.email
+    
+    try:
+        response = sg.client.mail.send.post(request_body=mail.get())
+        print(f"Email enviado correctamente. Status code: {response.status_code}")
+        # Para debugging, podemos obtener el mensaje ID
+        message_id = response.headers.get('X-Message-Id', '')
+        if message_id:
+            print(f"Message ID: {message_id}")
+        return {
+            "success": True, 
+            "message": "Email enviado correctamente",
+            "status_code": response.status_code,
+            "message_id": message_id
+        }
+    except Exception as e:
+        print(f"Error al enviar email: {str(e)}")
+        return {
+            "success": False, 
+            "message": "Error al enviar el email", 
+            "error": str(e)
+        }
 
 @app.post("/api/contact")
 async def contact_handler(
@@ -147,8 +162,9 @@ async def contact_handler(
     _: bool = Depends(check_rate_limit)
 ):
     # Verificar honeypot
-    if form_data.website:
+    if form_data.gotcha:
         # Simular éxito para no alertar al bot
+        print("Honeypot detectado, ignorando solicitud")
         return {"success": True, "message": "Mensaje enviado correctamente"}
     
     # Enviar email en segundo plano
