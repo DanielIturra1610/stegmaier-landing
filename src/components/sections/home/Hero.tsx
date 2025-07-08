@@ -92,7 +92,7 @@ const Hero: FC = () => {
               <motion.span
                 initial={{ width: 0 }}
                 animate={{ width: "100%" }}
-                transition={{ duration: 1, delay: 1 }}
+                transition={{ duration: 1, repeat: 1 }}
                 className="absolute inset-x-0 bottom-2 h-4 bg-gradient-to-r from-accent-500 to-accent-400 z-0 rounded-lg"
               />
             </span>
@@ -212,28 +212,49 @@ const Hero: FC = () => {
             </div>
 
             {/* ISO Badges with enhanced animation */}
-            <div className="flex justify-center space-x-3 mb-8">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-              >
-                <IsoBadge standard="9001" variant="primary" label="Calidad" />
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.9 }}
-              >
-                <IsoBadge standard="14001" variant="accent" label="Ambiente" />
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.0 }}
-              >
-                <IsoBadge standard="45001" variant="gold" label="Seguridad y Salud" />
-              </motion.div>
+            <div className="flex flex-col items-center space-y-4 mb-8">
+              {/* Primera fila - 3 badges originales */}
+              <div className="flex justify-center space-x-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.8 }}
+                >
+                  <IsoBadge standard="9001" variant="primary" label="Calidad" />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.9 }}
+                >
+                  <IsoBadge standard="14001" variant="accent" label="Ambiente" />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.0 }}
+                >
+                  <IsoBadge standard="45001" variant="gold" label="Seguridad y Salud" />
+                </motion.div>
+              </div>
+              
+              {/* Segunda fila - 2 nuevos badges */}
+              <div className="flex justify-center space-x-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.1 }}
+                >
+                  <IsoBadge standard="27001" variant="info" label="Inf. y Ciberseguridad" />
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1.2 }}
+                >
+                  <IsoBadge standard="50001" variant="success" label="Gestión Energética" />
+                </motion.div>
+              </div>
             </div>
 
             {/* Value propositions */}
