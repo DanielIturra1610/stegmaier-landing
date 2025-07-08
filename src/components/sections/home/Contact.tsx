@@ -504,7 +504,7 @@ const Contact: FC = () => {
                 <EnhancedContactCard
                   icon={MessageSquare}
                   title="WhatsApp Business"
-                  subtitle="Respuesta inmediata en horario laboral"
+                  subtitle="Respuesta inmediata"
                   href="https://wa.me/+56987501114"
                   variant="success"
                   external
@@ -515,7 +515,7 @@ const Contact: FC = () => {
                 <EnhancedContactCard
                   icon={Phone}
                   title="+56 9 8750 1114"
-                  subtitle="Llámanos de Lun-Vie 9:00-18:00"
+                  subtitle="Llámanos en cualquier momento"
                   href="tel:+56987501114"
                   variant="primary"
                 />
@@ -556,7 +556,7 @@ const Contact: FC = () => {
                   </motion.div>
                   <div>
                     <h4 className="font-bold text-gray-900 mb-2">
-                      Nuestras oficinas
+                      Casa Matriz
                     </h4>
                     <p className="text-gray-600 mb-1">
                       Peñuelas 2440, Quilpué
@@ -567,7 +567,7 @@ const Contact: FC = () => {
 
                     <div className="flex items-center text-sm text-primary-600 font-semibold bg-primary-50 px-3 py-2 rounded-full">
                       <Clock className="w-4 h-4 mr-2" />
-                      Lun-Vie 9:00-18:00
+                      Disponibles 24/7, todos los días
                     </div>
                   </div>
                 </div>

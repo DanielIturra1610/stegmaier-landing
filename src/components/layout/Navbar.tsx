@@ -9,9 +9,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 const NAV = [
   { label: 'Inicio', href: '/' },
-  { label: 'Consultorías ISO', href: '/consultorias' },
+  { label: 'Consultorías', href: '/consultorias' },
   { label: 'Empresa', href: '/empresa' },
-]
+] 
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)

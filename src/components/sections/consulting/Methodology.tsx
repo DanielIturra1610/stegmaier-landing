@@ -87,8 +87,9 @@ const Methodology: React.FC = () => {
           </h3>
 
           <p className="text-xl text-white/80 max-w-4xl mx-auto leading-relaxed">
-            Estrategia basada en la mejora continua de la calidad, ampliamente utilizada
-            en Sistemas de Gestión ISO para lograr resultados excepcionales.
+            Más que una metodología, el <span className="font-semibold text-accent-300">ADN de nuestra empresa</span>. 
+            Transformamos la mejora continua en resultados tangibles para su negocio, 
+            aplicando con maestría este enfoque en cada proyecto de <span className="font-semibold text-accent-300">Sistemas de Gestión ISO</span>.
           </p>
         </motion.div>
 

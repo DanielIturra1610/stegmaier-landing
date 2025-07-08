@@ -119,48 +119,6 @@ const CertificationCard: FC<{
   );
 };
 
-// Componente para mostrar socios y acreditaciones
-const PartnerLogos: FC = () => {
-  const partners = [
-    { name: 'TÜV Rheinland', logo: '/assets/partner-tuv.svg' },
-    { name: 'Bureau Veritas', logo: '/assets/partner-bureau.svg' },
-    { name: 'SGS', logo: '/assets/partner-sgs.svg' },
-    { name: 'AENOR', logo: '/assets/partner-aenor.svg' },
-    { name: 'ENAC', logo: '/assets/partner-enac.svg' },
-  ];
-  
-  return (
-    <div className="mt-14 py-8 px-4 border-t border-white/10">
-      <p className="text-center text-white/60 text-sm mb-8">
-        Trabajamos con los principales organismos certificadores
-      </p>
-      <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-        {partners.map((partner, index) => (
-          <motion.div 
-            key={partner.name} 
-            className="flex items-center justify-center grayscale hover:grayscale-0 transition-all duration-500"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 0.7 }}
-            whileHover={{ opacity: 1, scale: 1.05 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            viewport={{ once: true }}
-          >
-            <img 
-              src={partner.logo} 
-              alt={partner.name} 
-              className="h-12"
-              onError={(e) => {
-                // Fallback para logos que no se cargan
-                (e.target as HTMLImageElement).src = `https://placehold.co/120x48/cccccc/666666/?text=${partner.name}`;
-              }}
-            />
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const Certifications: FC = () => {
   // Animaciones corregidas
   const titleAnimation: Variants = {
@@ -219,9 +177,6 @@ const Certifications: FC = () => {
             />
           ))}
         </div>
-        
-        {/* Logos de socios certificadores */}
-        <PartnerLogos />
         
         {/* CTA */}
         <motion.div 
