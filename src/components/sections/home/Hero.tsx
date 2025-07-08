@@ -76,7 +76,7 @@ const Hero: FC = () => {
             className="inline-flex items-center mb-6 py-2 px-4 rounded-full bg-gradient-to-r from-accent-500/20 to-primary-400/20 backdrop-blur-sm border border-accent-500/30 shadow-lg"
           >
             <span className="inline-block w-2 h-2 rounded-full bg-accent-500 mr-3 animate-pulse"></span>
-            <span className="text-sm font-semibold text-white">🏆 Líderes en Certificación ISO desde 2008</span>
+            <span className="text-sm font-semibold text-white">🏆 Líderes en Implementación de Certificación ISO desde 2008</span>
           </motion.div>
 
           {/* Main headline with powerful messaging */}
@@ -98,7 +98,7 @@ const Hero: FC = () => {
             </span>
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
-              en certificación ISO
+              para certificación ISO
             </span>
           </motion.h1>
 
@@ -109,9 +109,10 @@ const Hero: FC = () => {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-2xl mb-8"
           >
-            <span className="font-semibold text-accent-300">Implementación garantizada</span> de ISO 9001, 14001 y 45001 
-            con acompañamiento completo y metodología probada en más de{' '}
-            <span className="font-semibold text-accent-300">500 empresas</span> chilenas.
+            <span className="font-semibold text-accent-300">Implementación garantizada</span> de{' '}
+            <span className="font-semibold text-accent-300">Normas ISO</span> y{' '}
+            <span className="font-semibold text-accent-300">Metodologías de mejora continua</span>{' '}
+            con acompañamiento completo.
           </motion.p>
 
           {/* Trust indicators */}
@@ -207,7 +208,7 @@ const Hero: FC = () => {
                 <span className="text-2xl">🏆</span>
               </motion.div>
               <h3 className="text-2xl lg:text-3xl font-bold mb-2">Certificación Garantizada</h3>
-              <p className="text-white/80 text-lg">Metodología probada y respaldada</p>
+              <p className="text-white/80 text-lg">Metodología comprobada y respaldada</p>
             </div>
 
             {/* ISO Badges with enhanced animation */}
@@ -231,16 +232,16 @@ const Hero: FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1.0 }}
               >
-                <IsoBadge standard="45001" variant="gold" label="Seguridad" />
+                <IsoBadge standard="45001" variant="gold" label="Seguridad y Salud" />
               </motion.div>
             </div>
 
             {/* Value propositions */}
             <div className="space-y-4 mb-8">
               {[
-                "Acompañamiento integral de principio a fin",
-                "Garantía de certificación en primera auditoría",
-                "Soporte post-certificación incluido"
+                "Acompañamiento integral de durante todo el proceso",
+                "Garantía de certificación en primera auditoría externa",
+                "Soporte post-implementación"
               ].map((text, index) => (
                 <motion.div
                   key={index}

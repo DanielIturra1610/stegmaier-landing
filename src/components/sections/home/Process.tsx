@@ -115,7 +115,7 @@ const Process: FC = () => {
           
           <p className="mt-8 mx-auto max-w-2xl text-lg text-white/80 leading-relaxed">
             Nuestro enfoque metódico garantiza resultados consistentes 
-            y una implementación sin sobresaltos. <span className="font-medium text-accent-300">Certificación garantizada en primera auditoría.</span>
+            y una implementación sin sobresaltos. <span className="font-medium text-accent-300">Llevamos tu organización al siguiente nivel.</span>
           </p>
         </motion.header>
 
@@ -130,7 +130,7 @@ const Process: FC = () => {
                 <span className="text-2xl">⏱️</span>
               </motion.div>
               <h3 className="text-white text-xl font-bold mb-2">Proceso Optimizado</h3>
-              <p className="text-white/70">12 semanas desde diagnóstico hasta certificación</p>
+              <p className="text-white/70">12 semanas desde diagnóstico hasta implementación</p>
             </div>
             <div className="text-center p-4">
               <motion.div 
@@ -139,7 +139,7 @@ const Process: FC = () => {
               >
                 <span className="text-2xl">🔍</span>
               </motion.div>
-              <h3 className="text-white text-xl font-bold mb-2">Enfoque Probado</h3>
+              <h3 className="text-white text-xl font-bold mb-2">Enfoque Estrategico</h3>
               <p className="text-white/70">Más de 500 empresas certificadas con éxito</p>
             </div>
             <div className="text-center p-4">
