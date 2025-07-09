@@ -4,6 +4,8 @@ import History from '../components/sections/company/History';
 import Values from '../components/sections/company/Values';
 import Team from '../components/sections/company/Team';
 import Certifications from '../components/sections/company/Certifications';
+import Mission from '../components/sections/company/Mission';
+import Vision from '../components/sections/company/Vision';
 
 function CompanyPage() {
   useEffect(() => {
@@ -16,6 +18,8 @@ function CompanyPage() {
   return (
     <>
       <CompanyHero />
+      <Vision />
+      <Mission />
       <History />
       <Values />
       <Team />

@@ -7,7 +7,7 @@ export interface IsoBadgeProps {
   standard: string;  // e.g., '9001', '14001', '45001'
   label?: string;    // Optional label for the badge
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'primary' | 'accent' | 'gold';
+  variant?: 'primary' | 'accent' | 'gold' | 'info' | 'success';
   className?: string;
 }
 
@@ -29,7 +29,9 @@ const IsoBadge: React.FC<IsoBadgeProps> = ({
   const variantClasses = {
     primary: 'bg-primary-600 text-white border-primary-300',
     accent: 'bg-accent-500 text-white border-accent-300',
-    gold: 'bg-gold-500 text-white border-gold-300'
+    gold: 'bg-gold-500 text-white border-gold-300',
+    info: 'bg-blue-500 text-white border-blue-300',
+    success: 'bg-green-500 text-white border-green-300'
   };
 
   // Animation variants

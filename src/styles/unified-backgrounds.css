@@ -133,6 +133,30 @@
   overflow: hidden;
 }
 
+/* Sección Vision */
+.section-vision-bg {
+  background: linear-gradient(
+    180deg, 
+    rgb(var(--color-primary-800)) 0%, 
+    rgb(var(--color-primary-800)) 30%, 
+    rgb(var(--color-primary-750)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sección Mission */
+.section-mission-bg {
+  background: linear-gradient(
+    180deg, 
+    rgb(var(--color-primary-750)) 0%, 
+    rgb(var(--color-primary-775)) 50%, 
+    rgb(var(--color-primary-800)) 100%
+  );
+  position: relative;
+  overflow: hidden;
+}
+
 /* Clase base para todas las secciones con fondo unificado */
 .section-unified-bg {
   position: relative;
