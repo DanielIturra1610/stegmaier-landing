@@ -1,7 +1,6 @@
 // src/components/sections/home/Services.tsx
 import { FC, useState } from 'react'
 import * as L from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import ServiceCard from '../../ui/ServiceCard'
 import Button from '../../ui/button'
 import type { Service } from '../../../types'
@@ -19,18 +18,7 @@ const FloatingShapes = () => (
     <div className="absolute inset-0 minimal-grid"></div>
     
     {/* Elementos específicos de la sección servicios */}
-    <motion.div
-      animate={{ 
-        y: [-20, 20, -20],
-        opacity: [0.4, 0.7, 0.4] 
-      }}
-      transition={{ 
-        duration: 12, 
-        repeat: Infinity, 
-        ease: "easeInOut" 
-      }}
-      className="absolute top-20 right-20 w-32 h-32 border border-white/10 rounded-full"
-    />
+    <div className="absolute top-20 right-20 w-32 h-32 border border-white/10 rounded-full" />
     
     {/* Mantener efecto blur característico de la sección */}
     <div className="absolute top-1/4 right-1/3 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
@@ -40,33 +28,23 @@ const FloatingShapes = () => (
 
 // Stats component
 const StatsSection = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.8, delay: 0.2 }}
-    className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg"
-  >
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg">
     {[
       { number: "500+", label: "Empresas certificadas", icon: "🏢" },
       { number: "15+", label: "Años de experiencia", icon: "📅" },
       { number: "98%", label: "Tasa de éxito", icon: "✅" },
       { number: "6", label: "Meses promedio", icon: "⏱️" }
     ].map((stat, index) => (
-      <motion.div
+      <div
         key={index}
-        initial={{ scale: 0.8, opacity: 0 }}
-        whileInView={{ scale: 1, opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
         className="text-center group hover:scale-105 transition-transform duration-300"
       >
         <div className="text-2xl mb-2">{stat.icon}</div>
         <div className="text-2xl md:text-3xl font-bold text-primary-700 mb-1">{stat.number}</div>
         <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
-      </motion.div>
+      </div>
     ))}
-  </motion.div>
+  </div>
 )
 
 const services: Service[] = [
@@ -146,27 +124,6 @@ const Services: FC = () => {
     { id: 'training', label: 'Capacitación', count: 2 }
   ]
 
-  // Enhanced animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
-  }
-
-  const titleAnimation = {
-    hidden: { opacity: 0, y: -30 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" as const } 
-    }
-  }
-
   return (
     <section
       id="services"
@@ -176,7 +133,7 @@ const Services: FC = () => {
       <div className="section-overlay-pattern bg-diagonal-lines"></div>
       
       {/* Elementos difuminados para suavizar la transición desde Hero */}
-      <div className="blur-transition-element blur-transition-top floating-transition"></div>
+      <div className="blur-transition-element blur-transition-top"></div>
 
       {/* Contenido de la sección */}
       <FloatingShapes />
@@ -184,22 +141,11 @@ const Services: FC = () => {
       <div className="container mx-auto px-4 max-w-7xl content-overlay">
         {/* Enhanced header section */}
         <div className="text-center mb-16">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={titleAnimation}
-          >
-            <motion.span 
-              initial={{ scale: 0.8, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm"
-            >
+          <div>
+            <span className="inline-block py-2 px-4 rounded-full bg-accent-500/30 text-white text-sm font-medium mb-3 backdrop-blur-sm shadow-sm">
               <span className="mr-2">🚀</span>
               Nuestros Servicios
-            </motion.span>
+            </span>
             
             <h2 className="mt-4 text-4xl md:text-5xl lg:text-6xl font-display font-black text-white leading-tight">
               Soluciones que{' '}
@@ -207,13 +153,7 @@ const Services: FC = () => {
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500">
                   transforman
                 </span>
-                <motion.span
-                  initial={{ width: 0 }}
-                  whileInView={{ width: "100%" }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                  className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-primary-200 to-accent-200 rounded-lg"
-                />
+                <span className="absolute inset-x-0 bottom-1 h-3 bg-gradient-to-r from-primary-200 to-accent-200 rounded-lg" />
               </span>
               <br />tu empresa
             </h2>
@@ -222,20 +162,14 @@ const Services: FC = () => {
               Desde el diagnóstico inicial hasta la mejora continua, te acompañamos en cada etapa 
               de tu <span className="font-semibold text-accent-300">transformación organizacional</span>.
             </p>
-          </motion.div>
+          </div>
         </div>
 
         {/* Stats section */}
         <StatsSection />
 
         {/* Category filters */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
-        >
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
           {categories.map((category) => (
             <button
               key={category.id}
@@ -250,15 +184,10 @@ const Services: FC = () => {
               <span className="ml-2 text-xs opacity-75">({category.count})</span>
             </button>
           ))}
-        </motion.div>
+        </div>
 
         {/* View mode toggle */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="flex justify-center mb-8"
-        >
+        <div className="flex justify-center mb-8">
           <div className="bg-primary-800/70 rounded-lg p-1 shadow-md border border-primary-600/30">
             <button
               onClick={() => setViewMode('grid')}
@@ -283,49 +212,31 @@ const Services: FC = () => {
               Vista Lista
             </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Services grid/list */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${viewMode}-${selectedCategory}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className={
-                viewMode === 'grid' 
-                  ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" 
-                  : "space-y-6"
-              }
-            >
-              {filteredServices.map((service, index) => (
-                <ServiceCard 
-                  key={`${service.id}-${viewMode}`}
-                  {...service} 
-                  variant={getVariant(index)}
-                  index={index}
-                  viewMode={viewMode}
-                />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+        <div>
+          <div
+            className={
+              viewMode === 'grid' 
+                ? "grid gap-8 sm:grid-cols-2 lg:grid-cols-3" 
+                : "space-y-6"
+            }
+          >
+            {filteredServices.map((service, index) => (
+              <ServiceCard 
+                key={`${service.id}-${viewMode}`}
+                {...service} 
+                variant={getVariant(index)}
+                index={index}
+                viewMode={viewMode}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Call to action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-center mt-16 p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden"
-        >
+        <div className="text-center mt-16 p-8 bg-gradient-to-r from-primary-600 to-accent-600 rounded-2xl text-white relative overflow-hidden">
           {/* Background pattern */}
           <div className="absolute inset-0 bg-grid-white bg-[length:20px_20px] opacity-10" />
           
@@ -354,7 +265,7 @@ const Services: FC = () => {
               </Button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
       {/* Conector a la siguiente sección con patrón de puntos */}
       <SectionConnector fromSection="services" toSection="process" type="dots" height={250} />

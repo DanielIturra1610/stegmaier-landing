@@ -1,12 +1,9 @@
 // src/components/ui/ServiceCard.tsx
-import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import * as L from 'lucide-react'
 import type { Service } from '../../types'
 import { cn } from '../../lib/utils'
 import Button from './button'
-
-const MotionArticle = motion.article
 
 interface ServiceCardProps extends Omit<Service, 'benefits' | 'timeframe'> {
   variant?: 'primary' | 'accent' | 'gold'
@@ -21,7 +18,6 @@ const ServiceCard = ({
   desc, 
   icon: Icon, 
   variant = 'primary',
-  index = 0,
   viewMode = 'grid',
   benefits = [],
   timeframe = ''
@@ -62,19 +58,9 @@ const ServiceCard = ({
   // Different layouts for grid vs list view
   if (viewMode === 'list') {
     return (
-      <MotionArticle
-        initial={{ opacity: 0, x: -30 }}
-        whileInView={{ 
-          opacity: 1, 
-          x: 0,
-          transition: { 
-            duration: 0.6, 
-            delay: index * 0.1 
-          } 
-        }}
-        viewport={{ once: true }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
+      <article
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className={cn(
           "group relative overflow-hidden rounded-2xl bg-white border border-gray-100",
           "focus-within:ring-2 focus-within:ring-primary-400 shadow-card",
@@ -110,94 +96,62 @@ const ServiceCard = ({
                 )}
               </div>
               
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors hover:scale-105 active:scale-95"
               >
-                <motion.div
-                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <div className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
                   <L.ChevronDown className="w-5 h-5 text-gray-600" />
-                </motion.div>
-              </motion.button>
+                </div>
+              </button>
             </div>
 
             <p className="mt-3 text-gray-600 leading-relaxed lg:text-lg">{desc}</p>
 
             {/* Expandable benefits */}
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="mt-4 pt-4 border-t border-gray-100"
-                >
-                  {benefits.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-900 text-sm">Incluye:</h4>
-                      {benefits.map((benefit, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: idx * 0.1 }}
-                          className="flex items-center text-sm text-gray-600"
-                        >
-                          <span className="text-accent-500 mr-2">✓</span>
-                          {benefit}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="mt-4">
-                    <Button 
-                      size="sm" 
-                      className="bg-primary-600 hover:bg-primary-700 text-white"
-                    >
-                      Más información
-                    </Button>
+            {isExpanded && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                {benefits.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-gray-900 text-sm">Incluye:</h4>
+                    {benefits.map((benefit, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center text-sm text-gray-600"
+                      >
+                        <span className="text-accent-500 mr-2">✓</span>
+                        {benefit}
+                      </div>
+                    ))}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                )}
+                
+                <div className="mt-4">
+                  <Button 
+                    size="sm" 
+                    className="bg-primary-600 hover:bg-primary-700 text-white"
+                  >
+                    Más información
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </MotionArticle>
+      </article>
     )
   }
 
   // Grid view (default)
   return (
-    <MotionArticle
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ 
-        opacity: 1, 
-        y: 0,
-        transition: { 
-          duration: 0.6, 
-          delay: Math.min(index * 0.15, 0.8),
-          type: "spring",
-          stiffness: 100
-        } 
-      }}
-      viewport={{ once: true }}
-      whileHover={{ 
-        y: -8, 
-        transition: { type: 'spring', stiffness: 300, damping: 20 }
-      }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+    <article
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "group relative overflow-hidden rounded-2xl bg-white p-6 lg:p-8 border border-gray-100", 
         "focus-within:ring-2 focus-within:ring-primary-400 shadow-card",
         "before:absolute before:top-0 before:left-0 before:h-2 before:w-full",
-        "bg-gradient-to-br transition-all duration-500 hover:shadow-2xl",
+        "bg-gradient-to-br transition-all duration-500 hover:shadow-2xl hover:-translate-y-2",
         colors.accent,
         colors.gradient,
         colors.border
@@ -218,13 +172,9 @@ const ServiceCard = ({
         </div>
         
         {timeframe && (
-          <motion.span 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={cn("px-3 py-1 rounded-full text-xs font-semibold", colors.badge)}
-          >
+          <span className={cn("px-3 py-1 rounded-full text-xs font-semibold", colors.badge)}>
             ⏱️ {timeframe}
-          </motion.span>
+          </span>
         )}
       </div>
 
@@ -239,17 +189,13 @@ const ServiceCard = ({
       {benefits.length > 0 && (
         <div className="space-y-2 mb-6">
           {benefits.slice(0, 2).map((benefit, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, x: -10 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.2 + idx * 0.1 }}
               className="flex items-center text-sm text-gray-600"
             >
               <span className="text-accent-500 mr-2 text-xs">✓</span>
               {benefit}
-            </motion.div>
+            </div>
           ))}
           {benefits.length > 2 && (
             <p className="text-xs text-gray-500">
@@ -267,75 +213,55 @@ const ServiceCard = ({
           className="text-primary-600 hover:text-primary-700 hover:bg-primary-50 p-0 font-semibold"
         >
           Ver detalles
-          <motion.span
-            className="inline-block ml-1"
-            animate={{ x: isHovered ? 3 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
+          <span className={`inline-block ml-1 transition-transform duration-200 ${isHovered ? 'translate-x-1' : ''}`}>
             →
-          </motion.span>
+          </span>
         </Button>
 
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors hover:scale-105 active:scale-95"
         >
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div className={`transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
             <L.Plus className="w-4 h-4 text-gray-600" />
-          </motion.div>
-        </motion.button>
+          </div>
+        </button>
       </div>
 
       {/* Expandable section for grid view */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 pt-4 border-t border-gray-100"
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          {benefits.length > 2 && (
+            <div className="space-y-2 mb-4">
+              <h4 className="font-semibold text-gray-900 text-sm">Beneficios adicionales:</h4>
+              {benefits.slice(2).map((benefit, idx) => (
+                <div
+                  key={idx + 2}
+                  className="flex items-center text-sm text-gray-600"
+                >
+                  <span className="text-accent-500 mr-2 text-xs">✓</span>
+                  {benefit}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <Button 
+            size="sm" 
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold"
           >
-            {benefits.length > 2 && (
-              <div className="space-y-2 mb-4">
-                <h4 className="font-semibold text-gray-900 text-sm">Beneficios adicionales:</h4>
-                {benefits.slice(2).map((benefit, idx) => (
-                  <motion.div
-                    key={idx + 2}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: idx * 0.1 }}
-                    className="flex items-center text-sm text-gray-600"
-                  >
-                    <span className="text-accent-500 mr-2 text-xs">✓</span>
-                    {benefit}
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            
-            <Button 
-              size="sm" 
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold"
-            >
-              <span className="mr-2">📞</span>
-              Solicitar Información
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="mr-2">📞</span>
+            Solicitar Información
+          </Button>
+        </div>
+      )}
 
       {/* Subtle corner accent */}
       <div className="absolute top-0 right-0 w-16 h-16 opacity-20">
         <div className={cn("absolute top-2 right-2 w-8 h-8 rounded-full", colors.icon)} />
         <div className={cn("absolute top-4 right-4 w-4 h-4 rounded-full", colors.icon)} />
       </div>
-    </MotionArticle>
+    </article>
   )
 }
 
