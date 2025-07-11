@@ -14,6 +14,7 @@
 .env.test.local
 .env.production.local
 .env.docker
+.env.example
 
 # Logs
 npm-debug.log*

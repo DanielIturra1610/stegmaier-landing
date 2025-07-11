@@ -98,7 +98,7 @@ async def send_email(form_data: ContactForm):
     sg = sendgrid.SendGridAPIClient(api_key=api_key)
     
     from_email = Email(os.environ.get("SENDGRID_FROM", "daniel.eduardo1610@gmail.com"))
-    to_email = To(os.environ.get("SENDGRID_TO", "contacto@stegmaierconsulting.cl"))
+    to_email = To(os.environ.get("SENDGRID_TO", "formulariocontacto@stegmaierconsulting.cl"))
     subject = f"Nuevo contacto de {form_data.name}"
     
     # Crear mensaje HTML

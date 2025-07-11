@@ -170,9 +170,23 @@ const EnhancedContactForm = () => {
           >
             {({ isSubmitting, errors, touched }) => (
               <Form className="px-1 sm:px-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
-                  ¿Cómo podemos ayudarte?
-                </h2>
+                {/* Título */}
+                <div className="text-center mb-8">
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <h3 className="text-3xl font-bold text-gray-900 mb-3">
+                      Solicita tu cotización gratuita
+                    </h3>
+                    <p className="text-gray-600 text-lg">
+                      Completa el formulario y te contactaremos en menos de 24
+                      horas
+                    </p>
+                  </motion.div>
+                </div>
+
 
                 <div className="space-y-3 sm:space-y-4">
                   {/* Campo honeypot oculto */}
