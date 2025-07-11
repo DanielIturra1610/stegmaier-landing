@@ -1,5 +1,5 @@
 // src/components/layout/Navbar.tsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import * as Toolbar from '@radix-ui/react-toolbar'
 import { Menu, X, Phone, Calendar } from 'lucide-react'
 import Button from '../ui/button'
@@ -17,6 +17,11 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [currentPath, setCurrentPath] = useState('/')
+  const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
+  const [indicatorStyle, setIndicatorStyle] = useState({
+    left: 0,
+    width: 0
+  })
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 64)
@@ -31,9 +36,32 @@ const Navbar = () => {
     } else {
       setCurrentPath(path)
     }
+
+    // Actualizar la posición del indicador cuando cambia la ruta
+    updateIndicatorPosition()
     
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [currentPath])
+
+  // Función para actualizar la posición del indicador
+  const updateIndicatorPosition = () => {
+    // Encontrar el índice del enlace activo
+    const activeIndex = NAV.findIndex(({ href }) => isActive(href))
+    
+    if (activeIndex !== -1 && navRefs.current[activeIndex]) {
+      const activeLink = navRefs.current[activeIndex]
+      if (activeLink) {
+        // Obtener las dimensiones del enlace activo
+        const { offsetLeft, offsetWidth } = activeLink
+        
+        // Actualizar el estilo del indicador
+        setIndicatorStyle({
+          left: offsetLeft,
+          width: offsetWidth
+        })
+      }
+    }
+  }
 
   const isActive = (href: string) => {
     // Manejo especial para la ruta principal
@@ -48,7 +76,7 @@ const Navbar = () => {
   }
 
   const linkBase =
-    `px-3 py-2 text-sm font-medium transition-colors relative group ${
+    `px-3 py-4 text-sm font-medium transition-colors relative group ${
       scrolled ? 'text-primary-700' : 'text-white'
     }`
 
@@ -61,7 +89,7 @@ const Navbar = () => {
     borderBottom: scrolled ? '1px solid rgba(226, 232, 240, 0.9)' : 'none',
     transition: 'all 0.2s ease-out',
     width: '100%',
-    zIndex: 50
+    zIndex: 50,
   }
 
   return (
@@ -72,7 +100,7 @@ const Navbar = () => {
         style={navbarStyle}
       >
         <Toolbar.Root
-          className="container mx-auto flex h-16 items-center justify-between px-4"
+          className="container mx-auto flex h-12 items-center justify-between px-4"
           aria-label="Menú principal"
         >
           {/* Logo */}
@@ -96,8 +124,14 @@ const Navbar = () => {
                   href={href}
                   className={`${linkBase} ${active ? (scrolled ? 'text-primary-600 font-semibold' : 'text-white font-semibold') : ''}`}
                 >
-                  {label}
-                  <span className={`absolute left-0 right-0 bottom-0 h-[2px] bg-primary-500 transition-transform ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'} origin-center`} />
+                  <span className="relative z-10">{label}</span>
+                  {/* Indicador verde que siempre está alineado con su enlace */}
+                  <span 
+                    className={`absolute left-0 right-0 bottom-0 h-[3px] bg-green-500 transition-transform duration-300 ease-in-out ${
+                      active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                    }`}
+                    style={{ transformOrigin: 'center' }}
+                  />
                 </a>
               )
             })}
@@ -143,6 +177,18 @@ const Navbar = () => {
             )}
           </button>
         </Toolbar.Root>
+        
+        {/* Indicador de página activa - posicionado en el borde inferior del navbar */}
+        <div className="relative h-0">
+          <div
+            className="absolute h-[3px] bg-green-500 transition-all duration-300 ease-in-out"
+            style={{
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+              bottom: '-1px',
+            }}
+          />
+        </div>
       </header>
       
       {/* Menú móvil (fuera del header para evitar conflictos) */}
