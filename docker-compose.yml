@@ -1,19 +1,68 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
-    # si quieres hot-reload monta SOLO el código, no node_modules
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: stegmaier-frontend
+    # hot-reload montando SOLO el código, no node_modules
     volumes:
-      - ./src:/app/src
-      - ./api:/app/api
-      - ./index.html:/app/index.html
-      - ./tailwind.config.js:/app/tailwind.config.js
-      # Quitamos el montaje de .env.docker que estaba causando el error
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/components.json:/app/components.json
+      # Configuración
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/tsconfig.node.json:/app/tsconfig.node.json
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/postcss.config.js:/app/postcss.config.js
     ports:
       - "5173:5173"  # Puerto para frontend
-      - "8000:8000"  # Puerto para backend API
-    env_file:
-      - .env.docker
     environment:
       - NODE_ENV=development
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - stegmaier-network
+      
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stegmaier-api
+    ports:
+      - "8000:8000"  # Puerto para backend API
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/requirements.txt:/app/requirements.txt
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DB_NAME=stegmaier_courses
+      - JWT_SECRET_KEY=your_jwt_secret_key_for_development
+    depends_on:
+      - mongodb
+    networks:
+      - stegmaier-network
+
+  # MongoDB Service
+  mongodb:
+    image: mongo:5.0
+    container_name: stegmaier-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - stegmaier-network
+
+networks:
+  stegmaier-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
