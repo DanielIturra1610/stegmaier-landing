@@ -3,6 +3,7 @@ import { FC, useState } from 'react'
 import { motion } from 'framer-motion'
 import StepItem from '../../ui/StepItem'
 import { steps } from './steps-data'
+import React from 'react';
 import SectionConnector from '../../ui/SectionConnector'
 
 // Background decorative elements

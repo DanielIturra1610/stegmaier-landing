@@ -1,5 +1,6 @@
 // src/components/ui/SectionConnector.tsx
 import { FC } from 'react';
+import React from 'react';
 
 interface SectionConnectorProps {
   fromSection: 'hero' | 'services' | 'process' | 'testimonials' | 'company' | 'history' | 'values' | 'team' | 'certifications' | 'mission' | 'vision';

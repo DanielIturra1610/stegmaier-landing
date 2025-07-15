@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import SectionConnector from '../../ui/SectionConnector';
 

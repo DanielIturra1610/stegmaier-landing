@@ -1,7 +1,7 @@
 import { FC, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import SectionConnector from '../../ui/SectionConnector';
-
+import React from 'react';
 // Datos de la historia de la empresa (podría moverse a un archivo separado)
 const historyEvents = [
   {

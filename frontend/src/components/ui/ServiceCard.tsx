@@ -5,6 +5,7 @@ import * as L from 'lucide-react'
 import type { Service } from '../../types'
 import { cn } from '../../lib/utils'
 import Button from './button'
+import React from 'react';
 
 const MotionArticle = motion.article
 

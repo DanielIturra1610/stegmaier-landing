@@ -7,8 +7,11 @@ import Testimonials from './components/sections/home/Testimonials';
 import Contact from './components/sections/home/Contact';
 import CompanyPage from './pages/CompanyPage';
 import ConsultingPage from './pages/ConsultingPage';
+import React from 'react';
+import { AuthProvider } from './context/AuthContext';
+import AppRoutes from './routes';
 
-// Página de inicio que contiene todas las secciones actuales
+// Componente para la página de inicio que contiene todas las secciones
 const HomePage = () => (
   <>
     <Hero />
@@ -19,16 +22,19 @@ const HomePage = () => (
   </>
 );
 
-function App() {
+// App principal con rutas
+const App = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout><HomePage /></Layout>} />
-        <Route path="/empresa" element={<Layout><CompanyPage /></Layout>} />
-        <Route path="/consultorias" element={<Layout><ConsultingPage /></Layout>} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
-}
+};
 
+// Exportamos HomePage para usarlo en routes/index.tsx
+export { HomePage };
+
+// Exportamos App como default para el punto de entrada principal
 export default App;

@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { cn } from '../../lib/utils'
 import type { Step } from '../../types'
+import React from 'react';
 
 interface StepItemProps extends Step {
   isLast?: boolean;

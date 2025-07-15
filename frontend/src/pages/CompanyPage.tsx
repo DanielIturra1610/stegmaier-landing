@@ -6,6 +6,8 @@ import Team from '../components/sections/company/Team';
 import Certifications from '../components/sections/company/Certifications';
 import Mission from '../components/sections/company/Mission';
 import Vision from '../components/sections/company/Vision';
+import React from 'react';
+import Layout from '../components/layout/Layout';
 
 function CompanyPage() {
   useEffect(() => {
@@ -16,7 +18,7 @@ function CompanyPage() {
   }, []);
 
   return (
-    <>
+    <Layout>
       <CompanyHero />
       <Vision />
       <Mission />
@@ -24,7 +26,7 @@ function CompanyPage() {
       <Values />
       <Team />
       <Certifications />
-    </>
+    </Layout>
   );
 }
 

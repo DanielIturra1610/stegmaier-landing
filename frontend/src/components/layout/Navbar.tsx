@@ -1,11 +1,17 @@
 // src/components/layout/Navbar.tsx
 import { useState, useEffect, useRef } from 'react'
+import React from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar'
-import { Menu, X, Phone, Calendar } from 'lucide-react'
+import { Menu, X, Phone, Calendar, LogIn, UserPlus, LogOut, User } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { useAuthModal } from '../../contexts/AuthModalContext'
 import Button from '../ui/button'
-import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'
-import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png'
 import { AnimatePresence, motion } from 'framer-motion'
+// @ts-ignore - Importar imágenes
+import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'
+// @ts-ignore - Importar imágenes
+import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png'
 
 const NAV = [
   { label: 'Inicio', href: '/' },
@@ -18,33 +24,69 @@ const Navbar = () => {
   const [open, setOpen] = useState(false)
   const [currentPath, setCurrentPath] = useState('/')
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([])
+  const isFirstRender = useRef(true)
   const [indicatorStyle, setIndicatorStyle] = useState({
     left: 0,
-    width: 0
+    width: 0,
+    transition: 'none' // Inicialmente sin transición
   })
+  
+  // Obtener funciones y estado de autenticación
+  const { isAuthenticated, isVerified, logout } = useAuth()
+  // Obtener funciones para controlar el modal de autenticación
+  const { openLoginModal, openRegisterModal } = useAuthModal()
+  const location = useLocation()
 
+  // Efecto para manejar el scroll y el cambio de tamaño de ventana
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 64)
     onScroll()
-    window.addEventListener('scroll', onScroll)
     
-    // Detectar la ruta actual
-    const path = window.location.pathname
+    // Manejador para el cambio de tamaño de ventana
+    const onResize = () => {
+      // Recalcular la posición del indicador cuando cambia el tamaño de la ventana
+      // Añadimos un pequeño retraso para permitir que el DOM se actualice
+      setTimeout(() => {
+        updateIndicatorPosition(true)
+      }, 50)
+    }
+    
+    window.addEventListener('scroll', onScroll)
+    window.addEventListener('resize', onResize)
+    
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Usamos eslint-disable porque updateIndicatorPosition se define después de este efecto
+  
+  // Efecto para actualizar la ruta actual cuando cambia la ubicación
+  useEffect(() => {
+    const path = location.pathname
     // Manejar rutas con hash
-    if (window.location.hash) {
-      setCurrentPath(path + window.location.hash)
+    if (location.hash) {
+      setCurrentPath(path + location.hash)
     } else {
       setCurrentPath(path)
     }
-
-    // Actualizar la posición del indicador cuando cambia la ruta
-    updateIndicatorPosition()
+  }, [location])
+  
+  // Efecto para actualizar la posición del indicador cuando cambia la ruta
+  useEffect(() => {
+    // Variable para determinar si es la primera carga
+    const isInitialLoad: boolean = currentPath === location.pathname || 
+                          (!!location.hash && currentPath === location.pathname + location.hash)
     
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [currentPath])
+    // Dar tiempo a que las referencias se actualicen
+    setTimeout(() => {
+      // En la carga inicial, no queremos animación
+      updateIndicatorPosition(isInitialLoad)
+    }, 50)
+  }, [currentPath, location])
 
   // Función para actualizar la posición del indicador
-  const updateIndicatorPosition = () => {
+  const updateIndicatorPosition = (skipAnimation = false) => {
     // Encontrar el índice del enlace activo
     const activeIndex = NAV.findIndex(({ href }) => isActive(href))
     
@@ -54,25 +96,41 @@ const Navbar = () => {
         // Obtener las dimensiones del enlace activo
         const { offsetLeft, offsetWidth } = activeLink
         
-        // Actualizar el estilo del indicador
-        setIndicatorStyle({
-          left: offsetLeft,
-          width: offsetWidth
-        })
+        // Si es el primer renderizado o si skipAnimation es true, no aplicamos transición
+        if (isFirstRender.current || skipAnimation) {
+          setIndicatorStyle({
+            left: offsetLeft,
+            width: offsetWidth,
+            transition: 'none'
+          })
+        } else {
+          // Para cambios de página posteriores, aplicamos la transición suave
+          setIndicatorStyle({
+            left: offsetLeft,
+            width: offsetWidth,
+            transition: 'none'
+          })
+        }
+        
+        // Después del primer renderizado, cambiamos el flag
+        if (isFirstRender.current) {
+          isFirstRender.current = false
+        }
       }
     }
   }
 
   const isActive = (href: string) => {
-    // Manejo especial para la ruta principal
-    if (href === '/' && currentPath === '/') return true
+    // Obtener la ruta sin hash
+    const pathWithoutHash = currentPath.split('#')[0]
     
-    // Para otras rutas, verificar si coinciden exactamente o si es una ruta con hash
-    if (href !== '/') {
-      return currentPath === href || (href.includes('#') && currentPath.includes(href))
+    // Manejo especial para la ruta principal
+    if (href === '/') {
+      return pathWithoutHash === '/' || pathWithoutHash === ''
     }
     
-    return false
+    // Para otras rutas, verificar coincidencia exacta
+    return pathWithoutHash === href
   }
 
   const linkBase =
@@ -116,49 +174,70 @@ const Navbar = () => {
 
           {/* Links escritorio */}
           <div className="hidden md:flex items-center justify-center space-x-4 flex-1 ml-8">
-            {NAV.map(({ label, href }) => {
+            {NAV.map(({ label, href }, index) => {
               const active = isActive(href)
               return (
-                <a
+                <Link
                   key={href}
-                  href={href}
+                  to={href}
+                  ref={el => navRefs.current[index] = el}
                   className={`${linkBase} ${active ? (scrolled ? 'text-primary-600 font-semibold' : 'text-white font-semibold') : ''}`}
                 >
                   <span className="relative z-10">{label}</span>
-                  {/* Indicador verde que siempre está alineado con su enlace */}
-                  <span 
-                    className={`absolute left-0 right-0 bottom-0 h-[3px] bg-green-500 transition-transform duration-300 ease-in-out ${
-                      active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                    }`}
-                    style={{ transformOrigin: 'center' }}
-                  />
-                </a>
+                </Link>
               )
             })}
           </div>
           
           {/* CTAs escritorio */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className={scrolled ? "text-primary-600 hover:bg-primary-50" : "text-white hover:text-white/90"}
-              asChild
-            >
-              <a href="/calendario" className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1.5" />
-                <span>Agendar</span>
-              </a>
-            </Button>
-            <Button 
-              size="sm"
-              asChild
-              className={!scrolled ? "text-primary-700 hover:bg-white/90" : ""}
-            >
-              <a href="/cotizar" className="flex items-center">
-                <span>Cotización</span>
-              </a>
-            </Button>
+            {/* Botones de autenticación */}
+            <div className="flex items-center space-x-2 mr-2">
+              {isAuthenticated ? (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className={scrolled ? "text-primary-600 hover:bg-primary-50" : "text-white hover:text-white/90"}
+                    asChild
+                  >
+                    <Link to={isVerified ? '/platform' : '/verify-reminder'} className="flex items-center">
+                      <User className="w-4 h-4 mr-1.5" />
+                      <span>{isVerified ? 'Mi Plataforma' : 'Verificar Email'}</span>
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className={scrolled ? "text-gray-600 hover:bg-gray-50" : "text-gray-200 hover:bg-primary-700/30"}
+                    onClick={logout}
+                  >
+                    <LogOut className="w-4 h-4 mr-1.5" />
+                    <span>Salir</span>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className={scrolled ? "text-gray-600 hover:bg-gray-50" : "text-gray-200 hover:bg-primary-700/30"}
+                    onClick={openLoginModal}
+                  >
+                    <LogIn className="w-4 h-4 mr-1.5" />
+                    <span>Iniciar Sesión</span>
+                  </Button>
+                  <Button 
+                    size="sm"
+                    className="bg-accent-500 text-white hover:bg-accent-600"
+                    onClick={openRegisterModal}
+                  >
+                    <UserPlus className="w-4 h-4 mr-1.5" />
+                    <span>Registrarse</span>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           
           {/* Botón de menú móvil */}
@@ -232,9 +311,9 @@ const Navbar = () => {
                   {NAV.map(({ label, href }) => {
                     const active = isActive(href);
                     return (
-                      <a
+                      <Link
                         key={href}
-                        href={href}
+                        to={href}
                         className={`flex items-center rounded-lg px-4 py-3 text-sm font-medium transition-all mb-1 w-full ${
                           active 
                             ? 'bg-primary-50 text-primary-600 font-medium' 
@@ -243,7 +322,7 @@ const Navbar = () => {
                         onClick={() => setOpen(false)}
                       >
                         {label}
-                      </a>
+                      </Link>
                     );
                   })}
                 </nav>
@@ -251,6 +330,42 @@ const Navbar = () => {
               
               {/* Footer con acciones */}
               <div className="px-4 py-4 border-t border-gray-100 space-y-3">
+                {/* Botones de autenticación */}
+                {isAuthenticated ? (
+                  <div className="flex items-center gap-3">
+                    <Link
+                      to={isVerified ? '/platform' : '/verify-reminder'}
+                      className="inline-flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-md bg-primary-500 text-white hover:bg-primary-600 transition-colors"
+                    >
+                      <User className="w-4 h-4 mr-1.5" />
+                      {isVerified ? 'Mi Plataforma' : 'Verificar Email'}
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="inline-flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4 mr-1.5" />
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={openLoginModal}
+                      className="inline-flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-md border border-gray-300 text-primary-600 hover:bg-gray-50 transition-colors"
+                    >
+                      <LogIn className="w-4 h-4 mr-1.5" />
+                      Iniciar Sesión
+                    </button>
+                    <button
+                      onClick={openRegisterModal}
+                      className="inline-flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-md bg-accent-500 text-white hover:bg-accent-600 transition-colors"
+                    >
+                      <UserPlus className="w-4 h-4 mr-1.5" />
+                      Registrarse
+                    </button>
+                  </div>
+                )}
                 <div className="flex items-center text-sm text-gray-600 mb-3 px-2">
                   <Phone className="w-4 h-4 mr-2 text-primary-500 flex-shrink-0" />
                   <a href="tel:+56223456789" className="hover:text-primary-600 truncate">

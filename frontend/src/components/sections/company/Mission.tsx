@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { motion, Variants } from 'framer-motion';
 import SectionConnector from '../../ui/SectionConnector';
+import React from 'react';
 
 const Mission: FC = () => {
   // Animaciones para los componentes

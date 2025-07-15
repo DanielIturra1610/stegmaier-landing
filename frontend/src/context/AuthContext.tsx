@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Estado inicial de autenticación
 const initialState: AuthState = {
-  user: null,
+  user: null as User | null,
   token: null,
   isAuthenticated: false,
   isVerified: false,
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Recuperar datos de almacenamiento al iniciar
     const token = localStorage.getItem('auth_token');
     const userStr = localStorage.getItem('auth_user');
-    let user = null;
+    let user: User | null = null;
     
     try {
       if (userStr) {
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       user,
       token,
       isAuthenticated: !!token,
-      isVerified: user?.verified || false,
+      isVerified: user ? user.verified || false : false,
       isLoading: !!token, // Si hay token, verificaremos su validez
     };
   });
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const verifyToken = async () => {
       if (state.token) {
         try {
-          const user = await authService.getCurrentUser();
+          const user: User = await authService.getCurrentUser();
           setState(prev => ({
             ...prev,
             user,

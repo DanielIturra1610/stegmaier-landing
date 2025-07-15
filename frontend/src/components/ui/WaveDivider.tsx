@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import React from 'react';
 
 type WavePosition = 'top' | 'bottom';
 type WaveColor = 'primary-700' | 'primary-800' | 'primary-850' | 'primary-900';

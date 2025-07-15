@@ -3,6 +3,7 @@ import { Quote, Star, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../../lib/utils'
 import Button from '../../ui/button'
+import React from 'react';
 import SectionConnector from '../../ui/SectionConnector'
 
 const testimonials = [

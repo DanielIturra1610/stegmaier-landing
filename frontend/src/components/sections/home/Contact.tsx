@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { useState } from 'react'
+import React from 'react';
 import {
   Mail,
   Phone,
@@ -16,6 +17,7 @@ import { cn } from '../../../lib/utils'
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik'
 import * as Yup from 'yup'
 import toast from 'react-hot-toast'
+
 
 // ───────────────────────────────────────────────────────────
 //  FORMULARIO DE CONTACTO

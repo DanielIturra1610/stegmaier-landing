@@ -4,6 +4,7 @@ import Methodology from '../components/sections/consulting/Methodology';
 import DiagnosticProjects from '../components/sections/consulting/DiagnosticProjects';
 import Services from '../components/sections/consulting/Services';
 import QuoteProcess from '../components/sections/consulting/QuoteProcess';
+import React from 'react';
 
 function ConsultingPage() {
   useEffect(() => {

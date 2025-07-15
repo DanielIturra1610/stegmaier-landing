@@ -1,6 +1,7 @@
 // src/components/sections/home/Services.tsx
 import { FC, useState } from 'react'
 import * as L from 'lucide-react'
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion'
 import ServiceCard from '../../ui/ServiceCard'
 import Button from '../../ui/button'
