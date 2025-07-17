@@ -1,107 +1,85 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, AuthState, LoginCredentials, RegisterData } from '../types/auth';
+import { authService } from '../services/auth.service';
 
-// Tipos para el contexto de autenticación
-interface AuthState {
-  isAuthenticated: boolean;
-  isVerified: boolean;
-  isLoading: boolean;
-  user: User | null;
-  token: string | null;
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  isVerified: boolean;
-}
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isVerified: boolean;
-  isLoading: boolean;
-  user: User | null;
+interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
-  verifyEmail: (token: string) => Promise<void>;
-  resendVerification: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<boolean>;
+  resendVerification: (email: string) => Promise<boolean>;
+  clearError: () => void;
 }
 
-// Crear el contexto
+// Crear contexto con valor predeterminado
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Props para el proveedor
+// Estado inicial de autenticación
+const initialState: AuthState = {
+  user: null as User | null,
+  token: null,
+  isAuthenticated: false,
+  isVerified: false,
+  isLoading: true,
+  error: null,
+};
+
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 // Proveedor del contexto
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Estado inicial
+  // Estado de autenticación
   const [state, setState] = useState<AuthState>(() => {
+    // Recuperar datos de almacenamiento al iniciar
     const token = localStorage.getItem('auth_token');
-    // Si hay un token en localStorage, consideramos al usuario como autenticado
-    // pero necesitamos verificar si el token es válido
+    const userStr = localStorage.getItem('auth_user');
+    let user: User | null = null;
+    
+    try {
+      if (userStr) {
+        user = JSON.parse(userStr) as User;
+      }
+    } catch (error) {
+      console.error('Error parsing user from localStorage', error);
+    }
+    
     return {
+      ...initialState,
+      user,
+      token,
       isAuthenticated: !!token,
-      isVerified: false, // Por defecto, asumimos que no está verificado hasta comprobar
-      isLoading: !!token, // Si hay token, estamos cargando la verificación
-      user: null,
-      token
+      isVerified: user ? (user.verified || false) : false,
+      isLoading: !!token, // Si hay token, verificaremos su validez
     };
   });
 
-  // Efecto para verificar el token al cargar
+  // Verificar token al inicio
   useEffect(() => {
     const verifyToken = async () => {
       if (state.token) {
         try {
-          // Simulamos una llamada a la API para verificar el token
-          // En un entorno real, esto sería una llamada a tu backend
-          const response = await new Promise<User>((resolve) => {
-            setTimeout(() => {
-              resolve({
-                id: '1',
-                name: 'Usuario Demo',
-                email: 'demo@stegmaier.cl',
-                isVerified: true
-              });
-            }, 1000);
-          });
-
-          setState({
-            ...state,
+          const user: User = await authService.getCurrentUser();
+          setState(prev => ({
+            ...prev,
+            user,
             isAuthenticated: true,
-            isVerified: response.isVerified,
+            isVerified: user.verified,
             isLoading: false,
-            user: response
-          });
+            error: null,
+          }));
         } catch (error) {
-          console.error('Error al verificar token:', error);
-          // Si hay un error, limpiamos el estado y el token
+          console.error('Token verification failed', error);
+          // Limpiar datos si el token no es válido
           localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
           setState({
-            isAuthenticated: false,
-            isVerified: false,
+            ...initialState,
             isLoading: false,
-            user: null,
-            token: null
           });
         }
       } else {
-        // Si no hay token, no estamos cargando
         setState(prev => ({ ...prev, isLoading: false }));
       }
     };
@@ -111,152 +89,137 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [state.token, state.isLoading]);
 
-  // Función para iniciar sesión
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  // Iniciar sesión
+  const login = async (credentials: LoginCredentials) => {
     try {
-      // Simulamos una llamada a la API para iniciar sesión
-      // En un entorno real, esto sería una llamada a tu backend
-      const response = await new Promise<{ token: string; user: User }>((resolve, reject) => {
-        setTimeout(() => {
-          // Validación simple para demo
-          if (credentials.email === 'demo@stegmaier.cl' && credentials.password === 'password') {
-            resolve({
-              token: 'fake_jwt_token',
-              user: {
-                id: '1',
-                name: 'Usuario Demo',
-                email: 'demo@stegmaier.cl',
-                isVerified: true
-              }
-            });
-          } else {
-            reject(new Error('Credenciales inválidas'));
-          }
-        }, 1000);
-      });
-
-      // Guardar el token en localStorage
-      localStorage.setItem('auth_token', response.token);
-
-      // Actualizar el estado
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const { user, token } = await authService.login(credentials);
+      
+      // Guardar datos en almacenamiento local
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      
       setState({
+        user,
+        token,
         isAuthenticated: true,
-        isVerified: response.user.isVerified,
+        isVerified: user.verified,
         isLoading: false,
-        user: response.user,
-        token: response.token
+        error: null,
       });
-    } catch (error) {
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Error al iniciar sesión';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
       throw error;
     }
   };
 
-  // Función para registrarse
-  const register = async (credentials: RegisterCredentials): Promise<void> => {
+  // Registrar usuario
+  const register = async (userData: RegisterData) => {
     try {
-      // Simulamos una llamada a la API para registrarse
-      // En un entorno real, esto sería una llamada a tu backend
-      const response = await new Promise<{ token: string; user: User }>((resolve, reject) => {
-        setTimeout(() => {
-          // En un escenario real, verificaríamos si el email ya existe
-          resolve({
-            token: 'fake_jwt_token',
-            user: {
-              id: '2',
-              name: credentials.name,
-              email: credentials.email,
-              isVerified: false // Por defecto, un usuario nuevo no está verificado
-            }
-          });
-        }, 1000);
-      });
-
-      // Guardar el token en localStorage
-      localStorage.setItem('auth_token', response.token);
-
-      // Actualizar el estado
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const { user, token } = await authService.register(userData);
+      
+      // Guardar datos en almacenamiento local
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      
       setState({
+        user,
+        token,
         isAuthenticated: true,
-        isVerified: response.user.isVerified,
+        isVerified: user.verified,
         isLoading: false,
-        user: response.user,
-        token: response.token
+        error: null,
       });
-    } catch (error) {
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Error al registrar usuario';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
       throw error;
     }
   };
 
-  // Función para cerrar sesión
-  const logout = (): void => {
-    // Eliminar el token de localStorage
-    localStorage.removeItem('auth_token');
-
-    // Actualizar el estado
+  // Cerrar sesión
+  const logout = () => {
+    authService.logout();
     setState({
-      isAuthenticated: false,
-      isVerified: false,
+      ...initialState,
       isLoading: false,
-      user: null,
-      token: null
     });
   };
-
-  // Función para verificar el email
-  const verifyEmail = async (token: string): Promise<void> => {
+  
+  // Verificar email
+  const verifyEmail = async (token: string): Promise<boolean> => {
     try {
-      // Simulamos una llamada a la API para verificar el email
-      // En un entorno real, esto sería una llamada a tu backend
-      await new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          // Simulamos una verificación exitosa
-          resolve();
-        }, 1000);
-      });
-
-      // Actualizar el estado si el usuario está autenticado
-      if (state.user) {
-        setState({
-          ...state,
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const response = await authService.verifyEmail(token);
+      
+      if (response.success && state.user) {
+        // Actualizar estado del usuario como verificado
+        const updatedUser = { ...state.user, verified: true };
+        localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+        
+        setState(prev => ({
+          ...prev,
+          user: updatedUser,
           isVerified: true,
-          user: {
-            ...state.user,
-            isVerified: true
-          }
-        });
+          isLoading: false,
+          error: null,
+        }));
       }
-    } catch (error) {
-      throw error;
+      
+      return response.success;
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Error al verificar correo';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
+      return false;
     }
   };
 
-  // Función para reenviar el email de verificación
-  const resendVerification = async (): Promise<void> => {
+  // Reenviar verificación
+  const resendVerification = async (email: string): Promise<boolean> => {
     try {
-      // Simulamos una llamada a la API para reenviar el email de verificación
-      // En un entorno real, esto sería una llamada a tu backend
-      await new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          // Simulamos un reenvío exitoso
-          resolve();
-        }, 1000);
-      });
-    } catch (error) {
-      throw error;
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      const response = await authService.resendVerification(email);
+      setState(prev => ({ ...prev, isLoading: false }));
+      return response.success;
+    } catch (error: any) {
+      const message = error.response?.data?.detail || 'Error al reenviar verificación';
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
+      return false;
     }
   };
 
-  // Valor del contexto
+  // Limpiar errores
+  const clearError = () => {
+    setState(prev => ({ ...prev, error: null }));
+  };
+
+  // Valores del contexto
   const contextValue: AuthContextType = {
-    isAuthenticated: state.isAuthenticated,
-    isVerified: state.isVerified,
-    isLoading: state.isLoading,
-    user: state.user,
+    ...state,
     login,
     register,
     logout,
     verifyEmail,
-    resendVerification
+    resendVerification,
+    clearError,
   };
 
   return (
@@ -266,11 +229,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// Hook para usar el contexto
+// Hook personalizado para usar el contexto
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+  
   if (context === undefined) {
     throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
+  
   return context;
 };
+
+export default AuthContext;

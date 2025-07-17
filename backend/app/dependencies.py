@@ -14,6 +14,7 @@ from .domain.repositories.course_repository import CourseRepository
 from .domain.repositories.lesson_repository import LessonRepository
 from .domain.repositories.enrollment_repository import EnrollmentRepository
 from .domain.repositories.review_repository import ReviewRepository
+from .domain.repositories.verification_token_repository import VerificationTokenRepository
 
 # Importación de implementaciones de repositorios
 from .infrastructure.repositories.user_repository_impl import MongoDBUserRepository
@@ -21,6 +22,7 @@ from .infrastructure.repositories.course_repository_impl import MongoDBCourseRep
 from .infrastructure.repositories.lesson_repository_impl import MongoDBLessonRepository
 from .infrastructure.repositories.enrollment_repository_impl import MongoDBEnrollmentRepository
 from .infrastructure.repositories.review_repository_impl import MongoDBReviewRepository
+from .infrastructure.repositories.mongo_verification_token_repository import MongoVerificationTokenRepository
 
 # Importación de servicios
 from .application.services.user_service import UserService
@@ -62,6 +64,14 @@ async def get_review_repository(db: AsyncIOMotorDatabase = Depends(get_database)
     """
     return MongoDBReviewRepository(db)
 
+async def get_verification_token_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> VerificationTokenRepository:
+    """
+    Proporciona una instancia configurada del repositorio de tokens de verificación.
+    """
+    # Asumimos que la colección se llamará 'verification_tokens'
+    collection = db.verification_tokens
+    return MongoVerificationTokenRepository(collection)
+
 # Dependencias de servicios
 
 async def get_user_service(user_repository: UserRepository = Depends(get_user_repository)) -> UserService:
@@ -70,11 +80,14 @@ async def get_user_service(user_repository: UserRepository = Depends(get_user_re
     """
     return UserService(user_repository)
 
-async def get_auth_service(user_repository: UserRepository = Depends(get_user_repository)) -> AuthService:
+async def get_auth_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+    verification_token_repository: VerificationTokenRepository = Depends(get_verification_token_repository)
+) -> AuthService:
     """
     Proporciona una instancia configurada del servicio de autenticación.
     """
-    return AuthService(user_repository)
+    return AuthService(user_repository, verification_token_repository)
 
 async def get_course_service(
     course_repository: CourseRepository = Depends(get_course_repository),

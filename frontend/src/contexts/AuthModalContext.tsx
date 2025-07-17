@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
-type ModalType = 'login' | 'register' | null;
+type ModalType = 'login' | 'register' | 'verification' | null;
 
 interface AuthModalContextType {
   modalType: ModalType;
@@ -8,6 +8,7 @@ interface AuthModalContextType {
   openRegisterModal: () => void;
   closeModal: () => void;
   isModalOpen: boolean;
+  setModalType: (type: ModalType) => void;
 }
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
@@ -27,7 +28,8 @@ export const AuthModalProvider: React.FC<{ children: ReactNode }> = ({ children 
         openLoginModal,
         openRegisterModal,
         closeModal,
-        isModalOpen
+        isModalOpen,
+        setModalType
       }}
     >
       {children}

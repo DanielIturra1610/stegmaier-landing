@@ -116,3 +116,31 @@ class PasswordReset(BaseModel):
                 "confirm_password": "newSecret123"
             }
         }
+
+
+class VerificationResponse(BaseModel):
+    """DTO para respuesta de verificación de correo"""
+    success: bool = Field(..., description="Indica si la operación fue exitosa")
+    message: str = Field(..., description="Mensaje informativo")
+    user_id: Optional[str] = Field(None, description="ID del usuario verificado (si la operación fue exitosa)")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "success": True,
+                "message": "Correo electrónico verificado correctamente",
+                "user_id": "60d21b4967d0d8992e610c85"
+            }
+        }
+
+
+class ResendVerificationRequest(BaseModel):
+    """DTO para solicitud de reenvío de verificación de correo"""
+    email: EmailStr = Field(..., description="Correo electrónico", example="john@example.com")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "john@example.com"
+            }
+        }
