@@ -93,17 +93,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
-      const { user, token } = await authService.login(credentials);
+      const authResponse = await authService.login(credentials);
       
-      // Guardar datos en almacenamiento local
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('auth_user', JSON.stringify(user));
+      // El token ya se guarda en el servicio de autenticación
+      // No es necesario volver a guardarlo aquí
+      
+      // Crear objeto de usuario a partir de los datos de la respuesta
+      const user: User = {
+        id: authResponse.user_id,
+        email: authResponse.email,
+        firstName: '', // Estos campos no vienen en la respuesta
+        lastName: '',  // pero son necesarios para el tipo User
+        role: authResponse.role as any,
+        verified: true, // Asumimos que está verificado si puede iniciar sesión
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
       
       setState({
         user,
-        token,
+        token: authResponse.access_token,
         isAuthenticated: true,
-        isVerified: user.verified,
+        isVerified: true,
         isLoading: false,
         error: null,
       });
@@ -122,17 +133,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterData) => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
-      const { user, token } = await authService.register(userData);
+      const authResponse = await authService.register(userData);
       
-      // Guardar datos en almacenamiento local
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('auth_user', JSON.stringify(user));
+      // El token ya se guarda en el servicio de autenticación
+      // No es necesario volver a guardarlo aquí
+      
+      // Crear objeto de usuario a partir de los datos de la respuesta
+      const user: User = {
+        id: authResponse.user_id,
+        email: authResponse.email,
+        firstName: userData.firstName, // Usamos los datos que se enviaron al registrar
+        lastName: userData.lastName,
+        role: authResponse.role as any,
+        verified: false, // Por defecto el usuario no estará verificado al registrarse
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
       
       setState({
         user,
-        token,
+        token: authResponse.access_token,
         isAuthenticated: true,
-        isVerified: user.verified,
+        isVerified: false,
         isLoading: false,
         error: null,
       });

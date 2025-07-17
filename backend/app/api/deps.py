@@ -60,8 +60,8 @@ async def get_current_user(
         # Decodificar el token JWT
         payload = jwt.decode(
             token,
-            settings.jwt_secret_key,
-            algorithms=[settings.jwt_algorithm]
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM]
         )
         
         # Extraer los datos del token

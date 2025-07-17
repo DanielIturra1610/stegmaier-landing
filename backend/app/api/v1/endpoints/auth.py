@@ -2,7 +2,6 @@
 Endpoints para la autenticación de usuarios
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from app.application.services.auth_service import AuthService
 from app.application.dtos.auth_dto import (
     Token, LoginData, RegistrationData, 
@@ -15,22 +14,17 @@ router = APIRouter()
 
 @router.post("/login", response_model=Token, summary="Iniciar sesión")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    login_data: LoginData,
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """
-    Inicia sesión y obtiene un token JWT.
+    Inicia sesión y obtiene un token JWT usando JSON.
     
     - **username**: Nombre de usuario o email
     - **password**: Contraseña
     
     Retorna un token de acceso JWT si las credenciales son válidas.
     """
-    # Crear datos de inicio de sesión a partir del formulario
-    login_data = LoginData(
-        username=form_data.username,
-        password=form_data.password
-    )
     
     # Autenticar al usuario
     user = await auth_service.authenticate_user(login_data)
@@ -50,10 +44,9 @@ async def register_user(registration_data: RegistrationData, auth_service: AuthS
     """Registra un nuevo usuario en el sistema.
     
     - **email**: Email del usuario
-    - **username**: Nombre de usuario
+    - **firstName**: Nombre del usuario
+    - **lastName**: Apellido del usuario
     - **password**: Contraseña
-    - **confirm_password**: Confirmación de contraseña
-    - **full_name**: Nombre completo del usuario
     """
     try:
         user, verification_token = await auth_service.register_user(registration_data)

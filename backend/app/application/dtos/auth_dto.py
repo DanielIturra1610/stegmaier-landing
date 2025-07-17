@@ -7,15 +7,31 @@ import re
 
 class LoginData(BaseModel):
     """DTO para inicio de sesión"""
-    username: str = Field(..., description="Nombre de usuario o email", example="johndoe")
+    username: Optional[str] = Field(None, description="Nombre de usuario o email", example="johndoe")
+    email: Optional[str] = Field(None, description="Email del usuario", example="johndoe@example.com")
     password: str = Field(..., min_length=6, description="Contraseña", example="secret123")
-
+    
+    @validator('username', 'email')
+    def validate_login_fields(cls, v, values):
+        # Asegurarse de que al menos uno de username o email esté presente
+        username = values.get('username')
+        email = values.get('email')
+        if not username and not email and not v:
+            raise ValueError('Se requiere proporcionar un nombre de usuario o email')
+        return v
+    
     class Config:
         schema_extra = {
-            "example": {
-                "username": "johndoe",
-                "password": "secret123"
-            }
+            "examples": [
+                {
+                    "username": "johndoe",
+                    "password": "secret123"
+                },
+                {
+                    "email": "johndoe@example.com",
+                    "password": "secret123"
+                }
+            ]
         }
 
 
@@ -55,31 +71,17 @@ class Token(BaseModel):
 class RegistrationData(BaseModel):
     """DTO para registro de usuario"""
     email: EmailStr = Field(..., description="Correo electrónico", example="john@example.com")
-    username: str = Field(..., min_length=3, max_length=50, description="Nombre de usuario", example="johndoe")
+    firstName: str = Field(..., min_length=2, max_length=50, description="Nombre", example="John")
+    lastName: str = Field(..., min_length=2, max_length=50, description="Apellido", example="Doe")
     password: str = Field(..., min_length=6, description="Contraseña", example="secret123")
-    confirm_password: str = Field(..., description="Confirmación de contraseña", example="secret123")
-    full_name: str = Field(..., min_length=3, max_length=100, description="Nombre completo", example="John Doe")
-
-    @validator('username')
-    def username_alphanumeric(cls, v):
-        if not re.match(r'^[a-zA-Z0-9_-]+$', v):
-            raise ValueError('El nombre de usuario debe contener solo letras, números, guiones y guiones bajos')
-        return v
-
-    @validator('confirm_password')
-    def passwords_match(cls, v, values, **kwargs):
-        if 'password' in values and v != values['password']:
-            raise ValueError('Las contraseñas no coinciden')
-        return v
-
+    
     class Config:
         schema_extra = {
             "example": {
                 "email": "john@example.com",
-                "username": "johndoe",
-                "password": "secret123",
-                "confirm_password": "secret123",
-                "full_name": "John Doe"
+                "firstName": "John",
+                "lastName": "Doe",
+                "password": "secret123"
             }
         }
 

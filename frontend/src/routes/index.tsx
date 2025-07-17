@@ -9,8 +9,6 @@ import PlatformLayout from '../components/layout/PlatformLayout';
 import { HomePage } from '../app';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
-import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
-import VerifyReminderPage from '../pages/auth/VerifyReminderPage';
 import ResendVerificationPage from '../pages/auth/ResendVerificationPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import CompanyPage from '../pages/CompanyPage';
@@ -43,8 +41,6 @@ const AppRoutes: React.FC = () => {
         {/* Rutas de autenticación */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
-        <Route path="/verify-reminder" element={<VerifyReminderPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
         
         {/* Ruta 404 */}

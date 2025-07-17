@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import FormInput from '../ui/FormInput';
 import Alert from '../ui/Alert';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -29,7 +29,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath = '/platf
     try {
       setLoginError(null);
       
-      // Llamamos al servicio de autenticación
+      // Llamamos al servicio de autenticación (el servicio se encarga de adaptar el formato)
       await login(values);
       
       // Verificamos si el email está verificado
@@ -43,8 +43,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath = '/platf
       if (onSuccess) {
         onSuccess();
       } else {
-        // Redirección por defecto
-        window.location.href = redirectPath;
+        // Aseguramos que la redirección use la URL completa y correcta
+        console.log('Redirigiendo a:', redirectPath);
+        // Forzamos la redirección usando una ruta absoluta
+        const baseUrl = window.location.origin;
+        const fullRedirectPath = redirectPath.startsWith('/') ? 
+          `${baseUrl}${redirectPath}` : 
+          `${baseUrl}/${redirectPath}`;
+          
+        console.log('URL completa:', fullRedirectPath);
+        window.location.replace(fullRedirectPath);
       }
     } catch (error: any) {
       // Manejar errores específicos de la API

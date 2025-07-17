@@ -32,8 +32,13 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user_id: string;
+  username: string;
+  email: string;
+  role: string;
   message?: string;
 }
 

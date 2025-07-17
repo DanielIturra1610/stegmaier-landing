@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import FormInput from '../ui/FormInput';
 import Alert from '../ui/Alert';
 import LoadingSpinner from '../ui/LoadingSpinner';

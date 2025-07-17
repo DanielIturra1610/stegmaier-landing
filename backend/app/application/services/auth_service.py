@@ -35,13 +35,17 @@ class AuthService:
         """
         user = None
         
-        # Intentar autenticar por email
-        if "@" in login_data.username:
-            user = await self.user_repository.get_by_email(login_data.username)
+        # Si se proporciona email, intentar autenticar por email primero
+        if login_data.email:
+            user = await self.user_repository.get_by_email(login_data.email)
         
-        # Si no se encuentra, intentar por nombre de usuario
-        if not user:
-            user = await self.user_repository.get_by_username(login_data.username)
+        # Si no hay email o no se encontró usuario, intentar con username
+        if not user and login_data.username:
+            # Comprobar si el username parece un email
+            if "@" in login_data.username:
+                user = await self.user_repository.get_by_email(login_data.username)
+            else:
+                user = await self.user_repository.get_by_username(login_data.username)
         
         # Verificar si el usuario existe y la contraseña es correcta
         if not user or not verify_password(login_data.password, user.hashed_password):
@@ -63,26 +67,26 @@ class AuthService:
         Returns:
             Token de acceso JWT y su tiempo de expiración
         """
-        access_token_expires = timedelta(minutes=self.settings.access_token_expire_minutes)
+        access_token_expires = timedelta(minutes=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         
         # Crear los datos que se incluirán en el token
         token_data = {
-            "sub": user.id,
             "email": user.email,
             "username": user.username,
             "role": user.role
         }
         
-        # Crear el token
+        # Crear el token incluyendo los datos adicionales
         access_token = create_access_token(
-            data=token_data, 
+            subject=user.id, 
+            additional_data=token_data,
             expires_delta=access_token_expires
         )
         
         return Token(
             access_token=access_token,
             token_type="bearer",
-            expires_in=self.settings.access_token_expire_minutes * 60,  # en segundos
+            expires_in=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # en segundos
             user_id=user.id,
             username=user.username,
             email=user.email,
@@ -100,26 +104,34 @@ class AuthService:
             Tupla con el usuario registrado y el token de verificación
         
         Raises:
-            ValueError: Si el email o nombre de usuario ya están registrados
+            ValueError: Si el email ya está registrado
         """
         # Verificar si el email ya está registrado
         existing_email = await self.user_repository.get_by_email(registration_data.email)
         if existing_email:
             raise ValueError("El email ya está registrado")
         
-        # Verificar si el nombre de usuario ya está registrado
-        existing_username = await self.user_repository.get_by_username(registration_data.username)
+        # Generar un nombre de usuario único basado en el email
+        username = registration_data.email.split('@')[0]
+        
+        # Verificar si el nombre de usuario generado ya existe
+        existing_username = await self.user_repository.get_by_username(username)
         if existing_username:
-            raise ValueError("El nombre de usuario ya está en uso")
+            # Agregar un número aleatorio al final si ya existe
+            import random
+            username = f"{username}{random.randint(100, 999)}"
+        
+        # Crear el nombre completo a partir de firstName y lastName
+        full_name = f"{registration_data.firstName} {registration_data.lastName}"
         
         # Crear el nuevo usuario con la contraseña hasheada
         hashed_password = get_password_hash(registration_data.password)
         
         user = User(
             email=registration_data.email,
-            username=registration_data.username,
+            username=username,
             hashed_password=hashed_password,
-            full_name=registration_data.full_name,
+            full_name=full_name,
             role="student",  # Por defecto, los usuarios registrados tienen rol de estudiante
             is_verified=False  # Por defecto, el usuario no está verificado
         )

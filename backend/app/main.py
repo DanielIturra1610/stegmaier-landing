@@ -59,13 +59,15 @@ def create_application() -> FastAPI:
         ],
     )
     
-    # Configuración de CORS
+    # Configuración de CORS - Mejorada para permitir todas las solicitudes
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
+        allow_origins=["*"],  # Permite todas las origins (en desarrollo)
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["*"],  # Permite todos los métodos
+        allow_headers=["*"],  # Permite todas las cabeceras
+        expose_headers=["*"],  # Expone todas las cabeceras
+        max_age=600  # Tiempo de caché para las comprobaciones preflight
     )
     
     # Eventos de inicio y cierre

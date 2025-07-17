@@ -8,7 +8,7 @@ import Contact from './components/sections/home/Contact';
 import CompanyPage from './pages/CompanyPage';
 import ConsultingPage from './pages/ConsultingPage';
 import React from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes';
 
 // Componente para la página de inicio que contiene todas las secciones

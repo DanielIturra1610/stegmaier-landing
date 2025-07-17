@@ -21,7 +21,14 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
     
     # CORS settings
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://stegmaier-frontend:5173",
+        "*"
+    ]
     
     class Config:
         case_sensitive = True
