@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+// @ts-ignore - Importar imágenes
+import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png'
 
 interface PlatformSidebarProps {
   isOpen: boolean;
@@ -38,11 +40,10 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
         <div className="flex items-center justify-between px-4 py-4 bg-primary-900">
           <div className="flex items-center">
             <img 
-              src="/assets/images/Stegmaierlogo.png" 
-              alt="Stegmaier" 
-              className="h-8"
+              src={StegmaierLogoBlanco} 
+              alt="Stegmaier Consulting Logo" 
+              className="w-36 h-10 object-contain"
             />
-            <span className="ml-2 text-white font-medium">Plataforma</span>
           </div>
           <button
             onClick={onClose}

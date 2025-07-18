@@ -81,8 +81,16 @@ export const authService = {
    * Cerrar sesión (cliente)
    */
   logout: (): void => {
+    // Limpieza inmediata del localStorage
+    localStorage.clear(); // Limpia todos los items de localStorage para evitar estado persistente
+    
+    // Como medida adicional, eliminamos explícitamente los elementos clave
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('redirect_after_logout');
+    
+    // No utilizamos timeout porque la redirección completa en AuthContext
+    // se encargará de renovar la página, lo que garantiza un estado limpio
   },
 
   /**

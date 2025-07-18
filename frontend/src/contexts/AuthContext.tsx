@@ -58,25 +58,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Verificar token al inicio
   useEffect(() => {
     const verifyToken = async () => {
-      if (state.token) {
+      // Si hay redirección después de logout, no verificamos el token
+      // Esto previene cualquier intento de restaurar la sesión durante el proceso de logout
+      const isLoggingOut = document.referrer.includes(window.location.origin) && 
+                          window.location.pathname === '/';
+                          
+      if (state.token && !isLoggingOut) {
         try {
           const user: User = await authService.getCurrentUser();
           setState(prev => ({
             ...prev,
             user,
             isAuthenticated: true,
-            isVerified: user.verified,
+            isVerified: true, // Para la plataforma de cursos, consideramos todos verificados
             isLoading: false,
             error: null,
           }));
         } catch (error) {
           console.error('Token verification failed', error);
-          // Limpiar datos si el token no es válido
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
+          // Limpiar datos completamente si el token no es válido
+          localStorage.clear(); // Limpieza completa
           setState({
-            ...initialState,
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isVerified: false,
             isLoading: false,
+            error: null
           });
         }
       } else {
@@ -105,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firstName: '', // Estos campos no vienen en la respuesta
         lastName: '',  // pero son necesarios para el tipo User
         role: authResponse.role as any,
-        verified: true, // Asumimos que está verificado si puede iniciar sesión
+        verified: true, // Para la plataforma de cursos, todos los usuarios se consideran verificados
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -171,11 +179,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Cerrar sesión
   const logout = () => {
-    authService.logout();
+    // Preparamos la redirección hacia la página principal
+    const homeUrl = window.location.origin + '/';
+    
+    // Primero actualizamos el estado con un estado consistente para evitar parpadeos en la UI
+    // Es importante hacer esto antes de limpiar el localStorage
     setState({
-      ...initialState,
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isVerified: false, // Esto es clave para evitar el problema con el botón
       isLoading: false,
+      error: null
     });
+    
+    // Ahora llamamos al servicio de autenticación para limpiar el localStorage
+    // El servicio elimina inmediatamente todas las claves del localStorage
+    authService.logout();
+    
+    // Como último paso, forzamos una recarga completa de la página
+    // usando replace para evitar entradas adicionales en el historial
+    // Esto garantiza un estado completamente limpio
+    window.location.replace(homeUrl);
   };
   
   // Verificar email

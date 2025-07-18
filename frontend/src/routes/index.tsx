@@ -7,7 +7,6 @@ import PlatformLayout from '../components/layout/PlatformLayout';
 
 // Páginas públicas
 import { HomePage } from '../app';
-import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ResendVerificationPage from '../pages/auth/ResendVerificationPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -39,7 +38,6 @@ const AppRoutes: React.FC = () => {
         <Route path="/empresa" element={<CompanyPage />} />
         
         {/* Rutas de autenticación */}
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
         

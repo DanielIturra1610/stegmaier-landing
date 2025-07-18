@@ -32,12 +32,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath = '/platf
       // Llamamos al servicio de autenticación (el servicio se encarga de adaptar el formato)
       await login(values);
       
-      // Verificamos si el email está verificado
-      if (!isVerified) {
-        setShowVerificationWarning(true);
-        setSubmitting(false);
-        return;
-      }
+      // Para usuarios de la plataforma de cursos, omitimos la verificación de email
+      // ya que todos los usuarios se consideran verificados
       
       // Callback opcional cuando el login es exitoso
       if (onSuccess) {

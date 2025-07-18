@@ -31,9 +31,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirigir a login si no está autenticado
+  // Redirigir a la página principal si no está autenticado
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/" state={{ from: location.pathname }} replace />;
   }
 
   // Si requiere verificación y no está verificado, redirigir a página de recordatorio
