@@ -15,9 +15,13 @@ import ConsultingPage from '../pages/ConsultingPage';
 
 // Páginas de la plataforma (protegidas)
 import DashboardPage from '../pages/platform/DashboardPage';
-import CoursesListPage from '../pages/platform/CoursesListPage';
+import CoursesPage from '../pages/platform/CoursesPage';
 import CourseDetailPage from '../pages/platform/CourseDetailPage';
 import ProfilePage from '../pages/platform/ProfilePage';
+import SettingsPage from '../pages/platform/SettingsPage';
+import CertificatesPage from '../pages/platform/CertificatesPage';
+import ProgressPage from '../pages/platform/ProgressPage';
+import SupportPage from '../pages/platform/SupportPage';
 
 // Protección de rutas
 import ProtectedRoute from './ProtectedRoute';
@@ -58,11 +62,23 @@ const AppRoutes: React.FC = () => {
         <Route index element={<DashboardPage />} />
         
         {/* Gestión de cursos */}
-        <Route path="courses" element={<CoursesListPage />} />
+        <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />
+        
+        {/* Configuración */}
+        <Route path="settings" element={<SettingsPage />} />
+        
+        {/* Certificados */}
+        <Route path="certificates" element={<CertificatesPage />} />
+        
+        {/* Progreso */}
+        <Route path="progress" element={<ProgressPage />} />
+        
+        {/* Soporte */}
+        <Route path="support" element={<SupportPage />} />
       </Route>
       
       {/* Redireccionar rutas desconocidas al 404 */}

@@ -3,6 +3,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  full_name?: string; // Agregado para soportar la respuesta del backend
   role: 'student' | 'instructor' | 'admin';
   profileImage?: string;
   verified: boolean;

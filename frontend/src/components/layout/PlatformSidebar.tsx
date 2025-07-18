@@ -29,10 +29,11 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
         />
       )}
       
-      {/* Sidebar principal */}
+      {/* Sidebar principal - Ahora con posición sticky para mantenerlo visible al hacer scroll */}
       <div 
         className={`
-          fixed inset-y-0 left-0 z-30 w-64 bg-primary-800 transform transition duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+          fixed inset-y-0 left-0 z-30 w-64 bg-primary-800 transform transition duration-300 ease-in-out 
+          lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen overflow-hidden flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >

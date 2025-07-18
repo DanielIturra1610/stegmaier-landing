@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import CourseCard from '../../components/courses/CourseCard';
 
 /**
  * Dashboard principal de la plataforma
@@ -41,14 +42,29 @@ const DashboardPage: React.FC = () => {
     <div className="space-y-6 pb-10">
       {/* Cabecera de bienvenida */}
       <header>
-        <div className="bg-primary-700 rounded-lg shadow-md p-6">
-          <div className="content-overlay">
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Bienvenido, {user?.firstName || 'Estudiante'}
-            </h1>
-            <p className="text-primary-100">
-              Continúa tu aprendizaje donde lo dejaste
-            </p>
+        <div className="bg-primary-700 rounded-lg shadow-md p-6 bg-gradient-to-r from-primary-700 to-primary-800">
+          <div className="content-overlay flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Bienvenido, {user ? (
+                  user.full_name ? 
+                    user.full_name.split(' ')[0] : // Solo tomar el primer nombre para el saludo
+                    (user.firstName || user.lastName ? 
+                      user.firstName || user.lastName : 
+                      'Estudiante')
+                ) : 'Estudiante'}
+              </h1>
+              <p className="text-primary-100 text-lg">
+                Continúa tu aprendizaje donde lo dejaste
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <div className="bg-white bg-opacity-10 p-3 rounded-full h-20 w-20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -101,58 +117,18 @@ const DashboardPage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {courses.length > 0 ? (
-            courses.slice(0, 2).map((course) => (
-              <div key={course.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-                <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/3 h-48 md:h-auto relative">
-                    <img 
-                      src={course.image || '/assets/images/course-placeholder.jpg'} 
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-0 left-0 p-2 bg-primary-600 text-white text-xs font-medium">
-                      {course.progress > 0 ? 'En progreso' : 'Nuevo'}
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 md:w-2/3 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-bold text-lg mb-2">{course.title}</h3>
-                      <div className="flex items-center text-sm text-gray-600 mb-3">
-                        <svg className="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>{course.completedLessons} de {course.lessons} lecciones completadas</span>
-                      </div>
-                      
-                      {/* Barra de progreso */}
-                      <div className="relative pt-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-xs font-medium text-gray-500">Progreso</div>
-                          <div className="text-xs font-medium text-primary-600">{course.progress}%</div>
-                        </div>
-                        <div className="overflow-hidden h-2 text-xs flex rounded bg-primary-100">
-                          <div 
-                            style={{ width: `${course.progress}%` }} 
-                            className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-600"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <Link 
-                        to={`/platform/courses/${course.id}`}
-                        className="inline-block px-4 py-2 border border-primary-600 text-primary-600 rounded-md text-sm font-medium hover:bg-primary-600 hover:text-white transition-colors duration-200"
-                      >
-                        {course.progress > 0 ? 'Continuar' : 'Comenzar'} curso
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            courses.map(course => (
+              <CourseCard 
+                key={course.id}
+                id={course.id}
+                title={course.title}
+                image={course.image}
+                progress={course.progress}
+                lessons={course.lessons}
+                completedLessons={course.completedLessons}
+              />
             ))
           ) : (
             <div className="col-span-2 bg-white rounded-lg p-6 text-center">
