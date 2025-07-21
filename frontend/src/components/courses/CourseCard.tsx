@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowRightIcon, ClockIcon, CalendarIcon, ChartBarIcon, DocumentTextIcon, LightBulbIcon, AcademicCapIcon, PresentationChartLineIcon } from '@heroicons/react/24/outline';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
 
-export interface CourseProps {
+type CourseProps = {
   id: number;
   title: string;
   description?: string;
@@ -9,140 +13,243 @@ export interface CourseProps {
   progress?: number;
   lessons?: number;
   completedLessons?: number;
-}
+  isNew?: boolean;
+  category?: string;
+  difficulty?: string;
+  estimatedTime?: string;
+  lastActivity?: string | null;
+  status?: string;
+  icon?: React.ReactNode;
+};
 
-/**
- * Componente de tarjeta de curso que muestra información sobre un curso específico
- * Si no hay imagen disponible, muestra un diseño con degradado y un ícono
- */
 const CourseCard: React.FC<CourseProps> = ({
   id,
   title,
-  description = 'Curso de la plataforma Stegmaier Consulting',
+  description = 'Este curso te ayudará a mejorar tus habilidades en consultoría y estrategia empresarial.',
   image,
   progress = 0,
   lessons = 0,
   completedLessons = 0,
+  icon,
+  isNew = false,
+  category = '',
+  difficulty = '',
+  estimatedTime = '',
+  lastActivity = null,
+  status = 'No comenzado'
 }) => {
-  // Colores para el degradado cuando no hay imagen
-  const gradientColors = [
-    'from-blue-500 to-purple-600',
-    'from-primary-500 to-primary-700',
-    'from-indigo-500 to-blue-600',
-    'from-purple-500 to-pink-500',
-    'from-green-500 to-teal-500',
-  ];
+  // Colores para los gradientes si no hay imagen - basados en categoría
+  const categoryGradients: Record<string, { gradient: string, icon: React.ReactElement }> = {
+    'Estrategia': { 
+      gradient: 'from-blue-500 to-blue-800', 
+      icon: <PresentationChartLineIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    },
+    'Análisis': { 
+      gradient: 'from-indigo-500 to-indigo-800', 
+      icon: <ChartBarIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    },
+    'Operaciones': { 
+      gradient: 'from-emerald-500 to-emerald-800', 
+      icon: <DocumentTextIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    },
+    'Liderazgo': { 
+      gradient: 'from-amber-500 to-amber-800', 
+      icon: <AcademicCapIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    },
+    'Innovación': { 
+      gradient: 'from-purple-500 to-purple-800', 
+      icon: <LightBulbIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+    },
+  };
   
-  // Selección aleatoria pero consistente basada en el ID
-  const colorIndex = (id % gradientColors.length);
-  const gradientColor = gradientColors[colorIndex];
+  // Seleccionar un gradiente y un icono basado en la categoría, o uno predeterminado si no existe
+  const defaultGradient = { gradient: 'from-gray-600 to-gray-900', icon: <DocumentTextIcon className="h-20 w-20 text-white/30 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" /> };
+  const categoryStyle = category ? (categoryGradients[category] || defaultGradient) : defaultGradient;
   
-  // Íconos para cursos sin imagen
-  const icons = [
-    (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-      </svg>
-    ),
-    (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    ),
-    (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-      </svg>
-    ),
-  ];
+  // Status colors
+  const statusColors: Record<string, { bg: string, text: string, border?: string }> = {
+    'Nuevo': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300' },
+    'En Progreso': { bg: 'bg-primary-100', text: 'text-primary-700', border: 'border-primary-300' },
+    'Casi Terminado': { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300' },
+    'Completado': { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300' },
+    'No comenzado': { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-300' }
+  };
+
+  // Calculate if it's "Casi Terminado" (80%+ progress)
+  const currentStatus = progress >= 80 && progress < 100 ? 'Casi Terminado' : 
+                       progress >= 100 ? 'Completado' : 
+                       progress > 0 ? 'En Progreso' : 
+                       isNew ? 'Nuevo' : status;
   
-  const iconIndex = (id % icons.length);
-  const icon = icons[iconIndex];
+  const statusStyle = statusColors[currentStatus] || statusColors['No comenzado'];
 
-  // Status del progreso
-  let progressStatus = 'No comenzado';
-  if (progress > 0 && progress < 100) {
-    progressStatus = 'En progreso';
-  } else if (progress === 100) {
-    progressStatus = 'Completado';
-  }
+  // Format last activity date
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
 
-  // Clases para el status del progreso
-  let statusClasses = 'bg-gray-100 text-gray-800';
-  if (progress > 0 && progress < 100) {
-    statusClasses = 'bg-yellow-100 text-yellow-800';
-  } else if (progress === 100) {
-    statusClasses = 'bg-green-100 text-green-800';
-  }
-
+  // Calculate if the course is active (touched in the last 7 days)
+  const isActive = lastActivity ? (new Date().getTime() - new Date(lastActivity).getTime()) / (1000 * 3600 * 24) < 7 : false;
+  
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-lg border border-gray-200 h-full flex flex-col">
-      {/* Imagen del curso o alternativa con gradiente si no hay imagen */}
-      <div className="h-48 relative overflow-hidden">
-        {image ? (
+    <motion.div 
+      className="rounded-lg shadow overflow-hidden flex flex-col bg-white relative group"
+      whileHover={{ 
+        scale: 1.02,
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 17
+      }}
+    >
+      {/* Status indicator */}
+      <div className="absolute top-0 left-0 bottom-0 w-1.5 z-10"
+        style={{ backgroundColor: statusStyle.text.replace('text-', 'var(--color-') + ')' }}
+      ></div>
+
+      <div className="relative h-44 overflow-hidden group">
+        {/* Image or gradient background with category icon */}
+        {image && !image.includes('placeholder.com') ? (
           <img 
             src={image} 
-            alt={title}
-            className="w-full h-full object-cover"
+            alt={title} 
+            className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-500" 
+            onError={(e) => {
+              // Si la imagen falla, elimina la fuente para que se muestre el respaldo
+              e.currentTarget.src = '';
+              e.currentTarget.onerror = null;
+            }}
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${gradientColor} flex items-center justify-center p-4`}>
-            {icon}
-            <div className="absolute bottom-0 left-0 w-full p-3 bg-black bg-opacity-50">
-              <span className="text-white text-sm font-medium truncate block">
-                Curso {id}
-              </span>
-            </div>
+          <div className={`bg-gradient-to-br ${categoryStyle.gradient} w-full h-full relative overflow-hidden`}>
+            {/* Pattern overlay for more visual interest */}
+            <div className="absolute inset-0 opacity-10" style={{ 
+              backgroundImage: `radial-gradient(circle at 25px 25px, white 2%, transparent 0%), radial-gradient(circle at 75px 75px, white 2%, transparent 0%)`,
+              backgroundSize: '100px 100px' 
+            }}></div>
+            
+            {/* Decorative circles */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5"></div>
+            <div className="absolute -bottom-20 -left-10 w-60 h-60 rounded-full bg-white/5"></div>
+            
+            {/* Category icon */}
+            {categoryStyle.icon}
           </div>
         )}
         
-        {/* Badge de progreso */}
-        <div className="absolute top-3 right-3">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClasses}`}>
-            {progressStatus}
+        {/* Overlay gradient for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-70 group-hover:opacity-90 transition-opacity"></div>
+        
+        {/* Badges container */}
+        <div className="absolute top-3 left-3 flex space-x-2 z-10">
+          {category && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
+              {category}
+            </span>
+          )}
+          {difficulty && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
+              {difficulty}
+            </span>
+          )}
+        </div>
+        
+        {/* Status badge */}
+        <div className="absolute top-3 right-3 z-10">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border ? `border ${statusStyle.border}` : ''}`}>
+            {currentStatus}
           </span>
         </div>
-      </div>
-      
-      <div className="p-5 flex-grow flex flex-col">
-        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2">
-          {title}
-        </h3>
-        
-        <p className="text-gray-600 text-sm mb-4 flex-grow line-clamp-2">
-          {description}
-        </p>
-        
-        {/* Información de progreso y lecciones */}
-        {lessons > 0 && (
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-500 mb-1">
-              <span>Progreso: {progress}%</span>
-              <span>{completedLessons} de {lessons} lecciones</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-primary-600 h-2 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+
+        {/* Circular progress in bottom-right corner */}
+        {progress > 0 && (
+          <div className="absolute bottom-3 right-3 h-12 w-12 z-10">
+            <CircularProgressbar 
+              value={progress} 
+              text={`${progress}%`}
+              styles={buildStyles({
+                textSize: '28px',
+                textColor: '#fff',
+                pathColor: '#fff',
+                trailColor: 'rgba(255,255,255,0.3)',
+              })} 
+            />
           </div>
         )}
+
+        {/* Title on image */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+          <h3 className="text-lg font-medium text-white">{title}</h3>
+        </div>
+      </div>
+
+      <div className="p-5 flex-grow">
+        {/* Description */}
+        <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
         
-        {/* Botón de acción */}
-        <Link 
-          to={`/platform/courses/${id}`}
-          className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-        >
-          {progress > 0 ? 'Continuar' : 'Comenzar'} curso
+        {/* Course info section */}
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+          {/* Estimated time */}
+          {estimatedTime && (
+            <div className="flex items-center">
+              <ClockIcon className="h-3.5 w-3.5 mr-1" />
+              <span>{estimatedTime}</span>
+            </div>
+          )}
+          
+          {/* Last activity date */}
+          {lastActivity && (
+            <div className="flex items-center">
+              <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+              <span className={isActive ? 'text-primary-600 font-medium' : ''}>Última actividad: {formatDate(lastActivity)}</span>
+            </div>
+          )}
+          
+          {/* Lessons counter */}
+          {lessons > 0 && (
+            <div className="flex items-center">
+              <span>{completedLessons} de {lessons} lecciones</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      {lessons > 0 && progress > 0 && (
+        <div className="px-5">
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className={`h-1.5 rounded-full`}
+              style={{ 
+                backgroundColor: statusStyle.text.replace('text-', 'var(--color-') + ')', 
+                filter: 'brightness(1.1)' 
+              }}
+            ></motion.div>
+          </div>
+        </div>
+      )}
+
+      <div className="px-5 pb-4 pt-4">
+        <Link to={`/platform/courses/${id}`}>
+          <motion.button
+            className={`w-full py-2 px-4 rounded flex items-center justify-center transition-colors duration-200 ${progress >= 100 
+              ? 'bg-green-50 text-green-700 border border-green-500 hover:bg-green-100' 
+              : 'bg-white text-primary-600 border border-primary-600 hover:bg-primary-50'}`}
+            whileTap={{ scale: 0.95 }}
+          >
+            {progress >= 100 ? 'Ver certificado' : progress > 0 ? 'Continuar curso' : 'Comenzar curso'} 
+            <ArrowRightIcon className="ml-2 h-4 w-4" />
+          </motion.button>
         </Link>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
