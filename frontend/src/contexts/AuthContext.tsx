@@ -112,27 +112,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // El token ya se guarda en el servicio de autenticación
       // No es necesario volver a guardarlo aquí
       
-      // Crear objeto de usuario a partir de los datos de la respuesta
-      const user: User = {
-        id: authResponse.user_id,
-        email: authResponse.email,
-        firstName: authResponse.first_name || '', // Extraer firstName si existe
-        lastName: authResponse.last_name || '',  // Extraer lastName si existe
-        full_name: authResponse.full_name || `${authResponse.first_name || ''} ${authResponse.last_name || ''}`.trim(), // Extraer o construir full_name
-        role: authResponse.role as any,
-        verified: true, // Para la plataforma de cursos, todos los usuarios se consideran verificados
-        createdAt: authResponse.created_at || new Date().toISOString(), // Usar la fecha real de registro
-        updatedAt: authResponse.updated_at || new Date().toISOString()
-      };
-      
-      setState({
-        user,
-        token: authResponse.access_token,
-        isAuthenticated: true,
-        isVerified: true,
-        isLoading: false,
-        error: null,
-      });
+      try {
+        // Obtener el perfil completo del usuario inmediatamente después del login
+        const fullUserData = await authService.getCurrentUser();
+        
+        // Actualizar el estado con los datos completos del usuario
+        setState({
+          user: fullUserData,
+          token: authResponse.access_token,
+          isAuthenticated: true,
+          isVerified: true, 
+          isLoading: false,
+          error: null,
+        });
+      } catch (profileError) {
+        // Si hay error al cargar el perfil completo, usamos los datos básicos de la autenticación
+        console.error('Error al cargar perfil completo:', profileError);
+        
+        // Crear objeto de usuario a partir de los datos de la respuesta
+        const user: User = {
+          id: authResponse.user_id,
+          email: authResponse.email,
+          firstName: authResponse.first_name || '', 
+          lastName: authResponse.last_name || '', 
+          full_name: authResponse.full_name || `${authResponse.first_name || ''} ${authResponse.last_name || ''}`.trim(),
+          role: authResponse.role as any,
+          verified: true,
+          createdAt: authResponse.created_at || new Date().toISOString(),
+          updatedAt: authResponse.updated_at || new Date().toISOString()
+        };
+        
+        setState({
+          user,
+          token: authResponse.access_token,
+          isAuthenticated: true,
+          isVerified: true,
+          isLoading: false,
+          error: null,
+        });
+      }
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Error al iniciar sesión';
       setState(prev => ({
@@ -150,30 +168,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       const authResponse = await authService.register(userData);
       
-      // El token ya se guarda en el servicio de autenticación
-      // No es necesario volver a guardarlo aquí
-      
-      // Crear objeto de usuario a partir de los datos de la respuesta
-      const user: User = {
-        id: authResponse.user_id,
-        email: authResponse.email,
-        firstName: userData.firstName, // Usamos los datos que se enviaron al registrar
-        lastName: userData.lastName,
-        full_name: authResponse.full_name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(), // Extraer o construir full_name
-        role: authResponse.role as any,
-        verified: false, // Por defecto el usuario no estará verificado al registrarse
-        createdAt: authResponse.created_at || new Date().toISOString(), // Usar la fecha real de registro
-        updatedAt: authResponse.updated_at || new Date().toISOString()
-      };
-      
-      setState({
-        user,
-        token: authResponse.access_token,
-        isAuthenticated: true,
-        isVerified: false,
-        isLoading: false,
-        error: null,
-      });
+      try {
+        // Obtener el perfil completo del usuario inmediatamente después del registro
+        const fullUserData = await authService.getCurrentUser();
+        
+        // Actualizar el estado con los datos completos del usuario
+        setState({
+          user: fullUserData,
+          token: authResponse.access_token,
+          isAuthenticated: true,
+          isVerified: fullUserData.verified, 
+          isLoading: false,
+          error: null,
+        });
+      } catch (profileError) {
+        // Si hay error al cargar el perfil completo, usamos los datos básicos del registro
+        console.error('Error al cargar perfil completo después del registro:', profileError);
+        
+        // Crear usuario a partir de los datos del registro
+        const user: User = {
+          id: authResponse.user_id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          full_name: `${userData.firstName} ${userData.lastName}`.trim(),
+          role: authResponse.role as any,
+          verified: false, // Por defecto, los usuarios nuevos no están verificados
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        setState({
+          user,
+          token: authResponse.access_token,
+          isAuthenticated: true,
+          isVerified: false,
+          isLoading: false,
+          error: null,
+        });
+      }
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Error al registrar usuario';
       setState(prev => ({
