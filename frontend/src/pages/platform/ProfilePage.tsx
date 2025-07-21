@@ -60,6 +60,7 @@ const ProfilePage: React.FC = () => {
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-bold">
               {user ? (
+                // Aseguramos mostrar el nombre completo correctamente
                 user.full_name ? 
                   user.full_name : 
                   (user.firstName || user.lastName ? 
@@ -80,7 +81,7 @@ const ProfilePage: React.FC = () => {
                 </span>
               )}
               <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary-500 text-white">
-                Desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                Desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {day: 'numeric', month: 'long', year: 'numeric'}) : 'N/A'}
               </span>
             </div>
           </div>
@@ -213,7 +214,7 @@ const ProfilePage: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4">
                       <div>
                         <p className="text-sm font-medium text-gray-500">Nombre completo</p>
-                        <p className="mt-1 text-gray-900 font-medium">{user ? `${user.firstName} ${user.lastName}` : 'No disponible'}</p>
+                        <p className="mt-1 text-gray-900 font-medium">{user ? (user.full_name ? user.full_name : `${user.firstName || ''} ${user.lastName || ''}`.trim()) : 'No disponible'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-500">Correo electrónico</p>

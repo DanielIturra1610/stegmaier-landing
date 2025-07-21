@@ -65,7 +65,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                           
       if (state.token && !isLoggingOut) {
         try {
-          const user: User = await authService.getCurrentUser();
+          const userData = await authService.getCurrentUser();
+          // Asegurarnos de que tengamos el full_name y createdAt
+          const user: User = {
+            ...userData,
+            full_name: userData.full_name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+            createdAt: userData.createdAt || new Date().toISOString()
+          };
           setState(prev => ({
             ...prev,
             user,
@@ -110,12 +116,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const user: User = {
         id: authResponse.user_id,
         email: authResponse.email,
-        firstName: '', // Estos campos no vienen en la respuesta
-        lastName: '',  // pero son necesarios para el tipo User
+        firstName: authResponse.first_name || '', // Extraer firstName si existe
+        lastName: authResponse.last_name || '',  // Extraer lastName si existe
+        full_name: authResponse.full_name || `${authResponse.first_name || ''} ${authResponse.last_name || ''}`.trim(), // Extraer o construir full_name
         role: authResponse.role as any,
         verified: true, // Para la plataforma de cursos, todos los usuarios se consideran verificados
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: authResponse.created_at || new Date().toISOString(), // Usar la fecha real de registro
+        updatedAt: authResponse.updated_at || new Date().toISOString()
       };
       
       setState({
@@ -152,10 +159,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: authResponse.email,
         firstName: userData.firstName, // Usamos los datos que se enviaron al registrar
         lastName: userData.lastName,
+        full_name: authResponse.full_name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(), // Extraer o construir full_name
         role: authResponse.role as any,
         verified: false, // Por defecto el usuario no estará verificado al registrarse
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        createdAt: authResponse.created_at || new Date().toISOString(), // Usar la fecha real de registro
+        updatedAt: authResponse.updated_at || new Date().toISOString()
       };
       
       setState({

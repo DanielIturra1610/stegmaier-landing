@@ -41,6 +41,12 @@ export interface AuthResponse {
   email: string;
   role: string;
   message?: string;
+  // Campos adicionales para soporte de nombre completo y fechas
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface VerificationResponse {

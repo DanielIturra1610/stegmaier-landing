@@ -98,7 +98,33 @@ export const authService = {
    */
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
-    return response.data;
+    const apiData = response.data;
+    
+    // Mapeo de los datos recibidos del API al formato que espera nuestra aplicación
+    const userData = {
+      id: apiData._id || apiData.id || '',
+      email: apiData.email || '',
+      // Manejo de nombres
+      firstName: apiData.firstName || apiData.first_name || '',
+      lastName: apiData.lastName || apiData.last_name || '',
+      full_name: apiData.full_name || '',
+      // Si no hay full_name pero hay firstName o lastName, lo construimos
+      ...((!apiData.full_name && (apiData.firstName || apiData.first_name || apiData.lastName || apiData.last_name)) && {
+        full_name: `${apiData.firstName || apiData.first_name || ''} ${apiData.lastName || apiData.last_name || ''}`.trim()
+      }),
+      // Otros campos
+      role: apiData.role || 'student',
+      verified: apiData.verified || apiData.is_verified || false,
+      profileImage: apiData.profileImage || apiData.profile_picture || '',
+      // Fechas
+      createdAt: apiData.createdAt || apiData.created_at || new Date().toISOString(),
+      updatedAt: apiData.updatedAt || apiData.updated_at || new Date().toISOString()
+    };
+    
+    // Guardamos los datos actualizados en localStorage para acceso rápido
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+    
+    return userData;
   },
 
   /**

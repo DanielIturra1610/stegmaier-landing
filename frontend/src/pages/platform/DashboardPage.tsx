@@ -47,11 +47,14 @@ const DashboardPage: React.FC = () => {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 Bienvenido, {user ? (
+                  // Aseguramos extraer el nombre completo
                   user.full_name ? 
                     user.full_name.split(' ')[0] : // Solo tomar el primer nombre para el saludo
-                    (user.firstName || user.lastName ? 
-                      user.firstName || user.lastName : 
-                      'Estudiante')
+                    (user.firstName ? 
+                      user.firstName : // Usar firstName si existe
+                      (user.lastName ? 
+                        user.lastName : // Usar lastName como alternativa
+                        'Estudiante'))
                 ) : 'Estudiante'}
               </h1>
               <p className="text-primary-100 text-lg">
