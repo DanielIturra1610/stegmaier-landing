@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore - Importar imágenes
 import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PlatformSidebarProps {
   isOpen: boolean;
@@ -303,8 +304,189 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
             return null;
           })}
         </nav>
+        
+        {/* Sección de perfil de usuario en la parte inferior */}
+        <UserProfileSection isCollapsed={isCollapsed} />
       </motion.div>
     </>
+  );
+};
+
+interface UserProfileSectionProps {
+  isCollapsed: boolean;
+}
+
+/**
+ * Componente para la sección de perfil de usuario en la parte inferior del sidebar
+ */
+const UserProfileSection: React.FC<UserProfileSectionProps> = ({ isCollapsed }) => {
+  const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  
+  // Generar iniciales para el avatar si no hay imagen de perfil
+  const getInitials = () => {
+    if (!user) return 'U';
+    if (user.full_name) {
+      const nameParts = user.full_name.split(' ');
+      return `${nameParts[0][0]}${nameParts.length > 1 ? nameParts[1][0] : ''}`;
+    }
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`;
+    }
+    return user.email[0].toUpperCase();
+  };
+  
+  // Cerrar el menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Manejar el clic en las opciones del menú
+  const handleOptionClick = (action: string) => {
+    setIsOpen(false);
+    
+    switch(action) {
+      case 'profile':
+        navigate('/platform/profile');
+        break;
+      case 'settings':
+        navigate('/platform/settings');
+        break;
+      case 'logout':
+        logout();
+        break;
+      default:
+        break;
+    }
+  };
+  
+  if (!user) return null;
+  
+  return (
+    <div className="mt-auto border-t border-primary-700 bg-primary-900/80 px-3 py-3">
+      <div className="relative" ref={dropdownRef}>
+        <motion.div 
+          className={`flex items-center cursor-pointer p-2 rounded-lg hover:bg-primary-800/60 transition-all ${isOpen ? 'bg-primary-800/60' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {/* Avatar de usuario o iniciales */}
+          <div className="relative">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-medium text-sm shadow-md">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt="Perfil" className="h-full w-full object-cover rounded-full" />
+              ) : (
+                getInitials()
+              )}
+            </div>
+            {/* Indicador de estado (online) */}
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-primary-900"></span>
+          </div>
+          
+          {/* Nombre de usuario - solo visible cuando no está colapsado */}
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div 
+                className="ml-3 flex-1"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white truncate">
+                    {user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}
+                  </span>
+                  <span className="text-xs text-gray-300 flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                    Conectado
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Flecha para indicar desplegable - solo visible cuando no está colapsado */}
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.svg 
+                className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </motion.svg>
+            )}
+          </AnimatePresence>
+        </motion.div>
+        
+        {/* Menú desplegable */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div 
+              className={`absolute bottom-full mb-2 ${isCollapsed ? 'left-0' : 'left-0 right-0'} bg-primary-800 rounded-lg shadow-lg py-1 border border-primary-700 z-50`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="px-3 py-2 border-b border-primary-700">
+                <div className="text-sm font-medium text-white">{user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}</div>
+                <div className="text-xs text-gray-300 truncate">{user.email}</div>
+              </div>
+              
+              <button 
+                className="w-full text-left flex items-center px-3 py-2 text-sm text-gray-200 hover:bg-primary-700 transition-colors"
+                onClick={() => handleOptionClick('profile')}
+              >
+                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Ver Perfil
+              </button>
+              
+              <button 
+                className="w-full text-left flex items-center px-3 py-2 text-sm text-gray-200 hover:bg-primary-700 transition-colors"
+                onClick={() => handleOptionClick('settings')}
+              >
+                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Configuración
+              </button>
+              
+              <div className="border-t border-primary-700 my-1"></div>
+              
+              <button 
+                className="w-full text-left flex items-center px-3 py-2 text-sm text-red-400 hover:bg-primary-700 transition-colors"
+                onClick={() => handleOptionClick('logout')}
+              >
+                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar Sesión
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 
