@@ -9,6 +9,7 @@ import 'react-circular-progressbar/dist/styles.css';
 import ReactConfetti from 'react-confetti';
 import ExperienceBar from '../../components/experience/ExperienceBar';
 import { StreakTracker } from '../../components/streak';
+import { WeeklyChallenges, MOCK_CHALLENGES } from '../../components/challenges';
 
 /**
  * Dashboard principal de la plataforma
@@ -52,6 +53,15 @@ const DashboardPage: React.FC = () => {
   const [longestStreak, setLongestStreak] = useState<number>(7);
   const [weeklyGoal, setWeeklyGoal] = useState<number>(5);
   const [experiencePoints, setExperiencePoints] = useState<number>(325);
+  const [completedChallenges, setCompletedChallenges] = useState<string[]>(['challenge-3']);
+  const [userChallengeProgress, setUserChallengeProgress] = useState<any>({
+    'challenge-1': { currentValue: 3, lastUpdated: new Date(), milestoneReached: [1, 3] },
+    'challenge-2': { currentValue: 450, lastUpdated: new Date(), milestoneReached: [100, 250, 400] },
+    'challenge-3': { currentValue: 3, lastUpdated: new Date(), milestoneReached: [1, 3] },
+    'challenge-4': { currentValue: 0, lastUpdated: new Date(), milestoneReached: [] },
+    'challenge-5': { currentValue: 1, lastUpdated: new Date(), milestoneReached: [1] },
+    'challenge-6': { currentValue: 7, lastUpdated: new Date(), milestoneReached: [3, 7] },
+  });
   const [nextAchievement, setNextAchievement] = useState<{name: string, description: string, icon: string, progress: number}>(
     {name: 'Explorador Dedicado', description: 'Completa 5 cursos diferentes', icon: '🏆', progress: 60}
   );
@@ -735,7 +745,7 @@ const DashboardPage: React.FC = () => {
           </motion.section>
         ) : (
           <motion.section 
-            className="mb-8"
+            className="mt-6 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -745,6 +755,59 @@ const DashboardPage: React.FC = () => {
               currentStreak={currentStreak}
               longestStreak={longestStreak}
               weeklyGoal={weeklyGoal}
+            />
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Desafíos Semanales */}
+      <AnimatePresence>
+        {loading ? (
+          <motion.section 
+            className="grid grid-cols-1 gap-6 mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="h-12 w-48 bg-gray-100 rounded-lg animate-pulse mb-4"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div 
+                  key={`skeleton-challenge-${i}`} 
+                  className="bg-gray-100 rounded-lg h-72 animate-pulse" 
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                ></div>
+              ))}
+            </div>
+          </motion.section>
+        ) : (
+          <motion.section 
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <WeeklyChallenges
+              challenges={MOCK_CHALLENGES}
+              completedChallenges={completedChallenges}
+              userProgress={userChallengeProgress}
+              onChallengeCompleted={(challengeId) => {
+                // Verificamos que el desafío no esté ya completado para evitar duplicados
+                if (!completedChallenges.includes(challengeId)) {
+                  setCompletedChallenges(prev => [...prev, challengeId]);
+                  setShowAchievement(true);
+                  
+                  // Actualizar puntos de experiencia solo si no está ya completado
+                  const challenge = MOCK_CHALLENGES.find(c => c.id === challengeId);
+                  if (challenge && challenge.reward.type !== 'badge') {
+                    setExperiencePoints(prev => prev + (challenge.reward.value || 0));
+                  }
+                }
+              }}
+              onChallengeClick={(challenge) => {
+                console.log('Challenge clicked:', challenge);
+                // Aquí podríamos mostrar un modal con más detalles o navegar a una página dedicada
+              }}
             />
           </motion.section>
         )}
