@@ -148,21 +148,33 @@ const StreakTracker: React.FC<StreakTrackerProps> = ({
         <div className="w-full overflow-x-auto pb-4">
           <div className="min-w-max">
             {/* Month labels - Distributed across full width */}
-            <div className="flex pl-6 mb-2 h-4 relative">
-              {calendarData.monthLabels.map((month, index) => (
-                <span 
-                  key={`month-${index}`}
-                  className="text-xs font-medium text-gray-700 absolute"
-                  style={{ 
-                    left: `${(month.position * 20) + 24}px`,
-                    backgroundColor: 'white',
-                    padding: '0 2px',
-                    zIndex: 10
-                  }}
-                >
-                  {month.label}
-                </span>
-              ))}
+            <div className="flex pl-6 mb-2 h-4 relative w-full">
+              {calendarData.monthLabels.map((month, index, array) => {
+                // Calcular la posición como porcentaje del ancho total
+                const totalMonths = array.length;
+                // Añadir margen del 5% en cada extremo
+                const marginPercentage = 5;
+                // Distribuir los meses en el 90% del espacio disponible (100% - 2*5%)
+                const availablePercentage = 100 - (marginPercentage * 2);
+                // El primer mes estará en 5%, el último en 95%
+                const percentage = marginPercentage + (index / (totalMonths - 1)) * availablePercentage;
+                
+                return (
+                  <span 
+                    key={`month-${index}`}
+                    className="text-xs font-medium text-gray-700 absolute"
+                    style={{ 
+                      left: `${percentage}%`,
+                      transform: "translateX(-50%)", // Centra el texto en su posición
+                      backgroundColor: 'white',
+                      padding: '0 2px',
+                      zIndex: 10
+                    }}
+                  >
+                    {month.label}
+                  </span>
+                );
+              })}
             </div>
             
             <div className="flex">
