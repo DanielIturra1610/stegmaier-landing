@@ -37,8 +37,8 @@ export const getLevelTitle = (level: number): string => {
     titleIndex = 1; // Consultor (levels 5-9)
   }
   
-  // Special formatting for high levels
-  let formattedTitle = `${titles[titleIndex]} Consultor Nivel ${level}`;
+  // Format title with level (without duplicating "Consultor")
+  let formattedTitle = `${titles[titleIndex]} Nivel ${level}`;
   
   // Add sparkles to high levels
   if (level >= 30) {
