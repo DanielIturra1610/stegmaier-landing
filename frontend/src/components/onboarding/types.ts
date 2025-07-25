@@ -15,20 +15,41 @@ export interface User extends BaseUser {
 export interface FirstDayMission {
   /** Unique identifier for the mission */
   id: string;
-  /** Display title of the mission */
+  /** Display title for the mission */
   title: string;
-  /** Detailed description of what the user needs to do */
+  /** Detailed description of the mission */
   description: string;
   /** CSS selector for the target element */
   targetElement: string;
-  /** XP points awarded on mission completion */
+  /** XP reward for completing the mission */
   xpReward: number;
-  /** Type of interaction required to complete the mission */
-  type: 'click' | 'read' | 'interact' | 'navigate';
-  /** Specific criteria that must be met to complete this mission */
+  /** Type of mission: read, click, navigate, interact */
+  type: 'read' | 'click' | 'navigate' | 'interact';
+  /** Human-readable completion criteria */
   completionCriteria: string;
-  /** Business context explaining the value of this mission */
+  /** Business context explaining why this mission is important */
   businessContext: string;
+  /** User-friendly description of the action required */
+  requiredAction: string;
+  /** Target route for navigation missions */
+  targetRoute?: string;
+  /** Minimum time required for read missions (ms) */
+  minimumTime?: number;
+  /** Rules for validating mission completion */
+  validationRules?: {
+    /** For read: visibility threshold (0-1) */
+    threshold?: number;
+    /** For navigation: require exact route match */
+    exactMatch?: boolean;
+    /** Timeout for mission completion (ms) */
+    timeout?: number;
+    /** For interact: time required to hover (ms) */
+    hoverTime?: number;
+    /** For interact: require click after hover */
+    requireClick?: boolean;
+    /** For click: prevent auto-completion */
+    preventAutoComplete?: boolean;
+  };
 }
 
 export interface FirstDayExperienceProps {

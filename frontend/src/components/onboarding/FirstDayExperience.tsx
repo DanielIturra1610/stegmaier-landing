@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FirstDayExperienceProps, FirstDayMission, MissionProgress, CelebrationConfig, User } from './types';
-import { FIRST_DAY_MISSIONS, STORAGE_KEY, REWARD_CONFIG, ANALYTICS_EVENTS, TIME_CONFIG } from './constants';
+import { FIRST_DAY_MISSIONS, REWARD_CONFIG, ANALYTICS_EVENTS, TIMING, STORAGE_KEYS } from './constants';
 import {
   isNewUser,
   saveMissionProgress,
@@ -30,6 +30,15 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
 }) => {
   // Check if user should see onboarding
   const shouldShowOnboarding = isNewUser(user?.currentLevel || 0, user?.totalXP || 0) && isVisible;
+  
+  // Add debug logging
+  console.log('🔍 [FirstDayExperience] Evaluating shouldShowOnboarding:', {
+    isNewUser: isNewUser(user?.currentLevel || 0, user?.totalXP || 0),
+    userLevel: user?.currentLevel || 0,
+    userXP: user?.totalXP || 0,
+    isVisible,
+    result: shouldShowOnboarding
+  });
   
   // Track current mission index
   const [currentMissionIndex, setCurrentMissionIndex] = useState<number>(0);
@@ -239,43 +248,41 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
   );
 
   return (
-    <div 
-      className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-900/50 flex flex-col items-center justify-start"
-      role="region"
-      aria-label="Onboarding"
-    >
-      {/* Header with progress */}
-      <div className="w-full bg-white px-4 py-3 shadow-md">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-xl font-bold text-gray-800 mb-1">
-            Experiencia de primer día
-          </h2>
-          
-          <p className="text-sm text-gray-600 mb-2">
-            Completa {FIRST_DAY_MISSIONS.length} misiones para desbloquear todas las funcionalidades
-          </p>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-primary-600 rounded-full h-2 transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
-              role="progressbar"
-              aria-valuenow={progressPercentage}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-          
-          {/* Missions count */}
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>{missionProgress.completedMissions.length} de {FIRST_DAY_MISSIONS.length} misiones completadas</span>
-            <span>XP ganado: {missionProgress.totalXP}</span>
-          </div>
+    <>
+      {/* Non-blocking floating progress indicator */}
+      <div 
+        className="fixed top-4 right-4 bg-white shadow-lg rounded-full px-3 py-1 text-sm font-medium z-40 flex items-center space-x-2"
+        aria-label="Onboarding Progress"
+      >
+        <div className="flex items-center">
+          <span className="text-primary-700 font-medium">Misión {missionProgress.completedMissions.length + 1}/{FIRST_DAY_MISSIONS.length}</span>
         </div>
+        
+        {/* Mini progress bar */}
+        <div className="w-16 bg-gray-200 rounded-full h-1.5">
+          <div
+            className="bg-primary-600 rounded-full h-1.5 transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+            role="progressbar"
+            aria-valuenow={progressPercentage}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+        
+        {/* Skip button */}
+        <button
+          onClick={handleSkipMission}
+          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full p-0.5"
+          aria-label="Omitir misión"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 10-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
+          </svg>
+        </button>
       </div>
       
-      {/* Mission spotlight */}
+      {/* Mission spotlight - non-intrusive */}
       {currentMission && (
         <MissionSpotlight
           targetElement={currentMission.targetElement}
@@ -283,7 +290,7 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
         />
       )}
       
-      {/* Mission tooltip */}
+      {/* Mission tooltip - non-intrusive */}
       {currentMission && (
         <MissionTooltip
           mission={currentMission}
@@ -292,13 +299,36 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
         />
       )}
       
+      {/* Bottom sheet for mobile */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white shadow-lg rounded-t-xl transform transition-transform duration-300 ease-in-out">
+        <div className="w-full flex justify-center py-1">
+          <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+        <div className="px-4 py-3 max-h-[40vh] overflow-y-auto">
+          <h3 className="text-base font-bold text-gray-800 mb-1.5">
+            {currentMission?.title}
+          </h3>
+          <p className="text-sm text-gray-600 mb-3">
+            {currentMission?.description}
+          </p>
+          <button
+            onClick={handleMissionComplete}
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors duration-200"
+          >
+            Completar misión
+          </button>
+        </div>
+      </div>
+      
       {/* Celebration modal */}
-      <CelebrationModal
-        isVisible={showCelebration}
-        config={celebrationConfig}
-        onClose={handleCloseCelebration}
-      />
-    </div>
+      <div className="relative z-50">
+        <CelebrationModal
+          isVisible={showCelebration}
+          config={celebrationConfig}
+          onClose={handleCloseCelebration}
+        />
+      </div>
+    </>
   );
 };
 

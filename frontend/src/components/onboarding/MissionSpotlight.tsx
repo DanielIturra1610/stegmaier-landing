@@ -62,24 +62,26 @@ const MissionSpotlight: React.FC<MissionSpotlightProps> = ({
   }
 
   return (
-    <div 
-      className="fixed inset-0 z-40 pointer-events-none"
-      aria-hidden="true"
-    >
-      {/* Spotlight overlay that darkens everything except the target */}
-      <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm">
-        {/* Cut out for the spotlight effect */}
+    <div aria-hidden="true" className="pointer-events-none">
+      {/* Non-intrusive highlight for target element - no fullscreen overlay */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          width: `${position.width}px`,
+          height: `${position.height}px`,
+          zIndex: 40,
+        }}
+        className="pointer-events-none"
+      >
+        {/* Elegant highlight ring around the element */}
         <div 
-          style={{
-            position: 'absolute',
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-            height: `${position.height}px`,
-            boxShadow: '0 0 0 9999px rgba(17, 24, 39, 0.5)'
-          }}
-          className="ring-4 ring-accent-500 ring-offset-4 shadow-2xl shadow-accent-500/50 animate-pulse rounded"
+          className="absolute inset-0 ring-4 ring-accent-500 ring-offset-4 rounded transition-all duration-300 ease-out animate-pulse"
         />
+        
+        {/* Subtle glow effect */}
+        <div className="absolute inset-0 -m-2 rounded-lg bg-accent-500 opacity-10 blur-sm"></div>
       </div>
     </div>
   );

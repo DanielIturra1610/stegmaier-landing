@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserExperience } from '../../hooks/useUserExperience';
 import CourseCard from '../../components/courses/CourseCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Area } from 'recharts';
@@ -19,7 +20,27 @@ const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [greeting, setGreeting] = useState<string>('Bienvenido');
   const [loading, setLoading] = useState<boolean>(true);
-  
+
+  // Usar el hook de experiencia para acceder al sistema híbrido de XP
+  const { 
+    totalXP, 
+    currentLevel, 
+    isOnboardingComplete,
+    loading: experienceLoading,
+    error: experienceError
+  } = useUserExperience(user?.id ? { userId: user.id } : { userId: '' });
+
+  // Debug log for experience system
+  useEffect(() => {
+    if (!experienceLoading) {
+      console.log('🔍 [DashboardPage] User experience data loaded:', {
+        totalXP,
+        currentLevel,
+        isOnboardingComplete
+      });
+    }
+  }, [totalXP, currentLevel, isOnboardingComplete, experienceLoading]);
+
   // Determinar saludo según la hora del día
   useEffect(() => {
     const getCurrentGreeting = () => {
@@ -32,14 +53,14 @@ const DashboardPage: React.FC = () => {
         return 'Buenas noches';
       }
     };
-    
+
     setGreeting(getCurrentGreeting());
-    
+
     // Simular carga de datos
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1200);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -48,11 +69,12 @@ const DashboardPage: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [weeklyProgress, setWeeklyProgress] = useState<any[]>([]);
   const [showAchievement, setShowAchievement] = useState<boolean>(false);
-  const [userLevel, setUserLevel] = useState<number>(3);
   const [currentStreak, setCurrentStreak] = useState<number>(4);
   const [longestStreak, setLongestStreak] = useState<number>(7);
   const [weeklyGoal, setWeeklyGoal] = useState<number>(5);
-  const [experiencePoints, setExperiencePoints] = useState<number>(325);
+  // Nota: Ya no usamos estos estados locales, ahora usamos los valores del hook useUserExperience
+  // const [userLevel, setUserLevel] = useState<number>(3);
+  // const [experiencePoints, setExperiencePoints] = useState<number>(325);
   const [completedChallenges, setCompletedChallenges] = useState<string[]>(['challenge-3']);
   const [userChallengeProgress, setUserChallengeProgress] = useState<any>({
     'challenge-1': { currentValue: 3, lastUpdated: new Date(), milestoneReached: [1, 3] },
@@ -65,7 +87,7 @@ const DashboardPage: React.FC = () => {
   const [nextAchievement, setNextAchievement] = useState<{name: string, description: string, icon: string, progress: number}>(
     {name: 'Explorador Dedicado', description: 'Completa 5 cursos diferentes', icon: '🏆', progress: 60}
   );
-  
+
   // Función para mostrar celebración de logros
   useEffect(() => {
     if (showAchievement) {
@@ -77,28 +99,28 @@ const DashboardPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showAchievement]);
-  
+
   // Generar fechas de estudio para mostrar múltiples meses (estilo GitHub)
   const mockStudyDates = useMemo(() => {
     // Generate mock study data
     const dates: Date[] = [];
     const today = new Date();
-    
+
     // Generar datos para los últimos 200 días (aproximadamente 7 meses)
     for (let i = 0; i <= 200; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      
+
       // Patrón de actividad diferente según el mes para simular GitHub
       const month = date.getMonth();
       const dayOfWeek = date.getDay(); // 0 = Domingo, 6 = Sábado
-      
+
       // Más actividad en días laborales
       const isWeekday = dayOfWeek > 0 && dayOfWeek < 6;
-      
+
       // Probabilidad base según el mes (más actividad en meses recientes)
       const monthFactor = 1 - (i / 250); // Factor que disminuye con el tiempo
-      
+
       // Patrón visual distintivo para cada mes
       let probability;
       if (i < 30) { // Último mes: alta actividad
@@ -110,27 +132,27 @@ const DashboardPage: React.FC = () => {
       } else { // Meses anteriores: actividad espaciada
         probability = isWeekday ? 0.3 : 0.15;
       }
-      
+
       // Ajustar por factor de tiempo
       probability *= monthFactor;
-      
+
       // Determinar si hay actividad este día
       if (Math.random() < probability) {
         dates.push(date);
       }
     }
-    
+
     // Asegurar streak actual de 4 días
     for (let i = 0; i < 4; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      
+
       // Quitar duplicados
       if (!dates.some(d => d.toDateString() === date.toDateString())) {
         dates.push(date);
       }
     }
-    
+
     return dates;
   }, []);
 
@@ -177,7 +199,7 @@ const DashboardPage: React.FC = () => {
       isNew: true,
     },
   ];
-  
+
   // Simulación de datos para los gráficos
   useEffect(() => {
     // Datos para el gráfico circular de distribución de tiempo
@@ -188,7 +210,7 @@ const DashboardPage: React.FC = () => {
       { name: 'Liderazgo', value: 15, color: '#F59E0B' },
       { name: 'Innovación', value: 5, color: '#8B5CF6' },
     ];
-    
+
     // Datos para el gráfico de línea de progreso semanal
     const weekData = [
       { day: 'Lun', progress: 30 },
@@ -199,23 +221,52 @@ const DashboardPage: React.FC = () => {
       { day: 'Sab', progress: 15 },
       { day: 'Dom', progress: 0 },
     ];
-    
+
     setChartData(pieData);
     setWeeklyProgress(weekData);
   }, []);
 
+  // Función para manejar la finalización de un desafío
+  const onChallengeCompleted = (challengeId: string) => {
+    // Buscar el desafío para obtener el valor objetivo
+    const challenge = MOCK_CHALLENGES.find(c => c.id === challengeId);
+    const targetValue = challenge ? challenge.targetValue : 0;
+    
+    // Actualizar progreso local
+    setUserChallengeProgress(prev => ({
+      ...prev,
+      [challengeId]: {
+        ...prev[challengeId],
+        currentValue: targetValue,
+        lastUpdated: new Date()
+      }
+    }));
+    
+    // Otorgar XP si es un desafío que no estaba completado antes
+    if (!completedChallenges.includes(challengeId)) {
+      setCompletedChallenges(prev => [...prev, challengeId]);
+      // Ya no usamos setExperiencePoints ya que ahora usamos el hook useUserExperience
+      setShowConfetti(true);
+      
+      // Ocultar confeti después de un tiempo
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 3000);
+    }
+  };
+  
   // Determinar curso más relevante basado en el progreso
   const getMostRelevantCourse = () => {
     if (!courses.length) return null;
     // Ordenar cursos por progreso (mayor a menor)
     return [...courses].sort((a, b) => b.progress - a.progress)[0];
   };
-  
+
   const mostRelevantCourse = getMostRelevantCourse();
 
   return (
-    <div className="space-y-6 pb-10">
-      {/* Cabecera de bienvenida */}
+    <div className="space-y-6 pb-10 dashboard-page-container" data-onboarding="dashboard-main">
+      {/* 1. Cabecera de bienvenida */}
       <header>
         <AnimatePresence>
           {loading ? (
@@ -227,7 +278,7 @@ const DashboardPage: React.FC = () => {
             >
               {/* Skeleton loading para cabecera */}
               <div className="content-overlay flex items-center justify-between relative">
-                <div className="space-y-3">
+                <div className="flex flex-col space-y-4 mb-6" data-onboarding="learning-goals">
                   <div className="h-8 w-64 bg-primary-600/40 rounded-md animate-pulse"></div>
                   <div className="h-5 w-48 bg-primary-600/30 rounded-md animate-pulse"></div>
                 </div>
@@ -235,7 +286,6 @@ const DashboardPage: React.FC = () => {
                   <div className="bg-primary-600/30 rounded-full h-20 w-20 animate-pulse"></div>
                 </div>
               </div>
-              
               {/* Shimmer effect */}
               <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-primary-600/10 to-transparent"></div>
             </motion.div>
@@ -262,7 +312,7 @@ const DashboardPage: React.FC = () => {
                 animate={{ rotate: [45, 90, 45] }}
                 transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
               />
-              
+
               <div className="content-overlay flex items-center justify-between relative z-10">
                 <div>
                   <motion.h1 
@@ -309,7 +359,7 @@ const DashboardPage: React.FC = () => {
         </AnimatePresence>
       </header>
 
-      {/* Accesos rápidos */}
+      {/* 2. Accesos rápidos */}
       <section>
         <AnimatePresence>
           {loading ? (
@@ -348,12 +398,11 @@ const DashboardPage: React.FC = () => {
                 className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center relative overflow-hidden group ${mostRelevantCourse && mostRelevantCourse.progress > 0 ? 'border-l-4 border-l-primary-500' : ''}`}
                 whileHover={{ 
                   scale: 1.02, 
-                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.2), 0 4px 6px -4px rgba(var(--color-primary-700), 0.2)"
+                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.1), 0 4px 6px -4px rgba(var(--color-primary-700), 0.1)"
                 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <motion.div 
-                  className="rounded-full bg-primary-100 p-3 mr-4 relative"
+                  className="rounded-full bg-primary-100 p-3 mr-4 flex items-center justify-center relative"
                   whileHover={{ rotate: [0, -10, 10, -10, 0] }}
                   transition={{ duration: 0.6 }}
                 >
@@ -363,167 +412,86 @@ const DashboardPage: React.FC = () => {
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
-                    whileHover={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.5 }}
                   >
-                    {mostRelevantCourse && mostRelevantCourse.progress > 0 ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    )}
-                  </motion.svg>
-                </motion.div>
-                <div className="flex-grow">
-                  {mostRelevantCourse && mostRelevantCourse.progress > 0 ? (
-                    <>
-                      <h3 className="font-medium">Continuar aprendiendo</h3>
-                      <p className="text-sm text-primary-600 font-medium">{mostRelevantCourse.title}</p>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
-                        <div 
-                          className="bg-primary-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                          style={{ width: `${mostRelevantCourse.progress}%` }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="font-medium">Comenzar tu primer curso</h3>
-                      <p className="text-sm text-gray-500">Inicia tu camino de aprendizaje</p>
-                    </>
-                  )}
-                </div>
-                {/* Badge dinámico */}
-                {!mostRelevantCourse || mostRelevantCourse.progress === 0 ? (
-                  <motion.div 
-                    className="absolute top-3 right-3 bg-accent-500 rounded-full w-3 h-3"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  />
-                ) : (
-                  <div className="absolute top-3 right-3">
-                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-primary-600 rounded-full">{Math.round(mostRelevantCourse.progress)}%</span>
-                  </div>
-                )}
-                {/* Highlight en hover */}
-                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-              </motion.div>
-              
-              {/* Card 2: Certificaciones con destacado adaptativo */}
-              <motion.div 
-                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center relative overflow-hidden group ${showAchievement ? 'ring-2 ring-accent-500 ring-offset-2' : ''}`}
-                whileHover={{ 
-                  scale: 1.02, 
-                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.2), 0 4px 6px -4px rgba(var(--color-primary-700), 0.2)"
-                }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {/* Efecto de glow cuando hay certificados disponibles */}
-                {showAchievement && (
-                  <motion.div 
-                    className="absolute inset-0 bg-accent-500/10 z-0"
-                    animate={{ opacity: [0.1, 0.2, 0.1] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                  />
-                )}
-                <motion.div 
-                  className={`rounded-full ${showAchievement ? 'bg-accent-100' : 'bg-primary-100'} p-3 mr-4 relative z-10`}
-                  whileHover={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <motion.svg 
-                    className={`h-6 w-6 ${showAchievement ? 'text-accent-600' : 'text-primary-600'}`} 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </motion.svg>
                 </motion.div>
                 <div className="flex-grow relative z-10">
-                  <h3 className="font-medium">{showAchievement ? '¡Logro alcanzado!' : 'Certificaciones'}</h3>
+                  <h3 className="font-medium">Nivel de usuario</h3>
                   <p className="text-sm text-gray-500">
-                    {showAchievement ? 'Reclamar tu certificado' : 'Gestiona tus certificados'}
+                    Nivel {currentLevel || 1} · {totalXP || 0} XP total
                   </p>
                 </div>
-                {/* Badge pendientes */}
-                <div className="absolute top-3 right-3 z-10">
-                  {showAchievement ? (
-                    <motion.span 
-                      className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-accent-500 rounded-full"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: [0, 1.2, 1] }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      1
-                    </motion.span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-700 bg-primary-100 rounded-full">0</span>
-                  )}
-                </div>
+
                 {/* Highlight en hover */}
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
               </motion.div>
-              
-              {/* Card 3: Gamificación y nivel de usuario */}
+
+              {/* Card 2: Experiencia y progreso */}
               <motion.div 
                 className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center relative overflow-hidden group"
                 whileHover={{ 
                   scale: 1.02, 
-                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.2), 0 4px 6px -4px rgba(var(--color-primary-700), 0.2)" 
+                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.1), 0 4px 6px -4px rgba(var(--color-primary-700), 0.1)"
                 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <motion.div 
                   className="rounded-full bg-primary-100 p-3 mr-4 flex items-center justify-center relative"
-                  whileHover={{ y: [0, -5, 0] }}
-                  transition={{ duration: 0.5 }}
+                  whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                  transition={{ duration: 0.6 }}
                 >
-                  {/* Estrella con número de nivel */}
-                  <motion.div
-                    className="absolute inset-0 flex items-center justify-center text-sm font-bold text-primary-700"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    {userLevel}
-                  </motion.div>
                   <motion.svg 
                     className="h-6 w-6 text-primary-600" 
                     xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
-                    animate={{ rotate: [0, currentStreak > 0 ? 360 : 0] }}
-                    transition={{ duration: 1.5, delay: 0.5 }}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </motion.svg>
                 </motion.div>
                 <div className="flex-grow">
-                  <h3 className="font-medium">Nivel {userLevel}</h3>
-                  <div className="flex items-center space-x-1.5">
-                    <p className="text-sm text-gray-500">{experiencePoints} XP</p>
-                    <div className="w-full max-w-16 bg-gray-200 h-1 rounded-full">
-                      <div className="bg-primary-500 h-1 rounded-full" style={{ width: '65%' }}></div>
-                    </div>
-                    <p className="text-xs text-primary-600 font-medium">500 XP</p>
-                  </div>
+                  <h3 className="font-medium">Tu progreso semanal</h3>
+                  <p className="text-sm text-gray-500">
+                    {currentStreak} días consecutivos · Racha máxima: {longestStreak} días
+                  </p>
                 </div>
-                {/* Racha de días */}
-                <div className="flex flex-col items-center justify-center">
-                  <motion.div 
-                    className="flex items-center justify-center h-9 w-9 rounded-full bg-orange-100"
-                    animate={currentStreak > 0 ? { scale: [1, 1.1, 1] } : {}}
-                    transition={{ repeat: Infinity, duration: 2 }}
+                {/* Highlight en hover */}
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </motion.div>
+
+              {/* Card 3: Desafíos */}
+              <motion.div 
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center relative overflow-hidden group"
+                whileHover={{ 
+                  scale: 1.02, 
+                  boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.1), 0 4px 6px -4px rgba(var(--color-primary-700), 0.1)"
+                }}
+              >
+                <motion.div 
+                  className="rounded-full bg-primary-100 p-3 mr-4 flex items-center justify-center relative"
+                  whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <motion.svg 
+                    className="h-6 w-6 text-primary-600" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
                   >
-                    <svg className="h-5 w-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2c.6 0 1.2.3 1.6.8l1.5 2c.1.1.2.2.4.2h2c1.9 0 3.5 1.6 3.5 3.5 0 .5-.1 1-.3 1.5-.2.6-.1 1.2.3 1.7l1.5 2c1.1 1.5.9 3.7-.5 4.9-.4.3-.9.5-1.4.5-.3 0-.5 0-.8-.1-.6-.2-1.2-.1-1.7.3l-1.5 1.5c-1.1 1.1-2.9 1.1-4 0-.3-.3-.5-.6-.6-1-.2-.6-.6-1-1.2-1.2-.6-.2-1-.6-1.2-1.2-.1-.4-.3-.7-.6-1-1.1-1.1-1.1-2.9 0-4 .3-.3.6-.5 1-.6.6-.2 1-.6 1.2-1.2.2-.6.6-1 1.2-1.2.4-.1.7-.3 1-.6 1.1-1.1 2.9-1.1 4 0 .3.3.5.6.6 1 .2.6.6 1 1.2 1.2.6.2 1 .6 1.2 1.2.1.4.3.7.6 1 .5.5.8 1.2.8 1.9 0 .2-.1.3-.2.4-.1.1-.3.2-.4.2h-13c-.3 0-.5-.1-.7-.3-.2-.2-.3-.4-.3-.7 0-.9.3-1.7.8-2.4.2-.2.3-.5.4-.8.1-.6.5-1 1-1.2.6-.2 1-.6 1.2-1.2.1-.4.3-.7.6-1 .5-.5 1.2-.8 1.9-.8zm0 2c-.3 0-.5.1-.7.3-.3.3-.5.7-.6 1.1-.3.8-1 1.4-1.8 1.6-.2 0-.3.1-.5.2-.4.4-.4 1 0 1.4l1 1c.4.4.4 1.1 0 1.5l-1 1c-.3.3-.3.7 0 .9.1.1.3.2.5.2h9.1c0-.2-.1-.4-.2-.6l-1.3-1.7c-.9-1.2-1-2.9-.3-4.2.1-.1.1-.3.1-.4 0-.3-.2-.5-.5-.5h-1.3c-.8 0-1.5-.4-1.9-1.1l-.9-1.2c-.1-.2-.3-.3-.6-.3z" />
-                    </svg>
-                  </motion.div>
-                  <span className="text-xs font-medium mt-1 text-gray-700">{currentStreak} días</span>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </motion.svg>
+                </motion.div>
+                <div className="flex-grow">
+                  <h3 className="font-medium">Desafíos semanales</h3>
+                  <p className="text-sm text-gray-500">
+                    {completedChallenges.length} completados · {MOCK_CHALLENGES.length} disponibles
+                  </p>
+                </div>
+                {/* Badge para mostrar nuevo desafío */}
+                <div className="absolute top-3 right-3">
+                  <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-accent-500 rounded-full">{MOCK_CHALLENGES.length - completedChallenges.length}</span>
                 </div>
                 {/* Highlight en hover */}
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-primary-500 to-primary-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
@@ -533,7 +501,7 @@ const DashboardPage: React.FC = () => {
         </AnimatePresence>
       </section>
 
-      {/* Continuar aprendiendo */}
+      {/* 3. Continúa aprendiendo */}
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Continúa aprendiendo</h2>
@@ -541,280 +509,78 @@ const DashboardPage: React.FC = () => {
             Ver todos los cursos
           </Link>
         </div>
-
-        <AnimatePresence>
-          {loading ? (
-            // Skeleton loading para cursos
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {[...Array(2)].map((_, i) => (
-                <motion.div 
-                  key={`skeleton-course-${i}`}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden relative"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.2 }}
-                >
-                  <div className="h-48 bg-gray-100 animate-pulse"></div>
-                  <div className="p-4 space-y-3">
-                    <div className="h-5 bg-gray-100 rounded w-3/4 animate-pulse"></div>
-                    <div className="h-4 bg-gray-50 rounded w-1/2 animate-pulse"></div>
-                    <div className="h-2 bg-gray-100 rounded w-full mt-2 animate-pulse"></div>
-                    <div className="flex justify-between mt-2">
-                      <div className="h-4 bg-gray-50 rounded w-1/4 animate-pulse"></div>
-                      <div className="h-4 bg-gray-50 rounded w-1/4 animate-pulse"></div>
-                    </div>
-                  </div>
-                  {/* Shimmer effect */}
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              {courses.length > 0 ? (
-                courses.map((course, index) => (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 + (index * 0.1) }}
-                    whileHover={{ 
-                      scale: 1.02,
-                      boxShadow: "0 10px 15px -3px rgba(var(--color-primary-700), 0.1), 0 4px 6px -4px rgba(var(--color-primary-700), 0.1)"
-                    }}
-                  >
-                    <CourseCard 
-                      id={course.id}
-                      title={course.title}
-                      image={course.image}
-                      progress={course.progress}
-                      lessons={course.lessons}
-                      completedLessons={course.completedLessons}
-                      category={course.category}
-                      difficulty={course.difficulty}
-                      estimatedTime={course.estimatedTime}
-                      lastActivity={course.lastActivity}
-                      status={course.status}
-                      isNew={course.isNew}
-                    />
-                  </motion.div>
-                ))
-              ) : (
-                <motion.div 
-                  className="col-span-2 bg-white rounded-lg p-6 text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.svg 
-                    className="h-12 w-12 mx-auto text-gray-400" 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1, rotate: [0, 5, 0, -5, 0] }}
-                    transition={{ duration: 0.6, type: "spring" }}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </motion.svg>
-                  <motion.h3 
-                    className="mt-2 text-lg font-medium text-gray-900"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    No has iniciado ningún curso
-                  </motion.h3>
-                  <motion.p 
-                    className="mt-1 text-gray-500"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                  >
-                    Explora nuestro catálogo de cursos para comenzar.
-                  </motion.p>
-                  <motion.div 
-                    className="mt-6"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      to="/platform/courses"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 transition-colors"
-                    >
-                      Explorar cursos
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        
+        {/* Mostrar tarjetas de cursos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {courses.slice(0, 3).map((course, index) => (
+            <CourseCard
+              key={course.id}
+              id={course.id}
+              title={course.title}
+              progress={course.progress}
+              image={course.image}
+              category={course.category}
+              difficulty={course.difficulty}
+              estimatedTime={course.estimatedTime}
+              data-onboarding={index === 0 ? "suggested-course" : undefined}
+            />
+          ))}
+        </div>
       </section>
 
-      {/* Estadísticas generales - ExperienceBar */}
-      <AnimatePresence>
-        {loading ? (
-          <motion.section 
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="h-6 w-48 bg-gray-100 rounded animate-pulse mb-6"></div>
-            
-            <div className="flex flex-col lg:flex-row items-center gap-6">
-              {/* Level skeleton */}
-              <div className="flex flex-col items-center">
-                <div className="h-20 w-20 bg-gray-100 rounded-full animate-pulse mb-2"></div>
-                <div className="h-4 w-16 bg-gray-100 rounded animate-pulse"></div>
-              </div>
-              
-              {/* Progress skeleton */}
-              <div className="flex-grow w-full">
-                <div className="h-6 w-32 bg-gray-100 rounded animate-pulse mb-3"></div>
-                <div className="h-5 w-full bg-gray-100 rounded-full animate-pulse mb-4"></div>
-                
-                <div className="grid grid-cols-3 gap-2 sm:gap-6 mt-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={`skeleton-stat-${i}`} className="flex flex-col sm:flex-row sm:items-center p-3 rounded-lg bg-gray-50">
-                      <div className="h-5 w-5 bg-gray-100 rounded animate-pulse mb-2 sm:mb-0 sm:mr-3"></div>
-                      <div>
-                        <div className="h-6 w-10 bg-gray-100 rounded animate-pulse mb-1"></div>
-                        <div className="h-4 w-24 bg-gray-100 rounded animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-          </motion.section>
-        ) : (
-          <motion.section 
-            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <ExperienceBar
-              totalXP={1250}
-              currentLevel={5}
-              xpForNextLevel={500}
-              currentLevelXP={250}
-              coursesCompleted={3}
-              lessonsCompleted={10}
-              certificates={0}
+      {/* 4. ExperienceBar y StreakTracker */}
+      <section>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">Tu progreso</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ExperienceBar */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-onboarding="experience-progress">
+            <h3 className="font-medium mb-3">Nivel de experiencia</h3>
+            <ExperienceBar 
+              totalXP={totalXP || 0}
+              currentLevel={currentLevel || 1}
+              xpForNextLevel={1000}
+              currentLevelXP={totalXP ? totalXP % 1000 : 0}
+              coursesCompleted={completedChallenges.length}
+              lessonsCompleted={currentStreak}
+              certificates={longestStreak > 7 ? Math.floor(longestStreak / 7) : 0}
             />
-          </motion.section>
-        )}
-      </AnimatePresence>
-      
-      {/* Racha de estudio */}
-      <AnimatePresence>
-        {loading ? (
-          <motion.section 
-            className="bg-white rounded-lg shadow-md p-6 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-3"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
-              <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
-              <div className="h-8 bg-gray-100 rounded animate-pulse"></div>
-            </div>
-            <div className="h-32 bg-gray-100 rounded animate-pulse"></div>
-          </motion.section>
-        ) : (
-          <motion.section 
-            className="mt-6 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <StreakTracker
-              studyDates={mockStudyDates}
+            <p className="text-sm text-gray-500 mt-2">
+              {totalXP ? totalXP % 1000 : 0} de 1000 XP para alcanzar el nivel {(currentLevel || 1) + 1}
+            </p>
+          </div>
+          
+          {/* StreakTracker */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-onboarding="learning-streak">
+            <h3 className="font-medium mb-3">Racha de aprendizaje</h3>
+            <StreakTracker 
+              studyDates={mockStudyDates} 
               currentStreak={currentStreak}
               longestStreak={longestStreak}
               weeklyGoal={weeklyGoal}
             />
-          </motion.section>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </section>
 
-      {/* Desafíos Semanales */}
-      <AnimatePresence>
-        {loading ? (
-          <motion.section 
-            className="grid grid-cols-1 gap-6 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="h-12 w-48 bg-gray-100 rounded-lg animate-pulse mb-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div 
-                  key={`skeleton-challenge-${i}`} 
-                  className="bg-gray-100 rounded-lg h-72 animate-pulse" 
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                ></div>
-              ))}
-            </div>
-          </motion.section>
-        ) : (
-          <motion.section 
-            className="mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <WeeklyChallenges
-              challenges={MOCK_CHALLENGES}
-              completedChallenges={completedChallenges}
-              userProgress={userChallengeProgress}
-              onChallengeCompleted={(challengeId) => {
-                // Verificamos que el desafío no esté ya completado para evitar duplicados
-                if (!completedChallenges.includes(challengeId)) {
-                  setCompletedChallenges(prev => [...prev, challengeId]);
-                  setShowAchievement(true);
-                  
-                  // Actualizar puntos de experiencia solo si no está ya completado
-                  const challenge = MOCK_CHALLENGES.find(c => c.id === challengeId);
-                  if (challenge && challenge.reward.type !== 'badge') {
-                    setExperiencePoints(prev => prev + (challenge.reward.value || 0));
-                  }
-                }
-              }}
-              onChallengeClick={(challenge) => {
-                console.log('Challenge clicked:', challenge);
-                // Aquí podríamos mostrar un modal con más detalles o navegar a una página dedicada
-              }}
-            />
-          </motion.section>
-        )}
-      </AnimatePresence>
+      {/* 5. Desafíos semanales */}
+      <section>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">Desafíos semanales</h2>
+          <span className="text-primary-600 text-sm">{completedChallenges.length}/{MOCK_CHALLENGES.length} completados</span>
+        </div>
+        <WeeklyChallenges 
+          challenges={MOCK_CHALLENGES}
+          userProgress={userChallengeProgress}
+          completedChallenges={completedChallenges}
+          onChallengeCompleted={onChallengeCompleted}
+          data-onboarding="weekly-challenges"
+        />
+      </section>
 
-      {/* ... */}
-
+      {/* 6. Próximamente */}
       <AnimatePresence>
         {loading ? (
           <motion.section 
@@ -893,6 +659,17 @@ const DashboardPage: React.FC = () => {
           </motion.section>
         )}
       </AnimatePresence>
+
+      {/* Confeti para celebraciones */}
+      {showConfetti && (
+        <ReactConfetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.2}
+        />
+      )}
     </div>
   );
 };

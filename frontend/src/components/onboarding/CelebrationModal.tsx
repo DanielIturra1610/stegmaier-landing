@@ -32,7 +32,7 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({
   
   return (
     <div 
-      className={`fixed inset-0 ${isFinal ? 'z-60' : 'z-50'} flex items-center justify-center ${isFinal ? 'bg-gray-900/75 backdrop-blur-md' : ''}`}
+      className={`fixed inset-0 ${isFinal ? 'z-[9999]' : 'z-[9997]'} flex items-center justify-center ${isFinal ? 'bg-gray-900/75 backdrop-blur-md' : ''}`}
       role="dialog"
       aria-labelledby="celebration-title"
       aria-describedby="celebration-message"
