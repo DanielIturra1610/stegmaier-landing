@@ -103,6 +103,8 @@ export interface MissionTooltipProps {
   onComplete: () => void;
   /** Called when user requests to skip the mission */
   onSkip: () => void;
+  /** Target element to position tooltip next to */
+  targetElement?: string;
 }
 
 export interface CelebrationModalProps {

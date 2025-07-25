@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CelebrationModalProps } from './types';
 import Confetti from 'react-confetti';
 
@@ -14,7 +14,32 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({
   onClose
 }) => {
   const { title, message, xpEarned, isFinal } = config;
+  const [showConfetti, setShowConfetti] = useState(false);
 
+  // Control confetti visibility - SOLO mostrar cuando el modal es visible
+  useEffect(() => {
+    // Solo mostrar confetti cuando el modal está visible Y hay configuración válida
+    if (isVisible && title && message) {
+      // Iniciar confetti con un pequeño retraso para evitar problemas de renderizado
+      const startTimer = setTimeout(() => {
+        setShowConfetti(true);
+      }, 100);
+      
+      // Auto-ocultar confetti después de cierto tiempo
+      const hideTimer = setTimeout(() => {
+        setShowConfetti(false);
+      }, isFinal ? 4000 : 2000);
+      
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(hideTimer);
+      };
+    } else {
+      // Siempre ocultar confetti cuando el modal está oculto
+      setShowConfetti(false);
+    }
+  }, [isVisible, title, message, isFinal]);
+  
   // Auto-hide for micro celebrations
   useEffect(() => {
     if (isVisible && !isFinal) {
@@ -26,7 +51,8 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({
     }
   }, [isVisible, isFinal, onClose]);
   
-  if (!isVisible) {
+  // Si el modal no es visible, no renderizar nada
+  if (!isVisible || !title || !message) {
     return null;
   }
   
@@ -37,24 +63,29 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({
       aria-labelledby="celebration-title"
       aria-describedby="celebration-message"
     >
-      {/* Confetti effect */}
-      {isFinal ? (
-        <Confetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={500}
-          gravity={0.15}
-        />
-      ) : (
-        <Confetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          recycle={false}
-          numberOfPieces={50}
-          gravity={0.2}
-          tweenDuration={3000}
-        />
+      {/* Confetti effect - controlado con estado local */}
+      {showConfetti && (
+        isFinal ? (
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={500}
+            gravity={0.15}
+            tweenDuration={4000}
+            onConfettiComplete={() => setShowConfetti(false)}
+          />
+        ) : (
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={50}
+            gravity={0.2}
+            tweenDuration={2000}
+            onConfettiComplete={() => setShowConfetti(false)}
+          />
+        )
       )}
       
       {isFinal ? (

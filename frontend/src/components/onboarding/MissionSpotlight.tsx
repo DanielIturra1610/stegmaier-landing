@@ -5,7 +5,7 @@ import { MissionSpotlightProps } from './types';
  * MissionSpotlight Component
  * 
  * Creates a spotlight effect to highlight a specific element on the page
- * Uses only Tailwind CSS classes for styling
+ * Uses only Tailwind CSS classes for styling with fixed positioning
  */
 const MissionSpotlight: React.FC<MissionSpotlightProps> = ({ 
   targetElement,
@@ -31,13 +31,13 @@ const MissionSpotlight: React.FC<MissionSpotlightProps> = ({
       return;
     }
 
-    // Get element position and dimensions
+    // Get element position and dimensions - Actualizado para responder al scroll
     const updatePosition = () => {
       const rect = element.getBoundingClientRect();
       
       setPosition({
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.top,
+        left: rect.left,
         width: rect.width,
         height: rect.height
       });
@@ -46,9 +46,9 @@ const MissionSpotlight: React.FC<MissionSpotlightProps> = ({
     // Initial position
     updatePosition();
 
-    // Update position on resize and scroll
+    // Update position on resize AND scroll
     window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition);
+    window.addEventListener('scroll', updatePosition, { passive: true });
 
     // Cleanup
     return () => {
@@ -63,25 +63,25 @@ const MissionSpotlight: React.FC<MissionSpotlightProps> = ({
 
   return (
     <div aria-hidden="true" className="pointer-events-none">
-      {/* Non-intrusive highlight for target element - no fullscreen overlay */}
+      {/* Non-intrusive highlight with fixed position */}
       <div 
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: `${position.top}px`,
           left: `${position.left}px`,
           width: `${position.width}px`,
           height: `${position.height}px`,
-          zIndex: 40,
+          zIndex: 40, // Ajustado para estar por encima del contenido pero por debajo de tooltips
         }}
         className="pointer-events-none"
       >
         {/* Elegant highlight ring around the element */}
         <div 
-          className="absolute inset-0 ring-4 ring-accent-500 ring-offset-4 rounded transition-all duration-300 ease-out animate-pulse"
+          className="absolute inset-0 ring-2 ring-accent-500 ring-offset-2 rounded transition-all duration-300 ease-out animate-pulse"
         />
         
         {/* Subtle glow effect */}
-        <div className="absolute inset-0 -m-2 rounded-lg bg-accent-500 opacity-10 blur-sm"></div>
+        <div className="absolute inset-0 -m-1 rounded-lg bg-accent-500 opacity-5 blur-sm"></div>
       </div>
     </div>
   );

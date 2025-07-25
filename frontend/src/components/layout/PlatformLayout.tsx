@@ -59,12 +59,15 @@ const PlatformLayout: React.FC = () => {
           shouldShowResult: shouldShow
         });
         
+        // Solo mostrar onboarding si realmente debe mostrarse según las reglas de negocio
         if (shouldShow) {
           console.log('🚀 [Onboarding] Iniciando experiencia de primer día para usuario nuevo', {
             currentLevel,
             totalXP,
             isOnboardingComplete
           });
+          
+          // Iniciar onboarding sin celebración automática
           setShowOnboarding(true);
           
           // Registrar inicio de onboarding para analytics
@@ -73,6 +76,8 @@ const PlatformLayout: React.FC = () => {
             timestamp: new Date().toISOString()
           });
         } else {
+          // Si no debe mostrarse, asegurarnos de que esté desactivado
+          setShowOnboarding(false);
           console.log('ℹ️ [Onboarding] No se requiere onboarding', { 
             currentLevel, 
             totalXP,
@@ -81,6 +86,7 @@ const PlatformLayout: React.FC = () => {
         }
       } catch (error) {
         console.error('[Onboarding] Error verificando estado de onboarding:', error);
+        setShowOnboarding(false); // Por seguridad, desactivar en caso de error
       }
     }
   }, [user, currentLevel, totalXP, isOnboardingComplete, experienceLoading]);
@@ -125,15 +131,6 @@ const PlatformLayout: React.FC = () => {
       {/* Sistema de onboarding para usuarios nuevos */}
       {showOnboarding && user && !experienceLoading && (
         <>
-          <button
-            onClick={() => {
-              setShowOnboarding(false);
-              console.log('Onboarding cerrado manualmente por el usuario');
-            }}
-            className="fixed top-4 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-md shadow-lg hover:bg-red-700"
-          >
-            Cerrar Onboarding
-          </button>
           <FirstDayExperience
             user={{
               ...user,

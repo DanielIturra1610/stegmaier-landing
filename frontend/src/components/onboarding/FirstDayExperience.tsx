@@ -69,6 +69,9 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
   useEffect(() => {
     if (!shouldShowOnboarding) return;
     
+    // Asegurar que no se muestre celebración al inicio
+    setShowCelebration(false);
+    
     // Check localStorage for existing progress
     const savedProgress = loadMissionProgress();
     
@@ -83,7 +86,9 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
       
       // If all missions complete, show final celebration
       if (nextMissionIndex === -1) {
-        handleAllMissionsComplete();
+        // Evitar mostrar celebración automáticamente al cargar todas las misiones completadas
+        // Solo mostrar un mensaje en consola
+        console.log('🎉 [FirstDayExperience] Todas las misiones están completas');
       } else {
         setCurrentMissionIndex(nextMissionIndex);
       }
@@ -101,7 +106,7 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
       );
     }
     
-    // Set initial mission start time
+    // Reset mission start time
     setMissionStartTime(Date.now());
   }, [shouldShowOnboarding]);
 
@@ -234,8 +239,27 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
   // Handle close celebration modal
   const handleCloseCelebration = useCallback(() => {
     setShowCelebration(false);
-  }, []);
+    
+    // Si es la celebración final, notificar después de cerrar
+    if (celebrationConfig.isFinal) {
+      // Ligero retraso para permitir animaciones de cierre
+      setTimeout(() => {
+        // Asegurar que toda la experiencia se cierre correctamente
+        if (onFirstDayComplete && typeof onFirstDayComplete === 'function' && missionProgress) {
+          onFirstDayComplete(missionProgress.totalXP);
+        }
+      }, 300);
+    }
+  }, [celebrationConfig.isFinal, missionProgress, onFirstDayComplete]);
   
+  // Cleanup al desmontar el componente
+  useEffect(() => {
+    return () => {
+      // Asegurar que no queden modales o confetis visibles al navegar fuera
+      setShowCelebration(false);
+    };
+  }, []);
+
   // Don't render anything if onboarding shouldn't be shown
   if (!shouldShowOnboarding || !missionProgress) {
     return null;
@@ -249,9 +273,9 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
 
   return (
     <>
-      {/* Non-blocking floating progress indicator */}
+      {/* Non-blocking floating progress indicator - Reposicionado y sin botón de omitir */}
       <div 
-        className="fixed top-4 right-4 bg-white shadow-lg rounded-full px-3 py-1 text-sm font-medium z-40 flex items-center space-x-2"
+        className="fixed top-4 right-4 bg-white shadow-lg rounded-full px-3 py-1 text-sm font-medium z-30 flex items-center space-x-2"
         aria-label="Onboarding Progress"
       >
         <div className="flex items-center">
@@ -270,19 +294,10 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
           />
         </div>
         
-        {/* Skip button */}
-        <button
-          onClick={handleSkipMission}
-          className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full p-0.5"
-          aria-label="Omitir misión"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 10-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
-          </svg>
-        </button>
+        {/* Se elimina el botón de omitir misión que aparecía detrás del rastreo */}
       </div>
       
-      {/* Mission spotlight - non-intrusive */}
+      {/* Mission spotlight - non-intrusive with fixed position */}
       {currentMission && (
         <MissionSpotlight
           targetElement={currentMission.targetElement}
@@ -290,13 +305,16 @@ const FirstDayExperience: React.FC<FirstDayExperienceProps> = ({
         />
       )}
       
-      {/* Mission tooltip - non-intrusive */}
+      {/* Mission tooltip - Ahora se posicionará dinámicamente según el elemento target */}
       {currentMission && (
-        <MissionTooltip
-          mission={currentMission}
-          onComplete={handleMissionComplete}
-          onSkip={handleSkipMission}
-        />
+        <div className="fixed z-40 pointer-events-none">
+          <MissionTooltip
+            mission={currentMission}
+            onComplete={handleMissionComplete}
+            onSkip={handleSkipMission}
+            targetElement={currentMission.targetElement}
+          />
+        </div>
       )}
       
       {/* Bottom sheet for mobile */}
