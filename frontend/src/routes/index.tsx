@@ -85,6 +85,7 @@ const AppRoutes: React.FC = () => {
         
         {/* Rutas administrativas (usando mismo layout) */}
         <Route path="users" element={<AdminUsers />} />
+        <Route path="admin/dashboard" element={<AdminDashboard />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />
