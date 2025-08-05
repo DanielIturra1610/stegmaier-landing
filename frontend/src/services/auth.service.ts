@@ -133,4 +133,11 @@ export const authService = {
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem('auth_token');
   },
+
+  /**
+   * Obtener el token de autenticación
+   */
+  getToken: (): string | null => {
+    return localStorage.getItem('auth_token');
+  },
 };

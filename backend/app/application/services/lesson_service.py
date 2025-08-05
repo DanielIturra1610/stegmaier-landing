@@ -239,3 +239,83 @@ class LessonService:
         
         # Reordenar las lecciones
         return await self.lesson_repository.reorder(course_id, order_data)
+    
+    async def update_lesson_video(self, lesson_id: str, video_id: str, instructor_id: str) -> Optional[Lesson]:
+        """
+        Actualizar el video de una lección
+        
+        Args:
+            lesson_id: ID de la lección
+            video_id: ID del video a asociar
+            instructor_id: ID del instructor
+        
+        Returns:
+            La lección actualizada o None si no existe
+        
+        Raises:
+            ValueError: Si el usuario no tiene permisos
+        """
+        # Verificar si la lección existe
+        lesson = await self.lesson_repository.get_by_id(lesson_id)
+        if not lesson:
+            return None
+        
+        # Verificar si el curso existe
+        course = await self.course_repository.get_by_id(lesson.course_id)
+        if not course:
+            raise ValueError("El curso no existe")
+        
+        # Verificar permisos
+        if course.instructor_id != instructor_id:
+            instructor = await self.user_repository.get_by_id(instructor_id)
+            if not instructor or instructor.role != "admin":
+                raise ValueError("No tienes permiso para actualizar esta lección")
+        
+        # Actualizar el video de la lección
+        lesson.video_url = f"/api/v1/media/video/{video_id}/stream"
+        lesson.content_type = "video"
+        
+        return await self.lesson_repository.update(lesson_id, lesson)
+    
+    async def create_video_lesson(
+        self,
+        instructor_id: str,
+        course_id: str,
+        title: str,
+        video_id: str,
+        description: Optional[str] = None,
+        duration: Optional[int] = None
+    ) -> Lesson:
+        """
+        Crear una nueva lección de video
+        
+        Args:
+            instructor_id: ID del instructor
+            course_id: ID del curso
+            title: Título de la lección
+            video_id: ID del video
+            description: Descripción opcional
+            duration: Duración en segundos
+        
+        Returns:
+            La lección creada
+        
+        Raises:
+            ValueError: Si el curso no existe o el usuario no tiene permisos
+        """
+        from ..dtos.lesson_dto import LessonCreate
+        
+        # Crear datos de la lección
+        lesson_data = LessonCreate(
+            course_id=course_id,
+            title=title,
+            description=description or "",
+            content="",  # El contenido será el video
+            content_type="video",
+            duration=duration or 0,
+            order=0,  # Se calculará automáticamente
+            is_free=False,
+            video_url=f"/api/v1/media/video/{video_id}/stream"
+        )
+        
+        return await self.create_lesson(instructor_id, lesson_data)

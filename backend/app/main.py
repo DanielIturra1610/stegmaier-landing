@@ -3,6 +3,8 @@ Punto de entrada principal de la aplicación FastAPI para la plataforma de curso
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
@@ -56,6 +58,14 @@ def create_application() -> FastAPI:
                 "name": "reseñas",
                 "description": "Sistema de valoraciones y reseñas de cursos",
             },
+            {
+                "name": "multimedia",
+                "description": "Gestión de archivos multimedia - videos e imágenes",
+            },
+            {
+                "name": "administración",
+                "description": "Panel administrativo - gestión de usuarios y cursos",
+            },
         ],
     )
     
@@ -73,6 +83,13 @@ def create_application() -> FastAPI:
     # Eventos de inicio y cierre
     app.add_event_handler("startup", connect_to_mongo)
     app.add_event_handler("shutdown", close_mongo_connection)
+    
+    # Configurar servicio de archivos estáticos para media
+    media_path = settings.MEDIA_ROOT
+    if not os.path.exists(media_path):
+        os.makedirs(media_path, exist_ok=True)
+    
+    app.mount("/static/media", StaticFiles(directory=media_path), name="media")
     
     # Incluir router principal de la API v1
     from .api.v1.api import api_router

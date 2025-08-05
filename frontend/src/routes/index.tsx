@@ -32,6 +32,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminCourses from '../pages/admin/AdminCourses';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
+import AdminLessons from '../pages/admin/AdminLessons';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
@@ -89,6 +90,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/dashboard" element={<AdminDashboard />} />
         <Route path="admin/courses/new" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
+        <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />

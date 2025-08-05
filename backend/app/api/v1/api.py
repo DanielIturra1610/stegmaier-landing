@@ -3,7 +3,7 @@ Configuración principal del router para la API v1.
 """
 from fastapi import APIRouter
 
-from .endpoints import auth, users, courses, lessons, enrollments, reviews, admin
+from .endpoints import auth, users, courses, lessons, enrollments, reviews, admin, media
 
 api_router = APIRouter()
 
@@ -15,3 +15,4 @@ api_router.include_router(lessons.router, prefix="/lessons", tags=["lecciones"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["inscripciones"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reseñas"])
 api_router.include_router(admin.router, prefix="/admin", tags=["administración"])
+api_router.include_router(media.router, prefix="/media", tags=["multimedia"])

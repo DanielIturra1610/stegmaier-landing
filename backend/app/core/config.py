@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
     
+    # Media settings
+    MEDIA_ROOT: str = os.getenv("MEDIA_ROOT", "media")
+    MAX_VIDEO_SIZE: int = 100 * 1024 * 1024  # 100MB
+    MAX_IMAGE_SIZE: int = 10 * 1024 * 1024   # 10MB
+    ALLOWED_VIDEO_TYPES: List[str] = ["video/mp4", "video/mpeg", "video/quicktime", "video/webm"]
+    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    
     # CORS settings
     cors_origins: List[str] = [
         "http://localhost:3000", 
