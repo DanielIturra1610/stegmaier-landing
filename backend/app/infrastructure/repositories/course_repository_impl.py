@@ -88,3 +88,21 @@ class MongoDBCourseRepository(CourseRepository):
             {"$set": {"average_rating": new_rating}}
         )
         return result.modified_count > 0
+    
+    # Métodos administrativos
+    async def count(self) -> int:
+        """Contar total de cursos"""
+        return await self.db[self.collection_name].count_documents({})
+    
+    async def count_by_status(self, is_published: bool) -> int:
+        """Contar cursos por estado de publicación"""
+        return await self.db[self.collection_name].count_documents({
+            "is_published": is_published
+        })
+    
+    async def get_all_filtered(self, skip: int = 0, limit: int = 20, is_published: Optional[bool] = None) -> List[Course]:
+        """Obtener cursos con filtros administrativos"""
+        filters = {}
+        if is_published is not None:
+            filters["is_published"] = is_published
+        return await self.list(skip=skip, limit=limit, **filters)

@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireVerified?: boolean;
+  allowedRoles?: string[];
 }
 
 /**
@@ -14,9 +15,10 @@ interface ProtectedRouteProps {
  */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requireVerified = true 
+  requireVerified = true,
+  allowedRoles 
 }) => {
-  const { isAuthenticated, isVerified, isLoading } = useAuth();
+  const { isAuthenticated, isVerified, isLoading, user } = useAuth();
   const location = useLocation();
 
   // Mostrar spinner mientras se verifica la autenticación
@@ -39,6 +41,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Si requiere verificación y no está verificado, redirigir a página de recordatorio
   if (requireVerified && !isVerified) {
     return <Navigate to="/verify-reminder" replace />;
+  }
+
+  // Verificar roles si se especifican
+  if (allowedRoles && allowedRoles.length > 0) {
+    if (!user || !allowedRoles.includes(user.role)) {
+      return <Navigate to="/" state={{ from: location.pathname }} replace />;
+    }
   }
 
   // Si pasa todas las verificaciones, mostrar los hijos (contenido protegido)

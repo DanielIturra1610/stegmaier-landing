@@ -68,3 +68,18 @@ class MongoDBUserRepository(UserRepository):
         """Eliminar usuario"""
         result = await self.db[self.collection_name].delete_one({"_id": ObjectId(user_id)})
         return result.deleted_count > 0
+    
+    # Métodos administrativos
+    async def count(self) -> int:
+        """Contar total de usuarios"""
+        return await self.db[self.collection_name].count_documents({})
+    
+    async def count_since(self, since_date) -> int:
+        """Contar usuarios creados desde una fecha"""
+        return await self.db[self.collection_name].count_documents({
+            "created_at": {"$gte": since_date}
+        })
+    
+    async def get_all(self, skip: int = 0, limit: int = 20) -> List[User]:
+        """Obtener todos los usuarios con paginación"""
+        return await self.list(skip=skip, limit=limit)

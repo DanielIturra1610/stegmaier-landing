@@ -50,11 +50,16 @@ const PlatformLayout: React.FC = () => {
     if (user && !experienceLoading) {
       try {
         // Usar la utilidad para determinar si mostrar onboarding
-        const shouldShow = shouldShowOnboarding({currentLevel, totalXP}) && !isOnboardingComplete;
+        const shouldShow = shouldShowOnboarding({
+          currentLevel, 
+          totalXP,
+          role: user.role  // Pasar el rol del usuario
+        }) && !isOnboardingComplete;
         
         console.log('🔍 [PlatformLayout] Evaluating showOnboarding:', {
           currentLevel,
           totalXP,
+          role: user.role,
           isOnboardingComplete,
           shouldShowResult: shouldShow
         });

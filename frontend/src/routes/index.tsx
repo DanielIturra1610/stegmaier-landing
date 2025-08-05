@@ -26,6 +26,24 @@ import SupportPage from '../pages/platform/SupportPage';
 // Protección de rutas
 import ProtectedRoute from './ProtectedRoute';
 
+// Componentes administrativos
+import AdminLayout from '../components/admin/AdminLayout';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import AdminUsers from '../pages/admin/AdminUsers';
+import AdminCourses from '../pages/admin/AdminCourses';
+import { useAuth } from '../contexts/AuthContext';
+
+// Componente para redirección condicional
+const AdminRedirect: React.FC = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === 'admin') {
+    return <Navigate to="/platform/courses" replace />;
+  }
+  
+  return <DashboardPage />;
+};
+
 /**
  * Componente principal de rutas de la aplicación
  */
@@ -58,12 +76,15 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       >
-        {/* Dashboard como ruta principal de la plataforma */}
-        <Route index element={<DashboardPage />} />
+        {/* Redirección condicional para admins */}
+        <Route index element={<AdminRedirect />} />
         
         {/* Gestión de cursos */}
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
+        
+        {/* Rutas administrativas (usando mismo layout) */}
+        <Route path="users" element={<AdminUsers />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />
@@ -80,6 +101,8 @@ const AppRoutes: React.FC = () => {
         {/* Soporte */}
         <Route path="support" element={<SupportPage />} />
       </Route>
+      
+      {/* Las rutas administrativas ahora están integradas en /platform */}
       
       {/* Redireccionar rutas desconocidas al 404 */}
       <Route path="*" element={<Navigate to="/404" replace />} />

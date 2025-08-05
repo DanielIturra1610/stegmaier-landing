@@ -243,3 +243,26 @@ class CourseService:
         
         # Publicar el curso
         return await self.course_repository.update(course_id, {"is_published": True})
+    
+    # Métodos administrativos añadidos para el panel admin
+    async def count_all(self) -> int:
+        """
+        Cuenta total de cursos
+        """
+        return await self.course_repository.count()
+
+    async def count_published(self) -> int:
+        """
+        Cuenta cursos publicados
+        """
+        return await self.course_repository.count_by_status(is_published=True)
+
+    async def get_all_admin(self, skip: int = 0, limit: int = 20, is_published: Optional[bool] = None):
+        """
+        Lista cursos con filtros admin
+        """
+        return await self.course_repository.get_all_filtered(
+            skip=skip, 
+            limit=limit, 
+            is_published=is_published
+        )

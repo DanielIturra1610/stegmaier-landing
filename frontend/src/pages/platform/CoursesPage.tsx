@@ -1,94 +1,123 @@
-import React, { useState } from 'react';
-import CourseCard, { CourseProps } from '../../components/courses/CourseCard';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import AdminCourses from '../admin/AdminCourses';
+import courseService, { Course } from '../../services/courseService';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 /**
  * Página que muestra todos los cursos disponibles para el usuario
  * Permite filtrar y buscar cursos
  */
 const CoursesPage: React.FC = () => {
-  // Estado para filtros y búsqueda
+  const { user } = useAuth();
+  
+  // Si el usuario es admin, mostrar la vista administrativa
+  if (user?.role === 'admin') {
+    return <AdminCourses />;
+  }
+  
+  // Estados para la página
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   
-  // Datos de ejemplo para los cursos
-  const courses: CourseProps[] = [
-    {
-      id: 1,
-      title: 'Introducción a la consultoría estratégica',
-      description: 'Aprende los fundamentos de la consultoría estratégica y cómo aplicarlos en situaciones reales de negocio.',
-      progress: 65,
-      lessons: 12,
-      completedLessons: 8,
-    },
-    {
-      id: 2,
-      title: 'Análisis de procesos empresariales',
-      description: 'Técnicas avanzadas para el análisis y optimización de procesos en organizaciones de todos los tamaños.',
-      progress: 25,
-      lessons: 8,
-      completedLessons: 2,
-    },
-    {
-      id: 3,
-      title: 'Optimización de operaciones',
-      description: 'Metodologías y herramientas para mejorar la eficiencia operativa en empresas manufactureras y de servicios.',
-      progress: 0,
-      lessons: 10,
-      completedLessons: 0,
-    },
-    {
-      id: 4,
-      title: 'Gestión del cambio organizacional',
-      description: 'Estrategias efectivas para implementar y gestionar procesos de cambio en organizaciones complejas.',
-      progress: 0,
-      lessons: 9,
-      completedLessons: 0,
-    },
-    {
-      id: 5,
-      title: 'Implementación de sistemas de gestión ISO 9001',
-      description: 'Guía completa para implementar sistemas de gestión de calidad basados en ISO 9001:2015.',
-      progress: 10,
-      lessons: 15,
-      completedLessons: 1,
-    },
-    {
-      id: 6,
-      title: 'Liderazgo en entornos de consultoría',
-      description: 'Desarrolla habilidades de liderazgo efectivas para gestionar equipos y proyectos de consultoría.',
-      progress: 0,
-      lessons: 8,
-      completedLessons: 0,
-    },
-  ];
+  // Cargar cursos al montar el componente
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Para estudiantes, obtenemos solo los cursos disponibles/inscritos
+        const response = await courseService.getAvailableCourses();
+        setCourses(response.courses);
+      } catch (err: any) {
+        console.error('Error loading courses:', err);
+        setError(err.message || 'Error al cargar los cursos');
+        setCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
   
-  // Categorías para filtrar
-  const categories = [
-    { id: 'all', name: 'Todos' },
-    { id: 'in-progress', name: 'En progreso' },
-    { id: 'not-started', name: 'No comenzados' },
-    { id: 'completed', name: 'Completados' }
-  ];
-  
-  // Filtrar cursos según la búsqueda y la categoría
+  // Función para filtrar cursos
   const filteredCourses = courses.filter(course => {
-    // Filtrar por texto de búsqueda
-    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        (course.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-    
-    // Filtrar por categoría
-    let matchesCategory = true;
-    if (categoryFilter === 'in-progress') {
-      matchesCategory = (course.progress || 0) > 0 && (course.progress || 0) < 100;
-    } else if (categoryFilter === 'not-started') {
-      matchesCategory = (course.progress || 0) === 0;
-    } else if (categoryFilter === 'completed') {
-      matchesCategory = (course.progress || 0) === 100;
-    }
-    
+    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         course.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
-
+  
+  // Si está cargando
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+  
+  // Si hay error
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+          <svg className="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="text-lg font-medium text-red-800 mb-2">Error al cargar cursos</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Si no hay cursos disponibles
+  if (filteredCourses.length === 0 && courses.length === 0) {
+    return (
+      <div className="space-y-6 pb-10">
+        {/* Cabecera */}
+        <header className="bg-gradient-to-r from-primary-700 to-primary-800 text-white rounded-xl shadow-md p-6 mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Catálogo de Cursos</h1>
+          <p className="text-primary-100">
+            Explora nuestra selección de cursos especializados en consultoría y gestión empresarial
+          </p>
+        </header>
+        
+        {/* Estado vacío */}
+        <div className="text-center py-12">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 max-w-md mx-auto">
+            <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay cursos disponibles</h3>
+            <p className="text-gray-600 mb-4">
+              Aún no hay cursos publicados en la plataforma. El administrador debe subir contenido para que puedas comenzar a aprender.
+            </p>
+            <div className="text-sm text-gray-500">
+              <p>Mientras tanto, puedes:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Completar tu perfil</li>
+                <li>Explorar la configuración de la plataforma</li>
+                <li>Contactar con soporte si necesitas ayuda</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6 pb-10">
       {/* Cabecera */}
@@ -127,61 +156,75 @@ const CoursesPage: React.FC = () => {
             <select
               id="category"
               name="category"
-              className="focus:ring-primary-500 focus:border-primary-500 relative block w-full sm:text-sm border-gray-300 rounded-md"
+              className="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
+              <option value="all">Todas las categorías</option>
+              <option value="consulting">Consultoría</option>
+              <option value="management">Gestión</option>
+              <option value="operations">Operaciones</option>
             </select>
           </div>
         </div>
       </div>
       
-      {/* Resultados de cursos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCourses.length > 0 ? (
-          filteredCourses.map(course => (
-            <CourseCard key={course.id} {...course} />
-          ))
-        ) : (
-          <div className="col-span-full flex flex-col items-center justify-center bg-white p-8 rounded-xl border border-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      {/* Lista de cursos o mensaje de filtros vacíos */}
+      {filteredCourses.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
+            <svg className="mx-auto h-12 w-12 text-yellow-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.291-1.007-5.691-2.709M12 15l2-9m5 9a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No se encontraron cursos</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Intenta ajustar los filtros o la búsqueda para encontrar cursos.
+            <h3 className="text-lg font-medium text-yellow-800 mb-2">No se encontraron cursos</h3>
+            <p className="text-yellow-700 mb-4">
+              No hay cursos que coincidan con tu búsqueda. Intenta con diferentes términos o filtros.
             </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setCategoryFilter('all');
+              }}
+              className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors"
+            >
+              Limpiar filtros
+            </button>
           </div>
-        )}
-      </div>
-      
-      {/* Sección de cursos destacados */}
-      {categoryFilter === 'all' && !searchQuery && (
-        <div className="mt-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Cursos destacados</h2>
-          <div className="bg-primary-50 rounded-xl p-4 md:p-6 border border-primary-100">
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl h-40 w-full md:w-64 flex-shrink-0 flex items-center justify-center text-white p-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-              </div>
-              <div className="flex-grow">
-                <h3 className="font-bold text-lg text-gray-900 mb-2">Programa de Certificación en Consultoría</h3>
-                <p className="text-gray-600 mb-4">
-                  Obtén una certificación profesional en consultoría estratégica con nuestro programa completo de formación.
-                </p>
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                  Más información
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <div key={course.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{course.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3">{course.description}</p>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <span>{course.lessons || 0} lecciones</span>
+                  <span>{course.duration || 0} min</span>
+                </div>
+                
+                {course.progress !== undefined && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Progreso</span>
+                      <span>{course.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-primary-600 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${course.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
+                <button className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors font-medium">
+                  {course.progress !== undefined && course.progress > 0 ? 'Continuar' : 'Comenzar'}
                 </button>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
     </div>

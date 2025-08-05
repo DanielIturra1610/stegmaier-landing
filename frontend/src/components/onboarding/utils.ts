@@ -622,6 +622,12 @@ export const shouldShowOnboarding = (user: any): boolean => {
   // Check if user exists
   if (!user) return true;
   
+  // Si el usuario es admin, nunca mostrar onboarding
+  if (user.role === 'admin') {
+    console.log('[Onboarding] Usuario admin - omitiendo onboarding');
+    return false;
+  }
+  
   // Check if user has required experience properties
   if (typeof user.totalXP !== 'number' || typeof user.currentLevel !== 'number') {
     console.warn('[Onboarding] User object missing experience properties');

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,8 +21,9 @@ interface LoginFormProps {
   redirectPath?: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath = '/platform' }) => {
-  const { login, isVerified } = useAuth();
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath }) => {
+  const { login, isVerified, user } = useAuth();
+  const navigate = useNavigate();
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showVerificationWarning, setShowVerificationWarning] = useState<boolean>(false);
 
@@ -39,16 +41,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectPath = '/platf
       if (onSuccess) {
         onSuccess();
       } else {
-        // Aseguramos que la redirección use la URL completa y correcta
-        console.log('Redirigiendo a:', redirectPath);
-        // Forzamos la redirección usando una ruta absoluta
-        const baseUrl = window.location.origin;
-        const fullRedirectPath = redirectPath.startsWith('/') ? 
-          `${baseUrl}${redirectPath}` : 
-          `${baseUrl}/${redirectPath}`;
-          
-        console.log('URL completa:', fullRedirectPath);
-        window.location.replace(fullRedirectPath);
+        // Determinar la ruta de redirección basada en el rol del usuario
+        let finalRedirectPath = redirectPath;
+        
+        // Si no se especificó redirectPath, usar lógica por defecto basada en rol
+        if (!finalRedirectPath) {
+          // Necesitamos obtener el usuario actualizado después del login
+          const userData = JSON.parse(localStorage.getItem('auth_user') || '{}');
+          console.log('Usuario logueado:', userData);
+          // Redirigir todos los usuarios autenticados a /platform
+          // El sidebar se encargará de mostrar la vista apropiada según el rol
+          console.log(`Usuario autenticado (${userData.role}), redirigiendo a /platform`);
+          finalRedirectPath = '/platform';
+        }
+        
+        console.log('Redirigiendo a:', finalRedirectPath);
+        // Forzamos la redirección usando navigate
+        navigate(finalRedirectPath);
       }
     } catch (error: any) {
       // Manejar errores específicos de la API

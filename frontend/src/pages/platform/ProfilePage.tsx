@@ -72,17 +72,44 @@ const ProfilePage: React.FC = () => {
               {user?.email || 'Correo no disponible'}
             </p>
             <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-              <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary-500 text-white">
-                Estudiante
+              {/* Badge de rol dinámico */}
+              <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium ${
+                user?.role === 'admin' 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-primary-500 text-white'
+              }`}>
+                {user?.role === 'admin' ? (
+                  <>
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 2L3 7v9a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM8 13a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Administrador
+                  </>
+                ) : 'Estudiante'}
               </span>
               {user?.verified && (
                 <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-500 text-white">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                   Verificado
                 </span>
               )}
-              <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary-500 text-white">
+              <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-500 text-white">
+                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
                 Desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {day: 'numeric', month: 'long', year: 'numeric'}) : 'N/A'}
               </span>
+              {/* Badge adicional para admins */}
+              {user?.role === 'admin' && (
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-yellow-500 text-white">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                  </svg>
+                  Acceso Total
+                </span>
+              )}
             </div>
           </div>
           

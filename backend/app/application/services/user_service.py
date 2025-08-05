@@ -164,3 +164,24 @@ class UserService:
             True si se eliminó correctamente, False si no
         """
         return await self.user_repository.delete(user_id)
+    
+    # Métodos administrativos añadidos para el panel admin
+    async def count_all(self) -> int:
+        """
+        Cuenta total de usuarios
+        """
+        return await self.user_repository.count()
+
+    async def count_recent(self, days: int) -> int:
+        """
+        Cuenta usuarios creados en últimos N días
+        """
+        from datetime import datetime, timedelta
+        since_date = datetime.utcnow() - timedelta(days=days)
+        return await self.user_repository.count_since(since_date)
+
+    async def get_all(self, skip: int = 0, limit: int = 20) -> List[User]:
+        """
+        Lista todos los usuarios (solo admin)
+        """
+        return await self.user_repository.get_all(skip=skip, limit=limit)
