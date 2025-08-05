@@ -266,3 +266,167 @@ class CourseService:
             limit=limit, 
             is_published=is_published
         )
+    
+    # Nuevos métodos para gestión administrativa
+    async def create_course_admin(
+        self, 
+        course_data: Dict[str, Any], 
+        instructor_id: str
+    ) -> Course:
+        """
+        Crear curso desde panel admin con validaciones específicas
+        """
+        from datetime import datetime
+        
+        # Validar datos requeridos
+        required_fields = ['title', 'description', 'level', 'category']
+        for field in required_fields:
+            if not course_data.get(field):
+                raise ValueError(f"Campo requerido: {field}")
+        
+        # Crear curso con datos por defecto para admin
+        course = Course(
+            title=course_data['title'],
+            description=course_data['description'],
+            instructor_id=instructor_id,
+            level=course_data['level'],
+            category=course_data['category'],
+            cover_image=course_data.get('cover_image', ''),
+            price=course_data.get('price', 0.0),
+            discount_price=course_data.get('discount_price', 0.0),
+            tags=course_data.get('tags', []),
+            requirements=course_data.get('requirements', []),
+            what_you_will_learn=course_data.get('what_you_will_learn', []),
+            is_published=False,  # Siempre empezar como borrador
+            total_duration=0,
+            total_students=0,
+            average_rating=0.0,
+            lessons=[],
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        return await self.course_repository.create(course)
+
+    async def update_course_admin(
+        self, 
+        course_id: str, 
+        course_data: Dict[str, Any],
+        user_id: str
+    ) -> Optional[Course]:
+        """
+        Actualizar curso desde panel admin
+        """
+        from datetime import datetime
+        
+        course = await self.course_repository.get_by_id(course_id)
+        if not course:
+            return None
+        
+        # Verificar permisos (instructor del curso o admin)
+        # Esta verificación se hace en el endpoint
+        
+        # Actualizar campos permitidos
+        updateable_fields = [
+            'title', 'description', 'level', 'category', 'cover_image',
+            'price', 'discount_price', 'tags', 'requirements', 'what_you_will_learn'
+        ]
+        
+        for field in updateable_fields:
+            if field in course_data:
+                setattr(course, field, course_data[field])
+        
+        course.updated_at = datetime.utcnow()
+        
+        return await self.course_repository.update(course)
+
+    async def get_course_with_lessons_admin(self, course_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtener curso con todas sus lecciones para edición admin
+        """
+        course = await self.course_repository.get_by_id(course_id)
+        if not course:
+            return None
+        
+        # Obtener lecciones del curso (simulado por ahora)
+        lessons = []  # TODO: Implementar cuando tengamos lesson_repository
+        
+        return {
+            "course": course,
+            "lessons": sorted(lessons, key=lambda x: getattr(x, 'order', 0)),
+            "total_lessons": len(lessons),
+            "total_duration": sum(getattr(lesson, 'duration', 0) or 0 for lesson in lessons)
+        }
+
+    async def publish_course_admin(self, course_id: str, user_id: str) -> Optional[Course]:
+        """
+        Publicar/despublicar curso desde admin
+        """
+        from datetime import datetime
+        
+        course = await self.course_repository.get_by_id(course_id)
+        if not course:
+            return None
+        
+        # Validar que el curso tenga al menos una lección (simplificado por ahora)
+        # lessons = await self.lesson_repository.get_by_course_id(course_id)
+        # if not lessons:
+        #     raise ValueError("No se puede publicar un curso sin lecciones")
+        
+        # Cambiar estado de publicación
+        course.is_published = not course.is_published
+        course.updated_at = datetime.utcnow()
+        
+        return await self.course_repository.update(course)
+
+    async def get_courses_with_stats(
+        self, 
+        skip: int = 0, 
+        limit: int = 20,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Obtener cursos con estadísticas básicas para admin
+        """
+        courses = await self.course_repository.get_all_filtered(
+            skip=skip, 
+            limit=limit, 
+            **filters if filters else {}
+        )
+        
+        # Añadir estadísticas básicas a cada curso
+        courses_with_stats = []
+        for course in courses:
+            # Contar lecciones (simulado por ahora)
+            lessons_count = 0  # TODO: Implementar cuando tengamos lesson_repository
+            
+            # Contar inscripciones activas (simulado por ahora)
+            enrollments_count = 0  # TODO: Implementar cuando tengamos enrollment_repository
+            
+            courses_with_stats.append({
+                **course.dict(),
+                "lessons_count": lessons_count,
+                "enrollments_count": enrollments_count,
+                "status_label": "Publicado" if course.is_published else "Borrador"
+            })
+        
+        return courses_with_stats
+    
+    async def count_active_enrollments(self, course_id: str) -> int:
+        """
+        Contar inscripciones activas de un curso
+        """
+        # TODO: Implementar cuando tengamos enrollment_repository
+        return 0
+    
+    async def delete_course_admin(self, course_id: str) -> bool:
+        """
+        Eliminar curso (solo si no tiene inscripciones activas)
+        """
+        # Verificar si tiene inscripciones activas
+        enrollments_count = await self.count_active_enrollments(course_id)
+        
+        if enrollments_count > 0:
+            raise ValueError(f"No se puede eliminar el curso. Tiene {enrollments_count} inscripciones activas")
+        
+        return await self.course_repository.delete(course_id)

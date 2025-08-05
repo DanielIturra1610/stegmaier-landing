@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import adminService from '../../services/adminService';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Course {
   id: string;
@@ -8,145 +9,267 @@ interface Course {
   level: string;
   category: string;
   is_published: boolean;
-  total_students: number;
+  lessons_count: number;
+  enrollments_count: number;
+  status_label: string;
   created_at: string;
+  price: number;
 }
 
 const AdminCourses: React.FC = () => {
+  const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all');
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true);
-        const isPublished = filter === 'all' ? undefined : filter === 'published';
-        const data = await adminService.getCourses(0, 50, isPublished);
-        setCourses(data);
-      } catch (err) {
-        console.error('Error fetching courses:', err);
-        setError('No se pudieron cargar los cursos');
-      } finally {
-        setLoading(false);
+  
+  // Filtros
+  const [publishedFilter, setPublishedFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      
+      let url = '/api/v1/admin/courses';
+      const params = new URLSearchParams();
+      
+      if (publishedFilter !== 'all') {
+        params.append('is_published', publishedFilter === 'published' ? 'true' : 'false');
       }
-    };
-
+      
+      if (categoryFilter !== 'all') {
+        params.append('category', categoryFilter);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+      } else {
+        setError('Error al cargar cursos');
+      }
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchCourses();
-  }, [filter]);
-
+  }, [publishedFilter, categoryFilter]);
+  
+  const handleTogglePublish = async (courseId: string) => {
+    try {
+      const response = await fetch(`/api/v1/admin/courses/${courseId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message);
+        fetchCourses(); // Recargar lista
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
+      }
+    } catch (err) {
+      console.error('Error toggling publish status:', err);
+      alert('Error de conexión');
+    }
+  };
+  
+  const handleDeleteCourse = async (courseId: string, courseTitle: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el curso "${courseTitle}"?`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/v1/admin/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        alert('Curso eliminado exitosamente');
+        fetchCourses(); // Recargar lista
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
+      }
+    } catch (err) {
+      console.error('Error deleting course:', err);
+      alert('Error de conexión');
+    }
+  };
+  
   if (loading) {
     return <div className="text-center py-8">Cargando cursos...</div>;
   }
-
+  
   if (error) {
     return <div className="text-center py-8 text-red-500">{error}</div>;
   }
-
+  
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Gestión de Cursos</h1>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
-          Crear Nuevo Curso
-        </button>
+        <Link
+          to="/platform/admin/courses/new"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+        >
+          + Nuevo Curso
+        </Link>
       </div>
       
       {/* Filtros */}
-      <div className="mb-6">
-        <div className="sm:hidden">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value as any)}
-            className="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="all">Todos los cursos</option>
-            <option value="published">Publicados</option>
-            <option value="draft">Borradores</option>
-          </select>
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <select
+              value={publishedFilter}
+              onChange={(e) => setPublishedFilter(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Todos</option>
+              <option value="published">Publicados</option>
+              <option value="draft">Borradores</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2"
+            >
+              <option value="all">Todas</option>
+              <option value="PROGRAMMING">Programación</option>
+              <option value="DESIGN">Diseño</option>
+              <option value="BUSINESS">Negocios</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="PERSONAL_DEVELOPMENT">Desarrollo Personal</option>
+              <option value="OTHER">Otros</option>
+            </select>
+          </div>
         </div>
-        <div className="hidden sm:block">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setFilter('all')}
-              className={`${
-                filter === 'all'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setFilter('published')}
-              className={`${
-                filter === 'published'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Publicados
-            </button>
-            <button
-              onClick={() => setFilter('draft')}
-              className={`${
-                filter === 'draft'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Borradores
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {courses.map((course) => (
-            <li key={course.id}>
-              <div className="px-4 py-4 flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {course.title}
-                    </p>
-                    <div className="ml-2 flex-shrink-0 flex">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        course.is_published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {course.is_published ? 'Publicado' : 'Borrador'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-1 flex items-center text-sm text-gray-500">
-                    <span>{course.level}</span>
-                    <span className="mx-2">•</span>
-                    <span>{course.category}</span>
-                    <span className="mx-2">•</span>
-                    <span>{course.total_students || 0} estudiantes</span>
-                  </div>
-                </div>
-                <div className="ml-4 flex items-center space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900 text-sm">
-                    Editar
-                  </button>
-                  <button className="text-red-600 hover:text-red-900 text-sm">
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
       
-      {courses.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No se encontraron cursos
-        </div>
-      )}
+      {/* Tabla de cursos */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Curso
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estado
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Lecciones
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estudiantes
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Precio
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {courses.map((course) => (
+              <tr key={course.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {course.title}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {course.category} • {course.level}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    course.is_published 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {course.status_label}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {course.lessons_count}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {course.enrollments_count}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  ${course.price}
+                </td>
+                <td className="px-6 py-4 text-right text-sm font-medium">
+                  <div className="flex justify-end gap-2">
+                    <Link
+                      to={`/platform/admin/courses/${course.id}/edit`}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Editar
+                    </Link>
+                    <button
+                      onClick={() => handleTogglePublish(course.id)}
+                      className={`${
+                        course.is_published 
+                          ? 'text-yellow-600 hover:text-yellow-900' 
+                          : 'text-green-600 hover:text-green-900'
+                      }`}
+                    >
+                      {course.is_published ? 'Despublicar' : 'Publicar'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCourse(course.id, course.title)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        
+        {courses.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No hay cursos disponibles
+          </div>
+        )}
+      </div>
     </div>
   );
 };
