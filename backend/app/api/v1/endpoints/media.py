@@ -1,254 +1,260 @@
 """
 Endpoints para gestión de archivos multimedia
+Sistema básico de upload y almacenamiento de videos
 """
-from typing import List, Optional
+import os
+import uuid
+import shutil
+from typing import Optional, List
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from fastapi.responses import StreamingResponse, FileResponse
-from fastapi.security import HTTPBearer
+from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status
+from fastapi.responses import FileResponse
 
+from ....domain.entities.user import User
 from ....application.services.media_service import MediaService
-from ....domain.entities.media import VideoAsset, ImageAsset
-from ....core.auth import get_current_user
+from ....application.services.lesson_service import LessonService
 from ....core.dependencies import get_media_service
+from ....dependencies import get_lesson_service
+from ....core.auth import get_current_instructor_user, get_current_admin_user
 
 router = APIRouter()
-security = HTTPBearer()
 
-@router.post("/upload/video", response_model=dict)
+# Configuración de archivos permitidos
+ALLOWED_VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv'}
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
+MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB
+MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10MB
+
+@router.post("/videos/upload", summary="Subir video")
 async def upload_video(
-    title: str = Form(..., description="Título del video"),
-    description: Optional[str] = Form(None, description="Descripción del video"),
-    file: UploadFile = File(..., description="Archivo de video"),
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    lesson_id: Optional[str] = Form(None),
+    current_user: User = Depends(get_current_instructor_user),
+    media_service: MediaService = Depends(get_media_service),
+    lesson_service: LessonService = Depends(get_lesson_service)
 ):
     """
-    Subir archivo de video
-    
-    **Formatos soportados:** MP4, MPEG, MOV, WebM
-    **Tamaño máximo:** 100MB
+    Sube un video al servidor y opcionalmente lo asocia a una lección
     """
     try:
-        video_asset = await media_service.upload_video(
+        # Validar archivo
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se proporcionó un archivo"
+            )
+        
+        # Validar extensión
+        file_extension = Path(file.filename).suffix.lower()
+        if file_extension not in ALLOWED_VIDEO_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Formato de archivo no permitido. Formatos válidos: {', '.join(ALLOWED_VIDEO_EXTENSIONS)}"
+            )
+        
+        # Validar tamaño (aproximado por headers)
+        if file.size and file.size > MAX_VIDEO_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"El archivo es demasiado grande. Tamaño máximo: {MAX_VIDEO_SIZE // (1024*1024)}MB"
+            )
+        
+        # Generar nombre único para el archivo
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        
+        # Guardar archivo
+        video_info = await media_service.save_video_file(
             file=file,
+            filename=unique_filename,
             title=title,
             description=description,
-            uploaded_by=current_user.get("id")
+            user_id=current_user.id
         )
+        
+        # Si se proporciona lesson_id, actualizar la lección
+        if lesson_id:
+            lesson = await lesson_service.update_lesson_video(
+                lesson_id=lesson_id,
+                video_url=video_info["url"],
+                duration=video_info.get("duration", 0)
+            )
+            
+            if not lesson:
+                # Archivo subido pero lección no encontrada
+                await media_service.delete_video_file(video_info["file_path"])
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Lección no encontrada"
+                )
         
         return {
             "message": "Video subido exitosamente",
-            "video_id": video_asset.id,
-            "title": video_asset.title,
-            "status": video_asset.status,
-            "upload_date": video_asset.upload_date
+            "video": video_info,
+            "lesson_updated": bool(lesson_id)
         }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
 
-@router.post("/upload/image", response_model=dict)
-async def upload_image(
-    purpose: str = Form("general", description="Propósito de la imagen"),
-    file: UploadFile = File(..., description="Archivo de imagen"),
-    current_user: dict = Depends(get_current_user),
+@router.get("/videos/{video_id}", summary="Obtener información del video")
+async def get_video_info(
+    video_id: str,
+    current_user: User = Depends(get_current_instructor_user),
     media_service: MediaService = Depends(get_media_service)
 ):
     """
-    Subir archivo de imagen
+    Obtiene información de un video específico
+    """
+    video_info = await media_service.get_video_info(video_id)
     
-    **Formatos soportados:** JPEG, PNG, WebP, GIF
-    **Tamaño máximo:** 10MB
+    if not video_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Video no encontrado"
+        )
+    
+    return video_info
+
+@router.get("/videos/{video_id}/stream", summary="Servir video para streaming")
+async def stream_video(
+    video_id: str,
+    current_user: User = Depends(get_current_instructor_user),
+    media_service: MediaService = Depends(get_media_service)
+):
+    """
+    Sirve el archivo de video para reproducción
+    """
+    video_info = await media_service.get_video_info(video_id)
+    
+    if not video_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Video no encontrado"
+        )
+    
+    file_path = video_info["file_path"]
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Archivo de video no encontrado en el servidor"
+        )
+    
+    return FileResponse(
+        path=file_path,
+        media_type="video/mp4",
+        filename=video_info["original_filename"]
+    )
+
+@router.delete("/videos/{video_id}", summary="Eliminar video")
+async def delete_video(
+    video_id: str,
+    current_user: User = Depends(get_current_admin_user),  # Solo admin puede eliminar
+    media_service: MediaService = Depends(get_media_service)
+):
+    """
+    Elimina un video del sistema (solo administradores)
+    """
+    success = await media_service.delete_video(video_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Video no encontrado"
+        )
+    
+    return {"message": "Video eliminado exitosamente"}
+
+@router.post("/images/upload", summary="Subir imagen")
+async def upload_image(
+    file: UploadFile = File(...),
+    purpose: str = Form(...),  # 'course_cover', 'profile', 'general'
+    current_user: User = Depends(get_current_instructor_user),
+    media_service: MediaService = Depends(get_media_service)
+):
+    """
+    Sube una imagen al servidor
     """
     try:
-        image_asset = await media_service.upload_image(
+        # Validar archivo
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se proporcionó un archivo"
+            )
+        
+        # Validar extensión
+        file_extension = Path(file.filename).suffix.lower()
+        if file_extension not in ALLOWED_IMAGE_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Formato de imagen no permitido. Formatos válidos: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+            )
+        
+        # Validar tamaño
+        if file.size and file.size > MAX_IMAGE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"La imagen es demasiado grande. Tamaño máximo: {MAX_IMAGE_SIZE // (1024*1024)}MB"
+            )
+        
+        # Generar nombre único
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        
+        # Guardar imagen
+        image_info = await media_service.save_image_file(
             file=file,
+            filename=unique_filename,
             purpose=purpose,
-            uploaded_by=current_user.get("id")
+            user_id=current_user.id
         )
         
         return {
             "message": "Imagen subida exitosamente",
-            "image_id": image_asset.id,
-            "purpose": image_asset.purpose,
-            "upload_date": image_asset.upload_date
+            "image": image_info
         }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/video/{video_id}/info", response_model=dict)
-async def get_video_info(
-    video_id: str,
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Obtener información de un video"""
-    try:
-        video = await media_service.get_video_info(video_id)
         
-        # Verificar permisos: admin puede ver todo, usuario solo sus videos
-        if current_user.get("role") != "admin" and video.uploaded_by != current_user.get("id"):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
-        
-        return {
-            "id": video.id,
-            "title": video.title,
-            "description": video.description,
-            "original_filename": video.original_filename,
-            "file_size": video.file_size,
-            "upload_date": video.upload_date,
-            "mime_type": video.mime_type,
-            "duration": video.duration,
-            "status": video.status,
-            "uploaded_by": video.uploaded_by
-        }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/image/{image_id}/info", response_model=dict)
-async def get_image_info(
-    image_id: str,
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Obtener información de una imagen"""
-    try:
-        image = await media_service.get_image_info(image_id)
-        
-        # Verificar permisos: admin puede ver todo, usuario solo sus imágenes
-        if current_user.get("role") != "admin" and image.uploaded_by != current_user.get("id"):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
-        
-        return {
-            "id": image.id,
-            "purpose": image.purpose,
-            "original_filename": image.original_filename,
-            "file_size": image.file_size,
-            "upload_date": image.upload_date,
-            "mime_type": image.mime_type,
-            "extension": image.extension,
-            "uploaded_by": image.uploaded_by
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/video/{video_id}/stream")
-async def stream_video(
-    video_id: str,
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Stream de video con control de acceso"""
-    try:
-        video = await media_service.get_video_info(video_id)
-        
-        # Verificar permisos
-        if current_user.get("role") != "admin" and video.uploaded_by != current_user.get("id"):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
-        
-        file_path = Path(video.file_path)
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="Archivo de video no encontrado")
-        
-        return FileResponse(
-            path=file_path,
-            media_type=video.mime_type,
-            filename=video.original_filename
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno del servidor: {str(e)}"
         )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/image/{image_id}")
+@router.get("/images/{image_id}", summary="Servir imagen")
 async def serve_image(
     image_id: str,
-    current_user: dict = Depends(get_current_user),
     media_service: MediaService = Depends(get_media_service)
 ):
-    """Servir imagen con control de acceso"""
-    try:
-        image = await media_service.get_image_info(image_id)
-        
-        # Verificar permisos
-        if current_user.get("role") != "admin" and image.uploaded_by != current_user.get("id"):
-            raise HTTPException(status_code=403, detail="Acceso denegado")
-        
-        file_path = Path(image.file_path)
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail="Archivo de imagen no encontrado")
-        
-        return FileResponse(
-            path=file_path,
-            media_type=image.mime_type,
-            filename=image.original_filename
+    """
+    Sirve una imagen (público para imágenes de cursos)
+    """
+    image_info = await media_service.get_image_info(image_id)
+    
+    if not image_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Imagen no encontrada"
         )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/video/{video_id}")
-async def delete_video(
-    video_id: str,
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Eliminar video (solo admins)"""
-    try:
-        success = await media_service.delete_video(video_id, current_user)
-        if success:
-            return {"message": "Video eliminado exitosamente"}
-        else:
-            raise HTTPException(status_code=404, detail="Video no encontrado")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/image/{image_id}")
-async def delete_image(
-    image_id: str,
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Eliminar imagen (solo admins)"""
-    try:
-        success = await media_service.delete_image(image_id, current_user)
-        if success:
-            return {"message": "Imagen eliminada exitosamente"}
-        else:
-            raise HTTPException(status_code=404, detail="Imagen no encontrada")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/videos", response_model=List[dict])
-async def list_videos(
-    current_user: dict = Depends(get_current_user),
-    media_service: MediaService = Depends(get_media_service)
-):
-    """Listar videos del usuario (o todos si es admin)"""
-    try:
-        videos = await media_service.list_videos(current_user)
-        
-        return [
-            {
-                "id": video.id,
-                "title": video.title,
-                "description": video.description,
-                "original_filename": video.original_filename,
-                "file_size": video.file_size,
-                "upload_date": video.upload_date,
-                "status": video.status,
-                "uploaded_by": video.uploaded_by
-            }
-            for video in videos
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    
+    file_path = image_info["file_path"]
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Archivo de imagen no encontrado"
+        )
+    
+    return FileResponse(
+        path=file_path,
+        media_type=f"image/{image_info['extension'][1:]}",  # Quitar el punto del extension
+        filename=image_info["original_filename"]
+    )

@@ -1,233 +1,222 @@
 """
 Servicio para gestión de archivos multimedia
+Maneja upload, almacenamiento y metadata de videos e imágenes
 """
 import os
-import uuid
+import json
 import shutil
+from typing import Optional, Dict, Any
 from pathlib import Path
-from typing import List, Optional, Tuple
 from datetime import datetime
+from fastapi import UploadFile
 
-from fastapi import UploadFile, HTTPException
-
+from ...core.config import settings
 from ...domain.entities.media import VideoAsset, ImageAsset
 from ...domain.repositories.media_repository import MediaRepository
-from ...core.config import settings
 
 class MediaService:
-    """Servicio para gestión de archivos multimedia"""
-    
     def __init__(self, media_repository: MediaRepository):
         self.media_repository = media_repository
-        self.base_media_path = Path(settings.MEDIA_ROOT)
-        self.videos_path = self.base_media_path / "videos"
-        self.images_path = self.base_media_path / "images"
         
-        # Crear directorios base
-        self.videos_path.mkdir(parents=True, exist_ok=True)
-        self.images_path.mkdir(parents=True, exist_ok=True)
-    
-    def _validate_video_file(self, file: UploadFile) -> bool:
-        """Validar archivo de video"""
-        if not file.content_type:
-            return False
+        # Configurar directorios de almacenamiento
+        self.base_media_dir = Path(settings.MEDIA_ROOT if hasattr(settings, 'MEDIA_ROOT') else 'media')
+        self.videos_dir = self.base_media_dir / 'videos'
+        self.images_dir = self.base_media_dir / 'images'
+        self.covers_dir = self.images_dir / 'covers'
         
-        allowed_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm']
-        if file.content_type not in allowed_types:
-            return False
-        
-        return True
+        # Crear directorios si no existen
+        self._ensure_directories()
     
-    def _validate_image_file(self, file: UploadFile) -> bool:
-        """Validar archivo de imagen"""
-        if not file.content_type:
-            return False
-        
-        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-        if file.content_type not in allowed_types:
-            return False
-        
-        return True
+    def _ensure_directories(self):
+        """Crear directorios necesarios si no existen"""
+        self.videos_dir.mkdir(parents=True, exist_ok=True)
+        self.images_dir.mkdir(parents=True, exist_ok=True)
+        self.covers_dir.mkdir(parents=True, exist_ok=True)
     
-    def _get_file_extension(self, filename: str) -> str:
-        """Obtener extensión del archivo"""
-        return Path(filename).suffix.lower()
-    
-    def _generate_stored_filename(self, original_filename: str) -> str:
-        """Generar nombre único para almacenar archivo"""
-        extension = self._get_file_extension(original_filename)
-        unique_id = str(uuid.uuid4())
-        return f"{unique_id}{extension}"
-    
-    async def _save_file_to_disk(self, file: UploadFile, target_path: Path) -> int:
-        """Guardar archivo en disco y retornar tamaño"""
-        with open(target_path, "wb") as buffer:
-            content = await file.read()
-            buffer.write(content)
-            return len(content)
-    
-    async def upload_video(
+    async def save_video_file(
         self, 
         file: UploadFile, 
-        title: str, 
+        filename: str,
+        title: str,
         description: Optional[str] = None,
-        uploaded_by: Optional[str] = None
-    ) -> VideoAsset:
-        """Subir archivo de video"""
-        
-        # Validar archivo
-        if not self._validate_video_file(file):
-            raise HTTPException(
-                status_code=400, 
-                detail="Tipo de archivo no válido. Tipos permitidos: MP4, MPEG, MOV, WebM"
+        user_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Guarda un archivo de video en el sistema de archivos y metadata en BD
+        """
+        try:
+            # Ruta completa del archivo
+            file_path = self.videos_dir / filename
+            
+            # Guardar archivo físico
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Obtener información básica del archivo
+            file_size = os.path.getsize(file_path)
+            
+            # Crear registro en base de datos
+            video_asset = VideoAsset(
+                original_filename=file.filename,
+                stored_filename=filename,
+                file_path=str(file_path),
+                file_size=file_size,
+                title=title,
+                description=description,
+                uploaded_by=user_id,
+                upload_date=datetime.utcnow(),
+                mime_type=file.content_type or 'video/mp4',
+                duration=0,  # TODO: Extraer duración real del video
+                status='uploaded'
             )
-        
-        # Validar tamaño máximo (100MB)
-        max_size = 100 * 1024 * 1024  # 100MB
-        
-        # Generar nombres de archivo
-        stored_filename = self._generate_stored_filename(file.filename)
-        file_path = self.videos_path / stored_filename
-        
-        # Guardar archivo
-        file_size = await self._save_file_to_disk(file, file_path)
-        
-        if file_size > max_size:
-            os.remove(file_path)  # Eliminar archivo si es muy grande
-            raise HTTPException(
-                status_code=400,
-                detail="El archivo es demasiado grande. Tamaño máximo: 100MB"
-            )
-        
-        # Crear entidad VideoAsset
-        video_asset = VideoAsset(
-            id=str(uuid.uuid4()),
-            original_filename=file.filename,
-            stored_filename=stored_filename,
-            file_path=str(file_path),
-            file_size=file_size,
-            title=title,
-            description=description,
-            uploaded_by=uploaded_by,
-            upload_date=datetime.now(),
-            mime_type=file.content_type,
-            duration=None,  # Se podría calcular con FFmpeg
-            status="pending_processing"
-        )
-        
-        # Guardar metadata
-        return await self.media_repository.save_video(video_asset)
+            
+            # Guardar en repositorio
+            saved_video = await self.media_repository.save_video(video_asset)
+            
+            return {
+                "id": saved_video.id,
+                "title": saved_video.title,
+                "original_filename": saved_video.original_filename,
+                "file_size": saved_video.file_size,
+                "duration": saved_video.duration,
+                "url": f"/api/v1/media/videos/{saved_video.id}/stream",
+                "file_path": str(file_path),
+                "upload_date": saved_video.upload_date.isoformat()
+            }
+            
+        except Exception as e:
+            # Limpiar archivo si hubo error en BD
+            if file_path.exists():
+                file_path.unlink()
+            raise e
     
-    async def upload_image(
-        self, 
-        file: UploadFile, 
-        purpose: str = "general",
-        uploaded_by: Optional[str] = None
-    ) -> ImageAsset:
-        """Subir archivo de imagen"""
-        
-        # Validar archivo
-        if not self._validate_image_file(file):
-            raise HTTPException(
-                status_code=400, 
-                detail="Tipo de archivo no válido. Tipos permitidos: JPEG, PNG, WebP, GIF"
+    async def save_image_file(
+        self,
+        file: UploadFile,
+        filename: str,
+        purpose: str,
+        user_id: str = None
+    ) -> Dict[str, Any]:
+        """
+        Guarda un archivo de imagen
+        """
+        try:
+            # Seleccionar directorio según propósito
+            if purpose == 'course_cover':
+                save_dir = self.covers_dir
+            else:
+                save_dir = self.images_dir
+            
+            file_path = save_dir / filename
+            
+            # Guardar archivo físico
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Obtener información del archivo
+            file_size = os.path.getsize(file_path)
+            file_extension = Path(filename).suffix.lower()
+            
+            # Crear registro en base de datos
+            image_asset = ImageAsset(
+                original_filename=file.filename,
+                stored_filename=filename,
+                file_path=str(file_path),
+                file_size=file_size,
+                purpose=purpose,
+                uploaded_by=user_id,
+                upload_date=datetime.utcnow(),
+                mime_type=file.content_type or f'image/{file_extension[1:]}',
+                extension=file_extension
             )
-        
-        # Validar tamaño máximo (10MB)
-        max_size = 10 * 1024 * 1024  # 10MB
-        
-        # Generar nombres de archivo
-        stored_filename = self._generate_stored_filename(file.filename)
-        file_path = self.images_path / stored_filename
-        
-        # Guardar archivo
-        file_size = await self._save_file_to_disk(file, file_path)
-        
-        if file_size > max_size:
-            os.remove(file_path)  # Eliminar archivo si es muy grande
-            raise HTTPException(
-                status_code=400,
-                detail="El archivo es demasiado grande. Tamaño máximo: 10MB"
-            )
-        
-        # Crear entidad ImageAsset
-        image_asset = ImageAsset(
-            id=str(uuid.uuid4()),
-            original_filename=file.filename,
-            stored_filename=stored_filename,
-            file_path=str(file_path),
-            file_size=file_size,
-            purpose=purpose,
-            uploaded_by=uploaded_by,
-            upload_date=datetime.now(),
-            mime_type=file.content_type,
-            extension=self._get_file_extension(file.filename)
-        )
-        
-        # Guardar metadata
-        return await self.media_repository.save_image(image_asset)
+            
+            # Guardar en repositorio
+            saved_image = await self.media_repository.save_image(image_asset)
+            
+            return {
+                "id": saved_image.id,
+                "original_filename": saved_image.original_filename,
+                "file_size": saved_image.file_size,
+                "purpose": saved_image.purpose,
+                "url": f"/api/v1/media/images/{saved_image.id}",
+                "file_path": str(file_path),
+                "upload_date": saved_image.upload_date.isoformat()
+            }
+            
+        except Exception as e:
+            # Limpiar archivo si hubo error
+            if file_path.exists():
+                file_path.unlink()
+            raise e
     
-    async def get_video_info(self, video_id: str) -> VideoAsset:
-        """Obtener información de video"""
+    async def get_video_info(self, video_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtiene información de un video por ID
+        """
         video = await self.media_repository.get_video_by_id(video_id)
+        
         if not video:
-            raise HTTPException(status_code=404, detail="Video no encontrado")
-        return video
+            return None
+        
+        return {
+            "id": video.id,
+            "title": video.title,
+            "description": video.description,
+            "original_filename": video.original_filename,
+            "file_size": video.file_size,
+            "duration": video.duration,
+            "status": video.status,
+            "file_path": video.file_path,
+            "url": f"/api/v1/media/videos/{video.id}/stream",
+            "upload_date": video.upload_date.isoformat()
+        }
     
-    async def get_image_info(self, image_id: str) -> ImageAsset:
-        """Obtener información de imagen"""
+    async def get_image_info(self, image_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Obtiene información de una imagen por ID
+        """
         image = await self.media_repository.get_image_by_id(image_id)
-        if not image:
-            raise HTTPException(status_code=404, detail="Imagen no encontrada")
-        return image
-    
-    async def delete_video(self, video_id: str, current_user: dict) -> bool:
-        """Eliminar video (solo admins)"""
-        if current_user.get("role") != "admin":
-            raise HTTPException(status_code=403, detail="Permisos insuficientes")
         
+        if not image:
+            return None
+        
+        return {
+            "id": image.id,
+            "original_filename": image.original_filename,
+            "file_size": image.file_size,
+            "purpose": image.purpose,
+            "file_path": image.file_path,
+            "extension": image.extension,
+            "url": f"/api/v1/media/images/{image.id}",
+            "upload_date": image.upload_date.isoformat()
+        }
+    
+    async def delete_video(self, video_id: str) -> bool:
+        """
+        Elimina un video del sistema (archivo y metadata)
+        """
         video = await self.media_repository.get_video_by_id(video_id)
+        
         if not video:
-            raise HTTPException(status_code=404, detail="Video no encontrado")
+            return False
         
         # Eliminar archivo físico
-        file_path = Path(video.file_path)
-        if file_path.exists():
-            os.remove(file_path)
+        try:
+            if os.path.exists(video.file_path):
+                os.unlink(video.file_path)
+        except Exception as e:
+            print(f"Error eliminando archivo físico: {e}")
         
-        # Eliminar metadata
+        # Eliminar de base de datos
         return await self.media_repository.delete_video(video_id)
     
-    async def delete_image(self, image_id: str, current_user: dict) -> bool:
-        """Eliminar imagen (solo admins)"""
-        if current_user.get("role") != "admin":
-            raise HTTPException(status_code=403, detail="Permisos insuficientes")
-        
-        image = await self.media_repository.get_image_by_id(image_id)
-        if not image:
-            raise HTTPException(status_code=404, detail="Imagen no encontrada")
-        
-        # Eliminar archivo físico
-        file_path = Path(image.file_path)
-        if file_path.exists():
-            os.remove(file_path)
-        
-        # Eliminar metadata
-        return await self.media_repository.delete_image(image_id)
-    
-    async def list_videos(self, current_user: dict) -> List[VideoAsset]:
-        """Listar videos del usuario o todos (si es admin)"""
-        if current_user.get("role") == "admin":
-            return await self.media_repository.list_videos()
-        else:
-            return await self.media_repository.list_videos(uploaded_by=current_user.get("id"))
-    
-    def get_video_file_path(self, video_id: str) -> Optional[Path]:
-        """Obtener ruta física del archivo de video"""
-        # Esta función será usada para streaming de video
-        return self.videos_path / f"{video_id}.mp4"  # Simplificado
-    
-    def get_image_file_path(self, image_id: str) -> Optional[Path]:
-        """Obtener ruta física del archivo de imagen"""
-        # Esta función será usada para servir imágenes
-        return self.images_path / f"{image_id}.jpg"  # Simplificado
+    async def delete_video_file(self, file_path: str):
+        """
+        Elimina solo el archivo físico (para cleanup en errores)
+        """
+        try:
+            if os.path.exists(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f"Error eliminando archivo: {e}")
+
