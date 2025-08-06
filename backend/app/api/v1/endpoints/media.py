@@ -15,7 +15,7 @@ from ....application.services.media_service import MediaService
 from ....application.services.lesson_service import LessonService
 from ....core.dependencies import get_media_service
 from ....dependencies import get_lesson_service
-from ....core.auth import get_current_instructor_user, get_current_admin_user
+from ...deps import get_current_instructor_user, get_current_admin_user
 
 router = APIRouter()
 

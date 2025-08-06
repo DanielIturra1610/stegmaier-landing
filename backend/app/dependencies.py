@@ -25,6 +25,7 @@ from .infrastructure.repositories.enrollment_repository_impl import MongoDBEnrol
 from .infrastructure.repositories.review_repository_impl import MongoDBReviewRepository
 from .infrastructure.repositories.mongo_verification_token_repository import MongoVerificationTokenRepository
 from .infrastructure.repositories.progress_repository import FileSystemProgressRepository
+from .infrastructure.repositories.analytics_repository import FileSystemAnalyticsRepository
 
 # Importación de servicios
 from .application.services.user_service import UserService
@@ -34,6 +35,7 @@ from .application.services.lesson_service import LessonService
 from .application.services.enrollment_service import EnrollmentService
 from .application.services.review_service import ReviewService
 from .application.services.progress_service import ProgressService
+from .application.services.analytics_service import AnalyticsService
 
 # Dependencias de repositorios
 
@@ -136,6 +138,9 @@ async def get_review_service(
 # Instancia global del repositorio de progreso
 _progress_repository = None
 
+# Instancia global del repositorio de analytics
+_analytics_repository = None
+
 def get_progress_repository() -> ProgressRepository:
     """
     Proporciona una instancia configurada del repositorio de progreso.
@@ -154,4 +159,29 @@ async def get_progress_service(
     return ProgressService(
         progress_repository=get_progress_repository(),
         enrollment_repository=enrollment_repository
+    )
+
+def get_analytics_repository() -> FileSystemAnalyticsRepository:
+    """
+    Proporciona una instancia configurada del repositorio de analytics.
+    """
+    global _analytics_repository
+    if _analytics_repository is None:
+        _analytics_repository = FileSystemAnalyticsRepository()
+    return _analytics_repository
+
+async def get_analytics_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+    course_repository: CourseRepository = Depends(get_course_repository),
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
+) -> AnalyticsService:
+    """
+    Proporciona una instancia configurada del servicio de analytics.
+    """
+    return AnalyticsService(
+        analytics_repository=get_analytics_repository(),
+        user_repository=user_repository,
+        course_repository=course_repository,
+        enrollment_repository=enrollment_repository,
+        progress_repository=get_progress_repository()
     )

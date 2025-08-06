@@ -8,6 +8,7 @@ import os
 
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
+from .middleware import PerformanceMiddleware, CacheControlMiddleware, ConditionalRequestMiddleware
 
 # Importación de routers (se crearán en futuros pasos)
 # from .api.v1.endpoints import users, auth, courses, lessons, enrollments, reviews
@@ -66,8 +67,29 @@ def create_application() -> FastAPI:
                 "name": "administración",
                 "description": "Panel administrativo - gestión de usuarios y cursos",
             },
+            {
+                "name": "analytics",
+                "description": "Sistema de análisis y métricas de la plataforma",
+            },
+            {
+                "name": "progreso",
+                "description": "Seguimiento del progreso de usuarios en cursos y lecciones",
+            },
         ],
     )
+    
+    # Middlewares personalizados (el orden importa)
+    
+    # Middleware de rendimiento - debe ir primero para medir todo
+    app.add_middleware(
+        PerformanceMiddleware,
+        slow_request_threshold=1.0,  # Logear requests > 1 segundo
+        log_all_requests=False  # Solo logear requests lentos y críticos
+    )
+    
+    # Middleware de cache control
+    app.add_middleware(CacheControlMiddleware)
+    app.add_middleware(ConditionalRequestMiddleware)
     
     # Configuración de CORS - Mejorada para permitir todas las solicitudes
     app.add_middleware(
@@ -76,7 +98,7 @@ def create_application() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],  # Permite todos los métodos
         allow_headers=["*"],  # Permite todas las cabeceras
-        expose_headers=["*"],  # Expone todas las cabeceras
+        expose_headers=["X-Process-Time", "X-Request-ID", "X-Cache-Rule"],  # Headers de debugging
         max_age=600  # Tiempo de caché para las comprobaciones preflight
     )
     

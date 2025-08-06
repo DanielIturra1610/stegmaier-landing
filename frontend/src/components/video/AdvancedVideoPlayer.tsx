@@ -3,6 +3,7 @@
  */
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface VideoBookmark {
   id: string;
@@ -56,8 +57,10 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
   className = ""
 }) => {
   const { user } = useAuth();
+  const { trackLessonStart, trackVideoProgress, trackLessonComplete } = useAnalytics();
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressSaveRef = useRef<NodeJS.Timeout | null>(null);
+  const lessonStartedRef = useRef<boolean>(false);
   
   // Estados del reproductor
   const [isLoading, setIsLoading] = useState(true);
@@ -133,6 +136,12 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
     const handlePlay = () => {
       setIsPlaying(true);
       setSessionStartTime(Date.now());
+      
+      // Track lesson start solo una vez por sesión
+      if (!lessonStartedRef.current) {
+        trackLessonStart(lessonId, videoId, title);
+        lessonStartedRef.current = true;
+      }
     };
 
     const handlePause = () => {
@@ -144,6 +153,9 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
       setIsPlaying(false);
       updateSessionWatchTime();
       handleVideoCompleted();
+      
+      // Track lesson complete
+      trackLessonComplete(lessonId, videoId, video.duration, title);
     };
 
     const handleError = () => {
@@ -262,6 +274,16 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
         
         if (onProgressUpdate) {
           onProgressUpdate(newProgress);
+        }
+        
+        // Track video progress every 30% milestone
+        const progressPercentage = (currentTime / duration) * 100;
+        if (progressPercentage >= 30 && progressPercentage < 60 && newProgress.watch_percentage < 30) {
+          trackVideoProgress(lessonId, videoId, progressPercentage, sessionWatchTime, duration);
+        } else if (progressPercentage >= 60 && progressPercentage < 90 && newProgress.watch_percentage < 60) {
+          trackVideoProgress(lessonId, videoId, progressPercentage, sessionWatchTime, duration);
+        } else if (progressPercentage >= 90 && newProgress.watch_percentage < 90) {
+          trackVideoProgress(lessonId, videoId, progressPercentage, sessionWatchTime, duration);
         }
 
         // Reset session time si se guardó

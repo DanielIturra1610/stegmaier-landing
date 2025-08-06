@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from ....domain.entities.user import User
 from ....application.services.progress_service import ProgressService
 from ....dependencies import get_progress_service
-from ....core.auth import get_current_user
+from ...deps import get_current_active_user
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ async def update_video_progress(
     lesson_id: str,
     video_id: str,
     progress_data: VideoProgressUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -69,7 +69,7 @@ async def update_video_progress(
 async def get_video_progress(
     lesson_id: str,
     video_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -102,7 +102,7 @@ async def get_video_progress(
 @router.get("/summary", summary="Obtener resumen de progreso del usuario")
 async def get_progress_summary(
     course_id: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -120,7 +120,7 @@ async def create_bookmark(
     lesson_id: str,
     video_id: str,
     bookmark_data: BookmarkCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -157,7 +157,7 @@ async def create_bookmark(
 async def get_bookmarks(
     lesson_id: str,
     video_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -187,7 +187,7 @@ async def create_note(
     lesson_id: str,
     video_id: str,
     note_data: NoteCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """
@@ -224,7 +224,7 @@ async def create_note(
 async def get_notes(
     lesson_id: str,
     video_id: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     progress_service: ProgressService = Depends(get_progress_service)
 ):
     """

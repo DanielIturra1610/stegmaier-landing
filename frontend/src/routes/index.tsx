@@ -34,6 +34,8 @@ import AdminUsers from '../pages/admin/AdminUsers';
 import AdminCourses from '../pages/admin/AdminCourses';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
+import AdminAnalytics from '../pages/admin/AdminAnalytics';
+import MyStats from '../pages/platform/MyStats';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
@@ -108,6 +110,10 @@ const AppRoutes: React.FC = () => {
         
         {/* Soporte */}
         <Route path="support" element={<SupportPage />} />
+        
+        {/* Analytics y Estadísticas */}
+        <Route path="admin/analytics" element={<AdminAnalytics />} />
+        <Route path="my-stats" element={<MyStats />} />
       </Route>
       
       {/* Las rutas administrativas ahora están integradas en /platform */}

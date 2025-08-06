@@ -47,7 +47,7 @@ const AdminCourses: React.FC = () => {
       
       const response = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -75,7 +75,7 @@ const AdminCourses: React.FC = () => {
       const response = await fetch(`/api/v1/admin/courses/${courseId}/publish`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -103,7 +103,7 @@ const AdminCourses: React.FC = () => {
       const response = await fetch(`/api/v1/admin/courses/${courseId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         }
       });

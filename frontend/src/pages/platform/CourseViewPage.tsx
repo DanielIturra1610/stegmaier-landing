@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface Lesson {
   id: string;
@@ -31,6 +32,7 @@ interface Course {
 const CourseViewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
+  const { trackPageView, trackCourseComplete, trackTimeOnPage } = useAnalytics();
   const navigate = useNavigate();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -49,6 +51,19 @@ const CourseViewPage: React.FC = () => {
       loadCourseData();
     }
   }, [courseId]);
+  
+  // Track page view and time on page
+  useEffect(() => {
+    if (courseId && course) {
+      trackPageView(`course-view-${courseId}`, {
+        course_id: courseId,
+        course_title: course.title
+      });
+      
+      const cleanup = trackTimeOnPage(`course-view-${courseId}`);
+      return cleanup;
+    }
+  }, [courseId, course?.title]);
 
   useEffect(() => {
     calculateCourseProgress();
@@ -109,6 +124,14 @@ const CourseViewPage: React.FC = () => {
     const totalLessons = course.lessons.length;
     const completedCount = completedLessons.size;
     const progressPercentage = Math.round((completedCount / totalLessons) * 100);
+    
+    // Track course completion when reaching 100%
+    if (progressPercentage === 100 && courseProgress < 100) {
+      const totalWatchTime = Object.values(lessonProgress)
+        .reduce((total, progress) => total + (progress.total_watch_time || 0), 0);
+      
+      trackCourseComplete(courseId || '', course.title, totalWatchTime);
+    }
     
     setCourseProgress(progressPercentage);
   };
