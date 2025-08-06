@@ -15,6 +15,7 @@ from .domain.repositories.lesson_repository import LessonRepository
 from .domain.repositories.enrollment_repository import EnrollmentRepository
 from .domain.repositories.review_repository import ReviewRepository
 from .domain.repositories.verification_token_repository import VerificationTokenRepository
+from .domain.repositories.progress_repository import ProgressRepository
 
 # Importación de implementaciones de repositorios
 from .infrastructure.repositories.user_repository_impl import MongoDBUserRepository
@@ -23,6 +24,7 @@ from .infrastructure.repositories.lesson_repository_impl import MongoDBLessonRep
 from .infrastructure.repositories.enrollment_repository_impl import MongoDBEnrollmentRepository
 from .infrastructure.repositories.review_repository_impl import MongoDBReviewRepository
 from .infrastructure.repositories.mongo_verification_token_repository import MongoVerificationTokenRepository
+from .infrastructure.repositories.progress_repository import FileSystemProgressRepository
 
 # Importación de servicios
 from .application.services.user_service import UserService
@@ -31,6 +33,7 @@ from .application.services.course_service import CourseService
 from .application.services.lesson_service import LessonService
 from .application.services.enrollment_service import EnrollmentService
 from .application.services.review_service import ReviewService
+from .application.services.progress_service import ProgressService
 
 # Dependencias de repositorios
 
@@ -129,3 +132,26 @@ async def get_review_service(
     Proporciona una instancia configurada del servicio de reseñas.
     """
     return ReviewService(review_repository, course_repository, user_repository, enrollment_repository)
+
+# Instancia global del repositorio de progreso
+_progress_repository = None
+
+def get_progress_repository() -> ProgressRepository:
+    """
+    Proporciona una instancia configurada del repositorio de progreso.
+    """
+    global _progress_repository
+    if _progress_repository is None:
+        _progress_repository = FileSystemProgressRepository()
+    return _progress_repository
+
+async def get_progress_service(
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
+) -> ProgressService:
+    """
+    Proporciona una instancia configurada del servicio de progreso.
+    """
+    return ProgressService(
+        progress_repository=get_progress_repository(),
+        enrollment_repository=enrollment_repository
+    )

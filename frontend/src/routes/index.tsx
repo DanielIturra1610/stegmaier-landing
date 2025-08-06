@@ -17,6 +17,7 @@ import ConsultingPage from '../pages/ConsultingPage';
 import DashboardPage from '../pages/platform/DashboardPage';
 import CoursesPage from '../pages/platform/CoursesPage';
 import CourseDetailPage from '../pages/platform/CourseDetailPage';
+import CourseViewPage from '../pages/platform/CourseViewPage';
 import ProfilePage from '../pages/platform/ProfilePage';
 import SettingsPage from '../pages/platform/SettingsPage';
 import CertificatesPage from '../pages/platform/CertificatesPage';
@@ -84,6 +85,7 @@ const AppRoutes: React.FC = () => {
         {/* Gestión de cursos */}
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
+        <Route path="courses/:courseId/view" element={<CourseViewPage />} />
         
         {/* Rutas administrativas (usando mismo layout) */}
         <Route path="users" element={<AdminUsers />} />
