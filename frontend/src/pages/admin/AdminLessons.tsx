@@ -18,19 +18,10 @@ import { VideoUploader } from '../../components/media/VideoUploader';
 import { VideoPlayer } from '../../components/media/VideoPlayer';
 import { adminService } from '../../services/adminService';
 import { mediaService } from '../../services/mediaService';
+import { lessonService, LessonCreate, LessonResponse } from '../../services/lessonService';
 import { useAuth } from '../../contexts/AuthContext';
 
-interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  content_type: 'text' | 'video';
-  video_url?: string;
-  duration: number;
-  order: number;
-  is_free: boolean;
-  created_at: string;
-}
+// Using LessonResponse from service instead of local interface
 
 interface Course {
   id: string;
@@ -45,10 +36,10 @@ const AdminLessons: React.FC = () => {
   const { user } = useAuth();
   
   const [course, setCourse] = useState<Course | null>(null);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [lessons, setLessons] = useState<LessonResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showVideoUploader, setShowVideoUploader] = useState(false);
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<LessonResponse | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
   // Estados para crear nueva lección
@@ -81,9 +72,11 @@ const AdminLessons: React.FC = () => {
         lessons_count: courseData.lessons_count || 0
       });
 
-      // Cargar lecciones (asumo que existe este método en adminService)
-      // Por ahora simulamos con data vacía
-      setLessons([]);
+      // Cargar lecciones usando lessonService
+      console.log('📚 [AdminLessons] Loading lessons for course:', courseId);
+      const lessonsData = await lessonService.getCourseLessons(courseId);
+      console.log('📚 [AdminLessons] Loaded lessons:', lessonsData);
+      setLessons(lessonsData);
       
     } catch (error: any) {
       console.error('Error loading course and lessons:', error);
@@ -115,7 +108,17 @@ const AdminLessons: React.FC = () => {
     }
 
     try {
-      // Implementar creación de lección de texto
+      console.log('🚀 [AdminLessons] Creating text lesson:', newLessonData);
+      
+      const lessonData: LessonCreate = {
+        title: newLessonData.title.trim(),
+        description: newLessonData.description.trim(),
+        content_type: newLessonData.content_type,
+        is_free: newLessonData.is_free
+      };
+      
+      await lessonService.createLesson(courseId, lessonData);
+      
       toast.success('Lección creada exitosamente');
       setShowNewLessonForm(false);
       setNewLessonData({
@@ -127,8 +130,8 @@ const AdminLessons: React.FC = () => {
       
       await loadCourseAndLessons();
     } catch (error: any) {
-      console.error('Error creating lesson:', error);
-      toast.error('Error al crear lección');
+      console.error('❌ [AdminLessons] Error creating lesson:', error);
+      toast.error(error.message || 'Error al crear lección');
     }
   };
 
@@ -138,12 +141,13 @@ const AdminLessons: React.FC = () => {
     }
 
     try {
-      // Implementar eliminación de lección
+      console.log('🗑️ [AdminLessons] Deleting lesson:', lessonId);
+      await lessonService.deleteLesson(lessonId);
       toast.success('Lección eliminada exitosamente');
       await loadCourseAndLessons();
     } catch (error: any) {
-      console.error('Error deleting lesson:', error);
-      toast.error('Error al eliminar lección');
+      console.error('❌ [AdminLessons] Error deleting lesson:', error);
+      toast.error(error.message || 'Error al eliminar lección');
     }
   };
 

@@ -9,7 +9,9 @@ from ....application.services.user_service import UserService
 from ....application.dtos.user_dto import (
     UserResponse, UserCreate, UserUpdate, UserPasswordUpdate
 )
-from ....domain.entities.user import User
+from app.domain.entities.user import User
+from app.domain.entities.user import UserRole
+from app.application.dtos.user_dto import UserUpdate
 from ....dependencies import get_user_service
 from ...deps import get_current_active_user, get_current_admin_user
 
@@ -240,10 +242,8 @@ async def change_user_role(
         )
     
     try:
-        from ...domain.entities.user import UserRole
-        role_enum = UserRole(new_role)
         
-        from ...application.dtos.user_dto import UserUpdate
+        role_enum = UserRole(new_role)
         user_data = UserUpdate(role=role_enum)
         
         updated_user = await user_service.update_user(user_id, user_data)

@@ -16,8 +16,10 @@ import ConsultingPage from '../pages/ConsultingPage';
 // Páginas de la plataforma (protegidas)
 import DashboardPage from '../pages/platform/DashboardPage';
 import CoursesPage from '../pages/platform/CoursesPage';
+import CoursesListPage from '../pages/platform/CoursesListPage';
 import CourseDetailPage from '../pages/platform/CourseDetailPage';
 import CourseViewPage from '../pages/platform/CourseViewPage';
+import MyCourses from '../pages/platform/MyCourses';
 import ProfilePage from '../pages/platform/ProfilePage';
 import SettingsPage from '../pages/platform/SettingsPage';
 import CertificatesPage from '../pages/platform/CertificatesPage';
@@ -84,10 +86,11 @@ const AppRoutes: React.FC = () => {
         {/* Redirección condicional para admins */}
         <Route index element={<AdminRedirect />} />
         
-        {/* Gestión de cursos */}
         <Route path="courses" element={<CoursesPage />} />
+        <Route path="courses/list" element={<CoursesListPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
-        <Route path="courses/:courseId/view" element={<CourseViewPage />} />
+        <Route path="courses/:id/view" element={<CourseViewPage />} />
+        <Route path="my-courses" element={<MyCourses />} />
         
         {/* Rutas administrativas (usando mismo layout) */}
         <Route path="users" element={<AdminUsers />} />

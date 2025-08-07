@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { courseService, Course } from '../../services/courseService';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminCourses from '../admin/AdminCourses';
-import courseService, { Course } from '../../services/courseService';
+import EnrollmentButton from '../../components/enrollment/EnrollmentButton';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 /**
@@ -10,6 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
  */
 const CoursesPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Si el usuario es admin, mostrar la vista administrativa
   if (user?.role === 'admin') {
@@ -27,33 +30,70 @@ const CoursesPage: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        console.log('🚀 [CoursesPage] Starting to fetch courses...');
         setLoading(true);
         setError(null);
-        // Para estudiantes, obtenemos solo los cursos disponibles/inscritos
+        
         const response = await courseService.getAvailableCourses();
-        setCourses(response.courses);
+        console.log('📦 [CoursesPage] Raw API response:', response);
+        console.log('📦 [CoursesPage] Response type:', typeof response);
+        console.log('📦 [CoursesPage] Is array:', Array.isArray(response));
+        
+        const coursesArray = Array.isArray(response) ? response : response.courses || [];
+        console.log('📋 [CoursesPage] Processed courses array:', coursesArray);
+        console.log('📊 [CoursesPage] Number of courses:', coursesArray.length);
+        
+        if (coursesArray.length > 0) {
+          console.log('🔍 [CoursesPage] First course details:', coursesArray[0]);
+        }
+        
+        setCourses(coursesArray);
+        console.log('✅ [CoursesPage] Courses set in state successfully');
       } catch (err: any) {
-        console.error('Error loading courses:', err);
+        console.error('❌ [CoursesPage] Error loading courses:', err);
         setError(err.message || 'Error al cargar los cursos');
         setCourses([]);
       } finally {
         setLoading(false);
+        console.log('🏁 [CoursesPage] Loading finished');
       }
     };
 
     fetchCourses();
   }, []);
   
+  // Handler para comenzar/continuar un curso
+  const handleStartCourse = (courseId: string) => {
+    console.log('🚀 [CoursesPage] Starting course:', courseId);
+    // Navegar a la página de detalle del curso
+    navigate(`/platform/courses/${courseId}`);
+  };
+  
   // Función para filtrar cursos
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = (courses || []).filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
+    
+    // Debug individual course filtering
+    console.log(`🔍 [Filter] Course "${course.title}":
+      - Category: "${course.category}" vs Filter: "${categoryFilter}"
+      - Matches category: ${matchesCategory}
+      - Matches search: ${matchesSearch}
+      - Final result: ${matchesSearch && matchesCategory}`);
+    
     return matchesSearch && matchesCategory;
   });
   
+  // RENDER STATE DEBUG (like debug component)
+  console.log('🔄 [CoursesPage] Component render - Loading:', loading, 'Courses:', courses?.length || 0, 'Error:', error || 'None');
+  console.log('🔍 [CoursesPage] All courses:', courses);
+  console.log('🔍 [CoursesPage] Filtered courses:', filteredCourses.length, filteredCourses);
+  console.log('🔍 [CoursesPage] Search query:', searchQuery, 'Category filter:', categoryFilter);
+  
   // Si está cargando
   if (loading) {
+    console.log('🔄 [CoursesPage] Rendering loading state');
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
@@ -63,6 +103,7 @@ const CoursesPage: React.FC = () => {
   
   // Si hay error
   if (error) {
+    console.log('❌ [CoursesPage] Rendering error state:', error);
     return (
       <div className="text-center py-12">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
@@ -84,6 +125,7 @@ const CoursesPage: React.FC = () => {
   
   // Si no hay cursos disponibles
   if (filteredCourses.length === 0 && courses.length === 0) {
+    console.log('🚨 [CoursesPage] Rendering empty state - no courses available');
     return (
       <div className="space-y-6 pb-10">
         {/* Cabecera */}
@@ -164,6 +206,7 @@ const CoursesPage: React.FC = () => {
               <option value="consulting">Consultoría</option>
               <option value="management">Gestión</option>
               <option value="operations">Operaciones</option>
+              <option value="safety_training">Prevención de Riesgos</option>
             </select>
           </div>
         </div>
@@ -219,9 +262,15 @@ const CoursesPage: React.FC = () => {
                   </div>
                 )}
                 
-                <button className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors font-medium">
-                  {course.progress !== undefined && course.progress > 0 ? 'Continuar' : 'Comenzar'}
-                </button>
+                <EnrollmentButton
+                  courseId={course.id}
+                  courseName={course.title}
+                  onEnrollmentChange={(enrolled) => {
+                    // Opcional: recargar cursos para reflejar cambios
+                    console.log(`Enrollment changed for ${course.title}:`, enrolled);
+                  }}
+                  onNavigateToCourse={handleStartCourse}
+                />
               </div>
             </div>
           ))}

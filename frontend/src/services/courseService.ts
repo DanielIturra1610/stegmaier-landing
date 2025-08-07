@@ -53,12 +53,20 @@ class CourseService {
   }
 
   // Obtener cursos disponibles para inscripción
-  async getAvailableCourses(page: number = 1, limit: number = 10): Promise<CoursesResponse> {
+  async getAvailableCourses(page: number = 1, limit: number = 10): Promise<Course[] | CoursesResponse> {
     try {
+      console.log('🔍 [courseService] Calling getAvailableCourses with params:', { page, limit });
       const response = await axios.get(`${API_BASE_URL}/api/v1/courses/available`, {
-        headers: this.getAuthHeaders(),
+        headers: {
+          ...this.getAuthHeaders(),
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
         params: { page, limit }
       });
+      console.log('🔍 [courseService] Response from API:', response.data);
+      console.log('🔍 [courseService] Response status:', response.status);
       return response.data;
     } catch (error: any) {
       console.error('Error fetching available courses:', error);

@@ -25,7 +25,7 @@ const AdminCourseForm: React.FC = () => {
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
-    level: 'BEGINNER',
+    level: 'beginner',
     category: 'occupational_safety',
     instructor_id: ''
   });
@@ -170,7 +170,7 @@ const AdminCourseForm: React.FC = () => {
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
         body: submitData
       });
@@ -266,9 +266,9 @@ const AdminCourseForm: React.FC = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
-              <option value="BEGINNER">Principiante</option>
-              <option value="INTERMEDIATE">Intermedio</option>
-              <option value="ADVANCED">Avanzado</option>
+              <option value="beginner">Principiante</option>
+              <option value="intermediate">Intermedio</option>
+              <option value="advanced">Avanzado</option>
             </select>
           </div>
           

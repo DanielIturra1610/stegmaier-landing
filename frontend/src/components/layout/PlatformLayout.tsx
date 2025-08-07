@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FirstDayExperience, User as OnboardingUser, shouldShowOnboarding, trackMissionEvent } from '../onboarding';
+// import { FirstDayExperience, User as OnboardingUser, shouldShowOnboarding, trackMissionEvent } from '../onboarding';
 import { User as AuthUser } from '../../types/auth';
-import { useUserExperience } from '../../hooks/useUserExperience';
-import { ANALYTICS_EVENTS } from '../onboarding/constants';
+// import { useUserExperience } from '../../hooks/useUserExperience';
+// import { ANALYTICS_EVENTS } from '../onboarding/constants';
 import PlatformNavbar from './PlatformNavbar';
 import PlatformSidebar from './PlatformSidebar';
 
@@ -19,7 +19,8 @@ const PlatformLayout: React.FC = () => {
   // Obtener datos del usuario actual del contexto de autenticación
   const { user } = useAuth();
   
-  // Usar el hook de experiencia para acceder al sistema híbrido de XP
+  // TEMPORALMENTE DESHABILITADO: Usar el hook de experiencia para acceder al sistema híbrido de XP
+  /*
   const { 
     totalXP, 
     currentLevel, 
@@ -32,19 +33,23 @@ const PlatformLayout: React.FC = () => {
   
   // Estado para el sistema de onboarding basado en la experiencia del usuario
   const [showOnboarding, setShowOnboarding] = useState(false);
+  */
   
-  // Tipo para el usuario con propiedades de experiencia
+  // TEMPORALMENTE DESHABILITADO: Tipo para el usuario con propiedades de experiencia
+  /*
   type ExtendedUser = AuthUser & {
     currentLevel?: number;
     totalXP?: number;
   };
+  */
 
   // Toggle para el sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
   
-  // Detectar si el usuario es nuevo y necesita onboarding
+  // TEMPORALMENTE DESHABILITADO: Detectar si el usuario es nuevo y necesita onboarding
+  /*
   useEffect(() => {
     // Solo proceder si hay un usuario autenticado y los datos de experiencia están cargados
     if (user && !experienceLoading) {
@@ -130,10 +135,12 @@ const PlatformLayout: React.FC = () => {
       console.error(`[Onboarding] Error al completar misión ${missionId}:`, error);
     }
   };
+  */
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sistema de onboarding para usuarios nuevos */}
+      {/* TEMPORALMENTE DESHABILITADO: Sistema de onboarding para usuarios nuevos */}
+      {/*
       {showOnboarding && user && !experienceLoading && (
         <>
           <FirstDayExperience
@@ -149,6 +156,7 @@ const PlatformLayout: React.FC = () => {
           />
         </>
       )}
+      */}
       {/* Sidebar para navegación de la plataforma */}
       <PlatformSidebar 
         isOpen={sidebarOpen} 

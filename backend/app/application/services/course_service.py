@@ -377,7 +377,13 @@ class CourseService:
         course.is_published = not course.is_published
         course.updated_at = datetime.utcnow()
         
-        return await self.course_repository.update(course)
+        # Preparar datos para actualización
+        update_data = {
+            "is_published": course.is_published,
+            "updated_at": course.updated_at
+        }
+        
+        return await self.course_repository.update(course.id, update_data)
 
     async def get_courses_with_stats(
         self, 

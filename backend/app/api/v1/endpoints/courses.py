@@ -77,6 +77,34 @@ async def get_instructor_courses(
     return await course_service.get_instructor_courses(current_user.id)
 
 
+@router.get("/available", response_model=List[CourseListResponse], summary="Obtener cursos disponibles")
+async def get_available_courses(
+    page: int = Query(1, ge=1, description="Número de página"),
+    limit: int = Query(10, ge=1, le=100, description="Número máximo de cursos por página"),
+    course_service: CourseService = Depends(get_course_service)
+):
+    """
+    Obtiene una lista de cursos disponibles para inscripción.
+    Solo devuelve cursos publicados.
+    
+    - **page**: Número de página para paginación
+    - **limit**: Número máximo de cursos por página
+    """
+    # Calcular skip basado en page
+    skip = (page - 1) * limit
+    
+    # Filtrar solo cursos publicados
+    filters = {"is_published": True}
+    
+    print(f"DEBUG: Getting available courses with filters: {filters}, skip: {skip}, limit: {limit}")
+    courses = await course_service.list_courses(skip, limit, **filters)
+    print(f"DEBUG: Found {len(courses)} available courses")
+    for course in courses:
+        print(f"DEBUG: Course - ID: {course.id}, Title: {course.title}, Published: {getattr(course, 'is_published', 'N/A')}")
+    
+    return courses
+
+
 @router.get("/{course_id}", response_model=CourseResponse, summary="Obtener curso por ID")
 async def get_course_by_id(
     course_id: str = Path(..., description="ID del curso"),
