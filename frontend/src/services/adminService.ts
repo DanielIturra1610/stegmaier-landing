@@ -177,6 +177,20 @@ class AdminService {
     
     return response.json();
   }
+  
+  async changeUserRole(userId: string, newRole: string) {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/role?new_role=${encodeURIComponent(newRole)}`, {
+      method: 'PUT',
+      headers: this.getHeaders()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Error changing user role');
+    }
+    
+    return response.json();
+  }
 }
 
 export const adminService = new AdminService();

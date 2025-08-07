@@ -207,3 +207,66 @@ async def delete_user(
         )
     
     return {"message": "Usuario eliminado correctamente"}
+
+
+@router.put("/{user_id}/role", response_model=dict, summary="Cambiar rol de usuario")
+async def change_user_role(
+    new_role: str,
+    user_id: str = Path(..., description="ID del usuario"),
+    current_user: User = Depends(get_current_admin_user),
+    user_service: UserService = Depends(get_user_service)
+):
+    """
+    Cambia el rol de un usuario específico.
+    
+    Requiere permisos de administrador.
+    
+    - **user_id**: ID del usuario
+    - **new_role**: Nuevo rol (student, instructor, admin)
+    """
+    # Validar que el rol sea válido
+    valid_roles = ["student", "instructor", "admin"]
+    if new_role not in valid_roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rol inválido. Debe ser uno de: {', '.join(valid_roles)}"
+        )
+    
+    # Verificar que no se esté cambiando su propio rol de admin
+    if current_user.id == user_id and current_user.role == "admin" and new_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes cambiar tu propio rol de administrador"
+        )
+    
+    try:
+        from ...domain.entities.user import UserRole
+        role_enum = UserRole(new_role)
+        
+        from ...application.dtos.user_dto import UserUpdate
+        user_data = UserUpdate(role=role_enum)
+        
+        updated_user = await user_service.update_user(user_id, user_data)
+        if not updated_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuario no encontrado"
+            )
+        
+        return {
+            "message": f"Rol cambiado exitosamente a {new_role}",
+            "user_id": user_id,
+            "new_role": new_role,
+            "updated_user": {
+                "id": updated_user.id,
+                "email": updated_user.email,
+                "full_name": updated_user.full_name,
+                "role": updated_user.role
+            }
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

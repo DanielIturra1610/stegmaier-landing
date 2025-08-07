@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCategoryOptions, getCategoriesGrouped } from '../../utils/courseCategories';
 
 interface CourseFormData {
   title: string;
   description: string;
   level: string;
   category: string;
-  price: number;
   instructor_id: string;
 }
 
@@ -26,8 +26,7 @@ const AdminCourseForm: React.FC = () => {
     title: '',
     description: '',
     level: 'BEGINNER',
-    category: 'PROGRAMMING',
-    price: 0,
+    category: 'occupational_safety',
     instructor_id: ''
   });
   
@@ -44,7 +43,7 @@ const AdminCourseForm: React.FC = () => {
       try {
         const response = await fetch('/api/v1/admin/users?role=instructor', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
           }
         });
         
@@ -70,7 +69,7 @@ const AdminCourseForm: React.FC = () => {
           setLoading(true);
           const response = await fetch(`/api/v1/admin/courses/${courseId}`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
             }
           });
           
@@ -83,7 +82,6 @@ const AdminCourseForm: React.FC = () => {
               description: course.description,
               level: course.level,
               category: course.category,
-              price: course.price,
               instructor_id: course.instructor_id
             });
           } else {
@@ -157,7 +155,6 @@ const AdminCourseForm: React.FC = () => {
       submitData.append('description', formData.description);
       submitData.append('level', formData.level);
       submitData.append('category', formData.category);
-      submitData.append('price', formData.price.toString());
       submitData.append('instructor_id', formData.instructor_id);
       
       if (coverImage) {
@@ -287,12 +284,15 @@ const AdminCourseForm: React.FC = () => {
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             >
-              <option value="PROGRAMMING">Programación</option>
-              <option value="DESIGN">Diseño</option>
-              <option value="BUSINESS">Negocios</option>
-              <option value="MARKETING">Marketing</option>
-              <option value="PERSONAL_DEVELOPMENT">Desarrollo Personal</option>
-              <option value="OTHER">Otros</option>
+              {getCategoriesGrouped() && Object.entries(getCategoriesGrouped()).map(([groupName, categories]) => (
+                <optgroup key={groupName} label={groupName}>
+                  {categories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
         </div>
@@ -319,23 +319,7 @@ const AdminCourseForm: React.FC = () => {
               ))}
             </select>
           </div>
-          
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-              Precio (USD)
-            </label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleInputChange}
-              min="0"
-              step="0.01"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="0.00"
-            />
-          </div>
+
         </div>
         
         {/* Imagen de portada */}

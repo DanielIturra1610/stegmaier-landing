@@ -180,8 +180,20 @@ class UserService:
         since_date = datetime.utcnow() - timedelta(days=days)
         return await self.user_repository.count_since(since_date)
 
-    async def get_all(self, skip: int = 0, limit: int = 20) -> List[User]:
+    async def get_all(self, skip: int = 0, limit: int = 20, filters: dict = None) -> List[User]:
         """
-        Lista todos los usuarios (solo admin)
+        Lista todos los usuarios (solo admin) con filtros opcionales
         """
+        if filters is None:
+            filters = {}
+        
+        # Si tenemos filtro de rol, aplicarlo
+        if "role" in filters:
+            # Por ahora implementamos filtro simple en memoria
+            # TODO: Mover lógica de filtro al repositorio para mejor performance
+            all_users = await self.user_repository.get_all(skip=0, limit=1000)  # Obtenemos más para filtrar
+            filtered_users = [user for user in all_users if user.role == filters["role"]]
+            # Aplicar paginación después del filtro
+            return filtered_users[skip:skip + limit]
+        
         return await self.user_repository.get_all(skip=skip, limit=limit)

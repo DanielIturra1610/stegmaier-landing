@@ -31,11 +31,39 @@ async def get_admin_dashboard(
 async def get_admin_users(
     skip: int = 0,
     limit: int = 20,
+    role: Optional[str] = None,
     current_user: User = Depends(get_current_admin_user),
     user_service: UserService = Depends(get_user_service)
 ):
-    """Lista usuarios para administración"""
-    return await user_service.get_all(skip=skip, limit=limit)
+    """Lista usuarios para administración con filtro por rol"""
+    try:
+        filters = {}
+        if role:
+            filters["role"] = role
+        
+        users = await user_service.get_all(skip=skip, limit=limit, filters=filters)
+        
+        # Filtrar información sensible para respuesta
+        user_list = []
+        for user in users:
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role,
+                "is_active": user.is_active,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at
+            }
+            user_list.append(user_data)
+        
+        return user_list
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener usuarios: {str(e)}"
+        )
 
 @router.get("/courses", summary="Lista de cursos para admin")
 async def get_admin_courses(
@@ -71,7 +99,7 @@ async def create_admin_course(
     level: str = Form(...),
     category: str = Form(...),
     instructor_id: str = Form(...),
-    price: float = Form(0.0),
+
     cover_image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_admin_user),
     course_service: CourseService = Depends(get_course_service)
@@ -91,7 +119,6 @@ async def create_admin_course(
             "description": description,
             "level": level,
             "category": category,
-            "price": price,
             "cover_image": cover_image_url,
             "tags": [],  # Se pueden añadir después
             "requirements": [],
@@ -146,7 +173,7 @@ async def update_admin_course(
     description: str = Form(...),
     level: str = Form(...),
     category: str = Form(...),
-    price: float = Form(0.0),
+
     cover_image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_admin_user),
     course_service: CourseService = Depends(get_course_service)
@@ -159,8 +186,7 @@ async def update_admin_course(
             "title": title,
             "description": description,
             "level": level,
-            "category": category,
-            "price": price
+            "category": category
         }
         
         # Procesar nueva imagen si se proporciona

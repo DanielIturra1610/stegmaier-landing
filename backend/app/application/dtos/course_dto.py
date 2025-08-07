@@ -11,7 +11,7 @@ class CourseCreate(BaseModel):
     title: str
     description: str
     cover_image: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     discount_price: Optional[float] = None
     level: CourseLevel
     category: CourseCategory
@@ -96,7 +96,7 @@ class CourseListResponse(BaseModel):
     description: str
     instructor_id: str
     cover_image: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     discount_price: Optional[float] = None
     level: CourseLevel
     category: CourseCategory
@@ -135,7 +135,7 @@ class CourseResponse(BaseModel):
     description: str
     instructor_id: str
     cover_image: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     discount_price: Optional[float] = None
     level: CourseLevel
     category: CourseCategory

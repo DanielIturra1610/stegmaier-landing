@@ -12,11 +12,23 @@ class CourseLevel(str, Enum):
     ADVANCED = "advanced"
 
 class CourseCategory(str, Enum):
-    PROGRAMMING = "programming"
-    DESIGN = "design"
-    BUSINESS = "business"
-    MARKETING = "marketing"
-    PERSONAL_DEVELOPMENT = "personal_development"
+    # Prevención de Riesgos
+    OCCUPATIONAL_SAFETY = "occupational_safety"  # Seguridad Ocupacional
+    INDUSTRIAL_HYGIENE = "industrial_hygiene"    # Higiene Industrial  
+    EMERGENCY_MANAGEMENT = "emergency_management" # Gestión de Emergencias
+    RISK_ASSESSMENT = "risk_assessment"          # Evaluación de Riesgos
+    WORK_SAFETY = "work_safety"                 # Seguridad en el Trabajo
+    
+    # Normas ISO
+    ISO_9001 = "iso_9001"                       # Gestión de Calidad
+    ISO_14001 = "iso_14001"                     # Gestión Ambiental
+    ISO_45001 = "iso_45001"                     # Seguridad y Salud Ocupacional
+    ISO_27001 = "iso_27001"                     # Seguridad de la Información
+    ISO_50001 = "iso_50001"                     # Gestión de Energía
+    
+    # Categorías Generales
+    REGULATORY_COMPLIANCE = "regulatory_compliance" # Cumplimiento Normativo
+    SAFETY_TRAINING = "safety_training"           # Capacitación en Seguridad
     OTHER = "other"
 
 class Course(BaseModel):
@@ -25,7 +37,7 @@ class Course(BaseModel):
     description: str
     instructor_id: str
     cover_image: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     discount_price: Optional[float] = None
     level: CourseLevel
     category: CourseCategory

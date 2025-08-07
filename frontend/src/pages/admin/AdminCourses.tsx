@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCategoryLabel, getCategoryOptions } from '../../utils/courseCategories';
 
 interface Course {
   id: string;
@@ -13,7 +14,7 @@ interface Course {
   enrollments_count: number;
   status_label: string;
   created_at: string;
-  price: number;
+  price?: number; // Hacemos el precio opcional
 }
 
 const AdminCourses: React.FC = () => {
@@ -166,12 +167,11 @@ const AdminCourses: React.FC = () => {
               className="border border-gray-300 rounded-md px-3 py-2"
             >
               <option value="all">Todas</option>
-              <option value="PROGRAMMING">Programación</option>
-              <option value="DESIGN">Diseño</option>
-              <option value="BUSINESS">Negocios</option>
-              <option value="MARKETING">Marketing</option>
-              <option value="PERSONAL_DEVELOPMENT">Desarrollo Personal</option>
-              <option value="OTHER">Otros</option>
+              {getCategoryOptions().map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -211,7 +211,7 @@ const AdminCourses: React.FC = () => {
                       {course.title}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {course.category} • {course.level}
+                      {getCategoryLabel(course.category)} • {course.level}
                     </div>
                   </div>
                 </td>
@@ -231,7 +231,7 @@ const AdminCourses: React.FC = () => {
                   {course.enrollments_count}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
-                  ${course.price}
+                  {course.price ? `$${course.price}` : 'Sin precio'}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
                   <div className="flex justify-end gap-2">

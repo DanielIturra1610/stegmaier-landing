@@ -36,6 +36,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     bio: Optional[str] = None
     profile_picture: Optional[str] = None
+    role: Optional[UserRole] = None  # Permitir cambio de rol solo para admins
     
     class Config:
         schema_extra = {
