@@ -1,7 +1,11 @@
 """
 Servicio para la gestión de cursos
 """
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ...domain.repositories.lesson_repository import LessonRepository
+    from ...domain.repositories.enrollment_repository import EnrollmentRepository
 from ...domain.repositories.course_repository import CourseRepository
 from ...domain.repositories.user_repository import UserRepository
 from ...domain.entities.course import Course
@@ -15,10 +19,14 @@ class CourseService:
     def __init__(
         self, 
         course_repository: CourseRepository,
-        user_repository: UserRepository
+        user_repository: UserRepository,
+        lesson_repository: Optional['LessonRepository'] = None,
+        enrollment_repository: Optional['EnrollmentRepository'] = None
     ):
         self.course_repository = course_repository
         self.user_repository = user_repository
+        self.lesson_repository = lesson_repository
+        self.enrollment_repository = enrollment_repository
     
     async def create_course(self, instructor_id: str, course_data: CourseCreate) -> Course:
         """
@@ -348,8 +356,14 @@ class CourseService:
         if not course:
             return None
         
-        # Obtener lecciones del curso (simulado por ahora)
-        lessons = []  # TODO: Implementar cuando tengamos lesson_repository
+        # Obtener lecciones del curso
+        lessons = []
+        if self.lesson_repository:
+            try:
+                lessons = await self.lesson_repository.get_lessons_by_course(course_id)
+            except Exception as e:
+                print(f"⚠️ Error obteniendo lecciones: {e}")
+                lessons = []  # Fallback a lista vacía
         
         return {
             "course": course,
@@ -403,11 +417,24 @@ class CourseService:
         # Añadir estadísticas básicas a cada curso
         courses_with_stats = []
         for course in courses:
-            # Contar lecciones (simulado por ahora)
-            lessons_count = 0  # TODO: Implementar cuando tengamos lesson_repository
+            # Contar lecciones
+            lessons_count = 0
+            if self.lesson_repository:
+                try:
+                    course_lessons = await self.lesson_repository.get_lessons_by_course(course.id)
+                    lessons_count = len(course_lessons) if course_lessons else 0
+                except Exception as e:
+                    print(f"⚠️ Error contando lecciones para curso {course.id}: {e}")
+                    lessons_count = 0
             
-            # Contar inscripciones activas (simulado por ahora)
-            enrollments_count = 0  # TODO: Implementar cuando tengamos enrollment_repository
+            # Contar inscripciones activas
+            enrollments_count = 0
+            if self.enrollment_repository:
+                try:
+                    enrollments_count = await self.enrollment_repository.count_by_course(course.id)
+                except Exception as e:
+                    print(f"⚠️ Error contando enrollments para curso {course.id}: {e}")
+                    enrollments_count = 0
             
             courses_with_stats.append({
                 **course.dict(),
@@ -422,8 +449,14 @@ class CourseService:
         """
         Contar inscripciones activas de un curso
         """
-        # TODO: Implementar cuando tengamos enrollment_repository
-        return 0
+        if not self.enrollment_repository:
+            return 0
+            
+        try:
+            return await self.enrollment_repository.count_by_course(course_id, active_only=True)
+        except Exception as e:
+            print(f"❌ Error contando enrollments activos para curso {course_id}: {e}")
+            return 0
     
     async def delete_course_admin(self, course_id: str) -> bool:
         """

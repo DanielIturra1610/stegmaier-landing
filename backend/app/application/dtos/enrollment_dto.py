@@ -8,15 +8,15 @@ from ...domain.entities.enrollment import EnrollmentStatus
 
 class EnrollmentCreate(BaseModel):
     """DTO para la creación de una nueva inscripción"""
-    user_id: str
     course_id: str
+    student_id: Optional[str] = None  # Solo para admins
     expiry_date: Optional[datetime] = None
     
     class Config:
         schema_extra = {
             "example": {
-                "user_id": "60d5ec9f2c21e3d10f5d5b5c",
                 "course_id": "60d5ec9f2c21e3d10f5d5b5d",
+                "student_id": "60d5ec9f2c21e3d10f5d5b5c",
                 "expiry_date": "2024-06-25T10:00:00"
             }
         }

@@ -46,7 +46,7 @@ class EnrollmentService {
       };
 
       const response = await axios.post<Enrollment>(
-        `${API_BASE_URL}/api/v1/enrollments`,
+        `${API_BASE_URL}/api/v1/enrollments/`,
         enrollmentData,
         { headers: this.getAuthHeaders() }
       );
@@ -73,7 +73,7 @@ class EnrollmentService {
 
       // Obtener enrollments del usuario
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/enrollments`,
+        `${API_BASE_URL}/api/v1/enrollments/`,
         { 
           headers: this.getAuthHeaders(),
           params 
@@ -210,7 +210,7 @@ class EnrollmentService {
       console.log(' [enrollmentService] Unenrolling from course:', courseId);
       
       await axios.delete(
-        `${API_BASE_URL}/api/v1/enrollments/${courseId}`,
+        `${API_BASE_URL}/api/v1/enrollments/${courseId}/`,
         { headers: this.getAuthHeaders() }
       );
 
@@ -229,7 +229,7 @@ class EnrollmentService {
       console.log('📊 [enrollmentService] Getting enrollment progress:', enrollmentId);
       
       const response = await axios.get<EnrollmentProgressResponse>(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/progress`,
+        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/progress/`,
         { headers: this.getAuthHeaders() }
       );
 
@@ -254,7 +254,7 @@ class EnrollmentService {
       };
 
       await axios.put(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/complete-lesson`,
+        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/complete-lesson/`,
         completionData,
         { headers: this.getAuthHeaders() }
       );
@@ -274,7 +274,7 @@ class EnrollmentService {
       console.log('🏆 [enrollmentService] Issuing certificate for enrollment:', enrollmentId);
       
       await axios.put(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/issue-certificate`,
+        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/issue-certificate/`,
         {},
         { headers: this.getAuthHeaders() }
       );

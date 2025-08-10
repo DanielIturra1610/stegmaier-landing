@@ -41,7 +41,7 @@ class EnrollmentService:
             ValueError: Si el usuario o curso no existen, o si ya está inscrito
         """
         # Verificar si el usuario existe
-        user = await self.user_repository.get_by_id(enrollment_data.user_id)
+        user = await self.user_repository.get_by_id(enrollment_data.student_id)
         if not user:
             raise ValueError("El usuario no existe")
         
@@ -55,7 +55,7 @@ class EnrollmentService:
         
         # Verificar si el usuario ya está inscrito en el curso
         existing_enrollment = await self.enrollment_repository.get_by_user_and_course(
-            enrollment_data.user_id, 
+            enrollment_data.student_id, 
             enrollment_data.course_id
         )
         
@@ -81,7 +81,7 @@ class EnrollmentService:
         
         # Crear la inscripción
         enrollment = Enrollment(
-            user_id=enrollment_data.user_id,
+            user_id=enrollment_data.student_id,
             course_id=enrollment_data.course_id,
             status=EnrollmentStatus.ACTIVE,
             expiry_date=enrollment_data.expiry_date

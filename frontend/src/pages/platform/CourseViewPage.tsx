@@ -76,7 +76,7 @@ const CourseViewPage: React.FC = () => {
       // Cargar datos del curso
       const courseResponse = await fetch(`/api/v1/courses/${courseId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 

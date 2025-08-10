@@ -64,18 +64,15 @@ const CoursesPage: React.FC = () => {
   
   // Handler para comenzar/continuar un curso
   const handleStartCourse = (courseId: string) => {
-    console.log('🚀 [CoursesPage] Starting course:', courseId);
-    // Navegar a la página de detalle del curso
-    navigate(`/platform/courses/${courseId}`);
+    console.log('🚀 [CoursesPage] Navigating to course:', courseId);
+    navigate(`/platform/courses/${courseId}/view`);
   };
   
-  // Función para filtrar cursos
-  const filteredCourses = (courses || []).filter(course => {
+  // Función para filtrar cursos según búsqueda y categoría
+  const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
-    
-    // Debug individual course filtering
     console.log(`🔍 [Filter] Course "${course.title}":
       - Category: "${course.category}" vs Filter: "${categoryFilter}"
       - Matches category: ${matchesCategory}

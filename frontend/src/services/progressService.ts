@@ -66,7 +66,7 @@ export interface CreateNoteRequest {
 
 class ProgressService {
   private getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -295,19 +295,307 @@ class ProgressService {
     totalNotes: number;
   }> {
     try {
-      const summary = await this.getProgressSummary();
-      
+      const [summary, recentVideos] = await Promise.all([
+        this.getProgressSummary(),
+        this.getProgressSummary().then(s => s.recent_activity)
+      ]);
+
       return {
         summary,
-        recentVideos: summary.recent_activity || [],
-        totalBookmarks: 0, // Se puede calcular desde el resumen
-        totalNotes: 0      // Se puede calcular desde el resumen
+        recentVideos,
+        totalBookmarks: 0, // TODO: Implementar conteo real
+        totalNotes: 0 // TODO: Implementar conteo real
       };
     } catch (error) {
       console.error('Error fetching detailed progress:', error);
       throw error;
     }
   }
+
+  // === LESSON PROGRESS METHODS ===
+
+  /**
+   * Iniciar una lección
+   */
+  async startLesson(lessonId: string, courseId: string, enrollmentId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/start`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          course_id: courseId,
+          enrollment_id: enrollmentId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error starting lesson: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error iniciando lección:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Completar una lección
+   */
+  async completeLesson(lessonId: string, courseId: string, enrollmentId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}/complete`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          course_id: courseId,
+          enrollment_id: enrollmentId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error completing lesson: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error completando lección:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualizar progreso de lección
+   */
+  async updateLessonProgress(
+    lessonId: string,
+    courseId: string, 
+    enrollmentId: string,
+    progressData: {
+      progress_percentage?: number;
+      time_spent_delta: number;
+      video_position?: number;
+      quiz_score?: number;
+    }
+  ) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/lessons/${lessonId}/progress?course_id=${courseId}&enrollment_id=${enrollmentId}`,
+        {
+          method: 'PUT',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(progressData)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error updating lesson progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error actualizando progreso de lección:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener progreso de lección
+   */
+  async getLessonProgress(lessonId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching lesson progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error obteniendo progreso de lección:', error);
+      throw error;
+    }
+  }
+
+  // === COURSE PROGRESS METHODS ===
+
+  /**
+   * Obtener progreso completo de curso
+   */
+  async getCourseProgress(courseId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching course progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error obteniendo progreso de curso:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener resumen de progreso del usuario
+   */
+  async getUserProgressSummary() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/summary`, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching user progress summary: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error obteniendo resumen de progreso:', error);
+      throw error;
+    }
+  }
+
+  // === BATCH SYNC METHODS ===
+
+  /**
+   * Sincronizar actualizaciones pendientes (offline sync)
+   */
+  async syncProgressBatch(updates: Array<{
+    lesson_id: string;
+    progress_percentage?: number;
+    time_spent_delta: number;
+    video_position?: number;
+    quiz_score?: number;
+  }>) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/sync`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ updates })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error syncing progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error en sincronización batch:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Guardar progreso localmente para offline sync
+   */
+  savePendingProgress(lessonId: string, progressData: any) {
+    try {
+      const existingData = localStorage.getItem('pending_progress');
+      const pendingProgress = existingData ? JSON.parse(existingData) : {};
+      
+      if (!pendingProgress[lessonId]) {
+        pendingProgress[lessonId] = [];
+      }
+      
+      pendingProgress[lessonId].push({
+        ...progressData,
+        timestamp: new Date().toISOString()
+      });
+      
+      localStorage.setItem('pending_progress', JSON.stringify(pendingProgress));
+    } catch (error) {
+      console.error('Error guardando progreso pendiente:', error);
+    }
+  }
+
+  /**
+   * Obtener y sincronizar progreso pendiente
+   */
+  async syncPendingProgress() {
+    try {
+      const pendingData = localStorage.getItem('pending_progress');
+      if (!pendingData) return { synced: 0, failed: 0 };
+      
+      const pendingProgress = JSON.parse(pendingData);
+      const allUpdates: Array<{
+        lesson_id: string;
+        progress_percentage?: number;
+        time_spent_delta: number;
+        video_position?: number;
+        quiz_score?: number;
+        timestamp?: string;
+      }> = [];
+      
+      for (const [lessonId, updates] of Object.entries(pendingProgress)) {
+        if (Array.isArray(updates)) {
+          for (const update of updates) {
+            allUpdates.push({
+              lesson_id: lessonId,
+              progress_percentage: update.progress_percentage,
+              time_spent_delta: update.time_spent_delta || 0,
+              video_position: update.video_position,
+              quiz_score: update.quiz_score,
+              timestamp: update.timestamp
+            });
+          }
+        }
+      }
+      
+      if (allUpdates.length > 0) {
+        const result = await this.syncProgressBatch(allUpdates);
+        
+        // Si la sincronización fue exitosa, limpiar storage
+        if (result.synced_count > 0) {
+          localStorage.removeItem('pending_progress');
+        }
+        
+        return {
+          synced: result.synced_count,
+          failed: result.failed_count
+        };
+      }
+      
+      return { synced: 0, failed: 0 };
+    } catch (error) {
+      console.error('Error sincronizando progreso pendiente:', error);
+      throw error;
+    }
+  }
+
+  // === ENHANCED UTILITIES ===
+
+  /**
+   * Calcular progreso general del curso basado en lecciones
+   */
+  calculateCourseProgress(lessonsProgress: any[]): number {
+    if (!lessonsProgress || lessonsProgress.length === 0) return 0;
+    
+    const totalProgress = lessonsProgress.reduce((sum, lesson) => {
+      return sum + (lesson.progress_percentage || 0);
+    }, 0);
+    
+    return Math.round(totalProgress / lessonsProgress.length);
+  }
+
+  /**
+   * Formatear tiempo total en formato legible
+   */
+  formatTotalTime(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
 }
 
 // Instancia única del servicio

@@ -15,7 +15,7 @@ export const useAnalytics = () => {
     if (!user) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) return;
 
       await fetch('/api/v1/analytics/activity', {
@@ -243,7 +243,7 @@ export const useAnalytics = () => {
     if (!user || events.length === 0) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) return;
 
       await fetch('/api/v1/analytics/activity/batch', {

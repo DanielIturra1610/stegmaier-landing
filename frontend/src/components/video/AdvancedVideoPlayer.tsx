@@ -193,7 +193,7 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
       // Cargar progreso del video
       const progressResponse = await fetch(`/api/v1/progress/videos/${lessonId}/${videoId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 
@@ -205,7 +205,7 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
       // Cargar marcadores
       const bookmarksResponse = await fetch(`/api/v1/progress/videos/${lessonId}/${videoId}/bookmarks`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 
@@ -217,7 +217,7 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
       // Cargar notas
       const notesResponse = await fetch(`/api/v1/progress/videos/${lessonId}/${videoId}/notes`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 
@@ -257,7 +257,7 @@ const AdvancedVideoPlayer: React.FC<AdvancedVideoPlayerProps> = ({
       const response = await fetch(`/api/v1/progress/videos/${lessonId}/${videoId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

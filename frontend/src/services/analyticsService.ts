@@ -105,7 +105,7 @@ class AnalyticsService {
    * Obtiene analytics personales del usuario
    */
   async getUserAnalytics(): Promise<any> {
-    return this.makeAuthenticatedRequest<any>('/users/me');
+    return this.makeAuthenticatedRequest<any>('/my-stats');
   }
 
   /**
@@ -118,7 +118,7 @@ class AnalyticsService {
     video_id?: string;
     metadata?: Record<string, any>;
   }): Promise<void> {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     
     if (!token) {
       console.warn('No token available for activity tracking');

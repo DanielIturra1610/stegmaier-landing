@@ -163,7 +163,10 @@ async def create_enrollment(
         # Si es admin, puede inscribir a cualquier usuario
         student_id = enrollment_data.student_id if current_user.role == "admin" else current_user.id
         
-        return await enrollment_service.create_enrollment(student_id, enrollment_data.course_id)
+        # Actualizar el student_id en enrollment_data
+        enrollment_data.student_id = student_id
+        
+        return await enrollment_service.enroll_user(enrollment_data)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

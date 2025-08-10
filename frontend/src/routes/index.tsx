@@ -14,7 +14,6 @@ import CompanyPage from '../pages/CompanyPage';
 import ConsultingPage from '../pages/ConsultingPage';
 
 // Páginas de la plataforma (protegidas)
-import DashboardPage from '../pages/platform/DashboardPage';
 import CoursesPage from '../pages/platform/CoursesPage';
 import CoursesListPage from '../pages/platform/CoursesListPage';
 import CourseDetailPage from '../pages/platform/CourseDetailPage';
@@ -24,6 +23,7 @@ import ProfilePage from '../pages/platform/ProfilePage';
 import SettingsPage from '../pages/platform/SettingsPage';
 import CertificatesPage from '../pages/platform/CertificatesPage';
 import ProgressPage from '../pages/platform/ProgressPage';
+import MyProgressPage from '../pages/platform/MyProgressPage';
 import SupportPage from '../pages/platform/SupportPage';
 
 // Protección de rutas
@@ -37,7 +37,6 @@ import AdminCourses from '../pages/admin/AdminCourses';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
-import MyStats from '../pages/platform/MyStats';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
@@ -48,7 +47,7 @@ const AdminRedirect: React.FC = () => {
     return <Navigate to="/platform/courses" replace />;
   }
   
-  return <DashboardPage />;
+  return <MyProgressPage />;
 };
 
 /**
@@ -110,13 +109,13 @@ const AppRoutes: React.FC = () => {
         
         {/* Progreso */}
         <Route path="progress" element={<ProgressPage />} />
+        <Route path="my-progress" element={<MyProgressPage />} />
         
         {/* Soporte */}
         <Route path="support" element={<SupportPage />} />
         
         {/* Analytics y Estadísticas */}
         <Route path="admin/analytics" element={<AdminAnalytics />} />
-        <Route path="my-stats" element={<MyStats />} />
       </Route>
       
       {/* Las rutas administrativas ahora están integradas en /platform */}

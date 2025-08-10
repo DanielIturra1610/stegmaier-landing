@@ -1,7 +1,7 @@
 """
 Endpoints para gestión de progreso de videos
 """
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from pydantic import BaseModel
 
@@ -26,6 +26,32 @@ class NoteCreate(BaseModel):
     timestamp: float
     content: str
     is_private: bool = True
+
+# === NEW LESSON PROGRESS MODELS ===
+
+class LessonProgressUpdate(BaseModel):
+    progress_percentage: Optional[float] = None
+    time_spent_delta: int = 0
+    video_position: Optional[int] = None
+    quiz_score: Optional[float] = None
+
+class StartLessonRequest(BaseModel):
+    course_id: str
+    enrollment_id: str
+
+class CompleteLessonRequest(BaseModel):
+    course_id: str
+    enrollment_id: str
+
+class BatchProgressUpdate(BaseModel):
+    lesson_id: str
+    progress_percentage: Optional[float] = None
+    time_spent_delta: int = 0
+    video_position: Optional[int] = None
+    quiz_score: Optional[float] = None
+
+class BatchSyncRequest(BaseModel):
+    updates: List[BatchProgressUpdate]
 
 @router.put("/videos/{lesson_id}/{video_id}", summary="Actualizar progreso de video")
 async def update_video_progress(
@@ -249,3 +275,166 @@ async def get_notes(
             for n in notes
         ]
     }
+
+# === LESSON PROGRESS ENDPOINTS ===
+
+@router.post("/lessons/{lesson_id}/start", summary="Iniciar lección")
+async def start_lesson(
+    lesson_id: str,
+    request_data: StartLessonRequest,
+    current_user: User = Depends(get_current_active_user),
+    progress_service: ProgressService = Depends(get_progress_service)
+):
+    """
+    Iniciar una lección (marcar como empezada)
+    """
+    try:
+        progress = await progress_service.start_lesson(
+            user_id=current_user.id,
+            lesson_id=lesson_id,
+            course_id=request_data.course_id,
+            enrollment_id=request_data.enrollment_id
+        )
+        
+        return {
+            "message": "Lección iniciada exitosamente",
+            "progress": {
+                "id": progress.id,
+                "lesson_id": progress.lesson_id,
+                "status": progress.status.value,
+                "progress_percentage": progress.progress_percentage,
+                "started_at": progress.started_at.isoformat() if progress.started_at else None,
+                "time_spent": progress.time_spent
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error iniciando lección: {str(e)}"
+        )
+
+@router.post("/lessons/{lesson_id}/complete", summary="Completar lección")
+async def complete_lesson(
+    lesson_id: str,
+    request_data: CompleteLessonRequest,
+    current_user: User = Depends(get_current_active_user),
+    progress_service: ProgressService = Depends(get_progress_service)
+):
+    """
+    Completar una lección
+    """
+    try:
+        progress = await progress_service.complete_lesson(
+            user_id=current_user.id,
+            lesson_id=lesson_id,
+            course_id=request_data.course_id,
+            enrollment_id=request_data.enrollment_id
+        )
+        
+        return {
+            "message": "Lección completada exitosamente",
+            "progress": {
+                "id": progress.id,
+                "lesson_id": progress.lesson_id,
+                "status": progress.status.value,
+                "progress_percentage": progress.progress_percentage,
+                "completed_at": progress.completed_at.isoformat() if progress.completed_at else None,
+                "time_spent": progress.time_spent
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error completando lección: {str(e)}"
+        )
+
+@router.put("/lessons/{lesson_id}/progress", summary="Actualizar progreso de lección")
+async def update_lesson_progress(
+    lesson_id: str,
+    progress_data: LessonProgressUpdate,
+    course_id: str,
+    enrollment_id: str,
+    current_user: User = Depends(get_current_active_user),
+    progress_service: ProgressService = Depends(get_progress_service)
+):
+    """
+    Actualizar progreso de lección
+    """
+    try:
+        progress = await progress_service.update_lesson_progress(
+            user_id=current_user.id,
+            lesson_id=lesson_id,
+            course_id=course_id,
+            enrollment_id=enrollment_id,
+            progress_percentage=progress_data.progress_percentage,
+            time_spent_delta=progress_data.time_spent_delta,
+            video_position=progress_data.video_position,
+            quiz_score=progress_data.quiz_score
+        )
+        
+        return {
+            "message": "Progreso de lección actualizado",
+            "progress": {
+                "id": progress.id,
+                "lesson_id": progress.lesson_id,
+                "status": progress.status.value,
+                "progress_percentage": progress.progress_percentage,
+                "time_spent": progress.time_spent,
+                "video_position": progress.video_position,
+                "quiz_score": progress.quiz_score,
+                "last_accessed_at": progress.last_accessed_at.isoformat() if progress.last_accessed_at else None
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error actualizando progreso: {str(e)}"
+        )
+
+@router.get("/lessons/{lesson_id}", summary="Obtener progreso de lección")
+async def get_lesson_progress(
+    lesson_id: str,
+    current_user: User = Depends(get_current_active_user),
+    progress_service: ProgressService = Depends(get_progress_service)
+):
+    """
+    Obtener progreso de lección específica
+    """
+    try:
+        progress = await progress_service.get_lesson_progress(
+            user_id=current_user.id,
+            lesson_id=lesson_id
+        )
+        
+        if not progress:
+            return {
+                "progress": None,
+                "message": "No hay progreso registrado para esta lección"
+            }
+        
+        return {
+            "progress": {
+                "id": progress.id,
+                "lesson_id": progress.lesson_id,
+                "course_id": progress.course_id,
+                "status": progress.status.value,
+                "progress_percentage": progress.progress_percentage,
+                "time_spent": progress.time_spent,
+                "content_type": progress.content_type,
+                "video_position": progress.video_position,
+                "quiz_score": progress.quiz_score,
+                "quiz_attempts": progress.quiz_attempts,
+                "started_at": progress.started_at.isoformat() if progress.started_at else None,
+                "completed_at": progress.completed_at.isoformat() if progress.completed_at else None,
+                "last_accessed_at": progress.last_accessed_at.isoformat() if progress.last_accessed_at else None
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo progreso de lección: {str(e)}"
+        )
