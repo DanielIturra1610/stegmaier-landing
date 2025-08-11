@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import { RefreshCw, Wifi, WifiOff, Award, Activity, Clock } from 'lucide-react';
 import UserProgressSummary from '../../components/progress/UserProgressSummary';
 import { useUserProgressSummary, useOfflineSync } from '../../hooks/useProgress';
 import { useUserExperience } from '../../hooks/useUserExperience';
@@ -241,6 +241,17 @@ const MyProgressPage: React.FC = () => {
       </div>
     );
   }
+ 
+  // Variables para saludo dinámico
+  const dayName = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
+  const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+  const displayName =
+    (stats?.user?.name && stats.user.name.trim()) ||
+    (user?.full_name && user.full_name.split(' ')[0]) ||
+    user?.firstName ||
+    (user?.email ? user.email.split('@')[0] : 'Estudiante') ||
+    'Estudiante';
+  const greeting = `¡Feliz ${capitalizedDay}, ${displayName}!`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -333,15 +344,15 @@ const MyProgressPage: React.FC = () => {
         )}
 
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white mb-8">
-          <div className="flex items-center justify-between">
+        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 rounded-2xl p-6 md:p-8 text-white mb-8 shadow-lg">
+          <div className="absolute -top-10 -right-10 w-56 h-56 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-10 -left-10 w-56 h-56 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="flex items-center justify-between relative">
             <div>
-              <h2 className="text-2xl font-bold mb-2">
-                ¡Hola, {stats?.user.name || user.firstName}! 👋
+              <h2 className="text-2xl md:text-3xl font-extrabold mb-2">
+                {greeting} 👋
               </h2>
-              <p className="text-blue-100">
-                Miembro desde {stats?.user.joined_date ? formatDate(stats.user.joined_date) : 'hace poco'}
-              </p>
+              <p className="text-blue-100/90">Es un gran día para aprender. ¡Sigue con tu racha!</p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold mb-1">
@@ -382,8 +393,11 @@ const MyProgressPage: React.FC = () => {
         {/* Progress Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Completion Rate */}
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Tasa de Finalización</h3>
+          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
+              <Award className="w-5 h-5 text-green-600" />
+              <h3 className="text-lg font-semibold">Tasa de Finalización</h3>
+            </div>
             <CircularProgress 
               percentage={stats?.learning.completion_rate || 0} 
               color="#10B981"
@@ -396,8 +410,11 @@ const MyProgressPage: React.FC = () => {
           </div>
 
           {/* Activity Score */}
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Puntuación de Actividad</h3>
+          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
+              <Activity className="w-5 h-5 text-amber-500" />
+              <h3 className="text-lg font-semibold">Puntuación de Actividad</h3>
+            </div>
             <CircularProgress 
               percentage={stats?.engagement.activity_score || 0} 
               color="#F59E0B"
@@ -412,8 +429,11 @@ const MyProgressPage: React.FC = () => {
           </div>
 
           {/* Watch Time */}
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Tiempo de Estudio</h3>
+          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
+            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-semibold">Tiempo de Estudio</h3>
+            </div>
             <div className="text-4xl font-bold text-blue-600 mb-2">
               {formatTime(stats?.learning.total_watch_time_seconds || 0)}
             </div>
