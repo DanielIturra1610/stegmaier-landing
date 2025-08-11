@@ -56,6 +56,14 @@ class MongoDBEnrollmentRepository(EnrollmentRepository):
         ).to_list(length=100)
         return [Enrollment(id=str(enrollment.pop("_id")), **enrollment) for enrollment in enrollments_data]
     
+    async def count_by_course(self, course_id: str, active_only: bool = False) -> int:
+        """Contar inscripciones por curso (opcionalmente solo activas)"""
+        query = {"course_id": course_id}
+        if active_only:
+            # El estado se almacena como string (e.g., "active") según el Enum
+            query["status"] = "active"
+        return await self.db[self.collection_name].count_documents(query)
+    
     async def update_progress(self, enrollment_id: str, progress: float, completed_lessons: List[str]) -> bool:
         """Actualizar progreso de inscripción"""
         result = await self.db[self.collection_name].update_one(

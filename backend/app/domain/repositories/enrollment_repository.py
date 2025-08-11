@@ -35,6 +35,11 @@ class EnrollmentRepository(ABC):
         pass
     
     @abstractmethod
+    async def count_by_course(self, course_id: str, active_only: bool = False) -> int:
+        """Contar inscripciones por curso (opcionalmente solo activas)"""
+        pass
+    
+    @abstractmethod
     async def update_progress(self, enrollment_id: str, progress: float, completed_lessons: List[str]) -> bool:
         """Actualizar progreso de inscripción"""
         pass

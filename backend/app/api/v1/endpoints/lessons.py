@@ -28,17 +28,25 @@ async def get_course_lessons(
     
     - **course_id**: ID del curso
     """
+    print(f"🔍 [API] GET /lessons/course/{course_id} called")
+    print(f"👤 [API] Current user: {current_user.email if current_user else 'Anonymous'}")
+    
     # Verificar que el curso exista
+    print(f"📚 [API] Fetching course details for ID: {course_id}")
     course = await course_service.get_course_by_id(course_id)
     if not course:
+        print(f"❌ [API] Course not found: {course_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Curso no encontrado"
         )
     
+    print(f"✅ [API] Course found: {course.title}, Published: {course.is_published}")
+    
     # Verificar permisos para ver lecciones de cursos no publicados
     if not course.is_published:
         if not current_user:
+            print(f"❌ [API] Anonymous user trying to access unpublished course")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para ver las lecciones de este curso"
@@ -46,12 +54,21 @@ async def get_course_lessons(
         
         # Solo el instructor del curso y los administradores pueden ver lecciones de cursos no publicados
         if current_user.id != course.instructor_id and current_user.role != "admin":
+            print(f"❌ [API] User {current_user.email} doesn't have permission for unpublished course")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para ver las lecciones de este curso no publicado"
             )
     
-    return await lesson_service.get_lessons_by_course(course_id)
+    print(f"✅ [API] User has permission to view lessons")
+    
+    lessons = await lesson_service.get_course_lessons(course_id)
+    
+    print(f"📋 [API] Returning {len(lessons) if lessons else 0} lessons")
+    if lessons and len(lessons) > 0:
+        print(f"📝 [API] First lesson in response: {lessons[0].title if hasattr(lessons[0], 'title') else 'N/A'}")
+    
+    return lessons
 
 
 @router.get("/{lesson_id}", response_model=LessonResponse, summary="Obtener lección por ID")
@@ -125,7 +142,7 @@ async def create_lesson(
         )
     
     try:
-        return await lesson_service.create_lesson(course_id, lesson_data)
+        return await lesson_service.create_lesson(current_user.id, lesson_data)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

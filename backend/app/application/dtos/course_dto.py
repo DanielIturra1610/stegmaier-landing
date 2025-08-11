@@ -1,7 +1,7 @@
 """
 DTOs para operaciones relacionadas con cursos
 """
-from typing import Optional, List
+from typing import Optional, List, Any
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from ...domain.entities.course import CourseLevel, CourseCategory
@@ -142,7 +142,7 @@ class CourseResponse(BaseModel):
     tags: List[str] = []
     requirements: List[str] = []
     what_you_will_learn: List[str] = []
-    lessons: List[str] = []
+    lessons: List[Any] = []  # 🔥 FIX: Changed from List[str] to List[Any] to support full lesson objects
     total_duration: int = 0
     total_students: int = 0
     average_rating: float = 0.0

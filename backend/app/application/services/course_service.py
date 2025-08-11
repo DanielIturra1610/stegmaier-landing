@@ -28,6 +28,83 @@ class CourseService:
         self.lesson_repository = lesson_repository
         self.enrollment_repository = enrollment_repository
     
+    async def get_course_by_id(self, course_id: str) -> Optional[Course]:
+        """
+        🔥 FIX: Método faltante crítico - Obtiene un curso por su ID
+        
+        Args:
+            course_id: ID del curso
+        
+        Returns:
+            El curso encontrado o None si no existe
+        """
+        print(f"🔍 [CourseService] get_course_by_id called with course_id={course_id}")
+        
+        course = await self.course_repository.get_by_id(course_id)
+        if not course:
+            print(f"⚠️ [CourseService] Course not found with ID: {course_id}")
+            return None
+        
+        print(f"✅ [CourseService] Course found: {course.title}")
+            
+        # Obtener lecciones del curso si existe lesson_repository
+        if self.lesson_repository:
+            print(f"📚 [CourseService] Fetching lessons for course {course_id}")
+            try:
+                lessons = await self.lesson_repository.get_by_course(course_id)
+                print(f"📋 [CourseService] Found {len(lessons) if lessons else 0} lessons")
+                # Convertir lecciones a formato esperado por frontend
+                course.lessons = lessons if lessons else []
+                if lessons:
+                    print(f"📝 [CourseService] First lesson: {lessons[0].title if hasattr(lessons[0], 'title') else 'N/A'}")
+            except Exception as e:
+                print(f"⚠️ [CourseService] Error obteniendo lecciones para curso {course_id}: {e}")
+                print(f"💥 [CourseService] Error type: {type(e).__name__}")
+                print(f"💥 [CourseService] Error details: {str(e)}")
+                course.lessons = []  # Fallback para evitar loader infinito
+        else:
+            print(f"⚠️ [CourseService] No lesson_repository available")
+            course.lessons = []
+        
+        print(f"✅ [CourseService] Returning course with {len(course.lessons)} lessons")    
+        return course
+    
+    async def list_courses(
+        self, 
+        skip: int = 0, 
+        limit: int = 10, 
+        **filters
+    ) -> List[Course]:
+        """
+        🔥 FIX 5: Método faltante crítico - Lista cursos con filtros
+        
+        Args:
+            skip: Número de cursos a saltar (paginación)
+            limit: Límite de cursos a devolver
+            **filters: Filtros adicionales (ej: is_published=True)
+        
+        Returns:
+            Lista de cursos que coinciden con los filtros
+        """
+        print(f"🔍 [CourseService] list_courses called with skip={skip}, limit={limit}, filters={filters}")
+        
+        try:
+            # Obtener cursos del repositorio con filtros usando método existente 'list'
+            courses = await self.course_repository.list(skip, limit, **filters)
+            print(f"✅ [CourseService] Found {len(courses)} courses from repository")
+            
+            # Log first course for debugging
+            if courses:
+                first_course = courses[0]
+                print(f"📋 [CourseService] First course: ID={first_course.id}, Title={first_course.title}, Published={getattr(first_course, 'is_published', 'N/A')}")
+            
+            return courses
+            
+        except Exception as e:
+            print(f"💥 [CourseService] Error in list_courses: {e}")
+            print(f"💥 [CourseService] Error type: {type(e)}")
+            raise e
+    
     async def create_course(self, instructor_id: str, course_data: CourseCreate) -> Course:
         """
         Crea un nuevo curso
@@ -360,7 +437,7 @@ class CourseService:
         lessons = []
         if self.lesson_repository:
             try:
-                lessons = await self.lesson_repository.get_lessons_by_course(course_id)
+                lessons = await self.lesson_repository.get_by_course(course_id)
             except Exception as e:
                 print(f"⚠️ Error obteniendo lecciones: {e}")
                 lessons = []  # Fallback a lista vacía
@@ -421,7 +498,7 @@ class CourseService:
             lessons_count = 0
             if self.lesson_repository:
                 try:
-                    course_lessons = await self.lesson_repository.get_lessons_by_course(course.id)
+                    course_lessons = await self.lesson_repository.get_by_course(course.id)
                     lessons_count = len(course_lessons) if course_lessons else 0
                 except Exception as e:
                     print(f"⚠️ Error contando lecciones para curso {course.id}: {e}")

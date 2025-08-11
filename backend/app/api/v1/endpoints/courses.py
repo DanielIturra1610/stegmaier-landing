@@ -6,11 +6,12 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
 
 from ....application.services.course_service import CourseService
+from ....application.services.lesson_service import LessonService
 from ....application.dtos.course_dto import (
     CourseResponse, CourseCreate, CourseUpdate, CourseListResponse
 )
 from ....domain.entities.user import User
-from ....dependencies import get_course_service
+from ....dependencies import get_course_service, get_lesson_service
 from ...deps import get_current_active_user, get_current_instructor_user
 
 router = APIRouter()
@@ -109,6 +110,7 @@ async def get_available_courses(
 async def get_course_by_id(
     course_id: str = Path(..., description="ID del curso"),
     course_service: CourseService = Depends(get_course_service),
+    lesson_service: LessonService = Depends(get_lesson_service),
     current_user: Optional[User] = Depends(get_current_active_user)
 ):
     """
@@ -116,6 +118,7 @@ async def get_course_by_id(
     
     - **course_id**: ID del curso a consultar
     """
+    print(f"🔍 [API] Getting course with ID: {course_id}")
     course = await course_service.get_course_by_id(course_id)
     
     if not course:
@@ -139,7 +142,36 @@ async def get_course_by_id(
                 detail="No tienes permiso para ver este curso no publicado"
             )
     
-    return course
+    # Obtener las lecciones del curso explícitamente
+    print(f"📚 [API] Fetching lessons for course {course_id}")
+    try:
+        lessons = await lesson_service.get_course_lessons(course_id)
+        print(f"✅ [API] Found {len(lessons)} lessons for course {course_id}")
+        
+        # Convertir las lecciones a diccionarios para el response
+        course_dict = course.dict() if hasattr(course, 'dict') else course.__dict__
+        course_dict['lessons'] = [
+            {
+                'id': str(lesson.id),
+                'title': lesson.title,
+                'order': lesson.order,
+                'content_type': lesson.content_type,
+                'content_text': lesson.content_text,
+                'content_url': lesson.content_url,
+                'duration': lesson.duration,
+                'is_free_preview': lesson.is_free_preview
+            } for lesson in lessons
+        ]
+        
+        print(f"📋 [API] Returning course with {len(course_dict['lessons'])} lessons")
+        return CourseResponse(**course_dict)
+        
+    except Exception as e:
+        print(f"⚠️ [API] Error fetching lessons: {e}")
+        # Si hay error, devolver el curso sin lecciones para evitar el loader infinito
+        course_dict = course.dict() if hasattr(course, 'dict') else course.__dict__
+        course_dict['lessons'] = []
+        return CourseResponse(**course_dict)
 
 
 @router.post("/", response_model=CourseResponse, status_code=status.HTTP_201_CREATED, summary="Crear un nuevo curso")

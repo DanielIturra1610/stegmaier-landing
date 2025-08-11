@@ -61,27 +61,40 @@ const AdminLessons: React.FC = () => {
     if (!courseId) return;
 
     try {
+      console.log('🔄 [AdminLessons] Starting loadCourseAndLessons for course:', courseId);
       setLoading(true);
       
       // Cargar información del curso
+      console.log('📖 [AdminLessons] Loading course data...');
       const courseData = await adminService.getCourse(courseId);
-      setCourse({
+      console.log('📖 [AdminLessons] Course data received:', courseData);
+      
+      const courseInfo = {
         id: courseData.id,
         title: courseData.title,
         instructor: courseData.instructor || 'Sin instructor',
         lessons_count: courseData.lessons_count || 0
-      });
+      };
+      console.log('📖 [AdminLessons] Setting course state:', courseInfo);
+      setCourse(courseInfo);
 
       // Cargar lecciones usando lessonService
       console.log('📚 [AdminLessons] Loading lessons for course:', courseId);
       const lessonsData = await lessonService.getCourseLessons(courseId);
-      console.log('📚 [AdminLessons] Loaded lessons:', lessonsData);
-      setLessons(lessonsData);
+      console.log('📚 [AdminLessons] Raw lessons data received:', lessonsData);
+      console.log('📚 [AdminLessons] Lessons count:', lessonsData?.length || 0);
+      console.log('📚 [AdminLessons] Setting lessons state...');
+      
+      setLessons(lessonsData || []);
+      console.log('✅ [AdminLessons] Lessons state updated successfully');
       
     } catch (error: any) {
-      console.error('Error loading course and lessons:', error);
+      console.error('💥 [AdminLessons] Error loading course and lessons:', error);
+      console.error('💥 [AdminLessons] Error details:', error.message);
+      console.error('💥 [AdminLessons] Error stack:', error.stack);
       toast.error('Error al cargar el curso y lecciones');
     } finally {
+      console.log('🏁 [AdminLessons] loadCourseAndLessons completed');
       setLoading(false);
     }
   };
@@ -109,17 +122,28 @@ const AdminLessons: React.FC = () => {
 
     try {
       console.log('🚀 [AdminLessons] Creating text lesson:', newLessonData);
+      console.log('📊 [AdminLessons] Current lessons count:', lessons.length);
       
-      const lessonData: LessonCreate = {
+      // 🔥 FIX: Correct payload to match backend LessonCreate DTO
+      const lessonData = {
         title: newLessonData.title.trim(),
-        description: newLessonData.description.trim(),
-        content_type: newLessonData.content_type,
-        is_free: newLessonData.is_free
+        course_id: courseId!, // ✅ Backend requires course_id
+        order: lessons.length + 1, // ✅ Backend requires order (next position)
+        content_type: newLessonData.content_type as 'text' | 'video', // ✅ Backend requires ContentType
+        content_text: newLessonData.description.trim(), // ✅ For text lessons, use content_text
+        duration: 0, // ✅ Backend requires duration (default 0 for text)
+        is_free_preview: newLessonData.is_free, // ✅ Backend expects is_free_preview, not is_free
+        attachments: [] // ✅ Backend requires attachments array
       };
       
-      await lessonService.createLesson(courseId, lessonData);
+      console.log('📋 [AdminLessons] Final lesson payload:', JSON.stringify(lessonData, null, 2));
+      console.log('🚀 [AdminLessons] About to create lesson...');
+      
+      const createdLesson = await lessonService.createLesson(courseId, lessonData);
+      console.log('✅ [AdminLessons] Lesson created successfully:', createdLesson);
       
       toast.success('Lección creada exitosamente');
+      console.log('🔄 [AdminLessons] Resetting form state...');
       setShowNewLessonForm(false);
       setNewLessonData({
         title: '',
@@ -128,7 +152,9 @@ const AdminLessons: React.FC = () => {
         is_free: false
       });
       
+      console.log('🔄 [AdminLessons] About to reload course and lessons...');
       await loadCourseAndLessons();
+      console.log('✅ [AdminLessons] Course and lessons reloaded after creation');
     } catch (error: any) {
       console.error('❌ [AdminLessons] Error creating lesson:', error);
       toast.error(error.message || 'Error al crear lección');

@@ -82,18 +82,7 @@ class CourseService {
     }
   }
 
-  // Obtener detalles de un curso específico
-  async getCourse(courseId: string): Promise<Course> {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/courses/${courseId}`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
-    } catch (error: any) {
-      console.error('Error fetching course:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener el curso');
-    }
-  }
+  // ✅ ELIMINADO: Función duplicada - usar la versión robusta al final del archivo
 
   // Inscribirse en un curso
   async enrollInCourse(courseId: string): Promise<void> {
@@ -123,25 +112,6 @@ class CourseService {
     } catch (error: any) {
       console.error('❌ [courseService] Error getting course detail:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener detalle del curso');
-    }
-  }
-
-  /**
-   * Obtener lecciones de un curso
-   */
-  async getCourseLessons(courseId: string): Promise<LessonResponse[]> {
-    try {
-      console.log('📚 [courseService] Getting lessons for course ID:', courseId);
-      
-      const response = await axios.get(`${API_BASE_URL}/api/v1/lessons/course/${courseId}`, {
-        headers: this.getAuthHeaders()
-      });
-      
-      console.log('✅ [courseService] Course lessons retrieved:', response.data.length);
-      return response.data;
-    } catch (error: any) {
-      console.error('❌ [courseService] Error getting course lessons:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener lecciones del curso');
     }
   }
 
@@ -223,6 +193,59 @@ class CourseService {
       if (error.response?.status === 404) {
         return { exists: false, published: false, accessible: false };
       }
+      throw error;
+    }
+  }
+
+  // ✅ FIX CRÍTICO: Método para obtener lecciones de un curso específico
+  async getCourseLessons(courseId: string): Promise<LessonResponse[]> {
+    try {
+      console.log('🔍 [CourseService] Getting lessons for course:', courseId);
+      
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/lessons/course/${courseId}`,
+        { headers: this.getAuthHeaders() }
+      );
+      
+      console.log('✅ [CourseService] Lessons fetched successfully:', response.data?.length || 0);
+      return response.data || [];
+    } catch (error: any) {
+      console.error('❌ [CourseService] Error fetching course lessons:', error);
+      console.error('❌ [CourseService] Response:', error.response?.data);
+      
+      // ✅ ROBUSTEZ: Devolver array vacío en lugar de crash
+      return [];
+    }
+  }
+
+  // ✅ FIX CRÍTICO: Método para obtener curso con verificación robusta
+  async getCourse(courseId: string): Promise<Course | null> {
+    try {
+      console.log('🔍 [CourseService] Getting course:', courseId);
+      
+      const response = await axios.get(
+        `${API_BASE_URL}/api/v1/courses/${courseId}`,
+        { headers: this.getAuthHeaders() }
+      );
+      
+      const course = response.data;
+      
+      // ✅ NORMALIZACIÓN: Asegurar que lessons sea array
+      if (course && !Array.isArray(course.lessons)) {
+        course.lessons = [];
+      }
+      
+      console.log('✅ [CourseService] Course fetched successfully:', course?.title);
+      console.log('📋 [CourseService] Course lessons count:', course?.lessons?.length || 0);
+      
+      return course;
+    } catch (error: any) {
+      console.error('❌ [CourseService] Error fetching course:', error);
+      
+      if (error.response?.status === 404) {
+        return null;
+      }
+      
       throw error;
     }
   }

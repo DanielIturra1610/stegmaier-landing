@@ -37,16 +37,25 @@ class LessonService:
         Raises:
             ValueError: Si el curso no existe o el usuario no tiene permisos
         """
+        print(f"🚀 [LessonService] Creating lesson for course: {lesson_data.course_id}")
+        print(f"📋 [LessonService] Lesson data: title={lesson_data.title}, order={lesson_data.order}, type={lesson_data.content_type}")
+        
         # Verificar si el curso existe
         course = await self.course_repository.get_by_id(lesson_data.course_id)
         if not course:
+            print(f"❌ [LessonService] Course not found: {lesson_data.course_id}")
             raise ValueError("El curso no existe")
+        
+        print(f"✅ [LessonService] Course found: {course.title}")
         
         # Verificar si el usuario tiene permisos para añadir lecciones al curso
         if course.instructor_id != instructor_id:
             instructor = await self.user_repository.get_by_id(instructor_id)
             if not instructor or instructor.role != "admin":
+                print(f"❌ [LessonService] User {instructor_id} does not have permission")
                 raise ValueError("No tienes permiso para añadir lecciones a este curso")
+        
+        print(f"✅ [LessonService] User {instructor_id} has permission to create lesson")
         
         # Crear la nueva lección
         lesson = Lesson(
@@ -61,7 +70,11 @@ class LessonService:
             attachments=lesson_data.attachments
         )
         
+        print(f"📝 [LessonService] Creating lesson object with order: {lesson.order}")
+        
         created_lesson = await self.lesson_repository.create(lesson)
+        
+        print(f"✅ [LessonService] Lesson created with ID: {created_lesson.id}")
         
         # Actualizar la lista de lecciones en el curso
         if created_lesson.id not in course.lessons:
@@ -70,6 +83,8 @@ class LessonService:
             # Actualizar la duración total del curso
             course.total_duration += created_lesson.duration
             
+            print(f"📚 [LessonService] Updating course with new lesson. Total lessons: {len(course.lessons)}")
+            
             await self.course_repository.update(
                 lesson_data.course_id, 
                 {
@@ -77,7 +92,12 @@ class LessonService:
                     "total_duration": course.total_duration
                 }
             )
+            
+            print(f"✅ [LessonService] Course updated successfully")
+        else:
+            print(f"⚠️ [LessonService] Lesson ID already in course lessons list")
         
+        print(f"✅ [LessonService] Lesson creation complete: {created_lesson.title}")
         return created_lesson
     
     async def get_lesson_by_id(self, lesson_id: str) -> Optional[Lesson]:
@@ -102,7 +122,27 @@ class LessonService:
         Returns:
             Lista de lecciones del curso
         """
-        return await self.lesson_repository.get_by_course(course_id)
+        print(f"🔍 [LessonService] Getting lessons for course: {course_id}")
+        
+        try:
+            lessons = await self.lesson_repository.get_by_course(course_id)
+            print(f"✅ [LessonService] Found {len(lessons) if lessons else 0} lessons for course {course_id}")
+            
+            if lessons and len(lessons) > 0:
+                print(f"📋 [LessonService] First lesson: ID={lessons[0].id}, Title={lessons[0].title}, Order={lessons[0].order}")
+                # Log all lessons for debugging
+                for idx, lesson in enumerate(lessons):
+                    print(f"📝 [LessonService] Lesson {idx + 1}: {lesson.title} (order: {lesson.order}, type: {lesson.content_type})")
+            else:
+                print(f"⚠️ [LessonService] No lessons found for course {course_id}")
+            
+            return lessons if lessons else []
+            
+        except Exception as e:
+            print(f"💥 [LessonService] Error getting course lessons: {e}")
+            print(f"💥 [LessonService] Error type: {type(e).__name__}")
+            print(f"💥 [LessonService] Error details: {str(e)}")
+            raise e
     
     async def update_lesson(
         self, 

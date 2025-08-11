@@ -87,8 +87,8 @@ const AppRoutes: React.FC = () => {
         
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/list" element={<CoursesListPage />} />
-        <Route path="courses/:id" element={<CourseDetailPage />} />
-        <Route path="courses/:id/view" element={<CourseViewPage />} />
+        <Route path="courses/:courseId" element={<CourseDetailPage />} />
+        <Route path="courses/:courseId/view" element={<CourseViewPage />} />
         <Route path="my-courses" element={<MyCourses />} />
         
         {/* Rutas administrativas (usando mismo layout) */}

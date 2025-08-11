@@ -49,6 +49,9 @@ const CourseViewPage: React.FC = () => {
   useEffect(() => {
     if (courseId) {
       loadCourseData();
+    } else {
+      setError('ID de curso no válido');
+      setIsLoading(false);
     }
   }, [courseId]);
   
@@ -72,29 +75,44 @@ const CourseViewPage: React.FC = () => {
   const loadCourseData = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      // Cargar datos del curso
-      const courseResponse = await fetch(`/api/v1/courses/${courseId}`, {
+      console.log('🔍 [CourseViewPage] Loading course data for ID:', courseId);
+
+      // ✅ FIX DIRECTO: Usar fetch con baseURL completa
+      const courseResponse = await fetch(`http://localhost:8000/api/v1/courses/${courseId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (!courseResponse.ok) {
-        throw new Error('Error al cargar el curso');
+        throw new Error(`Error ${courseResponse.status}: ${courseResponse.statusText}`);
       }
 
       const courseData = await courseResponse.json();
+      
+      console.log('✅ [CourseViewPage] Course data loaded:', courseData.title);
+      console.log('📋 [CourseViewPage] Lessons in course:', courseData.lessons?.length || 0);
+      
+      // ✅ Asegurar que lessons sea un array
+      if (!courseData.lessons) {
+        courseData.lessons = [];
+      }
+      
       setCourse(courseData);
 
-      // Cargar progreso para lecciones de video
+      // Cargar progreso para lecciones de video solo si hay lecciones
       const progressData: Record<string, VideoProgress> = {};
       const completed = new Set<string>();
 
-      for (const lesson of courseData.lessons) {
-        if (lesson.lesson_type === 'video' && lesson.video_id) {
+      if (courseData.lessons && courseData.lessons.length > 0) {
+        for (const lesson of courseData.lessons) {
+          // Verificar tanto lesson_type como content_type para compatibilidad
+          if ((lesson.lesson_type === 'video' || lesson.content_type === 'video') && lesson.video_id) {
           try {
-            const progress = await progressService.getVideoProgress(lesson.id, lesson.video_id);
+            const progress = await progressService.getVideoProgress(lesson.id, lesson.video_id || lesson.id);
             if (progress) {
               progressData[lesson.id] = progress;
               if (progress.is_completed) {
@@ -103,6 +121,7 @@ const CourseViewPage: React.FC = () => {
             }
           } catch (error) {
             console.warn(`Could not load progress for lesson ${lesson.id}:`, error);
+          }
           }
         }
       }
@@ -119,11 +138,16 @@ const CourseViewPage: React.FC = () => {
   };
 
   const calculateCourseProgress = () => {
-    if (!course || course.lessons.length === 0) return;
+    // ✅ FIX CRÍTICO: Verificar que course.lessons existe y es array
+    if (!course || !course.lessons || !Array.isArray(course.lessons) || course.lessons.length === 0) {
+      setCourseProgress(0);
+      return;
+    }
 
-    const totalLessons = course.lessons.length;
-    const completedCount = completedLessons.size;
-    const progressPercentage = Math.round((completedCount / totalLessons) * 100);
+    try {
+      const totalLessons = course.lessons.length;
+      const completedCount = completedLessons.size;
+      const progressPercentage = Math.round((completedCount / totalLessons) * 100);
     
     // Track course completion when reaching 100%
     if (progressPercentage === 100 && courseProgress < 100) {
@@ -133,7 +157,11 @@ const CourseViewPage: React.FC = () => {
       trackCourseComplete(courseId || '', course.title, totalWatchTime);
     }
     
-    setCourseProgress(progressPercentage);
+      setCourseProgress(progressPercentage);
+    } catch (error) {
+      console.error('Error calculating course progress:', error);
+      setCourseProgress(0);
+    }
   };
 
   const handleLessonSelect = (lessonIndex: number) => {
@@ -204,6 +232,49 @@ const CourseViewPage: React.FC = () => {
           >
             Volver a Cursos
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔥 FIX: Handle courses without lessons elegantly
+  if (course && (!course.lessons || course.lessons.length === 0)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <div className="text-yellow-500 mb-6">
+            <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Curso en Construcción</h2>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
+            <p className="text-gray-600 mb-3">
+              Este curso está siendo preparado por nuestro equipo. Las lecciones estarán disponibles muy pronto.
+            </p>
+            <div className="text-sm text-gray-500">
+              <p><strong>Instructor:</strong> {course.instructor_name}</p>
+              <p><strong>Estado:</strong> {course.total_lessons > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
+            </div>
+          </div>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => navigate('/platform/courses')}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Ver Otros Cursos
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Actualizar
+            </button>
+          </div>
+          <div className="mt-6 text-sm text-gray-500">
+            <p>💡 Te notificaremos cuando el contenido esté listo</p>
+          </div>
         </div>
       </div>
     );

@@ -96,12 +96,14 @@ async def get_auth_service(
 
 async def get_course_service(
     course_repository: CourseRepository = Depends(get_course_repository),
-    user_repository: UserRepository = Depends(get_user_repository)
+    user_repository: UserRepository = Depends(get_user_repository),
+    lesson_repository: LessonRepository = Depends(get_lesson_repository),
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
 ) -> CourseService:
     """
     Proporciona una instancia configurada del servicio de cursos.
     """
-    return CourseService(course_repository, user_repository)
+    return CourseService(course_repository, user_repository, lesson_repository, enrollment_repository)
 
 async def get_lesson_service(
     lesson_repository: LessonRepository = Depends(get_lesson_repository),

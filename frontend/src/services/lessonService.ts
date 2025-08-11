@@ -6,13 +6,17 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? '/api/v1' 
   : 'http://localhost:8000/api/v1';
 
+// 🔥 FIX: Updated to match backend LessonCreate DTO exactly
 interface LessonCreate {
   title: string;
-  description: string;
-  content_type: 'text' | 'video';
-  is_free: boolean;
-  content?: string;
-  video_url?: string;
+  course_id: string;
+  order: number;
+  content_type: 'text' | 'video' | 'quiz' | 'assignment';
+  content_url?: string;
+  content_text?: string;
+  duration: number;
+  is_free_preview: boolean;
+  attachments: string[];
 }
 
 interface LessonResponse {
@@ -37,16 +41,62 @@ class LessonService {
     };
   }
 
+  // 🔥 FIX 1: Enhanced with extensive debugging logs
   async getCourseLessons(courseId: string): Promise<LessonResponse[]> {
-    const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
-      headers: this.getHeaders()
-    });
+    console.log('🔍 [LessonService] Getting lessons for course:', courseId);
+    console.log('🔍 [LessonService] API URL:', `${API_BASE_URL}/lessons/course/${courseId}`);
+    console.log('🔍 [LessonService] Headers:', this.getHeaders());
+    
+    try {
+      const startTime = Date.now();
+      const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+      const responseTime = Date.now() - startTime;
 
-    if (!response.ok) {
-      throw new Error('Error fetching lessons');
+      console.log('📡 [LessonService] Response status:', response.status);
+      console.log('📡 [LessonService] Response ok:', response.ok);
+      console.log('📡 [LessonService] Response time:', responseTime + 'ms');
+      console.log('📡 [LessonService] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [LessonService] Error response body:', errorText);
+        console.error('❌ [LessonService] Error status code:', response.status);
+        console.error('❌ [LessonService] Error status text:', response.statusText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { detail: errorText };
+        }
+        throw new Error(errorData.detail || `Error fetching lessons: ${response.status}`);
+      }
+
+      const lessons = await response.json();
+      console.log('✅ [LessonService] Raw lessons received:', lessons);
+      console.log('📊 [LessonService] Total lessons count:', lessons?.length || 0);
+      console.log('📋 [LessonService] Lessons data structure:', JSON.stringify(lessons?.[0] || 'No lessons', null, 2));
+      
+      // Log each lesson for debugging
+      if (lessons && lessons.length > 0) {
+        lessons.forEach((lesson: any, index: number) => {
+          console.log(`📝 [LessonService] Lesson ${index + 1}:`, {
+            id: lesson.id || lesson._id,
+            title: lesson.title,
+            order: lesson.order,
+            content_type: lesson.content_type
+          });
+        });
+      }
+      
+      return lessons || [];
+    } catch (error) {
+      console.error('💥 [LessonService] Exception getting course lessons:', error);
+      console.error('💥 [LessonService] Error stack:', (error as Error).stack);
+      throw error;
     }
-
-    return await response.json();
   }
 
   async getLessonById(lessonId: string): Promise<LessonResponse> {
