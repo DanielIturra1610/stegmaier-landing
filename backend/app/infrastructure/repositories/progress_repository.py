@@ -573,8 +573,47 @@ class FileSystemProgressRepository(ProgressRepository):
             print(f"❌ Error recalculating course progress: {e}")
             raise e
     
-    async def get_user_progress_summary(self, user_id: str) -> ProgressSummary:
-        """Obtener resumen completo de progreso del usuario"""
+    async def get_user_progress_summary(
+        self, 
+        user_id: str, 
+        course_id: Optional[str] = None
+    ) -> List[VideoProgress]:
+        """Obtener resumen de progreso de videos del usuario"""
+        try:
+            # Obtener progreso de videos del usuario
+            data = self._load_json(self.video_progress_file)
+            user_videos = []
+            
+            for key, progress_data in data.items():
+                if progress_data['user_id'] == user_id:
+                    # Filtrar por curso si se proporciona course_id
+                    if course_id and progress_data.get('course_id') != course_id:
+                        continue
+                        
+                    video_progress = VideoProgress(
+                        id=progress_data.get('id', key),
+                        user_id=progress_data['user_id'],
+                        lesson_id=progress_data['lesson_id'],
+                        video_id=progress_data['video_id'],
+                        current_position=progress_data.get('current_position', 0.0),
+                        duration=progress_data.get('duration', 0.0),
+                        watch_percentage=progress_data.get('watch_percentage', 0.0),
+                        is_completed=progress_data.get('is_completed', False),
+                        total_watch_time=progress_data.get('total_watch_time', 0.0),
+                        last_watched=datetime.fromisoformat(progress_data['last_watched']) if progress_data.get('last_watched') else None,
+                        course_id=progress_data.get('course_id')
+                    )
+                    user_videos.append(video_progress)
+            
+            return user_videos
+            
+        except Exception as e:
+            print(f"❌ Error getting user video progress summary: {e}")
+            # Retornar lista vacía en caso de error
+            return []
+    
+    async def get_user_course_progress_summary(self, user_id: str) -> ProgressSummary:
+        """Obtener resumen completo de progreso de cursos del usuario"""
         try:
             # Obtener todos los course progress del usuario
             data = self._load_json(self.course_progress_file)
@@ -635,10 +674,10 @@ class FileSystemProgressRepository(ProgressRepository):
             )
             
         except Exception as e:
-            print(f"❌ Error getting user progress summary: {e}")
+            print(f"❌ Error getting user course progress summary: {e}")
             # Retornar summary vacío en caso de error
             return ProgressSummary(user_id=user_id)
-    
+
     async def get_user_active_courses(self, user_id: str) -> List[CourseProgress]:
         """Obtener cursos activos del usuario"""
         try:

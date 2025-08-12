@@ -110,25 +110,35 @@ class ProgressService:
         total_watch_time = sum(p.total_watch_time for p in progress_list)
         average_completion = sum(p.watch_percentage for p in progress_list) / total_videos if total_videos > 0 else 0
         
-        return {
+        # Construir estructura de datos que espera el frontend
+        summary_data = {
             "total_videos": total_videos,
             "completed_videos": completed_videos,
             "completion_rate": (completed_videos / total_videos * 100) if total_videos > 0 else 0,
             "total_watch_time_seconds": total_watch_time,
             "total_watch_time_formatted": self._format_duration(total_watch_time),
-            "average_completion_percentage": round(average_completion, 2),
-            "videos": [
-                {
-                    "lesson_id": p.lesson_id,
-                    "video_id": p.video_id,
-                    "current_position": p.current_position,
-                    "watch_percentage": p.watch_percentage,
-                    "is_completed": p.is_completed,
-                    "last_watched": p.last_watched.isoformat() if p.last_watched else None,
-                    "total_watch_time": p.total_watch_time
-                }
-                for p in progress_list
-            ]
+            "average_completion_percentage": round(average_completion, 2)
+        }
+        
+        recent_courses = [
+            {
+                "lesson_id": p.lesson_id,
+                "video_id": p.video_id,
+                "current_position": p.current_position,
+                "watch_percentage": p.watch_percentage,
+                "is_completed": p.is_completed,
+                "last_watched": p.last_watched.isoformat() if p.last_watched else None,
+                "total_watch_time": p.total_watch_time,
+                "course_id": p.course_id,
+                "status": "in_progress" if p.watch_percentage > 0 and not p.is_completed else ("completed" if p.is_completed else "not_started")
+            }
+            for p in progress_list
+        ]
+        
+        return {
+            "summary": summary_data,
+            "recent_courses": recent_courses,
+            "videos": recent_courses  # Mantenemos compatibilidad con ambos nombres
         }
     
     async def add_video_bookmark(

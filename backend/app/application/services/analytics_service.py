@@ -186,7 +186,7 @@ class AnalyticsService:
             return {}
         
         # Enrollments del usuario
-        user_enrollments = await self.enrollment_repository.get_by_user_id(user_id)
+        user_enrollments = await self.enrollment_repository.get_by_user(user_id)
         
         # Progreso de videos del usuario
         user_progress = await self.progress_repository.get_user_progress_summary(user_id)
@@ -382,7 +382,7 @@ class AnalyticsService:
     
     async def _get_user_favorite_category(self, user_id: str) -> Optional[str]:
         """Obtiene la categoría favorita del usuario"""
-        enrollments = await self.enrollment_repository.get_by_user_id(user_id)
+        enrollments = await self.enrollment_repository.get_by_user(user_id)
         
         if not enrollments:
             return None
@@ -425,7 +425,7 @@ class AnalyticsService:
         score = 0.0
         
         # Factor 1: Cursos completados (40 puntos máx)
-        user_enrollments = await self.enrollment_repository.get_by_user_id(user_id)
+        user_enrollments = await self.enrollment_repository.get_by_user(user_id)
         total_courses = len(user_enrollments)
         completed_courses = len([e for e in user_enrollments if e.status == "COMPLETED"])
         

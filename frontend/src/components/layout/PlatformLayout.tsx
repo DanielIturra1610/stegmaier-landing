@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { User as AuthUser } from '../../types/auth';
 // import { useUserExperience } from '../../hooks/useUserExperience';
 // import { ANALYTICS_EVENTS } from '../onboarding/constants';
-import PlatformNavbar from './PlatformNavbar';
+import PageHeader from '../header/PageHeader';
 import PlatformSidebar from './PlatformSidebar';
 
 /**
@@ -166,10 +166,9 @@ const PlatformLayout: React.FC = () => {
       
       {/* Contenido principal */}
       <div className="flex flex-col flex-1">
-        {/* Navbar de la plataforma */}
-        <PlatformNavbar 
-          onMenuClick={toggleSidebar} 
-          data-onboarding="platform-navbar" 
+        {/* Header contextual */}
+        <PageHeader 
+          onMenuClick={toggleSidebar}
         />
         
         {/* Contenido dinámico */}

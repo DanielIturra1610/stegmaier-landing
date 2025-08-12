@@ -51,8 +51,7 @@ const CertificatesPage: React.FC = () => {
       <header className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Certificados</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600">
               Accede y descarga los certificados de tus cursos completados
             </p>
           </div>

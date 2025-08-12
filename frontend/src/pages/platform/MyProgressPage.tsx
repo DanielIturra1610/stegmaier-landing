@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { RefreshCw, Wifi, WifiOff, Award, Activity, Clock } from 'lucide-react';
+import { Award, Activity, Clock, WifiOff } from 'lucide-react';
 import UserProgressSummary from '../../components/progress/UserProgressSummary';
 import { useUserProgressSummary, useOfflineSync } from '../../hooks/useProgress';
 import { useUserExperience } from '../../hooks/useUserExperience';
 import ExperienceBar from '../../components/experience/ExperienceBar';
 import { StreakTracker } from '../../components/streak';
+import analyticsService from '../../services/analyticsService';
 
 interface UserStats {
   period: {
@@ -95,13 +96,11 @@ const MyProgressPage: React.FC = () => {
   const { user } = useAuth();
   const { summary, loading: progressLoading, error: progressError, reload } = useUserProgressSummary();
   const { syncing, hasPendingUpdates, syncPendingProgress } = useOfflineSync();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   // Stats state
   const [stats, setStats] = useState<UserStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState('30');
 
   // Experience state
   const { 
@@ -119,70 +118,25 @@ const MyProgressPage: React.FC = () => {
     new Date(2024, 0, 5)
   ];
 
-  React.useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   useEffect(() => {
     if (user) {
       fetchUserStats();
     }
-  }, [user, selectedPeriod]);
+  }, [user]);
 
   const fetchUserStats = async () => {
     try {
       setStatsLoading(true);
       setStatsError(null);
 
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/v1/analytics/users/me?period_days=${selectedPeriod}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setStats(result.data);
-      } else {
-        throw new Error('Error al cargar estadísticas');
-      }
+      // Usar analyticsService correcto que llama a /my-stats
+      const result = await analyticsService.getUserAnalytics();
+      setStats(result.data);
     } catch (err) {
       console.error('Error fetching user stats:', err);
       setStatsError('Error cargando tus estadísticas');
     } finally {
       setStatsLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      if (hasPendingUpdates) {
-        await syncPendingProgress();
-      }
-      await reload();
-      await fetchUserStats();
-    } catch (error) {
-      console.error('Error refreshing progress:', error);
-    }
-  };
-
-  const handleSyncOffline = async () => {
-    try {
-      await syncPendingProgress();
-      await reload();
-    } catch (error) {
-      console.error('Error syncing offline data:', error);
     }
   };
 
@@ -254,78 +208,7 @@ const MyProgressPage: React.FC = () => {
   const greeting = `¡Feliz ${capitalizedDay}, ${displayName}!`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mi Progreso y Estadísticas</h1>
-              <p className="mt-1 text-gray-600">
-                Tu progreso de aprendizaje y actividad en la plataforma
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {/* Connection indicator */}
-              <div className="flex items-center space-x-2">
-                {isOnline ? (
-                  <>
-                    <Wifi className="w-4 h-4 text-green-500" />
-                    <span className="text-sm text-green-600">En línea</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-4 h-4 text-red-500" />
-                    <span className="text-sm text-red-600">Sin conexión</span>
-                  </>
-                )}
-              </div>
-
-              {/* Period Selector */}
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Período:</label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="7">Últimos 7 días</option>
-                  <option value="30">Últimos 30 días</option>
-                  <option value="90">Últimos 90 días</option>
-                  <option value="365">Todo el tiempo</option>
-                </select>
-              </div>
-
-              {/* Sync offline button */}
-              {hasPendingUpdates && (
-                <button
-                  onClick={handleSyncOffline}
-                  disabled={syncing}
-                  className="flex items-center space-x-2 bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg text-sm hover:bg-yellow-200 transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                  <span>{syncing ? 'Sincronizando...' : 'Sincronizar datos'}</span>
-                </button>
-              )}
-
-              {/* Refresh button */}
-              <button
-                onClick={handleRefresh}
-                disabled={loading || syncing}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${(loading || syncing) ? 'animate-spin' : ''}`} />
-                <span>Actualizar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
+    <div className="space-y-6 pb-10">
         {/* Offline alert */}
         {hasPendingUpdates && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
@@ -481,7 +364,6 @@ const MyProgressPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

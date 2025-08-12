@@ -86,13 +86,7 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Cabecera */}
-      <header className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Centro de Ayuda</h1>
-        <p className="text-gray-600 mt-1">
-          Encuentra respuestas a tus preguntas o contáctanos directamente
-        </p>
-      </header>
+
 
       {/* Búsqueda */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
