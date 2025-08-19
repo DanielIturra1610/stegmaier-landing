@@ -45,6 +45,7 @@ class Course(BaseModel):
     requirements: List[str] = []
     what_you_will_learn: List[str] = []
     lessons: List[str] = []
+    lessons_count: int = 0  # ✅ AGREGADO: Número de lecciones del curso
     total_duration: int = 0  # en minutos
     total_students: int = 0
     average_rating: float = 0.0

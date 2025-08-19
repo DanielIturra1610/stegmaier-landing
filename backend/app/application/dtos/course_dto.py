@@ -102,6 +102,7 @@ class CourseListResponse(BaseModel):
     category: CourseCategory
     tags: List[str] = []
     total_duration: int = 0
+    lessons_count: int = 0  # ✅ AGREGADO: Número de lecciones del curso
     total_students: int = 0
     average_rating: float = 0.0
     is_published: bool
@@ -121,6 +122,7 @@ class CourseListResponse(BaseModel):
                 "category": "programming",
                 "tags": ["python", "programación", "desarrollo"],
                 "total_duration": 120,
+                "lessons_count": 8,
                 "total_students": 150,
                 "average_rating": 4.7,
                 "is_published": True,

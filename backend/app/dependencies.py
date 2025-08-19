@@ -16,6 +16,7 @@ from .domain.repositories.enrollment_repository import EnrollmentRepository
 from .domain.repositories.review_repository import ReviewRepository
 from .domain.repositories.verification_token_repository import VerificationTokenRepository
 from .domain.repositories.progress_repository import ProgressRepository
+from .domain.repositories.module_repository import ModuleRepository
 
 # Importación de implementaciones de repositorios
 from .infrastructure.repositories.user_repository_impl import MongoDBUserRepository
@@ -26,6 +27,7 @@ from .infrastructure.repositories.review_repository_impl import MongoDBReviewRep
 from .infrastructure.repositories.mongo_verification_token_repository import MongoVerificationTokenRepository
 from .infrastructure.repositories.progress_repository import FileSystemProgressRepository
 from .infrastructure.repositories.analytics_repository import FileSystemAnalyticsRepository
+from .infrastructure.repositories.module_repository_impl import MongoDBModuleRepository
 
 # Importación de servicios
 from .application.services.user_service import UserService
@@ -36,6 +38,7 @@ from .application.services.enrollment_service import EnrollmentService
 from .application.services.review_service import ReviewService
 from .application.services.progress_service import ProgressService
 from .application.services.analytics_service import AnalyticsService
+from .application.services.module_service import ModuleService
 
 # Dependencias de repositorios
 
@@ -76,6 +79,12 @@ async def get_verification_token_repository(db: AsyncIOMotorDatabase = Depends(g
     # Asumimos que la colección se llamará 'verification_tokens'
     collection = db.verification_tokens
     return MongoVerificationTokenRepository(collection)
+
+async def get_module_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> ModuleRepository:
+    """
+    Proporciona una instancia configurada del repositorio de módulos.
+    """
+    return MongoDBModuleRepository(db)
 
 # Dependencias de servicios
 
@@ -187,3 +196,13 @@ async def get_analytics_service(
         enrollment_repository=enrollment_repository,
         progress_repository=get_progress_repository()
     )
+
+async def get_module_service(
+    module_repository: ModuleRepository = Depends(get_module_repository),
+    course_repository: CourseRepository = Depends(get_course_repository),
+    lesson_repository: LessonRepository = Depends(get_lesson_repository)
+) -> ModuleService:
+    """
+    Proporciona una instancia configurada del servicio de módulos.
+    """
+    return ModuleService(module_repository, course_repository, lesson_repository)

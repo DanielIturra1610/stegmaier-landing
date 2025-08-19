@@ -45,6 +45,10 @@ const CoursesPage: React.FC = () => {
         
         if (coursesArray.length > 0) {
           console.log('🔍 [CoursesPage] First course details:', coursesArray[0]);
+          console.log('🔍 [CoursesPage] First course lessons:', coursesArray[0].lessons);
+          console.log('🔍 [CoursesPage] First course lessons_count:', coursesArray[0].lessons_count);
+          console.log('🔍 [CoursesPage] First course lessons array check:', Array.isArray(coursesArray[0].lessons));
+          console.log('🔍 [CoursesPage] First course lessons length:', Array.isArray(coursesArray[0].lessons) ? coursesArray[0].lessons.length : 'Not an array');
         }
         
         setCourses(coursesArray);
@@ -240,8 +244,33 @@ const CoursesPage: React.FC = () => {
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">{course.description}</p>
                 
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>{course.lessons || 0} lecciones</span>
-                  <span>{course.duration || 0} min</span>
+                  <span>
+                    {(() => {
+                      console.log(`🎯 [CourseCard] Processing course "${course.title}":
+                        - lessons_count: ${course.lessons_count}
+                        - lessons: ${JSON.stringify(course.lessons)}
+                        - lessons is array: ${Array.isArray(course.lessons)}
+                        - lessons length: ${Array.isArray(course.lessons) ? course.lessons.length : 'N/A'}`);
+                      
+                      // Lógica simplificada
+                      let lessonsCount = 0;
+                      
+                      if (course.lessons_count !== undefined && course.lessons_count !== null) {
+                        lessonsCount = course.lessons_count;
+                        console.log(`🔢 [CourseCard] Using lessons_count: ${lessonsCount}`);
+                      } else if (Array.isArray(course.lessons)) {
+                        lessonsCount = course.lessons.length;
+                        console.log(`📚 [CourseCard] Using lessons array length: ${lessonsCount}`);
+                      } else {
+                        lessonsCount = 0;
+                        console.log(`❌ [CourseCard] No lessons data available, defaulting to 0`);
+                      }
+                      
+                      console.log(`✅ [CourseCard] Final lessons count for "${course.title}": ${lessonsCount}`);
+                      return lessonsCount;
+                    })()} lecciones
+                  </span>
+                  <span>{course.total_duration || (Array.isArray(course.lessons) ? course.lessons.reduce((total, lesson) => total + (lesson.duration || 0), 0) : course.duration) || 0} min</span>
                 </div>
                 
                 {course.progress !== undefined && (

@@ -12,17 +12,36 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://api.stegmaier.com' 
   : 'http://localhost:8000';
 
+// Interface para lección individual
+export interface LessonDetail {
+  id: string;
+  title: string;
+  order: number;
+  content_type: string;
+  content_text?: string;
+  content_url?: string;
+  duration: number;
+  is_free_preview: boolean;
+}
+
 // Interfaces para tipado
 export interface Course {
   id: string;
   title: string;
   description: string;
   instructor?: string;
-  duration?: number;
-  lessons?: number;
+  instructor_id?: string;
+  // ✅ CORREGIDO: Usar nombres de campos que devuelve el backend
+  total_duration: number;  // Backend devuelve "total_duration" 
+  lessons_count?: number;   // Backend devuelve "lessons_count"
+  // ✅ ACTUALIZADO: lessons puede ser array de objetos o número
+  lessons?: LessonDetail[] | number;  // Backend puede devolver array completo o número
+  // Mantener compatibilidad con nombres anteriores
+  duration?: number;       // Alias para total_duration
   completedLessons?: number;
   progress?: number;
   thumbnail?: string;
+  cover_image?: string;    // Backend devuelve "cover_image"
   category?: string;
   level?: string;
   is_published?: boolean;

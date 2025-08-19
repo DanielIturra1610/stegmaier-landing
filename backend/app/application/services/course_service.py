@@ -93,10 +93,41 @@ class CourseService:
             courses = await self.course_repository.list(skip, limit, **filters)
             print(f"✅ [CourseService] Found {len(courses)} courses from repository")
             
+            # ✅ CALCULAR lessons_count y total_duration para cada curso
+            print(f"🔍 [CourseService] lesson_repository available: {self.lesson_repository is not None}")
+            
+            if self.lesson_repository:
+                print(f"✅ [CourseService] Processing {len(courses)} courses for lessons_count calculation")
+                for course in courses:
+                    try:
+                        print(f"📚 [CourseService] Getting lessons for course {course.id} ({course.title})")
+                        # Obtener lecciones del curso
+                        lessons = await self.lesson_repository.get_by_course_id(course.id)
+                        print(f"🔍 [CourseService] Raw lessons result for {course.id}: {lessons}")
+                        print(f"🔢 [CourseService] Lessons type: {type(lessons)}, Length: {len(lessons) if lessons else 0}")
+                        
+                        # Actualizar contadores
+                        course.lessons_count = len(lessons) if lessons else 0
+                        course.total_duration = sum(lesson.duration for lesson in lessons) if lessons else 0
+                        
+                        print(f"✅ [CourseService] Course {course.title}: SET lessons_count={course.lessons_count}, total_duration={course.total_duration}")
+                    except Exception as lesson_error:
+                        print(f"❌ [CourseService] ERROR getting lessons for course {course.id}: {lesson_error}")
+                        print(f"❌ [CourseService] Error type: {type(lesson_error)}")
+                        # Valores por defecto en caso de error
+                        course.lessons_count = 0
+                        course.total_duration = 0
+            else:
+                # Si no hay lesson_repository, usar valores por defecto
+                print("❌ [CourseService] NO lesson_repository available, using default values")
+                for course in courses:
+                    course.lessons_count = 0
+                    course.total_duration = 0
+            
             # Log first course for debugging
             if courses:
                 first_course = courses[0]
-                print(f"📋 [CourseService] First course: ID={first_course.id}, Title={first_course.title}, Published={getattr(first_course, 'is_published', 'N/A')}")
+                print(f"📋 [CourseService] First course: ID={first_course.id}, Title={first_course.title}, Published={getattr(first_course, 'is_published', 'N/A')}, Lessons={getattr(first_course, 'lessons_count', 0)}")
             
             return courses
             

@@ -25,17 +25,36 @@ export enum CourseCategory {
   STRATEGY = 'strategy'
 }
 
+// Interface para lección individual (compatible con courseService)
+export interface LessonDetail {
+  id: string;
+  title: string;
+  order: number;
+  content_type: string;
+  content_text?: string;
+  content_url?: string;
+  duration: number;
+  is_free_preview: boolean;
+}
+
 // Interfaz básica de curso - coincide con Course en courseService.ts
 export interface Course {
   id: string;
   title: string;
   description: string;
   instructor?: string;
+  instructor_id?: string;
+  instructor_name?: string;
+  total_duration?: number;
+  lessons_count?: number;
+  // ✅ CORREGIDO: lessons puede ser array de objetos o número (compatible con courseService)
+  lessons?: LessonDetail[] | number;
+  // Mantener compatibilidad con nombres anteriores
   duration?: number;
-  lessons?: number;
   completedLessons?: number;
   progress?: number;
   thumbnail?: string;
+  cover_image?: string;
   category?: string;
   level?: string;
   is_published?: boolean;

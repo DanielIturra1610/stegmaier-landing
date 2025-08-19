@@ -97,9 +97,15 @@ async def get_available_courses(
     # Filtrar solo cursos publicados
     filters = {"is_published": True}
     
-    print(f"DEBUG: Getting available courses with filters: {filters}, skip: {skip}, limit: {limit}")
+    print(f"🚀 [ENDPOINT] Getting available courses with filters: {filters}, skip: {skip}, limit: {limit}")
     courses = await course_service.list_courses(skip, limit, **filters)
-    print(f"DEBUG: Found {len(courses)} available courses")
+    print(f"✅ [ENDPOINT] Found {len(courses)} available courses after CourseService.list_courses()")
+    
+    # Debug first course to verify lessons_count
+    if courses:
+        first_course = courses[0]
+        print(f"🔍 [ENDPOINT] First course lessons_count: {getattr(first_course, 'lessons_count', 'NOT_SET')}")
+        print(f"🔍 [ENDPOINT] First course total_duration: {getattr(first_course, 'total_duration', 'NOT_SET')}")
     for course in courses:
         print(f"DEBUG: Course - ID: {course.id}, Title: {course.title}, Published: {getattr(course, 'is_published', 'N/A')}")
     

@@ -365,21 +365,44 @@ const AdminCourseForm: React.FC = () => {
         </div>
       </form>
       
-      {/* Sección de lecciones si estamos editando */}
+      {/* Sección de gestión de contenido si estamos editando */}
       {isEditing && (
-        <div className="mt-8 bg-white shadow rounded-lg p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Lecciones del curso</h2>
-            <button 
-              onClick={() => navigate(`/platform/admin/courses/${courseId}/lessons`)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
-            >
-              Gestionar Lecciones
-            </button>
+        <div className="mt-8 space-y-6">
+          {/* Gestión de Módulos */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Módulos del curso</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Organiza tu curso en módulos temáticos para una mejor estructura de aprendizaje.
+                </p>
+              </div>
+              <button 
+                onClick={() => navigate(`/platform/admin/courses/${courseId}/modules`)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+              >
+                Gestionar Módulos
+              </button>
+            </div>
           </div>
-          <p className="text-gray-600 text-sm">
-            Una vez guardados los datos básicos del curso, podrás añadir y organizar las lecciones.
-          </p>
+
+          {/* Gestión de Lecciones */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Lecciones del curso</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Crea y organiza las lecciones individuales de tu curso.
+                </p>
+              </div>
+              <button 
+                onClick={() => navigate(`/platform/admin/courses/${courseId}/lessons`)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm"
+              >
+                Gestionar Lecciones
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

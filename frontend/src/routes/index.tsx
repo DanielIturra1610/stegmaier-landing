@@ -36,6 +36,7 @@ import AdminUsers from '../pages/admin/AdminUsers';
 import AdminCourses from '../pages/admin/AdminCourses';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
+import AdminModules from '../pages/admin/AdminModules';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -97,6 +98,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/new" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
+        <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />

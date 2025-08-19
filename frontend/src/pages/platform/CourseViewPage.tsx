@@ -7,6 +7,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { moduleService } from '../../services/moduleService';
+import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
+import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 
 interface Lesson {
   id: string;
@@ -36,6 +39,7 @@ const CourseViewPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [courseStructure, setCourseStructure] = useState<CourseStructureResponse | null>(null);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +49,8 @@ const CourseViewPage: React.FC = () => {
   // Estados del sidebar
   const [showSidebar, setShowSidebar] = useState(true);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [useModularView, setUseModularView] = useState(false);
 
   useEffect(() => {
     if (courseId) {
@@ -103,6 +109,22 @@ const CourseViewPage: React.FC = () => {
       
       setCourse(courseData);
 
+      // Intentar cargar estructura modular del curso
+      try {
+        const structureData = await moduleService.getCourseStructure(courseId!);
+        console.log('📚 [CourseViewPage] Course structure loaded:', structureData.modules.length, 'modules');
+        setCourseStructure(structureData);
+        setUseModularView(structureData.modules.length > 0);
+        
+        // Expandir el primer módulo por defecto
+        if (structureData.modules.length > 0) {
+          setExpandedModules(new Set([structureData.modules[0].id]));
+        }
+      } catch (moduleError) {
+        console.log('ℹ️ [CourseViewPage] No modular structure found, using flat lesson list');
+        setUseModularView(false);
+      }
+
       // Cargar progreso para lecciones de video solo si hay lecciones
       const progressData: Record<string, VideoProgress> = {};
       const completed = new Set<string>();
@@ -135,6 +157,48 @@ const CourseViewPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleModuleExpansion = (moduleId: string) => {
+    setExpandedModules(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(moduleId)) {
+        newExpanded.delete(moduleId);
+      } else {
+        newExpanded.add(moduleId);
+      }
+      return newExpanded;
+    });
+  };
+
+  const handleModularLessonSelect = (moduleIndex: number, lessonIndex: number) => {
+    if (!courseStructure) return;
+
+    // Calcular el índice global de la lección
+    let globalIndex = 0;
+    for (let i = 0; i < moduleIndex; i++) {
+      globalIndex += courseStructure.modules[i].lessons.length;
+    }
+    globalIndex += lessonIndex;
+
+    setCurrentLessonIndex(globalIndex);
+  };
+
+  const findCurrentModuleAndLesson = () => {
+    if (!courseStructure || !course?.lessons) return { moduleIndex: -1, lessonIndex: -1 };
+
+    const currentLesson = course.lessons[currentLessonIndex];
+    if (!currentLesson) return { moduleIndex: -1, lessonIndex: -1 };
+
+    for (let moduleIndex = 0; moduleIndex < courseStructure.modules.length; moduleIndex++) {
+      const module = courseStructure.modules[moduleIndex];
+      const lessonIndex = module.lessons.findIndex(l => l.id === currentLesson.id);
+      if (lessonIndex !== -1) {
+        return { moduleIndex, lessonIndex };
+      }
+    }
+
+    return { moduleIndex: -1, lessonIndex: -1 };
   };
 
   const calculateCourseProgress = () => {
@@ -286,11 +350,32 @@ const CourseViewPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar de lecciones */}
       <div className={`bg-white shadow-lg transition-all duration-300 ${showSidebar ? 'w-80' : 'w-0 overflow-hidden'}`}>
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">{course.title}</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Instructor: {course.instructor_name}
-          </p>
+        <div className="p-4">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h1 className="text-xl font-bold text-gray-900">{course.title}</h1>
+              
+              <div className="text-sm text-gray-500">
+                {course.instructor_name}
+              </div>
+            </div>
+            
+            {/* Información de módulos si están disponibles */}
+            {courseStructure && courseStructure.modules.length > 0 && (
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <BookOpenIcon className="w-4 h-4" />
+                  <span>{courseStructure.modules.length} módulos</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <ClockIcon className="w-4 h-4" />
+                  <span>{moduleService.formatDuration(
+                    courseStructure.modules.reduce((total, m) => total + m.estimated_duration, 0)
+                  )}</span>
+                </div>
+              </div>
+            )}
+          </div>
           
           {/* Progreso del curso */}
           <div className="mb-4">
@@ -308,14 +393,138 @@ const CourseViewPage: React.FC = () => {
               {completedLessons.size} de {course.lessons.length} lecciones completadas
             </p>
           </div>
-        </div>
 
-        {/* Lista de lecciones */}
-        <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
-          {course.lessons.map((lesson, index) => {
-            const isActive = index === currentLessonIndex;
-            const isCompleted = completedLessons.has(lesson.id);
-            const progress = lessonProgress[lesson.id];
+          {/* Lista de lecciones */}
+          <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
+          {useModularView && courseStructure ? (
+            // Vista Modular
+            <div className="space-y-2">
+              {courseStructure.modules.map((module, moduleIndex) => {
+                const isExpanded = expandedModules.has(module.id);
+                const { moduleIndex: currentModuleIndex, lessonIndex: currentLessonIndex } = findCurrentModuleAndLesson();
+                const isCurrentModule = moduleIndex === currentModuleIndex;
+                
+                return (
+                  <div key={module.id} className="border rounded-lg overflow-hidden">
+                    {/* Header del módulo */}
+                    <div 
+                      className={`flex items-center justify-between p-4 cursor-pointer transition-colors ${
+                        isCurrentModule ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                      onClick={() => toggleModuleExpansion(module.id)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+                        ) : (
+                          <ChevronRightIcon className="w-5 h-5 text-gray-500" />
+                        )}
+                        <BookOpenIcon className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <h3 className="font-medium text-gray-900">{module.title}</h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                            <span>{module.lessons.length} lecciones</span>
+                            {module.estimated_duration > 0 && (
+                              <div className="flex items-center gap-1">
+                                <ClockIcon className="w-4 h-4" />
+                                <span>{moduleService.formatDuration(module.estimated_duration)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Indicador de progreso del módulo */}
+                      <div className="flex items-center gap-2">
+                        {module.is_required && (
+                          <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded">
+                            Obligatorio
+                          </span>
+                        )}
+                        <span className="text-sm text-gray-500">
+                          Módulo {module.order}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Lista de lecciones del módulo */}
+                    {isExpanded && (
+                      <div className="border-t">
+                        {module.lessons.map((lesson, lessonIndex) => {
+                          const globalIndex = courseStructure.modules
+                            .slice(0, moduleIndex)
+                            .reduce((acc, m) => acc + m.lessons.length, 0) + lessonIndex;
+                          const isActive = globalIndex === currentLessonIndex;
+                          const isCompleted = completedLessons.has(lesson.id);
+                          const progress = lessonProgress[lesson.id];
+
+                          return (
+                            <div
+                              key={lesson.id}
+                              className={`p-4 border-b last:border-b-0 cursor-pointer transition-colors ${
+                                isActive 
+                                  ? 'bg-blue-50 border-l-4 border-l-blue-600' 
+                                  : 'hover:bg-gray-50'
+                              }`}
+                              onClick={() => handleModularLessonSelect(moduleIndex, lessonIndex)}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {/* Icono de tipo de lección */}
+                                    {lesson.content_type === 'video' ? (
+                                      <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                      </svg>
+                                    )}
+                                    <span className="text-xs text-gray-500">Lección {lessonIndex + 1}</span>
+                                  </div>
+                                  
+                                  <h4 className={`font-medium ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
+                                    {lesson.title}
+                                  </h4>
+                                  
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Lección {lessonIndex + 1}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 ml-4">
+                                  {/* Indicador de progreso */}
+                                  {progress && progress.watch_percentage > 0 && (
+                                    <div className="w-8 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-green-600 transition-all duration-300"
+                                        style={{ width: `${progress.watch_percentage}%` }}
+                                      />
+                                    </div>
+                                  )}
+                                  
+                                  {/* Icono de completado */}
+                                  {isCompleted && (
+                                    <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            // Vista Plana (original)
+            course.lessons.map((lesson, index) => {
+              const isActive = index === currentLessonIndex;
+              const isCompleted = completedLessons.has(lesson.id);
+              const progress = lessonProgress[lesson.id];
 
             return (
               <div
@@ -383,57 +592,85 @@ const CourseViewPage: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
+          </div>
         </div>
       </div>
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+        {/* Controls superiores */}
+        <div className="flex items-center justify-between mb-4 p-4">
+          {/* Botón toggle sidebar */}
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50"
+          >
+            {showSidebar ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+
+          {/* Toggle vista modular */}
+          {courseStructure && courseStructure.modules.length > 0 && (
+            <button
+              onClick={() => setUseModularView(!useModularView)}
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                useModularView 
+                  ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {useModularView ? 'Vista Lista' : 'Vista Módulos'}
             </button>
-            
+          )}
+        </div>
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b p-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">{currentLesson?.title}</h1>
-              <p className="text-sm text-gray-600">
-                Lección {currentLessonIndex + 1} de {course.lessons.length}
+              <h2 className="font-semibold text-lg">{currentLesson?.title || 'Selecciona una lección'}</h2>
+              <p className="text-sm text-gray-500">
+                Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
               </p>
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            {/* Navegación de lecciones */}
-            <button
-              onClick={() => handleLessonSelect(Math.max(0, currentLessonIndex - 1))}
-              disabled={currentLessonIndex === 0}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Anterior
-            </button>
-            
-            <button
-              onClick={() => handleLessonSelect(Math.min(course.lessons.length - 1, currentLessonIndex + 1))}
-              disabled={currentLessonIndex === course.lessons.length - 1}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Siguiente
-            </button>
-
-            <button
-              onClick={() => navigate('/platform/courses')}
-              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Salir del Curso
-            </button>
+            <div className="text-sm text-gray-500">
+              {course?.instructor_name}
+            </div>
           </div>
+        </div>
+
+        {/* Navegación de lecciones */}
+        <div className="flex items-center justify-between mb-4 p-4">
+          <button
+            onClick={() => handleLessonSelect(Math.max(0, currentLessonIndex - 1))}
+            disabled={currentLessonIndex === 0}
+            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Anterior
+          </button>
+          <button
+            onClick={() => handleLessonSelect(Math.min((course?.lessons?.length || 0) - 1, currentLessonIndex + 1))}
+            disabled={currentLessonIndex === (course?.lessons?.length || 0) - 1}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Siguiente
+          </button>
+
+          <button
+            onClick={() => navigate('/platform/courses')}
+            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Salir del Curso
+          </button>
         </div>
 
         {/* Contenido de la lección */}
@@ -442,8 +679,8 @@ const CourseViewPage: React.FC = () => {
             <div className="max-w-4xl mx-auto">
               <AdvancedVideoPlayer
                 videoUrl={currentLesson.video_url}
-                lessonId={currentLesson.id}
-                videoId={currentLesson.video_id}
+                lessonId={currentLesson?.id || ''}
+                videoId={currentLesson?.video_id || currentLesson?.id || ''}
                 title={currentLesson.title}
                 onProgressUpdate={(progress) => handleProgressUpdate(currentLesson.id, progress)}
                 onLessonComplete={handleLessonComplete}
