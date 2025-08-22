@@ -9,7 +9,9 @@ import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { moduleService } from '../../services/moduleService';
 import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
-import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { quizService, Quiz } from '../../services/quizService';
+import QuizCard from '../../components/course/QuizCard';
 
 interface Lesson {
   id: string;
@@ -51,10 +53,13 @@ const CourseViewPage: React.FC = () => {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [useModularView, setUseModularView] = useState(false);
+  const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, Quiz[]>>({});
+  const [userQuizAttempts, setUserQuizAttempts] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (courseId) {
       loadCourseData();
+      loadCourseQuizzes();
     } else {
       setError('ID de curso no válido');
       setIsLoading(false);
@@ -201,31 +206,55 @@ const CourseViewPage: React.FC = () => {
     return { moduleIndex: -1, lessonIndex: -1 };
   };
 
+  const loadCourseQuizzes = async () => {
+    if (!courseId) return;
+    
+    try {
+      console.log('🔍 [CourseViewPage] Loading quizzes for course:', courseId);
+      const quizzes = await quizService.getQuizzes({ course_id: courseId, status: 'published' });
+      
+      // Group quizzes by lesson_id
+      const quizzesByLesson: Record<string, Quiz[]> = {};
+      quizzes.forEach(quiz => {
+        if (quiz.lesson_id) {
+          if (!quizzesByLesson[quiz.lesson_id]) {
+            quizzesByLesson[quiz.lesson_id] = [];
+          }
+          quizzesByLesson[quiz.lesson_id].push(quiz);
+        }
+      });
+      
+      setLessonQuizzes(quizzesByLesson);
+      
+      // Load user quiz attempts for each quiz
+      const attempts: Record<string, any> = {};
+      for (const quiz of quizzes) {
+        try {
+          const userAttempts = await quizService.getUserQuizAttempts(quiz.id);
+          attempts[quiz.id] = userAttempts;
+        } catch (error) {
+          console.log('No attempts found for quiz:', quiz.id);
+          attempts[quiz.id] = [];
+        }
+      }
+      setUserQuizAttempts(attempts);
+      
+      console.log('✅ [CourseViewPage] Quizzes loaded:', Object.keys(quizzesByLesson).length, 'lessons with quizzes');
+    } catch (error) {
+      console.error('❌ [CourseViewPage] Error loading course quizzes:', error);
+    }
+  };
+
   const calculateCourseProgress = () => {
-    // ✅ FIX CRÍTICO: Verificar que course.lessons existe y es array
-    if (!course || !course.lessons || !Array.isArray(course.lessons) || course.lessons.length === 0) {
+    if (!course || course.lessons.length === 0) {
       setCourseProgress(0);
       return;
     }
 
-    try {
-      const totalLessons = course.lessons.length;
-      const completedCount = completedLessons.size;
-      const progressPercentage = Math.round((completedCount / totalLessons) * 100);
-    
-    // Track course completion when reaching 100%
-    if (progressPercentage === 100 && courseProgress < 100) {
-      const totalWatchTime = Object.values(lessonProgress)
-        .reduce((total, progress) => total + (progress.total_watch_time || 0), 0);
-      
-      trackCourseComplete(courseId || '', course.title, totalWatchTime);
-    }
-    
-      setCourseProgress(progressPercentage);
-    } catch (error) {
-      console.error('Error calculating course progress:', error);
-      setCourseProgress(0);
-    }
+    const totalLessons = course.lessons.length;
+    const completedCount = completedLessons.size;
+    const progress = (completedCount / totalLessons) * 100;
+    setCourseProgress(Math.round(progress));
   };
 
   const handleLessonSelect = (lessonIndex: number) => {
@@ -697,6 +726,33 @@ const CourseViewPage: React.FC = () => {
                   />
                 </div>
               )}
+              
+              {/* Quizzes de la lección */}
+              {lessonQuizzes[currentLesson.id] && lessonQuizzes[currentLesson.id].length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <AcademicCapIcon className="h-6 w-6 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Evaluaciones de esta lección</h3>
+                  </div>
+                  {lessonQuizzes[currentLesson.id].map((quiz) => {
+                    const attempts = userQuizAttempts[quiz.id] || [];
+                    const bestAttempt = attempts.length > 0 ? attempts.reduce((best: any, current: any) => 
+                      current.score > (best.score || 0) ? current : best
+                    ) : null;
+                    
+                    return (
+                      <QuizCard
+                        key={quiz.id}
+                        quiz={quiz}
+                        userAttempts={attempts.length}
+                        bestScore={bestAttempt?.score}
+                        canTake={attempts.length < quiz.max_attempts}
+                        lastAttemptPassed={bestAttempt?.score >= quiz.passing_score}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             // Lección de texto
@@ -707,6 +763,35 @@ const CourseViewPage: React.FC = () => {
                   className="prose max-w-none"
                   dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
                 />
+                
+                {/* Quizzes de la lección */}
+                {lessonQuizzes[currentLesson?.id || ''] && lessonQuizzes[currentLesson?.id || ''].length > 0 && (
+                  <div className="mt-8 border-t pt-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <AcademicCapIcon className="h-6 w-6 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Evaluaciones de esta lección</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {lessonQuizzes[currentLesson?.id || ''].map((quiz) => {
+                        const attempts = userQuizAttempts[quiz.id] || [];
+                        const bestAttempt = attempts.length > 0 ? attempts.reduce((best: any, current: any) => 
+                          current.score > (best.score || 0) ? current : best
+                        ) : null;
+                        
+                        return (
+                          <QuizCard
+                            key={quiz.id}
+                            quiz={quiz}
+                            userAttempts={attempts.length}
+                            bestScore={bestAttempt?.score}
+                            canTake={attempts.length < quiz.max_attempts}
+                            lastAttemptPassed={bestAttempt?.score >= quiz.passing_score}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Botón para marcar como completada */}
                 <div className="mt-8 border-t pt-6">

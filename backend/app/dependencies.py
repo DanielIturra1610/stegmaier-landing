@@ -17,6 +17,9 @@ from .domain.repositories.review_repository import ReviewRepository
 from .domain.repositories.verification_token_repository import VerificationTokenRepository
 from .domain.repositories.progress_repository import ProgressRepository
 from .domain.repositories.module_repository import ModuleRepository
+from .domain.repositories.quiz_repository import QuizRepository
+from .domain.repositories.assignment_repository import AssignmentRepository
+from .domain.repositories.notification_repository import NotificationRepository
 
 # Importación de implementaciones de repositorios
 from .infrastructure.repositories.user_repository_impl import MongoDBUserRepository
@@ -28,6 +31,9 @@ from .infrastructure.repositories.mongo_verification_token_repository import Mon
 from .infrastructure.repositories.progress_repository import FileSystemProgressRepository
 from .infrastructure.repositories.analytics_repository import FileSystemAnalyticsRepository
 from .infrastructure.repositories.module_repository_impl import MongoDBModuleRepository
+from .infrastructure.repositories.quiz_repository_impl import MongoDBQuizRepository
+from .infrastructure.repositories.assignment_repository_impl import MongoDBAssignmentRepository
+from .infrastructure.repositories.notification_repository_impl import MongoDBNotificationRepository
 
 # Importación de servicios
 from .application.services.user_service import UserService
@@ -39,6 +45,9 @@ from .application.services.review_service import ReviewService
 from .application.services.progress_service import ProgressService
 from .application.services.analytics_service import AnalyticsService
 from .application.services.module_service import ModuleService
+from .application.services.quiz_service import QuizService
+from .application.services.assignment_service import AssignmentService
+from .application.services.notification_service import NotificationService
 
 # Dependencias de repositorios
 
@@ -86,6 +95,24 @@ async def get_module_repository(db: AsyncIOMotorDatabase = Depends(get_database)
     """
     return MongoDBModuleRepository(db)
 
+async def get_quiz_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> QuizRepository:
+    """
+    Proporciona una instancia configurada del repositorio de quizzes.
+    """
+    return MongoDBQuizRepository(db)
+
+async def get_assignment_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> AssignmentRepository:
+    """
+    Proporciona una instancia configurada del repositorio de assignments.
+    """
+    return MongoDBAssignmentRepository(db)
+
+async def get_notification_repository(db: AsyncIOMotorDatabase = Depends(get_database)) -> NotificationRepository:
+    """
+    Proporciona una instancia configurada del repositorio de notificaciones.
+    """
+    return MongoDBNotificationRepository(db)
+
 # Dependencias de servicios
 
 async def get_user_service(user_repository: UserRepository = Depends(get_user_repository)) -> UserService:
@@ -107,12 +134,19 @@ async def get_course_service(
     course_repository: CourseRepository = Depends(get_course_repository),
     user_repository: UserRepository = Depends(get_user_repository),
     lesson_repository: LessonRepository = Depends(get_lesson_repository),
-    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> CourseService:
     """
     Proporciona una instancia configurada del servicio de cursos.
     """
-    return CourseService(course_repository, user_repository, lesson_repository, enrollment_repository)
+    return CourseService(
+        course_repository, 
+        user_repository, 
+        lesson_repository, 
+        enrollment_repository,
+        notification_service
+    )
 
 async def get_lesson_service(
     lesson_repository: LessonRepository = Depends(get_lesson_repository),
@@ -128,12 +162,19 @@ async def get_enrollment_service(
     enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository),
     course_repository: CourseRepository = Depends(get_course_repository),
     user_repository: UserRepository = Depends(get_user_repository),
-    lesson_repository: LessonRepository = Depends(get_lesson_repository)
+    lesson_repository: LessonRepository = Depends(get_lesson_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> EnrollmentService:
     """
     Proporciona una instancia configurada del servicio de inscripciones.
     """
-    return EnrollmentService(enrollment_repository, course_repository, user_repository, lesson_repository)
+    return EnrollmentService(
+        enrollment_repository, 
+        course_repository, 
+        user_repository, 
+        lesson_repository,
+        notification_service
+    )
 
 async def get_review_service(
     review_repository: ReviewRepository = Depends(get_review_repository),
@@ -162,14 +203,16 @@ def get_progress_repository() -> ProgressRepository:
     return _progress_repository
 
 async def get_progress_service(
-    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository),
+    notification_service: NotificationService = Depends(get_notification_service)
 ) -> ProgressService:
     """
     Proporciona una instancia configurada del servicio de progreso.
     """
     return ProgressService(
         progress_repository=get_progress_repository(),
-        enrollment_repository=enrollment_repository
+        enrollment_repository=enrollment_repository,
+        notification_service=notification_service
     )
 
 def get_analytics_repository() -> FileSystemAnalyticsRepository:
@@ -206,3 +249,27 @@ async def get_module_service(
     Proporciona una instancia configurada del servicio de módulos.
     """
     return ModuleService(module_repository, course_repository, lesson_repository)
+
+async def get_quiz_service(
+    quiz_repository: QuizRepository = Depends(get_quiz_repository)
+) -> QuizService:
+    """
+    Proporciona una instancia configurada del servicio de quizzes.
+    """
+    return QuizService(quiz_repository)
+
+async def get_assignment_service(
+    assignment_repository: AssignmentRepository = Depends(get_assignment_repository)
+) -> AssignmentService:
+    """
+    Proporciona una instancia configurada del servicio de assignments.
+    """
+    return AssignmentService(assignment_repository)
+
+async def get_notification_service(
+    notification_repository: NotificationRepository = Depends(get_notification_repository)
+) -> NotificationService:
+    """
+    Proporciona una instancia configurada del servicio de notificaciones.
+    """
+    return NotificationService(notification_repository)

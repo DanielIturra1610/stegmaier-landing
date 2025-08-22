@@ -2,9 +2,10 @@
  * Sistema de notificaciones para el header contextual
  * Implementa principios de desarrollo responsivo, mantenible y escalable del EncoderGroup
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { headerAnimations } from '../animations';
+import { notificationService, Notification as BackendNotification } from '../../../services/notificationService';
 
 export interface Notification {
   id: string;
@@ -28,61 +29,107 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
   className = '',
   maxVisible = 5 
 }) => {
-  // Estado local de notificaciones (en producción vendría de un contexto/store)
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'success',
-      title: 'Lección completada',
-      message: 'Has completado exitosamente "Introducción a React"',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 min ago
-      read: false
-    },
-    {
-      id: '2',
-      type: 'info',
-      title: 'Nuevo curso disponible',
-      message: 'Se ha añadido "TypeScript Avanzado" a tu lista de cursos',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
-      read: false
-    },
-    {
-      id: '3',
-      type: 'warning',
-      title: 'Progreso pendiente',
-      message: 'Tienes datos de progreso sin sincronizar',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      read: true,
-      action: {
-        label: 'Sincronizar',
-        onClick: () => console.log('Sincronizando...')
-      }
-    }
-  ]);
-
+  // Estados para notificaciones del backend
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+  // Cargar notificaciones del backend
+  useEffect(() => {
+    loadNotifications();
+    loadUnreadCount();
   }, []);
 
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await notificationService.getUserNotifications('unread', 1, maxVisible);
+      
+      // Convertir notificaciones del backend al formato del frontend
+      const frontendNotifications: Notification[] = response.notifications.map(backendNotif => ({
+        id: backendNotif.id,
+        type: notificationService.mapNotificationType(backendNotif.type),
+        title: backendNotif.title,
+        message: backendNotif.message,
+        timestamp: new Date(backendNotif.created_at),
+        read: backendNotif.status === 'read',
+        action: backendNotif.action_url ? {
+          label: backendNotif.action_label || 'Ver más',
+          onClick: () => window.location.href = backendNotif.action_url!
+        } : undefined
+      }));
+      
+      setNotifications(frontendNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      // Fallback a notificaciones de ejemplo en caso de error
+      setNotifications([
+        {
+          id: 'fallback-1',
+          type: 'info',
+          title: 'Sistema de notificaciones',
+          message: 'Las notificaciones se están cargando...',
+          timestamp: new Date(),
+          read: false
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Error loading unread count:', error);
+      setUnreadCount(0);
+    }
+  };
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, read: true }
+            : notification
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   }, []);
 
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const markAllAsRead = useCallback(async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   }, []);
+
+  const removeNotification = useCallback(async (id: string) => {
+    try {
+      await notificationService.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      // Si la notificación no estaba leída, reducir el contador
+      const wasUnread = notifications.find(n => n.id === id && !n.read);
+      if (wasUnread) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  }, [notifications]);
 
   const getNotificationIcon = (type: Notification['type']) => {
     const iconClass = "w-4 h-4";
@@ -100,16 +147,7 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
   };
 
   const formatTimestamp = (timestamp: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - timestamp.getTime();
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffMinutes < 1) return 'Ahora';
-    if (diffMinutes < 60) return `${diffMinutes}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}d`;
+    return notificationService.formatTimestamp(timestamp.toISOString());
   };
 
   const visibleNotifications = notifications.slice(0, maxVisible);

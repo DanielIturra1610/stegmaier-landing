@@ -5,11 +5,12 @@ from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...domain.repositories.lesson_repository import LessonRepository
-    from ...domain.repositories.enrollment_repository import EnrollmentRepository
-from ...domain.repositories.course_repository import CourseRepository
+    from ...domain.repositories.course_repository import CourseRepository
 from ...domain.repositories.user_repository import UserRepository
+from ...domain.repositories.enrollment_repository import EnrollmentRepository
 from ...domain.entities.course import Course
-from ..dtos.course_dto import CourseCreate, CourseUpdate
+from ..dtos.course_dto import CourseCreate, CourseUpdate, CourseResponse, CourseListResponse
+from .notification_service import NotificationService
 
 class CourseService:
     """
@@ -21,12 +22,14 @@ class CourseService:
         course_repository: CourseRepository,
         user_repository: UserRepository,
         lesson_repository: Optional['LessonRepository'] = None,
-        enrollment_repository: Optional['EnrollmentRepository'] = None
+        enrollment_repository: Optional['EnrollmentRepository'] = None,
+        notification_service: Optional[NotificationService] = None
     ):
         self.course_repository = course_repository
         self.user_repository = user_repository
         self.lesson_repository = lesson_repository
         self.enrollment_repository = enrollment_repository
+        self.notification_service = notification_service
     
     async def get_course_by_id(self, course_id: str) -> Optional[Course]:
         """
@@ -488,14 +491,14 @@ class CourseService:
         
         course = await self.course_repository.get_by_id(course_id)
         if not course:
-            return None
+            raise ValueError("Curso no encontrado")
         
-        # Validar que el curso tenga al menos una lección (simplificado por ahora)
-        # lessons = await self.lesson_repository.get_by_course_id(course_id)
-        # if not lessons:
+        # Opcional: Verificar que el curso tenga lecciones antes de publicar
+        # if course.lessons_count <= 0:
         #     raise ValueError("No se puede publicar un curso sin lecciones")
         
         # Cambiar estado de publicación
+        was_published = course.is_published
         course.is_published = not course.is_published
         course.updated_at = datetime.utcnow()
         
@@ -505,7 +508,21 @@ class CourseService:
             "updated_at": course.updated_at
         }
         
-        return await self.course_repository.update(course.id, update_data)
+        # Guardar cambios
+        updated_course = await self.course_repository.update(course_id, update_data)
+        
+        # Notificar cuando un curso se publica por primera vez
+        if self.notification_service and not was_published and course.is_published:
+            try:
+                await self.notification_service.notify_new_course_published(
+                    course_id=course_id,
+                    course_title=course.title,
+                    instructor_id=course.instructor_id
+                )
+            except Exception as e:
+                print(f"Error sending course publication notification: {e}")
+        
+        return updated_course
 
     async def get_courses_with_stats(
         self, 

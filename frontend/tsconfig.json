@@ -26,6 +26,7 @@
         "@assets/*": ["assets/*"]
       }
     },
-    "include": ["frontend/src"],
+    "include": ["src", "src/**/*", "src/tests/vitest.d.ts"],
+    "types": ["vitest/globals"],
     "references": [{ "path": "./tsconfig.node.json" }]
   }

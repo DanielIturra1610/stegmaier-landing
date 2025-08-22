@@ -9,15 +9,18 @@ from ...domain.entities.progress import VideoProgress, UserNote, VideoBookmark
 from ...domain.entities.course_progress import LessonProgress, CourseProgress, ProgressSummary, ProgressStatus
 from ...domain.repositories.progress_repository import ProgressRepository
 from ...domain.repositories.enrollment_repository import EnrollmentRepository
+from .notification_service import NotificationService
 
 class ProgressService:
     def __init__(
         self, 
         progress_repository: ProgressRepository,
-        enrollment_repository: EnrollmentRepository
+        enrollment_repository: EnrollmentRepository,
+        notification_service: Optional[NotificationService] = None
     ):
         self.progress_repository = progress_repository
         self.enrollment_repository = enrollment_repository
+        self.notification_service = notification_service
     
     async def update_video_progress(
         self,
@@ -462,11 +465,50 @@ class ProgressService:
         Actualizar progreso del curso basado en progreso de lecciones
         """
         try:
+            # Obtener progreso anterior para comparar
+            old_progress = await self.progress_repository.get_course_progress(user_id, course_id)
+            old_percentage = old_progress.progress_percentage if old_progress else 0.0
+            
             await self.progress_repository.recalculate_course_progress(user_id, course_id)
             print(f"✅ Course progress recalculated for user {user_id}, course {course_id}")
             
+            # Verificar si hay hitos de progreso para notificar
+            if self.notification_service:
+                new_progress = await self.progress_repository.get_course_progress(user_id, course_id)
+                if new_progress:
+                    await self._check_progress_milestones(
+                        user_id, course_id, old_percentage, new_progress.progress_percentage
+                    )
+            
         except Exception as e:
             print(f"❌ Error recalculating course progress: {e}")
+    
+    async def _check_progress_milestones(self, user_id: str, course_id: str, old_percentage: float, new_percentage: float):
+        """
+        Verificar y notificar hitos de progreso
+        """
+        try:
+            # Hitos de progreso significativos
+            milestones = [25.0, 50.0, 75.0, 80.0, 90.0, 100.0]
+            
+            for milestone in milestones:
+                if old_percentage < milestone <= new_percentage:
+                    if milestone == 100.0:
+                        # Notificación de curso completado
+                        await self.notification_service.notify_course_completion(
+                            student_id=user_id,
+                            course_id=course_id
+                        )
+                    elif milestone >= 80.0:
+                        # Notificación de progreso significativo (80%+)
+                        await self.notification_service.notify_course_progress(
+                            student_id=user_id,
+                            course_id=course_id,
+                            progress_percentage=milestone
+                        )
+                    
+        except Exception as e:
+            print(f"Error checking progress milestones: {e}")
     
     async def _issue_certificate(self, user_id: str, course_id: str):
         """

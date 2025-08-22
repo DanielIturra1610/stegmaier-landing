@@ -9,6 +9,8 @@ import os
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
 from .middleware import PerformanceMiddleware, CacheControlMiddleware, ConditionalRequestMiddleware
+from .middleware.monitoring_middleware import MonitoringMiddleware, MetricsCollectorMiddleware, MaintenanceModeMiddleware
+from .api.v1.openapi_config import get_openapi_config, TAGS_METADATA
 
 # Importación de routers (se crearán en futuros pasos)
 # from .api.v1.endpoints import users, auth, courses, lessons, enrollments, reviews
@@ -21,64 +23,24 @@ def create_application() -> FastAPI:
         Aplicación FastAPI configurada
     """
     settings = get_settings()
+    openapi_config = get_openapi_config()
     
-    # Opciones para Swagger UI
+    # Configuración completa de OpenAPI con documentación mejorada
     app = FastAPI(
-        title=settings.PROJECT_NAME,
-        description="API para la plataforma de cursos online de Stegmaier - Documentación de la API RESTful",
-        version="1.0.0",
+        **openapi_config,
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/docs",
         redoc_url="/api/redoc",
-        openapi_tags=[
-            {
-                "name": "autenticación",
-                "description": "Operaciones relacionadas con la autenticación de usuarios",
-                "externalDocs": {
-                    "description": "Más información sobre JWT",
-                    "url": "https://jwt.io/introduction",
-                },
-            },
-            {
-                "name": "usuarios",
-                "description": "Operaciones con usuarios - crear, actualizar, eliminar",
-            },
-            {
-                "name": "cursos",
-                "description": "Gestión de cursos - creación, actualización, listado, búsqueda",
-            },
-            {
-                "name": "lecciones",
-                "description": "Gestión de lecciones de cursos",
-            },
-            {
-                "name": "inscripciones",
-                "description": "Gestión de inscripciones a cursos y seguimiento del progreso",
-            },
-            {
-                "name": "reseñas",
-                "description": "Sistema de valoraciones y reseñas de cursos",
-            },
-            {
-                "name": "multimedia",
-                "description": "Gestión de archivos multimedia - videos e imágenes",
-            },
-            {
-                "name": "administración",
-                "description": "Panel administrativo - gestión de usuarios y cursos",
-            },
-            {
-                "name": "analytics",
-                "description": "Sistema de análisis y métricas de la plataforma",
-            },
-            {
-                "name": "progreso",
-                "description": "Seguimiento del progreso de usuarios en cursos y lecciones",
-            },
-        ],
     )
     
     # Middlewares personalizados (el orden importa)
+    
+    # Middleware de mantenimiento - debe ir primero
+    app.add_middleware(MaintenanceModeMiddleware)
+    
+    # Middleware de monitoreo - segundo para capturar todas las métricas
+    app.add_middleware(MonitoringMiddleware)
+    app.add_middleware(MetricsCollectorMiddleware)
     
     # Middleware de rendimiento - debe ir primero para medir todo
     app.add_middleware(

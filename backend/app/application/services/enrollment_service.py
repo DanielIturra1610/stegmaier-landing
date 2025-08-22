@@ -9,6 +9,7 @@ from ...domain.repositories.user_repository import UserRepository
 from ...domain.repositories.lesson_repository import LessonRepository
 from ...domain.entities.enrollment import Enrollment, EnrollmentStatus
 from ..dtos.enrollment_dto import EnrollmentCreate, EnrollmentUpdate, EnrollmentProgressUpdate
+from .notification_service import NotificationService
 
 class EnrollmentService:
     """
@@ -20,12 +21,14 @@ class EnrollmentService:
         enrollment_repository: EnrollmentRepository,
         course_repository: CourseRepository,
         user_repository: UserRepository,
-        lesson_repository: LessonRepository
+        lesson_repository: LessonRepository,
+        notification_service: Optional[NotificationService] = None
     ):
         self.enrollment_repository = enrollment_repository
         self.course_repository = course_repository
         self.user_repository = user_repository
         self.lesson_repository = lesson_repository
+        self.notification_service = notification_service
     
     async def enroll_user(self, enrollment_data: EnrollmentCreate) -> Enrollment:
         """
@@ -103,6 +106,20 @@ class EnrollmentService:
             course.id,
             {"total_students": course.total_students}
         )
+        
+        # Notificar al instructor sobre la nueva inscripción
+        if self.notification_service and course.instructor_id:
+            try:
+                await self.notification_service.notify_new_enrollment(
+                    student_id=user.id,
+                    course_id=course.id,
+                    course_title=course.title,
+                    instructor_id=course.instructor_id,
+                    student_name=f"{user.first_name} {user.last_name}"
+                )
+            except Exception as e:
+                # Log error but don't fail enrollment
+                print(f"Error sending enrollment notification: {e}")
         
         return created_enrollment
     

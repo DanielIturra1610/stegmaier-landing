@@ -1,9 +1,8 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-
-// Layouts
-import Layout from '../components/layout/Layout';
+import { createBrowserRouter } from 'react-router-dom';
 import PlatformLayout from '../components/layout/PlatformLayout';
+import Layout from '../components/layout/Layout';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Páginas públicas
 import { HomePage } from '../app';
@@ -25,6 +24,7 @@ import CertificatesPage from '../pages/platform/CertificatesPage';
 import ProgressPage from '../pages/platform/ProgressPage';
 import MyProgressPage from '../pages/platform/MyProgressPage';
 import SupportPage from '../pages/platform/SupportPage';
+import QuizTakePage from '../pages/platform/QuizTakePage';
 
 // Protección de rutas
 import ProtectedRoute from './ProtectedRoute';
@@ -38,6 +38,13 @@ import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
 import AdminModules from '../pages/admin/AdminModules';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
+import AdminQuizzes from '../pages/admin/AdminQuizzes';
+import AdminQuizForm from '../pages/admin/AdminQuizForm';
+
+// Instructor Pages
+import InstructorDashboard from '../pages/instructor/InstructorDashboard';
+import InstructorCourses from '../pages/instructor/InstructorCourses';
+import InstructorStudents from '../pages/instructor/InstructorStudents';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
@@ -99,6 +106,9 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
+        <Route path="admin/quizzes" element={<AdminQuizzes />} />
+        <Route path="admin/quizzes/new" element={<AdminQuizForm />} />
+        <Route path="admin/quizzes/:quizId/edit" element={<AdminQuizForm />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />
@@ -118,6 +128,9 @@ const AppRoutes: React.FC = () => {
         
         {/* Analytics y Estadísticas */}
         <Route path="admin/analytics" element={<AdminAnalytics />} />
+        
+        {/* Ruta para tomar un quiz */}
+        <Route path="quiz/take/:quizId" element={<QuizTakePage />} />
       </Route>
       
       {/* Las rutas administrativas ahora están integradas en /platform */}
