@@ -2,114 +2,12 @@
  * Quiz Service - Frontend service for quiz management
  */
 import axios from 'axios';
+import {
+  Quiz, QuizListItem, Question, QuizAttempt, QuizAnswer, StudentAnswer,
+  QuizCreate, QuizUpdate, QuizConfiguration, QuizStatistics, StudentQuizProgress,
+  QuestionType, QuizStatus, AttemptStatus
+} from '../types/quiz';
 
-// Types and interfaces for Quiz system
-export interface Question {
-  id?: string;
-  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'multiple_select';
-  text: string;
-  options?: string[];
-  correct_answers: string[];
-  explanation?: string;
-  points: number;
-  order?: number;
-  required: boolean;
-  tags?: string[];
-}
-
-export interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  course_id: string;
-  lesson_id?: string;
-  instructions?: string;
-  time_limit_minutes?: number;
-  max_attempts: number;
-  passing_score: number;
-  shuffle_questions: boolean;
-  show_results: boolean;
-  allow_review: boolean;
-  status: 'draft' | 'published' | 'archived';
-  tags?: string[];
-  questions?: Question[];
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface QuizCreate {
-  title: string;
-  description: string;
-  course_id: string;
-  lesson_id?: string;
-  instructions?: string;
-  time_limit_minutes?: number;
-  max_attempts: number;
-  passing_score: number;
-  shuffle_questions: boolean;
-  show_results: boolean;
-  allow_review: boolean;
-  tags?: string[];
-  questions?: Omit<Question, 'id' | 'order'>[];
-}
-
-export interface QuizUpdate {
-  title?: string;
-  description?: string;
-  instructions?: string;
-  time_limit_minutes?: number;
-  max_attempts?: number;
-  passing_score?: number;
-  shuffle_questions?: boolean;
-  show_results?: boolean;
-  allow_review?: boolean;
-  status?: 'draft' | 'published' | 'archived';
-  tags?: string[];
-}
-
-export interface QuizAttempt {
-  id: string;
-  quiz_id: string;
-  user_id: string;
-  started_at: string;
-  submitted_at?: string;
-  end_time?: string;
-  status: 'in_progress' | 'completed' | 'abandoned';
-  score?: number;
-  points_earned?: number;
-  total_points?: number;
-  answers: { [question_id: string]: any };
-}
-
-export interface QuizResult {
-  attempt_id: string;
-  quiz_id: string;
-  score: number;
-  points_earned: number;
-  total_points: number;
-  passed: boolean;
-  submitted_at: string;
-  question_results?: { [question_id: string]: any };
-}
-
-export interface QuizStatistics {
-  quiz_id: string;
-  total_attempts: number;
-  completed_attempts: number;
-  average_score: number;
-  completion_rate: number;
-  pass_rate: number;
-  question_statistics: QuestionStatistics[];
-}
-
-export interface QuestionStatistics {
-  question_id: string;
-  question_text: string;
-  total_answers: number;
-  correct_answers: number;
-  accuracy_percentage: number;
-}
 
 class QuizService {
   private baseURL = '/api/v1/quizzes';
@@ -134,22 +32,9 @@ class QuizService {
     }
   }
 
-  async getQuizzes(filters?: {
-    course_id?: string;
-    lesson_id?: string;
-    status?: string;
-    skip?: number;
-    limit?: number;
-  }): Promise<Quiz[]> {
+  async getQuizzesByCourse(courseId: string, publishedOnly: boolean = true): Promise<QuizListItem[]> {
     try {
-      const params = new URLSearchParams();
-      if (filters?.course_id) params.append('course_id', filters.course_id);
-      if (filters?.lesson_id) params.append('lesson_id', filters.lesson_id);
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.skip) params.append('skip', filters.skip.toString());
-      if (filters?.limit) params.append('limit', filters.limit.toString());
-
-      const response = await axios.get(`${this.baseURL}?${params.toString()}`, {
+      const response = await axios.get(`${this.baseURL}/course/${courseId}?published_only=${publishedOnly}`, {
         headers: this.getAuthHeaders()
       });
       return response.data;
@@ -191,42 +76,31 @@ class QuizService {
   }
 
   // Question Management
-  async addQuestion(quizId: string, questionData: Omit<Question, 'id' | 'order'>): Promise<Question> {
+  async createQuestion(questionData: any): Promise<Question> {
     try {
-      const response = await axios.post(`${this.baseURL}/${quizId}/questions`, questionData, {
+      const response = await axios.post(`${this.baseURL}/questions`, questionData, {
         headers: this.getAuthHeaders()
       });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to add question');
+      throw new Error(error.response?.data?.detail || 'Failed to create question');
     }
   }
 
-  async updateQuestion(questionId: string, questionData: Partial<Question>): Promise<Question> {
+  async addQuestionToQuiz(quizId: string, questionId: string): Promise<void> {
     try {
-      const response = await axios.put(`${this.baseURL}/questions/${questionId}`, questionData, {
-        headers: this.getAuthHeaders()
-      });
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to update question');
-    }
-  }
-
-  async deleteQuestion(questionId: string): Promise<void> {
-    try {
-      await axios.delete(`${this.baseURL}/questions/${questionId}`, {
+      await axios.post(`${this.baseURL}/${quizId}/questions/${questionId}`, {}, {
         headers: this.getAuthHeaders()
       });
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to delete question');
+      throw new Error(error.response?.data?.detail || 'Failed to add question to quiz');
     }
   }
 
   // Quiz Taking (Students)
   async startQuizAttempt(quizId: string): Promise<QuizAttempt> {
     try {
-      const response = await axios.post(`${this.baseURL}/${quizId}/start`, {}, {
+      const response = await axios.post(`${this.baseURL}/${quizId}/attempts`, {}, {
         headers: this.getAuthHeaders()
       });
       return response.data;
@@ -235,12 +109,9 @@ class QuizService {
     }
   }
 
-  async submitAnswer(attemptId: string, questionId: string, answer: any): Promise<void> {
+  async submitAnswer(attemptId: string, answerData: StudentAnswer): Promise<void> {
     try {
-      await axios.post(`${this.baseURL}/attempts/${attemptId}/answers`, {
-        question_id: questionId,
-        answer: answer
-      }, {
+      await axios.put(`${this.baseURL}/attempts/${attemptId}/answers`, answerData, {
         headers: this.getAuthHeaders()
       });
     } catch (error: any) {
@@ -248,7 +119,7 @@ class QuizService {
     }
   }
 
-  async submitQuizAttempt(attemptId: string): Promise<QuizResult> {
+  async submitQuizAttempt(attemptId: string): Promise<QuizAttempt> {
     try {
       const response = await axios.post(`${this.baseURL}/attempts/${attemptId}/submit`, {}, {
         headers: this.getAuthHeaders()
@@ -270,21 +141,21 @@ class QuizService {
     }
   }
 
-  async getUserQuizAttempts(quizId: string): Promise<QuizAttempt[]> {
+  async getStudentQuizProgress(studentId: string, courseId: string): Promise<StudentQuizProgress> {
     try {
-      const response = await axios.get(`${this.baseURL}/${quizId}/attempts`, {
+      const response = await axios.get(`${this.baseURL}/student/${studentId}/progress?course_id=${courseId}`, {
         headers: this.getAuthHeaders()
       });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz attempts');
+      throw new Error(error.response?.data?.detail || 'Failed to fetch student progress');
     }
   }
 
   // Statistics (Admin/Instructor)
   async getQuizStatistics(quizId: string): Promise<QuizStatistics> {
     try {
-      const response = await axios.get(`${this.baseURL}/${quizId}/statistics`, {
+      const response = await axios.get(`${this.baseURL}/admin/statistics/${quizId}`, {
         headers: this.getAuthHeaders()
       });
       return response.data;
@@ -294,46 +165,100 @@ class QuizService {
   }
 
   // Utility methods
-  formatTimeLimit(minutes?: number): string {
-    if (!minutes) return 'Sin límite de tiempo';
-    if (minutes < 60) return `${minutes} minutos`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours} horas`;
+  formatTimeRemaining(seconds: number): string {
+    if (seconds <= 0) return '00:00';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
-  getQuestionTypeLabel(type: string): string {
-    const labels: { [key: string]: string } = {
-      'multiple_choice': 'Opción múltiple',
-      'true_false': 'Verdadero/Falso',
-      'short_answer': 'Respuesta corta',
-      'multiple_select': 'Selección múltiple'
+  formatDuration(minutes?: number): string {
+    if (!minutes) return 'Sin límite de tiempo';
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+
+  getQuestionTypeLabel(type: QuestionType): string {
+    const labels: Record<QuestionType, string> = {
+      [QuestionType.MULTIPLE_CHOICE]: 'Opción múltiple',
+      [QuestionType.TRUE_FALSE]: 'Verdadero/Falso',
+      [QuestionType.FILL_IN_BLANK]: 'Completar espacios',
+      [QuestionType.ESSAY]: 'Ensayo',
+      [QuestionType.ORDERING]: 'Ordenar elementos',
+      [QuestionType.MATCHING]: 'Emparejar'
     };
     return labels[type] || type;
   }
 
-  getStatusLabel(status: string): string {
-    const labels: { [key: string]: string } = {
-      'draft': 'Borrador',
-      'published': 'Publicado',
-      'archived': 'Archivado',
-      'in_progress': 'En progreso',
-      'completed': 'Completado',
-      'abandoned': 'Abandonado'
+  getStatusLabel(status: QuizStatus | AttemptStatus): string {
+    const labels: Record<string, string> = {
+      [QuizStatus.DRAFT]: 'Borrador',
+      [QuizStatus.PUBLISHED]: 'Publicado',
+      [QuizStatus.ARCHIVED]: 'Archivado',
+      [AttemptStatus.IN_PROGRESS]: 'En progreso',
+      [AttemptStatus.COMPLETED]: 'Completado',
+      [AttemptStatus.SUBMITTED]: 'Enviado',
+      [AttemptStatus.GRADED]: 'Calificado',
+      [AttemptStatus.EXPIRED]: 'Expirado'
     };
     return labels[status] || status;
   }
 
-  getStatusColor(status: string): string {
-    const colors: { [key: string]: string } = {
-      'draft': 'yellow',
-      'published': 'green',
-      'archived': 'gray',
-      'in_progress': 'blue',
-      'completed': 'green',
-      'abandoned': 'red'
+  getStatusColor(status: QuizStatus | AttemptStatus): string {
+    const colors: Record<string, string> = {
+      [QuizStatus.DRAFT]: 'yellow',
+      [QuizStatus.PUBLISHED]: 'green',
+      [QuizStatus.ARCHIVED]: 'gray',
+      [AttemptStatus.IN_PROGRESS]: 'blue',
+      [AttemptStatus.COMPLETED]: 'green',
+      [AttemptStatus.SUBMITTED]: 'green',
+      [AttemptStatus.GRADED]: 'green',
+      [AttemptStatus.EXPIRED]: 'red'
     };
     return colors[status] || 'gray';
+  }
+
+  validateAnswer(question: Question, answer: any): { isValid: boolean; message?: string } {
+    if (!answer && answer !== 0 && answer !== false) {
+      return { isValid: false, message: 'Esta pregunta es obligatoria' };
+    }
+
+    switch (question.type) {
+      case QuestionType.MULTIPLE_CHOICE:
+      case QuestionType.TRUE_FALSE:
+        if (typeof answer !== 'string') {
+          return { isValid: false, message: 'Selecciona una opción válida' };
+        }
+        break;
+      
+      case QuestionType.FILL_IN_BLANK:
+        if (typeof answer !== 'string' || answer.trim().length === 0) {
+          return { isValid: false, message: 'Completa el campo de texto' };
+        }
+        break;
+      
+      case QuestionType.ORDERING:
+        if (!Array.isArray(answer) || answer.length === 0) {
+          return { isValid: false, message: 'Ordena todos los elementos' };
+        }
+        break;
+      
+      case QuestionType.MATCHING:
+        if (typeof answer !== 'object' || Object.keys(answer).length === 0) {
+          return { isValid: false, message: 'Completa todos los emparejamientos' };
+        }
+        break;
+    }
+
+    return { isValid: true };
   }
 }
 

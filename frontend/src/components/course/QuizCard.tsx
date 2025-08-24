@@ -31,7 +31,14 @@ const QuizCard: React.FC<QuizCardProps> = ({
   const navigate = useNavigate();
 
   const handleTakeQuiz = () => {
-    navigate(`/platform/quiz/take/${quiz.id}`);
+    // Navigate to quiz taking page
+    navigate(`/platform/quiz/take/${quiz.id}`, {
+      state: { 
+        returnTo: window.location.pathname,
+        courseId: quiz.course_id,
+        lessonId: quiz.lesson_id 
+      }
+    });
   };
 
   const getStatusIcon = () => {

@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from .endpoints import (
     auth, users, courses, lessons, enrollments, reviews, admin, media, 
     progress, progress_course, analytics, health, modules,
-    notifications, docs, monitoring, certificates
+    notifications, docs, monitoring, certificates, quizzes
 )
 
 api_router = APIRouter()
@@ -32,6 +32,9 @@ api_router.include_router(monitoring.router, prefix="/monitoring", tags=["Monito
 
 # Sistema de certificados
 api_router.include_router(certificates.router, prefix="/certificates", tags=["Certificates"])
+
+# Sistema de quizzes
+api_router.include_router(quizzes.router, prefix="/quizzes", tags=["Quizzes"])
 
 # Documentación extendida
 api_router.include_router(docs.router, prefix="/docs", tags=["Documentation"])
