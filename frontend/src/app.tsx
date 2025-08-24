@@ -1,14 +1,11 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/layout/Layout';
+import { BrowserRouter as Router } from 'react-router-dom';
 import Hero from './components/sections/home/Hero';
 import Services from './components/sections/home/Services';
 import Process from './components/sections/home/Process';
 import Testimonials from './components/sections/home/Testimonials';
 import Contact from './components/sections/home/Contact';
-import CompanyPage from './pages/CompanyPage';
-import ConsultingPage from './pages/ConsultingPage';
-import React from 'react';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import AppRoutes from './routes';
 
 // Componente para la página de inicio que contiene todas las secciones
@@ -26,9 +23,11 @@ const HomePage = () => (
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 };

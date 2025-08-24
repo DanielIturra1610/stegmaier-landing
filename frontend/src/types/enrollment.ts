@@ -65,8 +65,10 @@ export interface EnrollmentProgressResponse {
   completion_date?: string;
   expected_completion_date?: string;
   time_spent_minutes?: number;
+  time_spent?: number; // En segundos
   completed_lessons_count?: number;
   total_lessons_count?: number;
+  total_lessons?: number; // Alias para total_lessons_count
   last_activity?: string;
 }
 

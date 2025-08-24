@@ -1,11 +1,14 @@
 /**
  * Sistema de notificaciones para el header contextual
  * Implementa principios de desarrollo responsivo, mantenible y escalable del EncoderGroup
+ * Integrado con NotificationCenter completo
  */
 import React, { useState, useCallback, useEffect } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { headerAnimations } from '../animations';
-import { notificationService, Notification as BackendNotification } from '../../../services/notificationService';
+import { notificationService } from '../../../services/notificationService';
+import { useNotifications } from '../../../contexts/NotificationContext';
+import { NotificationCenter } from '../../notifications/NotificationCenter';
 
 export interface Notification {
   id: string;
@@ -29,21 +32,21 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
   className = '',
   maxVisible = 5 
 }) => {
-  // Estados para notificaciones del backend
+  // Usar el contexto de notificaciones para integración completa
+  const { unreadCount, refreshUnreadCount } = useNotifications();
+  
+  // Estados locales para el dropdown básico
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
 
-  // Cargar notificaciones del backend
+  // Cargar notificaciones básicas para el dropdown
   useEffect(() => {
-    loadNotifications();
-    loadUnreadCount();
+    loadBasicNotifications();
   }, []);
 
-  const loadNotifications = async () => {
+  const loadBasicNotifications = async () => {
     try {
-      setLoading(true);
       const response = await notificationService.getUserNotifications('unread', 1, maxVisible);
       
       // Convertir notificaciones del backend al formato del frontend
@@ -63,29 +66,8 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
       setNotifications(frontendNotifications);
     } catch (error) {
       console.error('Error loading notifications:', error);
-      // Fallback a notificaciones de ejemplo en caso de error
-      setNotifications([
-        {
-          id: 'fallback-1',
-          type: 'info',
-          title: 'Sistema de notificaciones',
-          message: 'Las notificaciones se están cargando...',
-          timestamp: new Date(),
-          read: false
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUnreadCount = async () => {
-    try {
-      const count = await notificationService.getUnreadCount();
-      setUnreadCount(count);
-    } catch (error) {
-      console.error('Error loading unread count:', error);
-      setUnreadCount(0);
+      // Fallback silencioso - el contexto manejará el estado
+      setNotifications([]);
     }
   };
 
@@ -99,11 +81,12 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
             : notification
         )
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      // Refrescar el contador desde el contexto
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  }, []);
+  }, [refreshUnreadCount]);
 
   const markAllAsRead = useCallback(async () => {
     try {
@@ -111,25 +94,22 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );
-      setUnreadCount(0);
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
-  }, []);
+  }, [refreshUnreadCount]);
 
   const removeNotification = useCallback(async (id: string) => {
     try {
       await notificationService.deleteNotification(id);
       setNotifications(prev => prev.filter(n => n.id !== id));
-      // Si la notificación no estaba leída, reducir el contador
-      const wasUnread = notifications.find(n => n.id === id && !n.read);
-      if (wasUnread) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      // Refrescar el contador desde el contexto
+      refreshUnreadCount();
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
-  }, [notifications]);
+  }, [refreshUnreadCount]);
 
   const getNotificationIcon = (type: Notification['type']) => {
     const iconClass = "w-4 h-4";
@@ -316,21 +296,31 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
             </div>
 
             {/* Footer con enlace a ver todas */}
-            {notifications.length > maxVisible && (
-              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                <button className={`
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+              <button 
+                onClick={() => {
+                  setIsOpen(false);
+                  setNotificationCenterOpen(true);
+                }}
+                className={`
                   text-sm text-blue-600 dark:text-blue-400
                   hover:text-blue-700 dark:hover:text-blue-300
                   font-medium
                   ${headerAnimations.actions.button}
-                `}>
-                  Ver todas las notificaciones ({notifications.length})
-                </button>
-              </div>
-            )}
+                `}
+              >
+                Ver todas las notificaciones
+              </button>
+            </div>
           </div>
         </>
       )}
+
+      {/* NotificationCenter completo */}
+      <NotificationCenter
+        isOpen={notificationCenterOpen}
+        onClose={() => setNotificationCenterOpen(false)}
+      />
     </div>
   );
 };
