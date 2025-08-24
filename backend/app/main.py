@@ -5,11 +5,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import asyncio
 
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
-from .middleware import PerformanceMiddleware, CacheControlMiddleware, ConditionalRequestMiddleware
-from .middleware.monitoring_middleware import MonitoringMiddleware, MetricsCollectorMiddleware, MaintenanceModeMiddleware
+from .middleware import CacheControlMiddleware, ConditionalRequestMiddleware
+from .middleware.monitoring_middleware import MaintenanceModeMiddleware
+from .infrastructure.monitoring.integrated_middleware import (
+    IntegratedMonitoringMiddleware,
+    PeriodicMetricsMiddleware,
+    initialize_monitoring_system
+)
 from .api.v1.openapi_config import get_openapi_config, TAGS_METADATA
 
 # Importación de routers (se crearán en futuros pasos)
@@ -38,16 +44,11 @@ def create_application() -> FastAPI:
     # Middleware de mantenimiento - debe ir primero
     app.add_middleware(MaintenanceModeMiddleware)
     
-    # Middleware de monitoreo - segundo para capturar todas las métricas
-    app.add_middleware(MonitoringMiddleware)
-    app.add_middleware(MetricsCollectorMiddleware)
+    # Middleware de monitoreo integrado - incluye Sentry, logging, rate limiting, métricas y alertas
+    app.add_middleware(IntegratedMonitoringMiddleware)
     
-    # Middleware de rendimiento - debe ir primero para medir todo
-    app.add_middleware(
-        PerformanceMiddleware,
-        slow_request_threshold=1.0,  # Logear requests > 1 segundo
-        log_all_requests=False  # Solo logear requests lentos y críticos
-    )
+    # Middleware de métricas periódicas - para actualizaciones en background
+    app.add_middleware(PeriodicMetricsMiddleware)
     
     # Middleware de cache control
     app.add_middleware(CacheControlMiddleware)
@@ -66,6 +67,7 @@ def create_application() -> FastAPI:
     
     # Eventos de inicio y cierre
     app.add_event_handler("startup", connect_to_mongo)
+    app.add_event_handler("startup", initialize_monitoring_system)
     app.add_event_handler("shutdown", close_mongo_connection)
     
     # Configurar servicio de archivos estáticos para media

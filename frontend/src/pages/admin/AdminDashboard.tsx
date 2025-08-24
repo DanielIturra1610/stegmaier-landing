@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import adminService from '../../services/adminService';
 
 interface DashboardStats {
@@ -10,7 +9,6 @@ interface DashboardStats {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -64,16 +62,28 @@ const AdminDashboard: React.FC = () => {
         <h2 className="text-lg font-semibold mb-4">Acciones Rápidas</h2>
         <div className="flex flex-wrap gap-4">
           <a 
-            href="/admin/courses/new" 
+            href="/platform/admin/courses/new" 
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
           >
             Crear Nuevo Curso
           </a>
           <a 
-            href="/admin/users" 
+            href="/platform/users" 
             className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
           >
             Ver Usuarios
+          </a>
+          <a 
+            href="/platform/admin/analytics" 
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+          >
+            Analytics
+          </a>
+          <a 
+            href="/platform/admin/monitoring" 
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md"
+          >
+            Monitoreo del Sistema
           </a>
         </div>
       </div>

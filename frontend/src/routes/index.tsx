@@ -1,8 +1,7 @@
 import React from 'react';
-import { createBrowserRouter } from 'react-router-dom';
 import PlatformLayout from '../components/layout/PlatformLayout';
 import Layout from '../components/layout/Layout';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Páginas públicas
 import { HomePage } from '../app';
@@ -30,21 +29,15 @@ import QuizTakePage from '../pages/platform/QuizTakePage';
 import ProtectedRoute from './ProtectedRoute';
 
 // Componentes administrativos
-import AdminLayout from '../components/admin/AdminLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminUsers from '../pages/admin/AdminUsers';
-import AdminCourses from '../pages/admin/AdminCourses';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
 import AdminModules from '../pages/admin/AdminModules';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
-
-// Instructor Pages
-import InstructorDashboard from '../pages/instructor/InstructorDashboard';
-import InstructorCourses from '../pages/instructor/InstructorCourses';
-import InstructorStudents from '../pages/instructor/InstructorStudents';
+import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
@@ -128,6 +121,9 @@ const AppRoutes: React.FC = () => {
         
         {/* Analytics y Estadísticas */}
         <Route path="admin/analytics" element={<AdminAnalytics />} />
+        
+        {/* Monitoreo del Sistema */}
+        <Route path="admin/monitoring" element={<SystemMonitoringDashboard />} />
         
         {/* Ruta para tomar un quiz */}
         <Route path="quiz/take/:quizId" element={<QuizTakePage />} />
