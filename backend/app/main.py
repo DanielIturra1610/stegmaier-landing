@@ -9,11 +9,6 @@ import asyncio
 
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
-from .middleware.security_middleware import (
-    SecurityHeadersMiddleware, 
-    RateLimitMiddleware, 
-    RequestSizeMiddleware
-)
 
 def create_application() -> FastAPI:
     """
@@ -34,18 +29,7 @@ def create_application() -> FastAPI:
         redoc_url="/api/redoc",
     )
     
-    # Middlewares básicos de seguridad
-    
-    # 1. Security Headers
-    app.add_middleware(SecurityHeadersMiddleware)
-    
-    # 2. Request size limiting
-    app.add_middleware(RequestSizeMiddleware)
-    
-    # 3. Rate Limiting
-    app.add_middleware(RateLimitMiddleware)
-    
-    # 4. CORS - SECURITY: Configured per environment
+    # CORS - SECURITY: Configured per environment
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,  # Dynamic based on environment
