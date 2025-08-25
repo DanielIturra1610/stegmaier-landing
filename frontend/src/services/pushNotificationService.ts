@@ -112,7 +112,7 @@ class PushNotificationService {
       // Crear suscripción
       const subscription = await this.swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey
+        applicationServerKey: applicationServerKey as BufferSource
       });
 
       // Enviar suscripción al backend

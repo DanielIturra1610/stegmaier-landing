@@ -32,7 +32,7 @@ class QuizService {
     }
   }
 
-  async getQuizzes(): Promise<QuizListItem[]> {
+  async getQuizzes(filters?: any): Promise<QuizListItem[]> {
     try {
       const response = await axios.get(this.baseURL, {
         headers: this.getAuthHeaders()
@@ -210,6 +210,7 @@ class QuizService {
   getQuestionTypeLabel(type: QuestionType): string {
     const labels: Record<QuestionType, string> = {
       [QuestionType.MULTIPLE_CHOICE]: 'Opción múltiple',
+      [QuestionType.MULTIPLE_SELECT]: 'Selección múltiple',
       [QuestionType.TRUE_FALSE]: 'Verdadero/Falso',
       [QuestionType.FILL_IN_BLANK]: 'Completar espacios',
       [QuestionType.ESSAY]: 'Ensayo',
@@ -219,7 +220,7 @@ class QuizService {
     return labels[type] || type;
   }
 
-  getStatusLabel(status: QuizStatus | AttemptStatus): string {
+  getStatusLabel(status: QuizStatus | AttemptStatus | string): string {
     const labels: Record<string, string> = {
       [QuizStatus.DRAFT]: 'Borrador',
       [QuizStatus.PUBLISHED]: 'Publicado',
@@ -233,7 +234,7 @@ class QuizService {
     return labels[status] || status;
   }
 
-  getStatusColor(status: QuizStatus | AttemptStatus): string {
+  getStatusColor(status: QuizStatus | AttemptStatus | string): string {
     const colors: Record<string, string> = {
       [QuizStatus.DRAFT]: 'yellow',
       [QuizStatus.PUBLISHED]: 'green',

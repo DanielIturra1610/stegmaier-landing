@@ -89,7 +89,7 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
   const { 
     preferences, 
     updatePreferences, 
-    pushPermission,
+    pushPermissionState,
     requestPushPermission 
   } = useNotifications();
 
@@ -186,7 +186,7 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
       </div>
 
       {/* Push Notifications Permission */}
-      {pushPermission !== 'granted' && (
+      {pushPermissionState.permission !== 'granted' && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <div className="flex items-start space-x-3">
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
@@ -195,12 +195,12 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
                 Notificaciones Push Deshabilitadas
               </h4>
               <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                {pushPermission === 'denied' 
+                {pushPermissionState.permission === 'denied' 
                   ? 'Has bloqueado las notificaciones push. Puedes habilitarlas desde la configuración del navegador.'
                   : 'Habilita las notificaciones push para recibir alertas incluso cuando no estés en la plataforma.'
                 }
               </p>
-              {pushPermission === 'default' && (
+              {pushPermissionState.permission === 'default' && (
                 <button
                   onClick={handleRequestPushPermission}
                   className="mt-2 px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-md transition-colors"
@@ -248,14 +248,14 @@ export const NotificationPreferences: React.FC<NotificationPreferencesProps> = (
                   <div className="flex items-center space-x-2">
                     <Smartphone className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-700 dark:text-gray-300">Push</span>
-                    {pushPermission !== 'granted' && (
+                    {pushPermissionState.permission !== 'granted' && (
                       <span className="text-xs text-gray-400">(No disponible)</span>
                     )}
                   </div>
                   <Switch.Root
-                    checked={group.channels.push && pushPermission === 'granted'}
+                    checked={group.channels.push && pushPermissionState.permission === 'granted'}
                     onCheckedChange={(checked) => handleChannelToggle(group.id, 'push', checked)}
-                    disabled={pushPermission !== 'granted'}
+                    disabled={pushPermissionState.permission !== 'granted'}
                     className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500 disabled:opacity-50 transition-colors"
                   >
                     <Switch.Thumb className="block w-5 h-5 bg-white rounded-full transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0.5 transform shadow-sm" />

@@ -5,7 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseService } from '../../services/courseService';
 import { adminService } from '../../services/adminService';
-import { quizService, Quiz } from '../../services/quizService';
+import { quizService } from '../../services/quizService';
+import { Quiz, QuizStatus, QuizListItem } from '../../types/quiz';
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -23,7 +24,7 @@ interface Course {
 
 const AdminQuizzes: React.FC = () => {
   const navigate = useNavigate();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizzes, setQuizzes] = useState<QuizListItem[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,8 +75,8 @@ const AdminQuizzes: React.FC = () => {
     quiz.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: string) => {
-    const color = quizService.getStatusColor(status);
+  const getStatusBadge = (status: QuizStatus) => {
+    const color = quizService.getStatusColor(status as string);
     const colorClasses = {
       green: 'bg-green-100 text-green-800',
       yellow: 'bg-yellow-100 text-yellow-800',
@@ -86,7 +87,7 @@ const AdminQuizzes: React.FC = () => {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[color as keyof typeof colorClasses] || colorClasses.gray}`}>
-        {quizService.getStatusLabel(status)}
+        {quizService.getStatusLabel(status as string)}
       </span>
     );
   };

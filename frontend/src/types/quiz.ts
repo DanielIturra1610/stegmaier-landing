@@ -127,6 +127,9 @@ export interface QuizListItem {
   average_score: number;
   completion_rate: number;
   created_at: string;
+  // Propiedades adicionales necesarias para AdminQuizzes
+  questions?: Question[];
+  time_limit_minutes?: number;
   published_at?: string;
   created_by: string;
   is_available: boolean;
