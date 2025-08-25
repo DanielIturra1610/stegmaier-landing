@@ -9,12 +9,10 @@ import {
   UserGroupIcon,
   DocumentCheckIcon,
   ExclamationTriangleIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  CalendarIcon
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon
 } from '@heroicons/react/24/outline';
 import { Assignment, AssignmentSubmission } from '../../types/assignment';
-import { assignmentService } from '../../services/assignmentService';
 
 interface AssignmentAnalyticsProps {
   courseId?: string;
@@ -228,7 +226,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
             <MetricCard
               title="Promedio General"
               value={analytics.overview.average_grade.toFixed(1)}
-              icon={<TrendingUpIcon className="h-6 w-6" />}
+              icon={<ArrowTrendingUpIcon className="h-6 w-6" />}
               color="indigo"
             />
             <MetricCard
@@ -280,7 +278,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                    <span className="text-sm font-medium text-gray-900">Enviadas Temprano (>3 días)</span>
+                    <span className="text-sm font-medium text-gray-900">Enviadas Temprano (&gt;3 días)</span>
                   </div>
                   <span className="text-lg font-bold text-green-600">{analytics.engagement.submission_patterns.early_birds}</span>
                 </div>
@@ -319,7 +317,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <TrendingUpIcon className="h-5 w-5 text-green-500 mr-2" />
+              <ArrowTrendingUpIcon className="h-5 w-5 text-green-500 mr-2" />
               Mejores Estudiantes
             </h3>
             <div className="space-y-3">
@@ -340,7 +338,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
 
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <TrendingDownIcon className="h-5 w-5 text-red-500 mr-2" />
+              <ArrowTrendingDownIcon className="h-5 w-5 text-red-500 mr-2" />
               Estudiantes que Necesitan Apoyo
             </h3>
             <div className="space-y-3">
