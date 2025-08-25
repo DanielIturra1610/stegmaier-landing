@@ -8,9 +8,10 @@ import shutil
 from typing import Optional, Dict, Any
 from pathlib import Path
 from datetime import datetime
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 
 from ...core.config import settings
+from ...core.file_security import validate_uploaded_file
 from ...domain.entities.media import VideoAsset, ImageAsset
 from ...domain.repositories.media_repository import MediaRepository
 
@@ -43,7 +44,19 @@ class MediaService:
     ) -> Dict[str, Any]:
         """
         Guarda un archivo de video en el sistema de archivos y metadata en BD
+        Con validaciones de seguridad mejoradas
         """
+        # SECURITY: Validar archivo antes de procesarlo
+        is_valid, errors, file_hash = await validate_uploaded_file(file, 'video')
+        if not is_valid:
+            raise HTTPException(
+                status_code=400, 
+                detail={
+                    "error": "File validation failed",
+                    "details": errors
+                }
+            )
+        
         try:
             # Ruta completa del archivo
             file_path = self.videos_dir / filename
@@ -55,7 +68,7 @@ class MediaService:
             # Obtener información básica del archivo
             file_size = os.path.getsize(file_path)
             
-            # Crear registro en base de datos
+            # Crear registro en base de datos con hash de seguridad
             video_asset = VideoAsset(
                 original_filename=file.filename,
                 stored_filename=filename,
@@ -117,6 +130,17 @@ class MediaService:
             file_size = os.path.getsize(file_path)
             file_extension = Path(filename).suffix.lower()
             
+            # SECURITY: Validar archivo antes de procesarlo
+            is_valid, errors, file_hash = await validate_uploaded_file(file, 'image')
+            if not is_valid:
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                        "error": "File validation failed",
+                        "details": errors
+                    }
+                )
+            
             # Crear registro en base de datos
             image_asset = ImageAsset(
                 original_filename=file.filename,
@@ -125,6 +149,7 @@ class MediaService:
                 file_size=file_size,
                 purpose=purpose,
                 uploaded_by=user_id,
+                file_hash=file_hash,  # Para detección de duplicados,
                 upload_date=datetime.utcnow(),
                 mime_type=file.content_type or f'image/{file_extension[1:]}',
                 extension=file_extension

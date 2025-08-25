@@ -11,6 +11,11 @@ from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
 from .middleware import CacheControlMiddleware, ConditionalRequestMiddleware
 from .middleware.monitoring_middleware import MaintenanceModeMiddleware
+from .middleware.security_middleware import (
+    SecurityHeadersMiddleware, 
+    RateLimitMiddleware, 
+    RequestSizeMiddleware
+)
 from .infrastructure.monitoring.integrated_middleware import (
     IntegratedMonitoringMiddleware,
     PeriodicMetricsMiddleware,
@@ -41,27 +46,44 @@ def create_application() -> FastAPI:
     
     # Middlewares personalizados (el orden importa)
     
-    # Middleware de mantenimiento - debe ir primero
+    # 1. Middleware de mantenimiento - debe ir primero
     app.add_middleware(MaintenanceModeMiddleware)
     
-    # Middleware de monitoreo integrado - incluye Sentry, logging, rate limiting, métricas y alertas
+    # 2. Security Headers - segundo para asegurar todas las responses
+    app.add_middleware(SecurityHeadersMiddleware)
+    
+    # 3. Request size limiting - antes de procesar requests grandes
+    app.add_middleware(RequestSizeMiddleware)
+    
+    # 4. Rate Limiting - después de security headers pero antes de processing
+    app.add_middleware(RateLimitMiddleware)
+    
+    # 5. Middleware de monitoreo integrado - incluye Sentry, logging, métricas y alertas
     app.add_middleware(IntegratedMonitoringMiddleware)
     
-    # Middleware de métricas periódicas - para actualizaciones en background
+    # 6. Middleware de métricas periódicas - para actualizaciones en background
     app.add_middleware(PeriodicMetricsMiddleware)
     
-    # Middleware de cache control
+    # 7. Middleware de cache control
     app.add_middleware(CacheControlMiddleware)
     app.add_middleware(ConditionalRequestMiddleware)
     
-    # Configuración de CORS - Mejorada para permitir todas las solicitudes
+    # 8. CORS - SECURITY: Configured per environment
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Permite todas las origins (en desarrollo)
+        allow_origins=settings.cors_origins,  # Dynamic based on environment
         allow_credentials=True,
-        allow_methods=["*"],  # Permite todos los métodos
-        allow_headers=["*"],  # Permite todas las cabeceras
-        expose_headers=["X-Process-Time", "X-Request-ID", "X-Cache-Rule"],  # Headers de debugging
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],  # Explicit methods only
+        allow_headers=[
+            "Accept",
+            "Accept-Language", 
+            "Content-Language",
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "X-Request-ID"
+        ],  # Explicit headers only
+        expose_headers=["X-Process-Time", "X-Request-ID", "X-Cache-Rule", "X-RateLimit-Remaining"],
         max_age=600  # Tiempo de caché para las comprobaciones preflight
     )
     

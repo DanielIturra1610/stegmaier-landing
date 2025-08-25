@@ -9,10 +9,15 @@ email-validator==2.0.0
 pymongo==4.3.3
 python-dotenv==1.0.0
 
+# Security Enhancements
+redis==4.6.0
+python-magic==0.4.27
+Pillow==10.0.1
+cryptography==41.0.7
+
 # Monitoring and Observability
 sentry-sdk[fastapi]==1.32.0
 prometheus-client==0.17.1
-redis==4.6.0
 structlog==23.1.0
 
 # HTTP and Networking
@@ -21,3 +26,6 @@ aiofiles==23.2.1
 
 # System monitoring
 psutil==5.9.5
+
+# Rate limiting and security
+hiredis==2.2.3
