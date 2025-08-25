@@ -3,13 +3,13 @@ FROM node:20.11-alpine3.19 AS build
 WORKDIR /app
 
 # Copia los archivos de configuración y dependencias
-COPY package.json package-lock.json ./
+COPY package.json ./
 COPY tsconfig.json tsconfig.node.json ./
 COPY vite.config.ts postcss.config.js tailwind.config.js ./
 COPY components.json ./
 
 # Instala las dependencias
-RUN npm ci
+RUN npm install
 
 # Copia el código fuente
 COPY index.html ./
