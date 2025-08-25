@@ -109,6 +109,16 @@ class AnalyticsService {
   }
 
   /**
+   * Función de tracking de eventos (compatibilidad con código existente)
+   */
+  trackEvent(eventName: string, eventData?: Record<string, any>): void {
+    this.trackActivity({
+      activity_type: eventName,
+      metadata: eventData
+    });
+  }
+
+  /**
    * Registra una actividad del usuario
    */
   async trackActivity(activityData: {

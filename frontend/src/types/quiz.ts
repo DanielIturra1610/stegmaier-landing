@@ -17,6 +17,9 @@ export enum QuizStatus {
   ARCHIVED = "archived"
 }
 
+// Type alias para compatibilidad con string literals
+export type QuizStatusType = "draft" | "published" | "archived";
+
 export enum AttemptStatus {
   IN_PROGRESS = "in_progress",
   COMPLETED = "completed",
@@ -90,6 +93,15 @@ export interface Quiz {
   average_score: number;
   completion_rate: number;
   is_available: boolean;
+  
+  // Propiedades adicionales para compatibilidad
+  time_limit_minutes?: number;
+  max_attempts?: number;
+  passing_score?: number;
+  shuffle_questions?: boolean;
+  show_results?: boolean;
+  allow_review?: boolean;
+  tags?: string[];
 }
 
 export interface QuizListItem {
@@ -111,32 +123,7 @@ export interface QuizListItem {
   is_available: boolean;
 }
 
-export interface QuizAnswer {
-  question_id: string;
-  answer: any;
-  time_spent: number;
-  is_correct?: boolean;
-  points_earned: number;
-  submitted_at: string;
-}
-
-export interface QuizAttempt {
-  id: string;
-  quiz_id: string;
-  student_id: string;
-  status: AttemptStatus;
-  attempt_number: number;
-  answers: QuizAnswer[];
-  current_question_index: number;
-  total_points: number;
-  points_earned: number;
-  score_percentage: number;
-  is_passing: boolean;
-  started_at: string;
-  submitted_at?: string;
-  time_spent: number;
-  time_remaining?: number;
-}
+// Student quiz progress definition will be completed later
 
 export interface StudentAnswer {
   question_id: string;
@@ -264,6 +251,62 @@ export interface QuizStatistics {
     average_time: number;
     skip_rate: number;
   }>;
+}
+
+// DTOs para crear y actualizar quizzes
+export interface QuizCreate {
+  title: string;
+  description: string;
+  instructions: string;
+  course_id: string;
+  module_id?: string;
+  lesson_id?: string;
+  question_ids: string[]; // Using string[] for consistency
+  config: QuizConfiguration;
+  status?: QuizStatus;
+}
+
+export interface QuizUpdate {
+  title?: string;
+  description?: string;
+  instructions?: string;
+  question_ids?: string[]; // Using string[] for consistency
+  config?: QuizConfiguration; // Using full type for consistency
+  status?: QuizStatus;
+}
+
+// Tipos para attempts y answers
+export interface QuizAttempt {
+  id: string;
+  quiz_id: string;
+  student_id: string;
+  attempt_number: number;
+  status: AttemptStatus;
+  started_at: string;
+  submitted_at?: string;
+  score?: number;
+  percentage?: number;
+  is_passing: boolean;
+  time_spent: number;
+  time_remaining?: number;
+  answers: StudentAnswer[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuizAnswer {
+  question_id: string;
+  answer: any;
+  is_correct: boolean;
+  points_earned: number;
+  time_spent: number;
+}
+
+export interface StudentAnswer {
+  question_id: string;
+  answer: any;
+  time_spent: number;
+  created_at: string;
 }
 
 export interface StudentQuizProgress {

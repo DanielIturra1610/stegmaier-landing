@@ -24,6 +24,7 @@ export interface Enrollment {
   last_accessed?: string; // ISO string, nullable
   certificate_issued: boolean;
   certificate_url?: string; // nullable
+  user_role: string; // Rol del usuario en el curso
 }
 
 // DTO para crear nuevo enrollment

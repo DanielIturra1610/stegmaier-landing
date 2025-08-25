@@ -41,7 +41,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({
                   className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm px-1"
                   aria-label={`Navegar a ${crumb.label}`}
                 >
-                  {crumb.label}
+                  {typeof crumb.label === 'function' ? crumb.label(crumb) : crumb.label}
                 </Link>
               ) : (
                 <span 
@@ -52,7 +52,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({
                   }`}
                   aria-current={isLast ? 'page' : undefined}
                 >
-                  {crumb.label}
+                  {typeof crumb.label === 'function' ? crumb.label(crumb) : crumb.label}
                 </span>
               )}
             </li>

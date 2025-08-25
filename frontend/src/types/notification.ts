@@ -84,6 +84,15 @@ export interface CreateNotificationRequest {
   actions?: Omit<NotificationAction, 'id'>[];
 }
 
+export interface CreateNotificationData {
+  recipient_id: string;
+  type: string;
+  title: string;
+  message: string;
+  related_id?: string;
+  metadata?: NotificationMetadata;
+}
+
 // Tipos para componentes UI
 export interface NotificationItemProps {
   notification: Notification;

@@ -170,6 +170,7 @@ export interface AssignmentSubmission {
   assignment_title: string;
   student_id: string;
   student_name?: string;
+  student_email?: string;
   
   // Content
   text_content: string;
@@ -181,6 +182,8 @@ export interface AssignmentSubmission {
   is_final: boolean;
   
   // Dates
+  created_at: string;
+  updated_at?: string;
   started_at?: string;
   submitted_at?: string;
   last_modified_at: string;
@@ -188,11 +191,14 @@ export interface AssignmentSubmission {
   // Grading
   grade_status: GradeStatus;
   grades: SubmissionGrade[];
+  grade?: SubmissionGrade; // Backward compatibility
   total_points_earned: number;
   total_points_possible: number;
   percentage_grade: number;
   letter_grade?: string;
   is_passing: boolean;
+  graded_at?: string;
+  feedback?: string;
   
   // Late penalty
   is_late: boolean;
@@ -350,6 +356,7 @@ export interface FileUploaderProps {
   allowedTypes?: string[];
   acceptedMimeTypes?: string[];
   className?: string;
+  ref?: React.MutableRefObject<any>;
 }
 
 export interface AssignmentGradingProps {

@@ -66,7 +66,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
       submissionList.forEach(submission => {
         initialGrades[submission.id] = {
           submission_id: submission.id,
-          grade: submission.grade,
+          grade: submission.grade ? submission.grade.points_earned : 0,
           feedback: submission.feedback || '',
           status: submission.grade !== null ? 'graded' : 'not_graded'
         };
@@ -86,7 +86,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
 
   const calculateStats = (submissionList: AssignmentSubmission[]) => {
     const gradedSubmissions = submissionList.filter(s => s.grade !== null);
-    const totalGrade = gradedSubmissions.reduce((sum, s) => sum + (s.grade || 0), 0);
+    const totalGrade = gradedSubmissions.reduce((sum, s) => sum + (s.grade?.points_earned || 0), 0);
     const averageGrade = gradedSubmissions.length > 0 ? totalGrade / gradedSubmissions.length : 0;
 
     // Distribución de calificaciones
@@ -100,9 +100,10 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
 
     const distribution = ranges.map(range => ({
       range: range.range,
-      count: gradedSubmissions.filter(s => 
-        (s.grade || 0) >= range.min && (s.grade || 0) <= range.max
-      ).length
+      count: gradedSubmissions.filter(s => {
+        const gradeValue = s.grade?.points_earned || 0;
+        return gradeValue >= range.min && gradeValue <= range.max;
+      }).length
     }));
 
     setStats({
@@ -181,14 +182,29 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
         const submission = submissions.find(s => s.id === gradeData.submission_id);
         if (!submission) return;
 
-        await assignmentService.gradeSubmission(gradeData.submission_id, {
-          grade: gradeData.grade!,
+        const gradeValue = typeof gradeData.grade === 'number' ? gradeData.grade : (gradeData.grade as any)?.points_earned || 0;
+        
+        await assignmentService.gradeSubmission(gradeData.submission_id, [{
+          points_earned: gradeValue,
+          points_possible: assignment.max_points,
           feedback: gradeData.feedback
-        });
+        }]);
+
+        // Crear objeto SubmissionGrade para la notificación
+        const gradeObject = {
+          criterion_id: undefined,
+          criterion_name: undefined,
+          points_earned: gradeValue,
+          points_possible: assignment.max_points,
+          feedback: gradeData.feedback || '',
+          grader_id: 'current_user', // TODO: Get actual user ID
+          grader_name: undefined,
+          graded_at: new Date().toISOString()
+        };
 
         // Enviar notificación al estudiante
         await assignmentNotificationService.notifyGradeAvailable(
-          { ...submission, grade: gradeData.grade!, feedback: gradeData.feedback },
+          { ...submission, grade: gradeObject, feedback: gradeData.feedback },
           assignment
         );
 

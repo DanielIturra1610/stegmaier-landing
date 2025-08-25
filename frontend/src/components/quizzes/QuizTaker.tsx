@@ -9,6 +9,7 @@ import {
   QuizTakerProps, QuizState 
 } from '../../types/quiz';
 import { quizService } from '../../services/quizService';
+import { analyticsService } from '../../services/analyticsService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import QuestionRenderer from './QuestionRenderer';
 import QuizProgress from './QuizProgress';
@@ -104,7 +105,7 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
         answers: new Map()
       }));
 
-      trackEvent('quiz_started', {
+      analyticsService.trackEvent('quiz_started', {
         quiz_id: quizId,
         quiz_title: quiz.title,
         attempt_id: attempt.id
@@ -142,7 +143,8 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
       const answerData: StudentAnswer = {
         question_id: currentQuestion.id,
         answer,
-        time_spent: timeSpent
+        time_spent: timeSpent,
+        created_at: new Date().toISOString()
       };
 
       await quizService.submitAnswer(state.attempt.id, answerData);
@@ -202,10 +204,10 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
         isSubmitting: false
       }));
 
-      trackEvent('quiz_completed', {
+      analyticsService.trackEvent('quiz_completed', {
         quiz_id: quizId,
         attempt_id: state.attempt.id,
-        score: completedAttempt.score_percentage,
+        score: completedAttempt.percentage,
         is_passing: completedAttempt.is_passing,
         time_spent: completedAttempt.time_spent
       });

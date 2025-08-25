@@ -28,6 +28,11 @@ class EmailService {
     console.log('Bulk emails would be sent:', emails.length, 'emails');
     return true;
   }
+
+  // Alias para compatibilidad con código existente
+  async sendBulkEmail(emails: EmailData[]): Promise<boolean> {
+    return this.sendBulkEmails(emails);
+  }
 }
 
 export const emailService = new EmailService();

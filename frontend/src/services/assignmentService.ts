@@ -60,6 +60,38 @@ class AssignmentService {
   }
 
   /**
+   * Obtener assignments del usuario actual
+   */
+  async getUserAssignments(): Promise<Assignment[]> {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/user/assignments`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting user assignments:', error);
+      throw new Error(error.response?.data?.detail || 'Error al obtener assignments del usuario');
+    }
+  }
+
+  /**
+   * Obtener submissions del usuario actual
+   */
+  async getUserSubmissions(): Promise<AssignmentSubmission[]> {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/user/submissions`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting user submissions:', error);
+      throw new Error(error.response?.data?.detail || 'Error al obtener submissions del usuario');
+    }
+  }
+
+  /**
    * Obtener assignment por ID
    */
   async getAssignment(assignmentId: string): Promise<Assignment> {
