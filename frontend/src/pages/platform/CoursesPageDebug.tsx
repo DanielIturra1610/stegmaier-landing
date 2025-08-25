@@ -77,7 +77,7 @@ const CoursesPageDebug: React.FC = () => {
               <div className="mt-2 text-sm text-gray-500">
                 <span>📂 Categoría: {course.category || 'Sin categoría'}</span>
                 <span className="ml-4">📊 Nivel: {course.level || 'Sin nivel'}</span>
-                <span className="ml-4">📚 Lecciones: {course.lessons || 0}</span>
+                <span className="ml-4">📚 Lecciones: {Array.isArray(course.lessons) ? course.lessons.length : course.lessons || 0}</span>
                 <span className="ml-4">⏱️ Duración: {course.duration || 0} min</span>
                 <span className="ml-4">✅ Publicado: {course.is_published ? 'Sí' : 'No'}</span>
               </div>

@@ -32,6 +32,17 @@ class QuizService {
     }
   }
 
+  async getQuizzes(): Promise<QuizListItem[]> {
+    try {
+      const response = await axios.get(this.baseURL, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || 'Failed to fetch quizzes');
+    }
+  }
+
   async getQuizzesByCourse(courseId: string, publishedOnly: boolean = true): Promise<QuizListItem[]> {
     try {
       const response = await axios.get(`${this.baseURL}/course/${courseId}?published_only=${publishedOnly}`, {
@@ -73,6 +84,16 @@ class QuizService {
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Failed to delete quiz');
     }
+  }
+
+  // Helper methods
+  formatTimeLimit(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   }
 
   // Question Management
