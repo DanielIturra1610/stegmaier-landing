@@ -5,7 +5,8 @@ from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...domain.repositories.lesson_repository import LessonRepository
-    from ...domain.repositories.course_repository import CourseRepository
+
+from ...domain.repositories.course_repository import CourseRepository
 from ...domain.repositories.user_repository import UserRepository
 from ...domain.repositories.enrollment_repository import EnrollmentRepository
 from ...domain.entities.course import Course
@@ -188,36 +189,6 @@ class CourseService:
         
         return created_course
     
-    async def get_course_by_id(self, course_id: str) -> Optional[Course]:
-        """
-        Obtiene un curso por su ID
-        
-        Args:
-            course_id: ID del curso
-        
-        Returns:
-            El curso encontrado o None
-        """
-        return await self.course_repository.get_by_id(course_id)
-    
-    async def list_courses(
-        self, 
-        skip: int = 0, 
-        limit: int = 20, 
-        **filters
-    ) -> List[Course]:
-        """
-        Lista cursos con paginación y filtros opcionales
-        
-        Args:
-            skip: Número de cursos a saltar
-            limit: Número máximo de cursos a devolver
-            **filters: Filtros opcionales (category, level, is_published)
-        
-        Returns:
-            Lista de cursos
-        """
-        return await self.course_repository.list(skip, limit, **filters)
     
     async def get_instructor_courses(self, instructor_id: str) -> List[Course]:
         """

@@ -13,8 +13,7 @@ from fastapi.responses import FileResponse
 from ....domain.entities.user import User
 from ....application.services.media_service import MediaService
 from ....application.services.lesson_service import LessonService
-from ....core.dependencies import get_media_service
-from ....dependencies import get_lesson_service
+from ....dependencies import get_lesson_service, get_media_service
 from ...deps import get_current_instructor_user, get_current_admin_user
 
 router = APIRouter()

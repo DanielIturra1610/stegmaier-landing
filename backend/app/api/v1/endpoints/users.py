@@ -9,9 +9,8 @@ from ....application.services.user_service import UserService
 from ....application.dtos.user_dto import (
     UserResponse, UserCreate, UserUpdate, UserPasswordUpdate
 )
-from app.domain.entities.user import User
-from app.domain.entities.user import UserRole
-from app.application.dtos.user_dto import UserUpdate
+from ....domain.entities.user import User
+from ....domain.entities.user import UserRole
 from ....dependencies import get_user_service
 from ...deps import get_current_active_user, get_current_admin_user
 

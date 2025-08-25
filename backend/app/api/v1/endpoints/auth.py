@@ -2,8 +2,8 @@
 Endpoints para la autenticación de usuarios
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.application.services.auth_service import AuthService
-from app.application.dtos.auth_dto import (
+from ....application.services.auth_service import AuthService
+from ....application.dtos.auth_dto import (
     Token, LoginData, RegistrationData, 
     PasswordResetRequest, PasswordReset,
     VerificationResponse, ResendVerificationRequest

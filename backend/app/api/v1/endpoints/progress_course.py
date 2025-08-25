@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ...deps import get_current_active_user
-from app.domain.entities.user import User
-from app.dependencies import get_progress_service
-from app.application.services.progress_service import ProgressService
+from ....domain.entities.user import User
+from ....dependencies import get_progress_service
+from ....application.services.progress_service import ProgressService
 
 router = APIRouter()
 

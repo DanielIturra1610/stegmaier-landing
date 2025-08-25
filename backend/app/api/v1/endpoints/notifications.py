@@ -11,7 +11,8 @@ from ....application.dtos.notification_dto import (
     NotificationCreate, NotificationResponse, NotificationListResponse,
     BulkNotificationCreate
 )
-from ...deps import get_notification_service, get_current_user, get_current_admin_user
+from ....dependencies import get_notification_service
+from ...deps import get_current_user, get_current_admin_user
 from ....domain.entities.user import User
 
 router = APIRouter()

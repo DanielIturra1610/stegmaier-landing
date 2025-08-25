@@ -326,7 +326,7 @@ class IntegratedMonitoringMiddleware:
                 category="alert_system_error"
             )
 
-class MetricsUpdateMiddleware:
+class PeriodicMetricsMiddleware:
     """Middleware para actualizar métricas del sistema periódicamente"""
     
     def __init__(self, app):
@@ -366,7 +366,7 @@ def create_monitoring_middleware_stack(app):
     # El último aplicado será el primero en ejecutarse
     
     # 1. Metrics update (debe ser externo)
-    app = MetricsUpdateMiddleware(app)
+    app = PeriodicMetricsMiddleware(app)
     
     # 2. Database query tracking
     app = DatabaseQueryMiddleware(app)

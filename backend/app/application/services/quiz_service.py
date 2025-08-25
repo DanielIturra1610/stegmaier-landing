@@ -16,9 +16,8 @@ from ...domain.entities.quiz import (
     QuizStatus, AttemptStatus, QuestionType
 )
 from ...domain.repositories.quiz_repository import QuizRepository
-from ...infrastructure.exceptions import (
-    NotFoundError, ValidationError, UnauthorizedError
-)
+from fastapi import HTTPException, status
+from pydantic import ValidationError
 
 
 class QuizService:
@@ -64,7 +63,7 @@ class QuizService:
         """Obtener quiz por ID."""
         quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
         if not quiz:
-            raise NotFoundError(f"Quiz con ID {quiz_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         # Verificar disponibilidad para estudiantes
         if user_id and not quiz.is_available_now():
@@ -76,11 +75,11 @@ class QuizService:
         """Actualizar quiz existente."""
         quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
         if not quiz:
-            raise NotFoundError(f"Quiz con ID {quiz_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         # Verificar permisos
         if quiz.created_by != user_id:
-            raise UnauthorizedError("No autorizado para modificar este quiz")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para modificar este quiz")
         
         # Actualizar campos
         if quiz_data.title is not None:
@@ -108,10 +107,10 @@ class QuizService:
         """Eliminar quiz."""
         quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
         if not quiz:
-            raise NotFoundError(f"Quiz con ID {quiz_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         if quiz.created_by != user_id:
-            raise UnauthorizedError("No autorizado para eliminar este quiz")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para eliminar este quiz")
         
         # Verificar si hay intentos
         attempts = await self.quiz_repository.get_attempts_by_quiz(quiz_id)
@@ -186,14 +185,14 @@ class QuizService:
         """Agregar pregunta a quiz."""
         quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
         if not quiz:
-            raise NotFoundError(f"Quiz con ID {quiz_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         if quiz.created_by != user_id:
-            raise UnauthorizedError("No autorizado para modificar este quiz")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para modificar este quiz")
         
         question = await self.quiz_repository.get_question_by_id(question_id)
         if not question:
-            raise NotFoundError(f"Pregunta con ID {question_id} no encontrada")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Pregunta con ID {question_id} no encontrada")
         
         # Verificar que no esté ya agregada
         existing_ids = [q.id for q in quiz.questions]
@@ -212,7 +211,7 @@ class QuizService:
         """Iniciar nuevo intento de quiz."""
         quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
         if not quiz:
-            raise NotFoundError(f"Quiz con ID {quiz_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         if not quiz.is_available_now():
             raise ValidationError("Quiz no disponible actualmente")
@@ -243,10 +242,10 @@ class QuizService:
         """Enviar respuesta a una pregunta."""
         attempt = await self.quiz_repository.get_attempt_by_id(attempt_id)
         if not attempt:
-            raise NotFoundError(f"Intento con ID {attempt_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Intento con ID {attempt_id} no encontrado")
         
         if attempt.student_id != student_id:
-            raise UnauthorizedError("No autorizado para este intento")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para este intento")
         
         if attempt.status != AttemptStatus.IN_PROGRESS:
             raise ValidationError("El intento no está en progreso")
@@ -254,7 +253,7 @@ class QuizService:
         # Obtener quiz para validaciones
         quiz = await self.quiz_repository.get_quiz_by_id(attempt.quiz_id)
         if not quiz:
-            raise NotFoundError("Quiz no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz no encontrado")
         
         # Verificar si el intento ha expirado
         if attempt.is_expired(quiz):
@@ -270,7 +269,7 @@ class QuizService:
                 break
         
         if not question:
-            raise NotFoundError("Pregunta no encontrada en este quiz")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pregunta no encontrada en este quiz")
         
         # Evaluar respuesta
         is_correct, points_earned = self._evaluate_answer(question, answer_data.answer)
@@ -307,10 +306,10 @@ class QuizService:
         """Finalizar y enviar intento de quiz."""
         attempt = await self.quiz_repository.get_attempt_by_id(attempt_id)
         if not attempt:
-            raise NotFoundError(f"Intento con ID {attempt_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Intento con ID {attempt_id} no encontrado")
         
         if attempt.student_id != student_id:
-            raise UnauthorizedError("No autorizado para este intento")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para este intento")
         
         if attempt.status != AttemptStatus.IN_PROGRESS:
             raise ValidationError("El intento no está en progreso")
@@ -318,7 +317,7 @@ class QuizService:
         # Obtener quiz para cálculos finales
         quiz = await self.quiz_repository.get_quiz_by_id(attempt.quiz_id)
         if not quiz:
-            raise NotFoundError("Quiz no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz no encontrado")
         
         # Calcular puntaje final
         attempt.calculate_score(quiz)
@@ -335,10 +334,10 @@ class QuizService:
         """Obtener intento por ID."""
         attempt = await self.quiz_repository.get_attempt_by_id(attempt_id)
         if not attempt:
-            raise NotFoundError(f"Intento con ID {attempt_id} no encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Intento con ID {attempt_id} no encontrado")
         
         if attempt.student_id != user_id:
-            raise UnauthorizedError("No autorizado para ver este intento")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para ver este intento")
         
         return self._attempt_to_response(attempt)
 

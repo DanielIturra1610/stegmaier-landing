@@ -3,14 +3,14 @@ Endpoints API para Módulos
 """
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.application.dtos.module_dto import (
+from ....application.dtos.module_dto import (
     ModuleCreate, ModuleUpdate, ModuleResponse, ModuleWithLessons,
     CourseStructureResponse, ModuleOrderUpdate, LessonAssignment
 )
-from app.application.services.module_service import ModuleService
-from app.dependencies import get_module_service
-from app.api.deps import get_current_admin_user
-from app.domain.entities.user import User
+from ....application.services.module_service import ModuleService
+from ....dependencies import get_module_service
+from ...deps import get_current_admin_user
+from ....domain.entities.user import User
 
 router = APIRouter()
 

@@ -3,12 +3,19 @@ Enhanced File Security Validation
 Validaciones críticas de seguridad para uploads de archivos
 """
 import os
-import magic
 import hashlib
 from typing import List, Tuple, Optional
 from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from .config import get_settings
+
+# Try to import magic, fallback if not available
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    magic = None
 
 settings = get_settings()
 
@@ -182,11 +189,15 @@ class FileSecurityValidator:
         if file_size == 0:
             errors.append("Empty file not allowed")
         
-        # 5. Detectar tipo MIME real usando python-magic
-        try:
-            actual_mime = magic.from_buffer(file_content, mime=True)
-        except Exception:
-            # Fallback si magic no está disponible
+        # 5. Detectar tipo MIME real usando python-magic (si está disponible)
+        if MAGIC_AVAILABLE:
+            try:
+                actual_mime = magic.from_buffer(file_content, mime=True)
+            except Exception:
+                # Fallback si magic falla
+                actual_mime = file.content_type
+        else:
+            # Fallback si magic no está instalado
             actual_mime = file.content_type
         
         # 6. Validar tipo MIME

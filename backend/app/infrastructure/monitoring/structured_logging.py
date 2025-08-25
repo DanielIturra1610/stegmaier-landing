@@ -8,7 +8,27 @@ import os
 from typing import Dict, Any, Optional
 from datetime import datetime
 from contextvars import ContextVar
-from pythonjsonlogger import jsonlogger
+try:
+    from pythonjsonlogger import jsonlogger
+except ImportError:
+    # Create a simple fallback for JSON logging
+    class JsonLoggerFallback:
+        def __init__(self, *args, **kwargs):
+            pass
+        
+        class JsonFormatter(logging.Formatter):
+            def format(self, record):
+                log_data = {
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'level': record.levelname,
+                    'message': record.getMessage(),
+                    'module': record.module,
+                    'function': record.funcName,
+                    'line': record.lineno
+                }
+                return json.dumps(log_data)
+    
+    jsonlogger = JsonLoggerFallback()
 import traceback
 
 # Context variables para tracking de requests

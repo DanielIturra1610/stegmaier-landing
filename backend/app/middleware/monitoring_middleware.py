@@ -7,7 +7,7 @@ import uuid
 from typing import Callable, Dict, Any
 from datetime import datetime
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 import os
 import json

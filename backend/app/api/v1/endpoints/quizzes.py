@@ -13,12 +13,10 @@ from ....application.dtos.quiz_dto import (
     QuizAnswerSubmit, QuizStatistics, StudentQuizProgress
 )
 from ....application.services.quiz_service import QuizService
-from ....core.dependencies import get_current_user, get_current_admin_user
-from ....core.dependencies import get_quiz_service
+from ...deps import get_current_user, get_current_admin_user
+from ....dependencies import get_quiz_service
 from ....domain.entities.user import User
-from ....infrastructure.exceptions import (
-    NotFoundError, ValidationError, UnauthorizedError
-)
+# Las excepciones se manejan directamente en el servicio usando HTTPException
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 security = HTTPBearer()

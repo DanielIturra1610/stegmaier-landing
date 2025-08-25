@@ -7,9 +7,9 @@ from typing import Dict, Any, Optional, List
 import os
 from datetime import datetime, timedelta
 
-from ...infrastructure.monitoring.advanced_health_checks import advanced_health_monitor
-from ...infrastructure.monitoring.prometheus_metrics import lms_metrics, generate_metrics, get_metrics_content_type
-from ...infrastructure.monitoring.alerting_system import alert_manager
+from ....infrastructure.monitoring.advanced_health_checks import advanced_health_monitor
+from ....infrastructure.monitoring.prometheus_metrics import lms_metrics, generate_metrics, get_metrics_content_type
+from ....infrastructure.monitoring.alerting_system import alert_manager
 from ...deps import get_current_admin_user
 from ....domain.entities.user import User
 
@@ -63,7 +63,7 @@ async def metrics_json(
 ):
     """Métricas del sistema en formato JSON para dashboards"""
     try:
-        from ...infrastructure.monitoring.prometheus_metrics import MetricsCollector
+        from ....infrastructure.monitoring.prometheus_metrics import MetricsCollector
         from motor.motor_asyncio import AsyncIOMotorClient
         
         # Configurar cliente MongoDB
@@ -192,7 +192,7 @@ async def test_alert_system(
         raise HTTPException(status_code=403, detail="Test alerts not allowed in production")
     
     try:
-        from ...infrastructure.monitoring.alerting_system import Alert, AlertLevel, AlertChannel
+        from ....infrastructure.monitoring.alerting_system import Alert, AlertLevel, AlertChannel
         
         # Crear alerta de prueba
         test_alert = Alert(
@@ -261,7 +261,7 @@ async def get_performance_metrics(
 ):
     """Métricas detalladas de performance de la aplicación"""
     try:
-        from ...middleware.performance import request_metrics
+        from ....middleware.performance import request_metrics
         
         # Obtener métricas del middleware
         middleware_metrics = request_metrics.get_metrics()
