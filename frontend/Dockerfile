@@ -44,15 +44,15 @@ server {
 }
 EOF
 
-# Create startup script
+# Create startup script that handles dynamic port
 COPY <<EOF /docker-entrypoint.sh
 #!/bin/sh
 export PORT=\${PORT:-80}
+echo "Starting nginx on port \$PORT"
 envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
-nginx -g "daemon off;"
+exec nginx -g "daemon off;"
 EOF
 
 RUN chmod +x /docker-entrypoint.sh
 
-EXPOSE 80
 CMD ["/docker-entrypoint.sh"]

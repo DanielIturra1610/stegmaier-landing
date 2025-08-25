@@ -4,7 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "nginx -g 'daemon off;'",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
   }
