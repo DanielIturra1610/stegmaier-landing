@@ -2,8 +2,8 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile.frontend",
-    "watchPatterns": ["frontend/**"]
+    "dockerfilePath": "Dockerfile",
+    "watchPatterns": ["./**"]
   },
   "deploy": {
     "startCommand": "nginx -g 'daemon off;'",
