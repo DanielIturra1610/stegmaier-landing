@@ -44,4 +44,4 @@ RUN echo 'server { \
 EXPOSE 80
 
 # Comando para iniciar Nginx
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
