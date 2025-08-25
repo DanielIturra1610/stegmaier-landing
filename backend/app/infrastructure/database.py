@@ -2,7 +2,7 @@
 Configuración de conexión a MongoDB
 """
 from motor.motor_asyncio import AsyncIOMotorClient
-from ..core.config import settings
+from ..core.config import get_settings
 
 class Database:
     client: AsyncIOMotorClient = None
@@ -17,6 +17,7 @@ async def connect_to_mongo():
     """
     Conectar a MongoDB al iniciar la aplicación
     """
+    settings = get_settings()
     db.client = AsyncIOMotorClient(settings.MONGODB_URL)
     db.db = db.client[settings.MONGODB_DB_NAME]
     print("Conectado a MongoDB")
