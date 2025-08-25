@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Instalar dependencias primero (mejor caching)
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
 # Copiar archivos de configuración
 COPY tsconfig.json tsconfig.node.json ./
