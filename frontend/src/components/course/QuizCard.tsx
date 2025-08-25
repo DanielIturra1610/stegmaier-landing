@@ -11,7 +11,7 @@ import {
   BookOpenIcon,
   TrophyIcon
 } from '@heroicons/react/24/outline';
-import { Quiz } from '../../services/quizService';
+import { Quiz } from '../../types/quiz';
 
 interface QuizCardProps {
   quiz: Quiz;

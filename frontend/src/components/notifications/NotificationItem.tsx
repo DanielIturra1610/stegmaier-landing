@@ -22,7 +22,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Notification, NotificationType } from '../../types/notification';
+import { Notification } from '../../services/notificationService';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 interface NotificationItemProps {
@@ -30,8 +30,21 @@ interface NotificationItemProps {
   isLast?: boolean;
 }
 
+// Definir tipos válidos de notificación
+type NotificationTypeKey = 
+  | 'COURSE_COMPLETION'
+  | 'COURSE_PROGRESS' 
+  | 'COURSE_ENROLLMENT'
+  | 'QUIZ_COMPLETION'
+  | 'NEW_COURSE_ANNOUNCEMENT'
+  | 'SYSTEM_UPDATE'
+  | 'REMINDER'
+  | 'ACHIEVEMENT'
+  | 'MESSAGE'
+  | 'ALERT';
+
 // Mapeo de tipos a iconos y estilos
-const typeConfig: Record<NotificationType, {
+const typeConfig: Record<NotificationTypeKey, {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
   bgColor: string;
@@ -103,14 +116,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   notification, 
   isLast = false 
 }) => {
-  const { markAsRead, markAsUnread, archiveNotification, deleteNotification } = useNotifications();
+  const { markAsRead, archiveNotification, deleteNotification } = useNotifications();
   const [isLoading, setIsLoading] = useState(false);
 
-  const config = typeConfig[notification.type] || typeConfig.SYSTEM_UPDATE;
+  const config = typeConfig[notification.type as NotificationTypeKey] || typeConfig.SYSTEM_UPDATE;
   const IconComponent = config.icon;
 
   const handleMarkAsRead = async () => {
-    if (notification.is_read) return;
+    if (notification.status === 'read') return;
     
     setIsLoading(true);
     try {
@@ -122,18 +135,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
-  const handleMarkAsUnread = async () => {
-    if (!notification.is_read) return;
-    
-    setIsLoading(true);
-    try {
-      await markAsUnread(notification.id);
-    } catch (error) {
-      console.error('Error marking as unread:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // markAsUnread no está disponible en el contexto actual
+  // const handleMarkAsUnread = async () => {
+  //   if (notification.status !== 'read') return;
+  //   console.log('markAsUnread not implemented yet');
+  // };
 
   const handleArchive = async () => {
     setIsLoading(true);
@@ -183,7 +189,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     <div
       className={`
         group relative p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer
-        ${!notification.is_read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}
+        ${notification.status === 'unread' ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}
         ${isLoading ? 'opacity-60 pointer-events-none' : ''}
       `}
       onClick={handleMarkAsRead}
@@ -198,7 +204,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h4 className={`text-sm font-medium text-gray-900 dark:text-white ${!notification.is_read ? 'font-semibold' : ''}`}>
+              <h4 className={`text-sm font-medium text-gray-900 dark:text-white ${notification.status === 'unread' ? 'font-semibold' : ''}`}>
                 {notification.title}
               </h4>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
@@ -218,27 +224,24 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </div>
 
             {/* Indicador no leído */}
-            {!notification.is_read && (
+            {notification.status === 'unread' && (
               <div className="flex-shrink-0 w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full ml-2 mt-1" />
             )}
           </div>
 
           {/* Acciones de la notificación */}
-          {notification.actions && notification.actions.length > 0 && (
+          {notification.action_url && notification.action_label && (
             <div className="mt-3 flex items-center space-x-2">
-              {notification.actions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAction(action.url);
-                  }}
-                  className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                >
-                  {action.label}
-                  {action.url && <ExternalLink className="w-3 h-3 ml-1" />}
-                </button>
-              ))}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAction(notification.action_url);
+                }}
+                className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              >
+                {notification.action_label}
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </button>
             </div>
           )}
         </div>
@@ -259,13 +262,13 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
               className="min-w-[200px] bg-white dark:bg-gray-800 rounded-md p-1 shadow-lg border border-gray-200 dark:border-gray-700 z-50"
               sideOffset={5}
             >
-              {notification.is_read ? (
+              {notification.status === 'read' ? (
                 <DropdownMenu.Item
-                  className="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
-                  onClick={handleMarkAsUnread}
+                  className="flex items-center px-3 py-2 text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  disabled
                 >
                   <Bell className="w-4 h-4 mr-2" />
-                  Marcar como no leída
+                  Marcar como no leída (no disponible)
                 </DropdownMenu.Item>
               ) : (
                 <DropdownMenu.Item

@@ -61,6 +61,7 @@ export interface EnrollmentProgressResponse {
   last_accessed?: string;
   certificate_issued: boolean;
   certificate_url?: string;
+  user_role: string; // Rol del usuario en el curso
   // Campos adicionales para UI
   enrolled_at?: string;
   completion_date?: string;

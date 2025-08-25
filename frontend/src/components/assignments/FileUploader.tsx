@@ -30,7 +30,7 @@ interface FileUploadItem {
   uploadedFile?: AssignmentFile;
 }
 
-export const FileUploader: React.FC<FileUploaderProps> = ({
+export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: string) => Promise<AssignmentFile[]> }, FileUploaderProps>(({
   onFilesUploaded,
   onUploadError,
   maxFiles = 5,
@@ -38,7 +38,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   allowedTypes = [],
   acceptedMimeTypes = [],
   className = ''
-}) => {
+}, ref) => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploads, setUploads] = useState<FileUploadItem[]>([]);
 
@@ -255,8 +255,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     ].join(',');
   };
 
-  // Expose uploadAllFiles method through ref or callback prop
-  React.useImperativeHandle((props as any).ref, () => ({
+  // Expose uploadAllFiles method through ref
+  React.useImperativeHandle(ref, () => ({
     uploadAllFiles
   }), [uploadAllFiles]);
 
@@ -421,6 +421,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default FileUploader;

@@ -120,6 +120,7 @@ class EnrollmentService {
                 last_accessed: enrollment.last_accessed,
                 certificate_issued: enrollment.certificate_issued,
                 certificate_url: enrollment.certificate_url,
+                user_role: enrollment.user_role || 'student', // Default fallback
                 enrolled_at: enrollment.enrollment_date // alias
               }
             };
@@ -152,6 +153,7 @@ class EnrollmentService {
                 last_accessed: enrollment.last_accessed,
                 certificate_issued: enrollment.certificate_issued,
                 certificate_url: enrollment.certificate_url,
+                user_role: enrollment.user_role || 'student', // Default fallback
                 enrolled_at: enrollment.enrollment_date
               }
             };
@@ -326,8 +328,14 @@ class EnrollmentService {
         }
       );
 
-      console.log('✅ [enrollmentService] Retrieved course enrollments:', response.data);
-      return response.data;
+      // Ensure each enrollment has user_role field with default fallback
+      const enrollmentsWithRole = response.data.map(enrollment => ({
+        ...enrollment,
+        user_role: enrollment.user_role || 'student' // Default to 'student' if not provided
+      }));
+
+      console.log('✅ [enrollmentService] Retrieved course enrollments:', enrollmentsWithRole.length);
+      return enrollmentsWithRole;
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error getting course enrollments:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener inscripciones del curso');

@@ -166,8 +166,10 @@ export const AssignmentComments: React.FC<AssignmentCommentsProps> = ({
     try {
       // Obtener información del assignment para la notificación
       const assignment = await assignmentService.getAssignment(assignmentId);
+      const submission = await assignmentService.getMySubmission(submissionId);
       
       const notificationData = {
+        recipient_id: submission.student_id,
         type: comment.is_revision_request ? 'assignment_revision_requested' : 'assignment_comment',
         title: comment.is_revision_request 
           ? 'Revisión solicitada en assignment' 

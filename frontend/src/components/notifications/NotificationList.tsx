@@ -5,7 +5,7 @@
  */
 import React, { useRef, useEffect } from 'react';
 import { Loader2, RefreshCw, Bell } from 'lucide-react';
-import { Notification } from '../../types/notification';
+import { Notification } from '../../services/notificationService';
 import { NotificationItem } from './NotificationItem';
 
 interface NotificationListProps {

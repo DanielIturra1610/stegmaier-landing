@@ -69,7 +69,7 @@ export const AssignmentNotifications: React.FC<AssignmentNotificationsProps> = (
         // Obtener submissions del usuario para este assignment
         let userSubmissions: AssignmentSubmission[] = [];
         try {
-          userSubmissions = await assignmentService.getUserSubmissions(assignment.id);
+          userSubmissions = await assignmentService.getUserSubmissions();
         } catch (error) {
           console.log('No submissions found for assignment:', assignment.id);
         }

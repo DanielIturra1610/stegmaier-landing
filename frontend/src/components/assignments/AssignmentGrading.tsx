@@ -19,6 +19,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 import { assignmentService } from '../../services/assignmentService';
 import {
   Assignment,
@@ -40,6 +41,8 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   onGradeSubmitted,
   onBulkGrade
 }) => {
+  const { user } = useAuth();
+  
   // State management
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>(initialSubmissions);
   const [filteredSubmissions, setFilteredSubmissions] = useState<AssignmentSubmission[]>(initialSubmissions);
@@ -185,7 +188,9 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
       const grades: SubmissionGrade[] = [{
         points_earned: gradeInput.points,
         points_possible: assignment.max_points,
-        feedback: gradeInput.feedback
+        feedback: gradeInput.feedback,
+        grader_id: user?.id || 'current_user',
+        graded_at: new Date().toISOString()
       }];
 
       const updatedSubmission = await assignmentService.gradeSubmission(
@@ -227,7 +232,9 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
       const grades = [{
         points_earned: points,
         points_possible: assignment.max_points,
-        feedback: bulkFeedback || ''
+        feedback: bulkFeedback || '',
+        grader_id: user?.id || 'current_user',
+        graded_at: new Date().toISOString()
       }];
 
       const updatedSubmissions = await assignmentService.bulkGrade({

@@ -3,7 +3,8 @@
  */
 
 export enum QuestionType {
-  MULTIPLE_CHOICE = "multiple_choice",
+  MULTIPLE_CHOICE = "multiple_choice", 
+  MULTIPLE_SELECT = "multiple_select",
   TRUE_FALSE = "true_false",
   FILL_IN_BLANK = "fill_in_blank",
   ESSAY = "essay",
@@ -40,6 +41,7 @@ export interface Question {
   id: string;
   type: QuestionType;
   title: string;
+  text: string;
   content: string;
   explanation?: string;
   points: number;
@@ -48,6 +50,7 @@ export interface Question {
   correct_answers: string[];
   case_sensitive: boolean;
   pairs: Array<{ [key: string]: string }>;
+  order?: number;
   tags: string[];
   difficulty: string;
   created_at: string;
@@ -58,16 +61,22 @@ export interface Question {
 export interface QuizConfiguration {
   shuffle_questions: boolean;
   shuffle_answers: boolean;
-  show_results_immediately: boolean;
+  show_results_immediately?: boolean;
   show_correct_answers: boolean;
-  allow_retakes: boolean;
+  allow_retakes?: boolean;
+  allow_review: boolean;
   max_attempts?: number;
-  passing_score: number;
+  passing_score?: number;
   time_limit?: number;
+  time_limit_enabled: boolean;
   available_from?: string;
   available_until?: string;
-  require_proctor: boolean;
-  randomize_from_pool: boolean;
+  require_proctor?: boolean;
+  proctoring_enabled: boolean;
+  require_webcam: boolean;
+  prevent_copy_paste: boolean;
+  randomize_from_pool?: boolean;
+  randomize_order: boolean;
   questions_per_attempt?: number;
 }
 
@@ -129,6 +138,8 @@ export interface StudentAnswer {
   question_id: string;
   answer: any;
   time_spent: number;
+  is_correct?: boolean;
+  points_earned?: number;
 }
 
 // DTOs para crear/actualizar
@@ -159,10 +170,18 @@ export interface QuizCreate {
   course_id: string;
   module_id?: string;
   lesson_id?: string;
-  questions: string[];
+  questions: Question[];
   question_pool: string[];
   config: QuizConfiguration;
   estimated_duration: number;
+  status?: QuizStatus;
+  time_limit_minutes?: number;
+  max_attempts?: number;
+  passing_score?: number;
+  shuffle_questions?: boolean;
+  show_results?: boolean;
+  allow_review?: boolean;
+  tags?: string[];
 }
 
 export interface QuizUpdate {
@@ -285,11 +304,14 @@ export interface QuizAttempt {
   started_at: string;
   submitted_at?: string;
   score?: number;
+  score_percentage: number;
   percentage?: number;
   is_passing: boolean;
   time_spent: number;
   time_remaining?: number;
   answers: StudentAnswer[];
+  points_earned: number;
+  total_points: number;
   created_at: string;
   updated_at: string;
 }

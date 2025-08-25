@@ -10,7 +10,8 @@ import {
   CheckIcon,
   PencilIcon
 } from '@heroicons/react/24/outline';
-import { quizService, Quiz, QuizCreate, Question } from '../../services/quizService';
+import { quizService } from '../../services/quizService';
+import { Quiz, QuizCreate, Question, QuestionType, QuizStatus } from '../../types/quiz';
 import { courseService } from '../../services/courseService';
 import { adminService } from '../../services/adminService';
 
@@ -41,18 +42,22 @@ const AdminQuizForm: React.FC = () => {
     show_results: true,
     allow_review: true,
     tags: [] as string[],
-    status: 'draft' as 'draft' | 'published' | 'archived'
+    status: QuizStatus.DRAFT
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
-    type: 'multiple_choice',
+    type: QuestionType.MULTIPLE_CHOICE,
     text: '',
-    options: ['', '', '', ''],
+    options: [
+      { id: '1', text: '', is_correct: false, order: 0 },
+      { id: '2', text: '', is_correct: false, order: 1 },
+      { id: '3', text: '', is_correct: false, order: 2 },
+      { id: '4', text: '', is_correct: false, order: 3 }
+    ],
     correct_answers: [],
     explanation: '',
     points: 1,
-    required: true,
     tags: []
   });
 
@@ -118,8 +123,8 @@ const AdminQuizForm: React.FC = () => {
       return;
     }
 
-    if (currentQuestion.type === 'multiple_choice' || currentQuestion.type === 'multiple_select') {
-      const validOptions = currentQuestion.options?.filter(opt => opt.trim()) || [];
+    if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE || currentQuestion.type === QuestionType.MULTIPLE_SELECT) {
+      const validOptions = currentQuestion.options?.filter(opt => opt.text?.trim()) || [];
       if (validOptions.length < 2) {
         alert('Debes proporcionar al menos 2 opciones válidas');
         return;
@@ -163,27 +168,31 @@ const AdminQuizForm: React.FC = () => {
 
   const resetQuestionForm = () => {
     setCurrentQuestion({
-      type: 'multiple_choice',
+      type: QuestionType.MULTIPLE_CHOICE,
       text: '',
-      options: ['', '', '', ''],
+      options: [
+        { id: '1', text: '', is_correct: false, order: 0 },
+        { id: '2', text: '', is_correct: false, order: 1 },
+        { id: '3', text: '', is_correct: false, order: 2 },
+        { id: '4', text: '', is_correct: false, order: 3 }
+      ],
       correct_answers: [],
       explanation: '',
       points: 1,
-      required: true,
       tags: []
     });
     setShowQuestionForm(false);
     setEditingQuestionIndex(null);
   };
 
-  const handleSubmit = async (status: 'draft' | 'published' = 'draft') => {
+  const handleSubmit = async (status: QuizStatus = QuizStatus.DRAFT) => {
     try {
       if (!formData.title.trim() || !formData.description.trim() || !formData.course_id) {
         alert('Por favor completa todos los campos requeridos');
         return;
       }
 
-      if (status === 'published' && questions.length === 0) {
+      if (status === QuizStatus.PUBLISHED && questions.length === 0) {
         alert('No puedes publicar un quiz sin preguntas');
         return;
       }
@@ -192,16 +201,31 @@ const AdminQuizForm: React.FC = () => {
 
       const quizData: QuizCreate = {
         ...formData,
-        questions: questions.map(({ id, order, ...question }) => question)
+        questions: questions,
+        question_pool: [],
+        question_ids: questions.map(q => q.id).filter(Boolean),
+        config: {
+          shuffle_questions: formData.shuffle_questions || false,
+          shuffle_answers: false,
+          show_correct_answers: formData.show_results || true,
+          allow_review: formData.allow_review || true,
+          time_limit_enabled: !!formData.time_limit_minutes,
+          proctoring_enabled: false,
+          require_webcam: false,
+          prevent_copy_paste: false,
+          randomize_order: false
+        },
+        estimated_duration: formData.time_limit_minutes || 30,
+        status: status
       };
 
       if (isEditing && quizId) {
-        await quizService.updateQuiz(quizId, { status });
+        await quizService.updateQuiz(quizId, { status: status });
       } else {
         const newQuiz = await quizService.createQuiz(quizData);
         // Si se quiere publicar directamente, actualizar el estado
-        if (status === 'published') {
-          await quizService.updateQuiz(newQuiz.id, { status: 'published' });
+        if (status === QuizStatus.PUBLISHED) {
+          await quizService.updateQuiz(newQuiz.id, { status: QuizStatus.PUBLISHED });
         }
       }
 
@@ -532,7 +556,7 @@ const AdminQuizForm: React.FC = () => {
           Cancelar
         </button>
         <button
-          onClick={() => handleSubmit('draft')}
+          onClick={() => handleSubmit(QuizStatus.DRAFT)}
           disabled={loading}
           className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
         >
@@ -540,7 +564,7 @@ const AdminQuizForm: React.FC = () => {
           <span>Guardar Borrador</span>
         </button>
         <button
-          onClick={() => handleSubmit('published')}
+          onClick={() => handleSubmit(QuizStatus.PUBLISHED)}
           disabled={loading || questions.length === 0}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
