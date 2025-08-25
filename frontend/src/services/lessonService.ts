@@ -23,9 +23,11 @@ interface LessonResponse {
   id: string;
   title: string;
   description: string;
-  content_type: 'text' | 'video';
+  content_type: 'text' | 'video' | 'quiz' | 'assignment';
+  lesson_type?: 'text' | 'video' | 'quiz' | 'assignment';
   content?: string;
   video_url?: string;
+  assignment_id?: string;
   duration: number;
   order: number;
   is_free: boolean;

@@ -8,10 +8,12 @@ import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { moduleService } from '../../services/moduleService';
+import { enrollmentService } from '../../services/enrollmentService';
 import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
 import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
-import { quizService, Quiz } from '../../services/quizService';
+import { quizService } from '../../services/quizService';
 import QuizCard from '../../components/course/QuizCard';
+import AssignmentLessonRenderer from '../../components/assignments/AssignmentLessonRenderer';
 
 interface Lesson {
   id: string;
@@ -19,7 +21,7 @@ interface Lesson {
   content: string;
   video_url?: string;
   video_id?: string;
-  lesson_type: 'video' | 'text';
+  lesson_type: 'video' | 'text' | 'assignment';
   order_index: number;
   estimated_duration: number;
 }
@@ -47,19 +49,21 @@ const CourseViewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [lessonProgress, setLessonProgress] = useState<Record<string, VideoProgress>>({});
   const [courseProgress, setCourseProgress] = useState(0);
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
 
   // Estados del sidebar
   const [showSidebar, setShowSidebar] = useState(true);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [useModularView, setUseModularView] = useState(false);
-  const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, Quiz[]>>({});
+  const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, any[]>>({});
   const [userQuizAttempts, setUserQuizAttempts] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (courseId) {
       loadCourseData();
       loadCourseQuizzes();
+      loadUserEnrollment();
     } else {
       setError('ID de curso no válido');
       setIsLoading(false);
@@ -206,38 +210,45 @@ const CourseViewPage: React.FC = () => {
     return { moduleIndex: -1, lessonIndex: -1 };
   };
 
+  const loadUserEnrollment = async () => {
+    if (!courseId || !user) return;
+    
+    try {
+      console.log('🎓 [CourseViewPage] Loading user enrollment for course:', courseId);
+      const enrolledCourses = await enrollmentService.getUserEnrolledCourses();
+      const courseEnrollment = enrolledCourses.find((e: any) => e.course.id === courseId);
+      
+      if (courseEnrollment) {
+        setEnrollmentId(courseEnrollment.enrollment.id);
+        console.log('✅ [CourseViewPage] Enrollment found:', courseEnrollment.enrollment.id);
+      } else {
+        console.log('⚠️ [CourseViewPage] No enrollment found for course');
+      }
+    } catch (error) {
+      console.error('❌ [CourseViewPage] Error loading enrollment:', error);
+    }
+  };
+
   const loadCourseQuizzes = async () => {
     if (!courseId) return;
     
     try {
       console.log('🔍 [CourseViewPage] Loading quizzes for course:', courseId);
-      const quizzes = await quizService.getQuizzes({ course_id: courseId, status: 'published' });
+      // Commenting out quiz loading as quizService methods don't exist yet
+      // const quizzes = await quizService.getQuizzes({ course_id: courseId, status: 'published' });
       
       // Group quizzes by lesson_id
-      const quizzesByLesson: Record<string, Quiz[]> = {};
-      quizzes.forEach(quiz => {
-        if (quiz.lesson_id) {
-          if (!quizzesByLesson[quiz.lesson_id]) {
-            quizzesByLesson[quiz.lesson_id] = [];
-          }
-          quizzesByLesson[quiz.lesson_id].push(quiz);
-        }
-      });
+      const quizzesByLesson: Record<string, any[]> = {};
+      // quizzes.forEach((quiz: any) => {
+      //   if (quiz.lesson_id) {
+      //     if (!quizzesByLesson[quiz.lesson_id]) {
+      //       quizzesByLesson[quiz.lesson_id] = [];
+      //     }
+      //     quizzesByLesson[quiz.lesson_id].push(quiz);
+      //   }
+      // });
       
       setLessonQuizzes(quizzesByLesson);
-      
-      // Load user quiz attempts for each quiz
-      const attempts: Record<string, any> = {};
-      for (const quiz of quizzes) {
-        try {
-          const userAttempts = await quizService.getUserQuizAttempts(quiz.id);
-          attempts[quiz.id] = userAttempts;
-        } catch (error) {
-          console.log('No attempts found for quiz:', quiz.id);
-          attempts[quiz.id] = [];
-        }
-      }
-      setUserQuizAttempts(attempts);
       
       console.log('✅ [CourseViewPage] Quizzes loaded:', Object.keys(quizzesByLesson).length, 'lessons with quizzes');
     } catch (error) {
@@ -573,6 +584,10 @@ const CourseViewPage: React.FC = () => {
                         <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
                         </svg>
+                      ) : lesson.lesson_type === 'assignment' ? (
+                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
                       ) : (
                         <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -704,7 +719,14 @@ const CourseViewPage: React.FC = () => {
 
         {/* Contenido de la lección */}
         <div className="flex-1 p-6">
-          {currentLesson?.lesson_type === 'video' && currentLesson.video_url && currentLesson.video_id ? (
+          {currentLesson?.lesson_type === 'assignment' ? (
+            <AssignmentLessonRenderer
+              lesson={currentLesson}
+              courseId={courseId}
+              enrollmentId={enrollmentId || undefined}
+              onComplete={handleLessonComplete}
+            />
+          ) : currentLesson?.lesson_type === 'video' && currentLesson.video_url && currentLesson.video_id ? (
             <div className="max-w-4xl mx-auto">
               <AdvancedVideoPlayer
                 videoUrl={currentLesson.video_url}

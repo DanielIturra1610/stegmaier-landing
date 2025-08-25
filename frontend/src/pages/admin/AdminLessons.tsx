@@ -10,7 +10,8 @@ import {
   PlayIcon,
   TrashIcon,
   PencilIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 
@@ -264,6 +265,12 @@ const AdminLessons: React.FC = () => {
               {lessons.filter(l => l.content_type === 'text').length}
             </div>
           </div>
+          <div>
+            <div className="text-sm font-medium text-gray-500">Assignments</div>
+            <div className="mt-1 text-3xl font-semibold text-gray-900">
+              {lessons.filter(l => l.lesson_type === 'assignment').length}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -405,6 +412,8 @@ const AdminLessons: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       {lesson.content_type === 'video' ? (
                         <VideoCameraIcon className="h-5 w-5 text-blue-500" />
+                      ) : lesson.lesson_type === 'assignment' || lesson.content_type === 'assignment' ? (
+                        <ClipboardDocumentCheckIcon className="h-5 w-5 text-purple-500" />
                       ) : (
                         <DocumentTextIcon className="h-5 w-5 text-green-500" />
                       )}
@@ -428,14 +437,26 @@ const AdminLessons: React.FC = () => {
                           setShowVideoPlayer(true);
                         }}
                         className="text-blue-600 hover:text-blue-500"
+                        title="Ver video"
                       >
                         <PlayIcon className="h-5 w-5" />
+                      </button>
+                    )}
+                    
+                    {(lesson.lesson_type === 'assignment' || lesson.content_type === 'assignment') && lesson.assignment_id && (
+                      <button
+                        onClick={() => navigate(`/platform/admin/assignments/${lesson.assignment_id}/grading`)}
+                        className="text-purple-600 hover:text-purple-500"
+                        title="Calificar assignment"
+                      >
+                        <ClipboardDocumentCheckIcon className="h-5 w-5" />
                       </button>
                     )}
                     
                     <button
                       onClick={() => {/* Implementar edición */}}
                       className="text-gray-400 hover:text-gray-600"
+                      title="Editar lección"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -443,6 +464,7 @@ const AdminLessons: React.FC = () => {
                     <button
                       onClick={() => handleDeleteLesson(lesson.id)}
                       className="text-red-400 hover:text-red-600"
+                      title="Eliminar lección"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>

@@ -37,6 +37,7 @@ import AdminModules from '../pages/admin/AdminModules';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
+import AdminAssignmentGrading from '../pages/admin/AdminAssignmentGrading';
 import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -99,6 +100,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
+        <Route path="admin/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />
         <Route path="admin/quizzes/:quizId/edit" element={<AdminQuizForm />} />

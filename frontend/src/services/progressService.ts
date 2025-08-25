@@ -596,6 +596,120 @@ class ProgressService {
     return `${minutes}m`;
   }
 
+  // === ASSIGNMENT PROGRESS METHODS ===
+
+  /**
+   * Marcar assignment como iniciado
+   */
+  async startAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/start`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          lesson_id: lessonId,
+          course_id: courseId,
+          enrollment_id: enrollmentId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error starting assignment: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error iniciando assignment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Marcar assignment como completado (cuando se envía submission)
+   */
+  async completeAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, submissionId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}/complete`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          lesson_id: lessonId,
+          course_id: courseId,
+          enrollment_id: enrollmentId,
+          submission_id: submissionId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error completing assignment: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error completando assignment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualizar progreso de assignment
+   */
+  async updateAssignmentProgress(
+    lessonId: string,
+    assignmentId: string,
+    courseId: string,
+    enrollmentId: string,
+    progressData: {
+      progress_percentage: number;
+      time_spent_delta: number;
+      submission_status?: string;
+    }
+  ) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/assignments/${assignmentId}/progress?lesson_id=${lessonId}&course_id=${courseId}&enrollment_id=${enrollmentId}`,
+        {
+          method: 'PUT',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(progressData)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error updating assignment progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error actualizando progreso de assignment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener progreso de assignment
+   */
+  async getAssignmentProgress(lessonId: string, assignmentId: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/assignments/${assignmentId}?lesson_id=${lessonId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      if (response.status === 404) {
+        return null; // No hay progreso guardado aún
+      }
+
+      if (!response.ok) {
+        throw new Error(`Error fetching assignment progress: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error obteniendo progreso de assignment:', error);
+      throw error;
+    }
+  }
+
 }
 
 // Instancia única del servicio
