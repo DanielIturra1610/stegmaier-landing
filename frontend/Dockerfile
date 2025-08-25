@@ -24,9 +24,10 @@ FROM nginx:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
-COPY <<EOF /etc/nginx/conf.d/default.conf
+# Create nginx template
+COPY <<EOF /etc/nginx/conf.d/default.conf.template
 server {
-    listen 80;
+    listen \${PORT};
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
@@ -43,5 +44,15 @@ server {
 }
 EOF
 
+# Create startup script
+COPY <<EOF /docker-entrypoint.sh
+#!/bin/sh
+export PORT=\${PORT:-80}
+envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+nginx -g "daemon off;"
+EOF
+
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-entrypoint.sh"]
