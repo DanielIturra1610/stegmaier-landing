@@ -9,14 +9,20 @@ const API_CACHE_NAME = 'stegmaier-api-cache-v1';
 
 // ✅ Configuración centralizada de API para Service Worker
 const getApiBaseUrl = () => {
-  // En production siempre usar HTTPS
+  // FORZAR HTTPS en todos los casos de producción
   if (self.location.hostname.includes('railway.app') || 
       self.location.hostname.includes('vercel.app') ||
+      self.location.hostname.includes('netlify.app') ||
+      self.location.hostname.includes('github.io') ||
       self.location.protocol === 'https:') {
     return 'https://stegmaier-backend-production.up.railway.app/api/v1';
   }
-  // Solo en desarrollo local usar HTTP
-  return 'http://localhost:8000/api/v1';
+  // Solo en desarrollo local explícito usar HTTP
+  if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8000/api/v1';
+  }
+  // FALLBACK SEGURO: Siempre HTTPS por defecto
+  return 'https://stegmaier-backend-production.up.railway.app/api/v1';
 };
 
 const buildApiUrl = (endpoint) => {

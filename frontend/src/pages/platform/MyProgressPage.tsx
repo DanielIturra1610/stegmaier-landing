@@ -131,10 +131,89 @@ const MyProgressPage: React.FC = () => {
 
       // Usar analyticsService correcto que llama a /my-stats
       const result = await analyticsService.getUserAnalytics();
-      setStats(result.data);
+      
+      // ✅ Validación defensiva de estructura de datos
+      const validatedStats = {
+        period: result.data?.period || {
+          start_date: new Date().toISOString(),
+          end_date: new Date().toISOString(),
+          days: 30
+        },
+        user: result.data?.user || {
+          user_id: user?.id || '',
+          name: user?.full_name || user?.firstName || 'Usuario',
+          joined_date: new Date().toISOString()
+        },
+        learning: result.data?.learning || {
+          courses_enrolled: 0,
+          courses_completed: 0,
+          courses_in_progress: 0,
+          completion_rate: 0,
+          total_watch_time_seconds: 0,
+          total_watch_time_hours: 0,
+          average_session_duration: 0
+        },
+        engagement: result.data?.engagement || {
+          login_streak: 0,
+          total_logins: 0,
+          last_login: new Date().toISOString(),
+          favorite_category: 'General',
+          activity_score: 0,
+          lessons_completed: 0
+        },
+        achievements: result.data?.achievements || {
+          certificates_earned: 0,
+          badges_earned: [],
+          milestones: []
+        },
+        recent_activity: result.data?.recent_activity || []
+      };
+
+      console.log('✅ [MyProgressPage] Validated stats structure:', validatedStats);
+      setStats(validatedStats);
     } catch (err) {
-      console.error('Error fetching user stats:', err);
-      setStatsError('Error cargando tus estadísticas');
+      console.error('❌ [MyProgressPage] Error fetching user stats:', err);
+      
+      // ✅ Fallback con datos por defecto en caso de error
+      const fallbackStats = {
+        period: {
+          start_date: new Date().toISOString(),
+          end_date: new Date().toISOString(),
+          days: 30
+        },
+        user: {
+          user_id: user?.id || '',
+          name: user?.full_name || user?.firstName || 'Usuario',
+          joined_date: new Date().toISOString()
+        },
+        learning: {
+          courses_enrolled: 0,
+          courses_completed: 0,
+          courses_in_progress: 0,
+          completion_rate: 0,
+          total_watch_time_seconds: 0,
+          total_watch_time_hours: 0,
+          average_session_duration: 0
+        },
+        engagement: {
+          login_streak: 0,
+          total_logins: 0,
+          last_login: new Date().toISOString(),
+          favorite_category: 'General',
+          activity_score: 0,
+          lessons_completed: 0
+        },
+        achievements: {
+          certificates_earned: 0,
+          badges_earned: [],
+          milestones: []
+        },
+        recent_activity: []
+      };
+      
+      console.log('🔄 [MyProgressPage] Using fallback stats due to error');
+      setStats(fallbackStats);
+      setStatsError('Error cargando estadísticas. Mostrando datos por defecto.');
     } finally {
       setStatsLoading(false);
     }
@@ -239,10 +318,10 @@ const MyProgressPage: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold mb-1">
-                {getStreakEmoji(stats?.engagement.login_streak || 0)}
+                {getStreakEmoji(stats?.engagement?.login_streak || 0)}
               </div>
               <div className="text-sm text-blue-100">
-                {stats?.engagement.login_streak || 0} días consecutivos
+                {stats?.engagement?.login_streak || 0} días consecutivos
               </div>
             </div>
           </div>
@@ -256,9 +335,9 @@ const MyProgressPage: React.FC = () => {
               currentLevel={currentLevel || 1}
               xpForNextLevel={1000}
               currentLevelXP={totalXP || 0}
-              coursesCompleted={stats?.learning.courses_completed || 0}
-              lessonsCompleted={stats?.engagement.lessons_completed || 0}
-              certificates={stats?.achievements.certificates_earned || 0}
+              coursesCompleted={stats?.learning?.courses_completed || 0}
+              lessonsCompleted={stats?.engagement?.lessons_completed || 0}
+              certificates={stats?.achievements?.certificates_earned || 0}
             />
           </div>
         )}
@@ -267,8 +346,8 @@ const MyProgressPage: React.FC = () => {
         <div className="mb-8">
           <StreakTracker
             studyDates={mockStudyDates}
-            currentStreak={stats?.engagement.login_streak || 0}
-            longestStreak={stats?.engagement.login_streak || 0}
+            currentStreak={stats?.engagement?.login_streak || 0}
+            longestStreak={stats?.engagement?.login_streak || 0}
             weeklyGoal={5}
           />
         </div>
@@ -282,12 +361,12 @@ const MyProgressPage: React.FC = () => {
               <h3 className="text-lg font-semibold">Tasa de Finalización</h3>
             </div>
             <CircularProgress 
-              percentage={stats?.learning.completion_rate || 0} 
+              percentage={stats?.learning?.completion_rate || 0} 
               color="#10B981"
             />
             <div className="mt-4">
               <p className="text-sm text-gray-600">
-                {stats?.learning.courses_completed || 0} de {stats?.learning.courses_enrolled || 0} cursos completados
+                {stats?.learning?.courses_completed || 0} de {stats?.learning?.courses_enrolled || 0} cursos completados
               </p>
             </div>
           </div>
@@ -299,14 +378,14 @@ const MyProgressPage: React.FC = () => {
               <h3 className="text-lg font-semibold">Puntuación de Actividad</h3>
             </div>
             <CircularProgress 
-              percentage={stats?.engagement.activity_score || 0} 
+              percentage={stats?.engagement?.activity_score || 0} 
               color="#F59E0B"
             />
             <div className="mt-4">
-              <p className={`text-sm font-medium ${getActivityScoreColor(stats?.engagement.activity_score || 0)}`}>
-                {(stats?.engagement.activity_score || 0) >= 80 ? 'Muy Activo' :
-                 (stats?.engagement.activity_score || 0) >= 60 ? 'Activo' :
-                 (stats?.engagement.activity_score || 0) >= 40 ? 'Moderado' : 'Poco Activo'}
+              <p className={`text-sm font-medium ${getActivityScoreColor(stats?.engagement?.activity_score || 0)}`}>
+                {(stats?.engagement?.activity_score || 0) >= 80 ? 'Muy Activo' :
+                 (stats?.engagement?.activity_score || 0) >= 60 ? 'Activo' :
+                 (stats?.engagement?.activity_score || 0) >= 40 ? 'Moderado' : 'Poco Activo'}
               </p>
             </div>
           </div>
@@ -318,13 +397,13 @@ const MyProgressPage: React.FC = () => {
               <h3 className="text-lg font-semibold">Tiempo de Estudio</h3>
             </div>
             <div className="text-4xl font-bold text-blue-600 mb-2">
-              {formatTime(stats?.learning.total_watch_time_seconds || 0)}
+              {formatTime(stats?.learning?.total_watch_time_seconds || 0)}
             </div>
             <p className="text-sm text-gray-600">
               Tiempo total invertido
             </p>
             <div className="mt-2 text-xs text-gray-500">
-              Promedio por sesión: {formatTime(stats?.learning.average_session_duration || 0)}
+              Promedio por sesión: {formatTime(stats?.learning?.average_session_duration || 0)}
             </div>
           </div>
         </div>
