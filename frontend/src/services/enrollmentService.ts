@@ -1,37 +1,30 @@
 /**
- * Servicio para gestión de enrollments (inscripciones)
- * Conecta con el backend de enrollments
+ * Servicio para gestión de enrollments (inscripciones) 
+ * ✅ CORREGIDO: URLs centralizadas, sin duplicación /api/v1/api/v1
  */
 import axios from 'axios';
+import { Course } from '../types/course';
 import {
   Enrollment,
-  EnrollmentCreate,
-  EnrollmentUpdate,
   EnrollmentStatus,
-  LessonCompletionUpdate,
   EnrollmentProgressResponse,
   EnrolledCourse,
   EnrollmentStats,
-  EnrollmentsResponse,
   CourseEnrollmentStatus
 } from '../types/enrollment';
+import { API_CONFIG, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 
-const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Tipos para requests internos
+interface EnrollmentCreate {
+  course_id: string;
+}
+
+interface LessonCompletionUpdate {
+  lesson_id: string;
+  completed: boolean;
+}
 
 class EnrollmentService {
-  /**
-   * Obtiene headers de autenticación
-   */
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    };
-  }
-
   /**
    * Inscribirse en un curso
    */
@@ -44,9 +37,9 @@ class EnrollmentService {
       };
 
       const response = await axios.post<Enrollment>(
-        `${API_BASE_URL}/api/v1/enrollments/`,
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/`,
         enrollmentData,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
 
       console.log('✅ [enrollmentService] Successfully enrolled:', response.data);
@@ -69,11 +62,11 @@ class EnrollmentService {
         params.status = status;
       }
 
-      // Obtener enrollments del usuario
+      // Obtener enrollments del usuario - ✅ CORREGIDO: Sin duplicación API path
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/enrollments/`,
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/`,
         { 
-          headers: this.getAuthHeaders(),
+          headers: getAuthHeaders(),
           params 
         }
       );
@@ -85,10 +78,10 @@ class EnrollmentService {
       const enrolledCourses = await Promise.all(
         enrollments.map(async (enrollment: any) => {
           try {
-            // Obtener información del curso
+            // ✅ CORREGIDO: URL correcta sin duplicación
             const courseResponse = await axios.get(
-              `${API_BASE_URL}/api/v1/courses/${enrollment.course_id}`,
-              { headers: this.getAuthHeaders() }
+              `${API_CONFIG.BASE_URL}${API_ENDPOINTS.COURSES}/${enrollment.course_id}`,
+              { headers: getAuthHeaders() }
             );
             
             return {
@@ -118,13 +111,13 @@ class EnrollmentService {
                 last_accessed: enrollment.last_accessed,
                 certificate_issued: enrollment.certificate_issued,
                 certificate_url: enrollment.certificate_url,
-                user_role: enrollment.user_role || 'student', // Default fallback
-                enrolled_at: enrollment.enrollment_date // alias
+                user_role: enrollment.user_role || 'student',
+                enrolled_at: enrollment.enrollment_date
               }
             };
           } catch (error) {
             console.error(`Error fetching course ${enrollment.course_id}:`, error);
-            // En caso de error, crear un curso mínimo con información disponible
+            // Fallback para cursos no disponibles
             return {
               course: {
                 id: enrollment.course_id,
@@ -151,7 +144,7 @@ class EnrollmentService {
                 last_accessed: enrollment.last_accessed,
                 certificate_issued: enrollment.certificate_issued,
                 certificate_url: enrollment.certificate_url,
-                user_role: enrollment.user_role || 'student', // Default fallback
+                user_role: enrollment.user_role || 'student',
                 enrolled_at: enrollment.enrollment_date
               }
             };
@@ -174,17 +167,14 @@ class EnrollmentService {
     try {
       console.log('🔍 [enrollmentService] Checking enrollment status for course:', courseId);
       
-      // Obtener todas las inscripciones del usuario
       const enrollments = await this.getUserEnrolledCourses();
-      
-      // Buscar si está inscrito en este curso
       const enrolledCourse = enrollments.find(e => e.course.id === courseId);
       
       const status: CourseEnrollmentStatus = {
         course_id: courseId,
         is_enrolled: !!enrolledCourse,
         enrollment: enrolledCourse?.enrollment,
-        can_enroll: !enrolledCourse, // Si no está inscrito, puede inscribirse
+        can_enroll: !enrolledCourse,
         enrollment_restrictions: enrolledCourse ? ['Ya está inscrito en este curso'] : []
       };
 
@@ -192,7 +182,6 @@ class EnrollmentService {
       return status;
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error checking enrollment status:', error);
-      // En caso de error, asumir que puede inscribirse
       return {
         course_id: courseId,
         is_enrolled: false,
@@ -203,20 +192,20 @@ class EnrollmentService {
   }
 
   /**
-   * Desinscribirse de un curso (cancelar enrollment)
+   * Desinscribirse de un curso
    */
   async unenrollFromCourse(courseId: string): Promise<void> {
     try {
-      console.log(' [enrollmentService] Unenrolling from course:', courseId);
+      console.log('🔄 [enrollmentService] Unenrolling from course:', courseId);
       
       await axios.delete(
-        `${API_BASE_URL}/api/v1/enrollments/${courseId}/`,
-        { headers: this.getAuthHeaders() }
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${courseId}/`,
+        { headers: getAuthHeaders() }
       );
 
-      console.log(' [enrollmentService] Successfully unenrolled from course');
+      console.log('✅ [enrollmentService] Successfully unenrolled from course');
     } catch (error: any) {
-      console.error(' [enrollmentService] Error unenrolling from course:', error);
+      console.error('❌ [enrollmentService] Error unenrolling from course:', error);
       throw new Error(error.response?.data?.detail || 'Error al desinscribirse del curso');
     }
   }
@@ -229,8 +218,8 @@ class EnrollmentService {
       console.log('📊 [enrollmentService] Getting enrollment progress:', enrollmentId);
       
       const response = await axios.get<EnrollmentProgressResponse>(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/progress/`,
-        { headers: this.getAuthHeaders() }
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/progress/`,
+        { headers: getAuthHeaders() }
       );
 
       console.log('✅ [enrollmentService] Retrieved enrollment progress:', response.data);
@@ -254,12 +243,12 @@ class EnrollmentService {
       };
 
       await axios.put(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/complete-lesson/`,
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/complete-lesson/`,
         completionData,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
 
-      console.log('✅ [enrollmentService] Successfully marked lesson as completed');
+      console.log('✅ [enrollmentService] Lesson marked as completed');
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error marking lesson as completed:', error);
       throw new Error(error.response?.data?.detail || 'Error al marcar lección como completada');
@@ -267,19 +256,19 @@ class EnrollmentService {
   }
 
   /**
-   * Emitir certificado de finalización
+   * Emitir certificado para curso completado
    */
   async issueCertificate(enrollmentId: string): Promise<void> {
     try {
       console.log('🏆 [enrollmentService] Issuing certificate for enrollment:', enrollmentId);
       
       await axios.put(
-        `${API_BASE_URL}/api/v1/enrollments/${enrollmentId}/issue-certificate/`,
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/issue-certificate/`,
         {},
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
 
-      console.log('✅ [enrollmentService] Successfully issued certificate');
+      console.log('✅ [enrollmentService] Certificate issued successfully');
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error issuing certificate:', error);
       throw new Error(error.response?.data?.detail || 'Error al emitir certificado');
@@ -287,31 +276,31 @@ class EnrollmentService {
   }
 
   /**
-   * Obtener estadísticas de enrollments de un curso (solo para instructores/admins)
+   * Obtener estadísticas de inscripciones de un curso (para admins/instructores)
    */
   async getCourseEnrollmentStats(courseId: string): Promise<EnrollmentStats> {
     try {
       console.log('📈 [enrollmentService] Getting course enrollment stats:', courseId);
       
       const response = await axios.get<EnrollmentStats>(
-        `${API_BASE_URL}/api/v1/enrollments/course/${courseId}/stats`,
-        { headers: this.getAuthHeaders() }
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}/stats`,
+        { headers: getAuthHeaders() }
       );
 
-      console.log('✅ [enrollmentService] Retrieved course enrollment stats:', response.data);
+      console.log('✅ [enrollmentService] Retrieved enrollment stats:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ [enrollmentService] Error getting course enrollment stats:', error);
+      console.error('❌ [enrollmentService] Error getting enrollment stats:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener estadísticas de inscripciones');
     }
   }
 
   /**
-   * Obtener todos los enrollments de un curso (solo para instructores/admins)
+   * Obtener todos los enrollments de un curso (para admins/instructores)
    */
   async getCourseEnrollments(courseId: string, status?: EnrollmentStatus): Promise<Enrollment[]> {
     try {
-      console.log('👥 [enrollmentService] Getting course enrollments:', courseId);
+      console.log('👥 [enrollmentService] Getting course enrollments:', { courseId, status });
       
       const params: any = {};
       if (status) {
@@ -319,54 +308,22 @@ class EnrollmentService {
       }
 
       const response = await axios.get<Enrollment[]>(
-        `${API_BASE_URL}/api/v1/enrollments/course/${courseId}`,
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}`,
         { 
-          headers: this.getAuthHeaders(),
+          headers: getAuthHeaders(),
           params 
         }
       );
 
-      // Ensure each enrollment has user_role field with default fallback
-      const enrollmentsWithRole = response.data.map(enrollment => ({
-        ...enrollment,
-        user_role: enrollment.user_role || 'student' // Default to 'student' if not provided
-      }));
-
-      console.log('✅ [enrollmentService] Retrieved course enrollments:', enrollmentsWithRole.length);
-      return enrollmentsWithRole;
+      console.log('✅ [enrollmentService] Retrieved course enrollments:', response.data.length);
+      return response.data;
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error getting course enrollments:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener inscripciones del curso');
     }
   }
-
-  /**
-   * Verificar si el usuario puede inscribirse en un curso
-   */
-  async canEnrollInCourse(courseId: string): Promise<boolean> {
-    try {
-      const status = await this.getEnrollmentStatus(courseId);
-      return status.can_enroll;
-    } catch (error) {
-      console.error('❌ [enrollmentService] Error checking if can enroll:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Obtener el enrollment específico de un usuario en un curso
-   */
-  async getUserCourseEnrollment(courseId: string): Promise<Enrollment | null> {
-    try {
-      const status = await this.getEnrollmentStatus(courseId);
-      return status.enrollment || null;
-    } catch (error) {
-      console.error('❌ [enrollmentService] Error getting user course enrollment:', error);
-      return null;
-    }
-  }
 }
 
-// Exportar instancia singleton
-export const enrollmentService = new EnrollmentService();
+// Export singleton instance
+const enrollmentService = new EnrollmentService();
 export default enrollmentService;

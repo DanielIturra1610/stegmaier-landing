@@ -1,5 +1,6 @@
 /**
  * Quiz Service - Frontend service for quiz management
+ * ✅ CORREGIDO: URLs centralizadas, sin URLs relativas
  */
 import axios from 'axios';
 import {
@@ -7,282 +8,298 @@ import {
   QuizCreate, QuizUpdate, QuizConfiguration, QuizStatistics, StudentQuizProgress,
   QuestionType, QuizStatus, AttemptStatus
 } from '../types/quiz';
-
+import { API_CONFIG, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 
 class QuizService {
-  private baseURL = '/api/v1/quizzes';
-
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
-  }
-
   // Quiz Management (Admin/Instructor)
   async createQuiz(quizData: QuizCreate): Promise<Quiz> {
     try {
-      const response = await axios.post(this.baseURL, quizData, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📝 [quizService] Creating quiz:', quizData.title);
+      
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}`,
+        quizData,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz created:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error creating quiz:', error);
       throw new Error(error.response?.data?.detail || 'Failed to create quiz');
     }
   }
 
   async getQuizzes(filters?: any): Promise<QuizListItem[]> {
     try {
-      const response = await axios.get(this.baseURL, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📚 [quizService] Getting quizzes');
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved quizzes:', response.data.length);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error fetching quizzes:', error);
       throw new Error(error.response?.data?.detail || 'Failed to fetch quizzes');
     }
   }
 
   async getQuizzesByCourse(courseId: string, publishedOnly: boolean = true): Promise<QuizListItem[]> {
     try {
-      const response = await axios.get(`${this.baseURL}/course/${courseId}?published_only=${publishedOnly}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📚 [quizService] Getting quizzes by course:', { courseId, publishedOnly });
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/course/${courseId}?published_only=${publishedOnly}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved course quizzes:', response.data.length);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quizzes');
+      console.error('❌ [quizService] Error fetching course quizzes:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to fetch course quizzes');
     }
   }
 
   async getQuiz(quizId: string): Promise<Quiz> {
     try {
-      const response = await axios.get(`${this.baseURL}/${quizId}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📝 [quizService] Getting quiz:', quizId);
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved quiz:', response.data.title);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error fetching quiz:', error);
       throw new Error(error.response?.data?.detail || 'Failed to fetch quiz');
     }
   }
 
-  async updateQuiz(quizId: string, quizData: QuizUpdate): Promise<Quiz> {
+  async updateQuiz(quizId: string, updateData: QuizUpdate): Promise<Quiz> {
     try {
-      const response = await axios.put(`${this.baseURL}/${quizId}`, quizData, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📝 [quizService] Updating quiz:', quizId);
+      
+      const response = await axios.put(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        updateData,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz updated:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error updating quiz:', error);
       throw new Error(error.response?.data?.detail || 'Failed to update quiz');
     }
   }
 
   async deleteQuiz(quizId: string): Promise<void> {
     try {
-      await axios.delete(`${this.baseURL}/${quizId}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('🗑️ [quizService] Deleting quiz:', quizId);
+      
+      await axios.delete(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz deleted successfully');
     } catch (error: any) {
+      console.error('❌ [quizService] Error deleting quiz:', error);
       throw new Error(error.response?.data?.detail || 'Failed to delete quiz');
     }
   }
 
-  // Helper methods
-  formatTimeLimit(minutes: number): string {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  }
-
-  // Question Management
-  async createQuestion(questionData: any): Promise<Question> {
+  async publishQuiz(quizId: string): Promise<Quiz> {
     try {
-      const response = await axios.post(`${this.baseURL}/questions`, questionData, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📢 [quizService] Publishing quiz:', quizId);
+      
+      const response = await axios.put(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/publish`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz published:', response.data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to create question');
+      console.error('❌ [quizService] Error publishing quiz:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to publish quiz');
     }
   }
 
-  async addQuestionToQuiz(quizId: string, questionId: string): Promise<void> {
-    try {
-      await axios.post(`${this.baseURL}/${quizId}/questions/${questionId}`, {}, {
-        headers: this.getAuthHeaders()
-      });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to add question to quiz');
-    }
-  }
-
-  // Quiz Taking (Students)
+  // Student Quiz Taking
   async startQuizAttempt(quizId: string): Promise<QuizAttempt> {
     try {
-      const response = await axios.post(`${this.baseURL}/${quizId}/attempts`, {}, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('🚀 [quizService] Starting quiz attempt:', quizId);
+      
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/attempts`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz attempt started:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error starting quiz attempt:', error);
       throw new Error(error.response?.data?.detail || 'Failed to start quiz attempt');
     }
   }
 
-  async submitAnswer(attemptId: string, answerData: StudentAnswer): Promise<void> {
+  async submitQuizAnswer(attemptId: string, answers: StudentAnswer[]): Promise<QuizAttempt> {
     try {
-      await axios.put(`${this.baseURL}/attempts/${attemptId}/answers`, answerData, {
-        headers: this.getAuthHeaders()
-      });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to submit answer');
-    }
-  }
-
-  async submitQuizAttempt(attemptId: string): Promise<QuizAttempt> {
-    try {
-      const response = await axios.post(`${this.baseURL}/attempts/${attemptId}/submit`, {}, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📤 [quizService] Submitting quiz answers:', { attemptId, answersCount: answers.length });
+      
+      const response = await axios.post(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}/submit`,
+        { answers },
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Quiz answers submitted:', response.data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to submit quiz');
+      console.error('❌ [quizService] Error submitting quiz answers:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to submit quiz answers');
     }
   }
 
   async getQuizAttempt(attemptId: string): Promise<QuizAttempt> {
     try {
-      const response = await axios.get(`${this.baseURL}/attempts/${attemptId}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📊 [quizService] Getting quiz attempt:', attemptId);
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved quiz attempt:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error fetching quiz attempt:', error);
       throw new Error(error.response?.data?.detail || 'Failed to fetch quiz attempt');
     }
   }
 
-  async getStudentQuizProgress(studentId: string, courseId: string): Promise<StudentQuizProgress> {
+  async getStudentQuizProgress(quizId: string): Promise<StudentQuizProgress> {
     try {
-      const response = await axios.get(`${this.baseURL}/student/${studentId}/progress?course_id=${courseId}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📈 [quizService] Getting student quiz progress:', quizId);
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/progress`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved quiz progress:', response.data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Failed to fetch student progress');
+      console.error('❌ [quizService] Error fetching quiz progress:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz progress');
     }
   }
 
-  // Statistics (Admin/Instructor)
   async getQuizStatistics(quizId: string): Promise<QuizStatistics> {
     try {
-      const response = await axios.get(`${this.baseURL}/admin/statistics/${quizId}`, {
-        headers: this.getAuthHeaders()
-      });
+      console.log('📊 [quizService] Getting quiz statistics:', quizId);
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/statistics`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved quiz statistics:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('❌ [quizService] Error fetching quiz statistics:', error);
       throw new Error(error.response?.data?.detail || 'Failed to fetch quiz statistics');
     }
   }
 
-  // Utility methods
-  formatTimeRemaining(seconds: number): string {
-    if (seconds <= 0) return '00:00';
-    
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  async getStudentAttempts(quizId: string): Promise<QuizAttempt[]> {
+    try {
+      console.log('📚 [quizService] Getting student attempts for quiz:', quizId);
+      
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/my-attempts`,
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('✅ [quizService] Retrieved student attempts:', response.data.length);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [quizService] Error fetching student attempts:', error);
+      throw new Error(error.response?.data?.detail || 'Failed to fetch student attempts');
     }
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
-  formatDuration(minutes?: number): string {
-    if (!minutes) return 'Sin límite de tiempo';
-    if (minutes < 60) return `${minutes} min`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  // Utility methods
+  calculateScore(answers: StudentAnswer[], questions: Question[]): number {
+    let correctAnswers = 0;
+    
+    answers.forEach(answer => {
+      const question = questions.find(q => q.id === answer.question_id);
+      if (!question) return;
+
+      switch (question.type) {
+        case 'multiple_choice':
+        case 'true_false':
+          // Para multiple choice, answer es un string con la opción seleccionada
+          if (question.correct_answers.includes(answer.answer)) {
+            correctAnswers++;
+          }
+          break;
+        case 'multiple_select':
+          const correctOptions = question.correct_answers || [];
+          const selectedOptions = Array.isArray(answer.answer) ? answer.answer : [answer.answer];
+          if (this.arraysEqual(correctOptions.sort(), selectedOptions.sort())) {
+            correctAnswers++;
+          }
+          break;
+        // Para short_answer y essay, la calificación debe ser manual
+        default:
+          break;
+      }
+    });
+
+    return questions.length > 0 ? (correctAnswers / questions.length) * 100 : 0;
+  }
+
+  private arraysEqual(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every(val => b.includes(val));
   }
 
   getQuestionTypeLabel(type: QuestionType): string {
-    const labels: Record<QuestionType, string> = {
-      [QuestionType.MULTIPLE_CHOICE]: 'Opción múltiple',
-      [QuestionType.MULTIPLE_SELECT]: 'Selección múltiple',
-      [QuestionType.TRUE_FALSE]: 'Verdadero/Falso',
-      [QuestionType.FILL_IN_BLANK]: 'Completar espacios',
-      [QuestionType.ESSAY]: 'Ensayo',
-      [QuestionType.ORDERING]: 'Ordenar elementos',
-      [QuestionType.MATCHING]: 'Emparejar'
+    const labels = {
+      'multiple_choice': 'Opción Múltiple',
+      'true_false': 'Verdadero/Falso', 
+      'short_answer': 'Respuesta Corta',
+      'essay': 'Ensayo',
+      'multiple_select': 'Selección Múltiple',
+      'matching': 'Emparejamiento'
     };
     return labels[type] || type;
   }
 
-  getStatusLabel(status: QuizStatus | AttemptStatus | string): string {
-    const labels: Record<string, string> = {
-      [QuizStatus.DRAFT]: 'Borrador',
-      [QuizStatus.PUBLISHED]: 'Publicado',
-      [QuizStatus.ARCHIVED]: 'Archivado',
-      [AttemptStatus.IN_PROGRESS]: 'En progreso',
-      [AttemptStatus.COMPLETED]: 'Completado',
-      [AttemptStatus.SUBMITTED]: 'Enviado',
-      [AttemptStatus.GRADED]: 'Calificado',
-      [AttemptStatus.EXPIRED]: 'Expirado'
+  getStatusLabel(status: QuizStatus | AttemptStatus): string {
+    const labels = {
+      'draft': 'Borrador',
+      'published': 'Publicado',
+      'archived': 'Archivado',
+      'in_progress': 'En Progreso',
+      'completed': 'Completado',
+      'graded': 'Calificado',
+      'expired': 'Expirado'
     };
-    return labels[status] || status;
-  }
-
-  getStatusColor(status: QuizStatus | AttemptStatus | string): string {
-    const colors: Record<string, string> = {
-      [QuizStatus.DRAFT]: 'yellow',
-      [QuizStatus.PUBLISHED]: 'green',
-      [QuizStatus.ARCHIVED]: 'gray',
-      [AttemptStatus.IN_PROGRESS]: 'blue',
-      [AttemptStatus.COMPLETED]: 'green',
-      [AttemptStatus.SUBMITTED]: 'green',
-      [AttemptStatus.GRADED]: 'green',
-      [AttemptStatus.EXPIRED]: 'red'
-    };
-    return colors[status] || 'gray';
-  }
-
-  validateAnswer(question: Question, answer: any): { isValid: boolean; message?: string } {
-    if (!answer && answer !== 0 && answer !== false) {
-      return { isValid: false, message: 'Esta pregunta es obligatoria' };
-    }
-
-    switch (question.type) {
-      case QuestionType.MULTIPLE_CHOICE:
-      case QuestionType.TRUE_FALSE:
-        if (typeof answer !== 'string') {
-          return { isValid: false, message: 'Selecciona una opción válida' };
-        }
-        break;
-      
-      case QuestionType.FILL_IN_BLANK:
-        if (typeof answer !== 'string' || answer.trim().length === 0) {
-          return { isValid: false, message: 'Completa el campo de texto' };
-        }
-        break;
-      
-      case QuestionType.ORDERING:
-        if (!Array.isArray(answer) || answer.length === 0) {
-          return { isValid: false, message: 'Ordena todos los elementos' };
-        }
-        break;
-      
-      case QuestionType.MATCHING:
-        if (typeof answer !== 'object' || Object.keys(answer).length === 0) {
-          return { isValid: false, message: 'Completa todos los emparejamientos' };
-        }
-        break;
-    }
-
-    return { isValid: true };
+    return labels[status as keyof typeof labels] || status;
   }
 }
 
-export const quizService = new QuizService();
+// Export singleton instance
+const quizService = new QuizService();
 export default quizService;

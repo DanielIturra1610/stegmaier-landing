@@ -1,8 +1,9 @@
 /**
- * Servicio para gestión de archivos multimedia
+ * Media Service - Frontend service for multimedia file management
+ * ✅ CORREGIDO: URLs centralizadas, headers centralizados, sin URLs relativas
  */
 import axios from 'axios';
-import { authService } from './auth.service';
+import { API_CONFIG, API_ENDPOINTS, buildApiUrl, getAuthHeaders } from '../config/api.config';
 
 export interface VideoInfo {
   id: string;
@@ -35,7 +36,6 @@ export interface UploadProgress {
 }
 
 class MediaService {
-  private baseURL = '/api/v1/media';
 
   /**
    * Subir archivo de video con progress tracking
@@ -54,11 +54,16 @@ class MediaService {
     }
 
     try {
-      const response = await axios.post(`${this.baseURL}/upload/video`, formData, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Content-Type': 'multipart/form-data',
-        },
+      console.log('📹 [mediaService] Uploading video:', title);
+      
+      const response = await axios.post(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/upload/video`),
+        formData,
+        {
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+          },
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const loaded = progressEvent.loaded;
@@ -69,9 +74,10 @@ class MediaService {
         },
       });
 
+      console.log('✅ [mediaService] Video uploaded successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('Error uploading video:', error);
+      console.error('❌ [mediaService] Error uploading video:', error);
       throw new Error(error.response?.data?.detail || 'Error al subir video');
     }
   }
@@ -89,11 +95,16 @@ class MediaService {
     formData.append('purpose', purpose);
 
     try {
-      const response = await axios.post(`${this.baseURL}/upload/image`, formData, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-          'Content-Type': 'multipart/form-data',
-        },
+      console.log('🖼️ [mediaService] Uploading image with purpose:', purpose);
+      
+      const response = await axios.post(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/upload/image`),
+        formData,
+        {
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+          },
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
             const loaded = progressEvent.loaded;
@@ -104,9 +115,10 @@ class MediaService {
         },
       });
 
+      console.log('✅ [mediaService] Image uploaded successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('Error uploading image:', error);
+      console.error('❌ [mediaService] Error uploading image:', error);
       throw new Error(error.response?.data?.detail || 'Error al subir imagen');
     }
   }
@@ -116,15 +128,17 @@ class MediaService {
    */
   async getVideoInfo(videoId: string): Promise<VideoInfo> {
     try {
-      const response = await axios.get(`${this.baseURL}/video/${videoId}/info`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
-      });
+      console.log('📹 [mediaService] Getting video info:', videoId);
+      
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}/info`),
+        { headers: getAuthHeaders() }
+      );
 
+      console.log('✅ [mediaService] Video info retrieved:', response.data.title);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting video info:', error);
+      console.error('❌ [mediaService] Error getting video info:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener información del video');
     }
   }
@@ -134,15 +148,17 @@ class MediaService {
    */
   async getImageInfo(imageId: string): Promise<ImageInfo> {
     try {
-      const response = await axios.get(`${this.baseURL}/image/${imageId}/info`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
-      });
+      console.log('🖼️ [mediaService] Getting image info:', imageId);
+      
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}/info`),
+        { headers: getAuthHeaders() }
+      );
 
+      console.log('✅ [mediaService] Image info retrieved:', response.data.purpose);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting image info:', error);
+      console.error('❌ [mediaService] Error getting image info:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener información de la imagen');
     }
   }
@@ -151,14 +167,20 @@ class MediaService {
    * Obtener URL de streaming de video
    */
   getVideoStreamUrl(videoId: string): string {
-    return `${this.baseURL}/video/${videoId}/stream?token=${authService.getToken()}`;
+    const token = localStorage.getItem('auth_token');
+    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}/stream?token=${token}`);
+    console.log('🎥 [mediaService] Generated video stream URL for:', videoId);
+    return url;
   }
 
   /**
    * Obtener URL de imagen
    */
   getImageUrl(imageId: string): string {
-    return `${this.baseURL}/image/${imageId}?token=${authService.getToken()}`;
+    const token = localStorage.getItem('auth_token');
+    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}?token=${token}`);
+    console.log('🖼️ [mediaService] Generated image URL for:', imageId);
+    return url;
   }
 
   /**
@@ -166,15 +188,17 @@ class MediaService {
    */
   async deleteVideo(videoId: string): Promise<{ message: string }> {
     try {
-      const response = await axios.delete(`${this.baseURL}/video/${videoId}`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
-      });
+      console.log('🗑️ [mediaService] Deleting video:', videoId);
+      
+      const response = await axios.delete(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}`),
+        { headers: getAuthHeaders() }
+      );
 
+      console.log('✅ [mediaService] Video deleted successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error deleting video:', error);
+      console.error('❌ [mediaService] Error deleting video:', error);
       throw new Error(error.response?.data?.detail || 'Error al eliminar video');
     }
   }
@@ -184,15 +208,17 @@ class MediaService {
    */
   async deleteImage(imageId: string): Promise<{ message: string }> {
     try {
-      const response = await axios.delete(`${this.baseURL}/image/${imageId}`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
-      });
+      console.log('🗑️ [mediaService] Deleting image:', imageId);
+      
+      const response = await axios.delete(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}`),
+        { headers: getAuthHeaders() }
+      );
 
+      console.log('✅ [mediaService] Image deleted successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error deleting image:', error);
+      console.error('❌ [mediaService] Error deleting image:', error);
       throw new Error(error.response?.data?.detail || 'Error al eliminar imagen');
     }
   }
@@ -202,15 +228,17 @@ class MediaService {
    */
   async listVideos(): Promise<VideoInfo[]> {
     try {
-      const response = await axios.get(`${this.baseURL}/videos`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`,
-        },
-      });
+      console.log('📚 [mediaService] Listing videos');
+      
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/videos`),
+        { headers: getAuthHeaders() }
+      );
 
+      console.log('✅ [mediaService] Videos listed:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error listing videos:', error);
+      console.error('❌ [mediaService] Error listing videos:', error);
       throw new Error(error.response?.data?.detail || 'Error al listar videos');
     }
   }

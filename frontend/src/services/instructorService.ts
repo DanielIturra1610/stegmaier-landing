@@ -1,4 +1,9 @@
-import api from './api';
+/**
+ * Instructor Service - Frontend service for instructor functionality
+ * ✅ CORREGIDO: URLs centralizadas, headers centralizados, sin URLs relativas
+ */
+import axios from 'axios';
+import { API_CONFIG, API_ENDPOINTS, buildApiUrl, getAuthHeaders } from '../config/api.config';
 
 export interface DashboardStats {
   totalCourses: number;
@@ -51,15 +56,18 @@ export interface StudentProgress {
 }
 
 class InstructorService {
-  private baseUrl = '/api/v1/instructor';
-
   // Dashboard methods
   async getDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await api.get(`${this.baseUrl}/dashboard/stats`);
+      console.log(' [instructorService] Getting dashboard stats');
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/dashboard/stats`),
+        { headers: getAuthHeaders() }
+      );
+      console.log(' [instructorService] Dashboard stats retrieved');
       return response.data;
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error(' [instructorService] Error fetching dashboard stats:', error);
       // Return mock data for development
       return {
         totalCourses: 5,
@@ -74,10 +82,15 @@ class InstructorService {
 
   async getRecentActivity(limit: number = 10): Promise<RecentActivity[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/dashboard/activity?limit=${limit}`);
+      console.log(' [instructorService] Getting recent activity, limit:', limit);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/dashboard/activity?limit=${limit}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log(' [instructorService] Recent activity retrieved:', response.data.length);
       return response.data;
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      console.error(' [instructorService] Error fetching recent activity:', error);
       // Return mock data for development
       return [
         {
@@ -111,10 +124,15 @@ class InstructorService {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.status) queryParams.append('status', params.status);
 
-      const response = await api.get(`${this.baseUrl}/courses?${queryParams}`);
+      console.log(' [instructorService] Getting my courses with params:', params);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/courses?${queryParams}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log(' [instructorService] My courses retrieved:', response.data.total);
       return response.data;
     } catch (error) {
-      console.error('Error fetching instructor courses:', error);
+      console.error(' [instructorService] Error fetching instructor courses:', error);
       throw error;
     }
   }
@@ -135,10 +153,15 @@ class InstructorService {
       if (params?.sort) queryParams.append('sort', params.sort);
       if (params?.order) queryParams.append('order', params.order);
 
-      const response = await api.get(`${this.baseUrl}/courses/${courseId}/students?${queryParams}`);
+      console.log(' [instructorService] Getting students for course:', courseId);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/courses/${courseId}/students?${queryParams}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log(' [instructorService] Course students retrieved:', response.data.total);
       return response.data;
     } catch (error) {
-      console.error('Error fetching course students:', error);
+      console.error(' [instructorService] Error fetching course students:', error);
       throw error;
     }
   }
@@ -154,20 +177,37 @@ class InstructorService {
       if (params?.limit) queryParams.append('limit', params.limit.toString());
       if (params?.search) queryParams.append('search', params.search);
 
-      const response = await api.get(`${this.baseUrl}/students?${queryParams}`);
+      console.log(' [instructorService] Getting all my students with params:', params);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/students?${queryParams}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log(' [instructorService] All students retrieved:', response.data.total);
       return response.data;
     } catch (error) {
-      console.error('Error fetching all students:', error);
+      console.error(' [instructorService] Error fetching all students:', error);
       throw error;
     }
   }
 
   async publishCourse(courseId: string): Promise<void> {
-    await api.post(`${this.baseUrl}/courses/${courseId}/publish`);
+    console.log(' [instructorService] Publishing course:', courseId);
+    await axios.post(
+      buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/courses/${courseId}/publish`),
+      {},
+      { headers: getAuthHeaders() }
+    );
+    console.log(' [instructorService] Course published successfully');
   }
 
   async unpublishCourse(courseId: string): Promise<void> {
-    await api.post(`${this.baseUrl}/courses/${courseId}/unpublish`);
+    console.log(' [instructorService] Unpublishing course:', courseId);
+    await axios.post(
+      buildApiUrl(`${API_ENDPOINTS.INSTRUCTOR}/courses/${courseId}/unpublish`),
+      {},
+      { headers: getAuthHeaders() }
+    );
+    console.log(' [instructorService] Course unpublished successfully');
   }
 }
 

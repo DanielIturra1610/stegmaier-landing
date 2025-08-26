@@ -1,9 +1,9 @@
 /**
- * Servicio para gestión de assignments
- * Reutiliza patrones del mediaService existente
+ * Assignment Service - Frontend service for assignment management
+ * ✅ CORREGIDO: URLs centralizadas, headers centralizados, sin URLs relativas
  */
 import axios from 'axios';
-import { authService } from './auth.service';
+import { API_CONFIG, API_ENDPOINTS, buildApiUrl, getAuthHeaders } from '../config/api.config';
 import {
   Assignment,
   AssignmentSubmission,
@@ -22,21 +22,9 @@ import {
 } from '../types/assignment';
 
 class AssignmentService {
-  private baseURL = '/api/v1/assignments';
-
-  // Configuración de axios con interceptors
-  private getAuthHeaders() {
-    const token = authService.getToken();
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  }
-
   private getMultipartHeaders() {
-    const token = authService.getToken();
     return {
-      'Authorization': `Bearer ${token}`,
+      ...getAuthHeaders(),
       'Content-Type': 'multipart/form-data'
     };
   }
@@ -48,13 +36,15 @@ class AssignmentService {
    */
   async getCourseAssignments(courseId: string): Promise<Assignment[]> {
     try {
+      console.log('📚 [assignmentService] Getting course assignments for:', courseId);
       const response = await axios.get(
-        `${this.baseURL}/course/${courseId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/course/${courseId}`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Course assignments retrieved:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting course assignments:', error);
+      console.error('❌ [assignmentService] Error getting course assignments:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener assignments del curso');
     }
   }
@@ -64,13 +54,15 @@ class AssignmentService {
    */
   async getUserAssignments(): Promise<Assignment[]> {
     try {
+      console.log('👤 [assignmentService] Getting user assignments');
       const response = await axios.get(
-        `${this.baseURL}/user/assignments`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/user/assignments`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] User assignments retrieved:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting user assignments:', error);
+      console.error('❌ [assignmentService] Error getting user assignments:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener assignments del usuario');
     }
   }
@@ -80,13 +72,15 @@ class AssignmentService {
    */
   async getUserSubmissions(): Promise<AssignmentSubmission[]> {
     try {
+      console.log('📝 [assignmentService] Getting user submissions');
       const response = await axios.get(
-        `${this.baseURL}/user/submissions`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/user/submissions`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] User submissions retrieved:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting user submissions:', error);
+      console.error('❌ [assignmentService] Error getting user submissions:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener submissions del usuario');
     }
   }
@@ -96,13 +90,15 @@ class AssignmentService {
    */
   async getAssignment(assignmentId: string): Promise<Assignment> {
     try {
+      console.log('📋 [assignmentService] Getting assignment:', assignmentId);
       const response = await axios.get(
-        `${this.baseURL}/${assignmentId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment retrieved:', response.data.title);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting assignment:', error);
+      console.error('❌ [assignmentService] Error getting assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener assignment');
     }
   }
@@ -112,14 +108,16 @@ class AssignmentService {
    */
   async createAssignment(data: AssignmentCreateDTO): Promise<Assignment> {
     try {
+      console.log('➕ [assignmentService] Creating assignment:', data.title);
       const response = await axios.post(
-        this.baseURL,
+        buildApiUrl(API_ENDPOINTS.ASSIGNMENTS),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment created:', response.data.id);
       return response.data;
     } catch (error: any) {
-      console.error('Error creating assignment:', error);
+      console.error('❌ [assignmentService] Error creating assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al crear assignment');
     }
   }
@@ -129,14 +127,16 @@ class AssignmentService {
    */
   async updateAssignment(assignmentId: string, data: AssignmentUpdateDTO): Promise<Assignment> {
     try {
+      console.log('✏️ [assignmentService] Updating assignment:', assignmentId);
       const response = await axios.put(
-        `${this.baseURL}/${assignmentId}`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}`),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment updated successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error updating assignment:', error);
+      console.error('❌ [assignmentService] Error updating assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al actualizar assignment');
     }
   }
@@ -146,12 +146,14 @@ class AssignmentService {
    */
   async deleteAssignment(assignmentId: string): Promise<void> {
     try {
+      console.log('🗑️ [assignmentService] Deleting assignment:', assignmentId);
       await axios.delete(
-        `${this.baseURL}/${assignmentId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment deleted successfully');
     } catch (error: any) {
-      console.error('Error deleting assignment:', error);
+      console.error('❌ [assignmentService] Error deleting assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al eliminar assignment');
     }
   }
@@ -161,14 +163,16 @@ class AssignmentService {
    */
   async publishAssignment(assignmentId: string): Promise<Assignment> {
     try {
+      console.log('🚀 [assignmentService] Publishing assignment:', assignmentId);
       const response = await axios.post(
-        `${this.baseURL}/${assignmentId}/publish`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/publish`),
         {},
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment published successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error publishing assignment:', error);
+      console.error('❌ [assignmentService] Error publishing assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al publicar assignment');
     }
   }
@@ -191,8 +195,9 @@ class AssignmentService {
         formData.append('description', description);
       }
 
+      console.log('📎 [assignmentService] Uploading assignment file for:', assignmentId);
       const response = await axios.post(
-        `${this.baseURL}/${assignmentId}/files`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files`),
         formData,
         {
           headers: this.getMultipartHeaders(),
@@ -209,9 +214,10 @@ class AssignmentService {
         }
       );
 
+      console.log('✅ [assignmentService] Assignment file uploaded successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error uploading assignment file:', error);
+      console.error('❌ [assignmentService] Error uploading assignment file:', error);
       throw new Error(error.response?.data?.detail || 'Error al subir archivo');
     }
   }
@@ -221,12 +227,14 @@ class AssignmentService {
    */
   async deleteAssignmentFile(assignmentId: string, fileId: string): Promise<void> {
     try {
+      console.log('🗑️ [assignmentService] Deleting assignment file:', fileId);
       await axios.delete(
-        `${this.baseURL}/${assignmentId}/files/${fileId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files/${fileId}`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment file deleted successfully');
     } catch (error: any) {
-      console.error('Error deleting assignment file:', error);
+      console.error('❌ [assignmentService] Error deleting assignment file:', error);
       throw new Error(error.response?.data?.detail || 'Error al eliminar archivo');
     }
   }
@@ -238,13 +246,15 @@ class AssignmentService {
    */
   async getAssignmentSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
     try {
+      console.log('📥 [assignmentService] Getting assignment submissions for:', assignmentId);
       const response = await axios.get(
-        `${this.baseURL}/${assignmentId}/submissions`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/submissions`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment submissions retrieved:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error getting assignment submissions:', error);
+      console.error('❌ [assignmentService] Error getting assignment submissions:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener entregas');
     }
   }
@@ -254,16 +264,19 @@ class AssignmentService {
    */
   async getMySubmission(assignmentId: string): Promise<AssignmentSubmission | null> {
     try {
+      console.log('📝 [assignmentService] Getting my submission for assignment:', assignmentId);
       const response = await axios.get(
-        `${this.baseURL}/${assignmentId}/my-submission`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/my-submission`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] My submission retrieved');
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
+        console.log('ℹ️ [assignmentService] No submission found for assignment:', assignmentId);
         return null; // No submission found
       }
-      console.error('Error getting my submission:', error);
+      console.error('❌ [assignmentService] Error getting my submission:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener mi entrega');
     }
   }
@@ -273,14 +286,16 @@ class AssignmentService {
    */
   async createSubmission(data: SubmissionCreateDTO): Promise<AssignmentSubmission> {
     try {
+      console.log('➕ [assignmentService] Creating submission for assignment:', data.assignment_id);
       const response = await axios.post(
-        `${this.baseURL}/${data.assignment_id}/submissions`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${data.assignment_id}/submissions`),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Submission created:', response.data.id);
       return response.data;
     } catch (error: any) {
-      console.error('Error creating submission:', error);
+      console.error('❌ [assignmentService] Error creating submission:', error);
       throw new Error(error.response?.data?.detail || 'Error al crear entrega');
     }
   }
@@ -290,14 +305,16 @@ class AssignmentService {
    */
   async updateSubmission(submissionId: string, data: SubmissionUpdateDTO): Promise<AssignmentSubmission> {
     try {
+      console.log('✏️ [assignmentService] Updating submission:', submissionId);
       const response = await axios.put(
-        `${this.baseURL}/submissions/${submissionId}`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}`),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Submission updated successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error updating submission:', error);
+      console.error('❌ [assignmentService] Error updating submission:', error);
       throw new Error(error.response?.data?.detail || 'Error al actualizar entrega');
     }
   }
@@ -307,14 +324,16 @@ class AssignmentService {
    */
   async submitAssignment(submissionId: string): Promise<AssignmentSubmission> {
     try {
+      console.log('📤 [assignmentService] Submitting assignment:', submissionId);
       const response = await axios.post(
-        `${this.baseURL}/submissions/${submissionId}/submit`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}/submit`),
         {},
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment submitted successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error submitting assignment:', error);
+      console.error('❌ [assignmentService] Error submitting assignment:', error);
       throw new Error(error.response?.data?.detail || 'Error al enviar assignment');
     }
   }
@@ -337,8 +356,9 @@ class AssignmentService {
         formData.append('description', description);
       }
 
+      console.log('📎 [assignmentService] Uploading submission file for:', submissionId);
       const response = await axios.post(
-        `${this.baseURL}/submissions/${submissionId}/files`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}/files`),
         formData,
         {
           headers: this.getMultipartHeaders(),
@@ -355,9 +375,10 @@ class AssignmentService {
         }
       );
 
+      console.log('✅ [assignmentService] Submission file uploaded successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error uploading submission file:', error);
+      console.error('❌ [assignmentService] Error uploading submission file:', error);
       throw new Error(error.response?.data?.detail || 'Error al subir archivo');
     }
   }
@@ -367,12 +388,14 @@ class AssignmentService {
    */
   async deleteSubmissionFile(submissionId: string, fileId: string): Promise<void> {
     try {
+      console.log('🗑️ [assignmentService] Deleting submission file:', fileId);
       await axios.delete(
-        `${this.baseURL}/submissions/${submissionId}/files/${fileId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}/files/${fileId}`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Submission file deleted successfully');
     } catch (error: any) {
-      console.error('Error deleting submission file:', error);
+      console.error('❌ [assignmentService] Error deleting submission file:', error);
       throw new Error(error.response?.data?.detail || 'Error al eliminar archivo');
     }
   }
@@ -388,14 +411,16 @@ class AssignmentService {
     feedback?: string
   ): Promise<AssignmentSubmission> {
     try {
+      console.log('🎖️ [assignmentService] Grading submission:', submissionId);
       const response = await axios.post(
-        `${this.baseURL}/submissions/${submissionId}/grade`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}/grade`),
         { grades, feedback },
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Submission graded successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error grading submission:', error);
+      console.error('❌ [assignmentService] Error grading submission:', error);
       throw new Error(error.response?.data?.detail || 'Error al calificar entrega');
     }
   }
@@ -405,14 +430,16 @@ class AssignmentService {
    */
   async bulkGrade(data: BulkGradeCreateDTO): Promise<AssignmentSubmission[]> {
     try {
+      console.log('📈 [assignmentService] Bulk grading submissions');
       const response = await axios.post(
-        `${this.baseURL}/submissions/bulk-grade`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/bulk-grade`),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Bulk grading completed:', response.data.length);
       return response.data;
     } catch (error: any) {
-      console.error('Error bulk grading:', error);
+      console.error('❌ [assignmentService] Error bulk grading:', error);
       throw new Error(error.response?.data?.detail || 'Error en calificación masiva');
     }
   }
@@ -424,14 +451,16 @@ class AssignmentService {
    */
   async addComment(submissionId: string, data: SubmissionCommentCreateDTO) {
     try {
+      console.log('💬 [assignmentService] Adding comment to submission:', submissionId);
       const response = await axios.post(
-        `${this.baseURL}/submissions/${submissionId}/comments`,
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/submissions/${submissionId}/comments`),
         data,
-        { headers: this.getAuthHeaders() }
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Comment added successfully');
       return response.data;
     } catch (error: any) {
-      console.error('Error adding comment:', error);
+      console.error('❌ [assignmentService] Error adding comment:', error);
       throw new Error(error.response?.data?.detail || 'Error al agregar comentario');
     }
   }
@@ -443,13 +472,15 @@ class AssignmentService {
    */
   async getAssignmentStatistics(assignmentId: string): Promise<AssignmentStatistics> {
     try {
+      console.log('📈 [assignmentService] Getting assignment statistics:', assignmentId);
       const response = await axios.get(
-        `${this.baseURL}/${assignmentId}/statistics`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/statistics`),
+        { headers: getAuthHeaders() }
       );
+      console.log('✅ [assignmentService] Assignment statistics retrieved');
       return response.data;
     } catch (error: any) {
-      console.error('Error getting assignment statistics:', error);
+      console.error('❌ [assignmentService] Error getting assignment statistics:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener estadísticas');
     }
   }
@@ -459,14 +490,19 @@ class AssignmentService {
    */
   async getStudentProgress(courseId: string, studentId?: string): Promise<StudentAssignmentProgress> {
     try {
-      const url = studentId 
-        ? `${this.baseURL}/progress/${courseId}/${studentId}`
-        : `${this.baseURL}/progress/${courseId}/me`;
+      console.log('📉 [assignmentService] Getting student progress for course:', courseId);
+      const endpoint = studentId 
+        ? `${API_ENDPOINTS.ASSIGNMENTS}/progress/${courseId}/${studentId}`
+        : `${API_ENDPOINTS.ASSIGNMENTS}/progress/${courseId}/me`;
         
-      const response = await axios.get(url, { headers: this.getAuthHeaders() });
+      const response = await axios.get(
+        buildApiUrl(endpoint),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [assignmentService] Student progress retrieved');
       return response.data;
     } catch (error: any) {
-      console.error('Error getting student progress:', error);
+      console.error('❌ [assignmentService] Error getting student progress:', error);
       throw new Error(error.response?.data?.detail || 'Error al obtener progreso');
     }
   }

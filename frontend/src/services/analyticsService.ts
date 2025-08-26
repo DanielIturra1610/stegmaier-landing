@@ -1,6 +1,8 @@
 /**
- * Servicio para manejar todas las llamadas de analytics
+ * Analytics Service - Frontend service for analytics and metrics
+ * ✅ CORREGIDO: URLs centralizadas, headers centralizados, sin URLs relativas
  */
+import { API_CONFIG, API_ENDPOINTS, buildApiUrl, getAuthHeaders } from '../config/api.config';
 
 export interface PlatformMetrics {
   users: {
@@ -42,21 +44,18 @@ export interface RevenueData {
 }
 
 class AnalyticsService {
-  private baseURL = '/api/v1/analytics';
 
   private async makeAuthenticatedRequest<T>(endpoint: string): Promise<T> {
     const token = localStorage.getItem('auth_token');
     
     if (!token || token === 'null' || token === 'undefined') {
-      console.warn('Analytics request failed: No valid authentication token');
+      console.warn('📊 [analyticsService] Analytics request failed: No valid authentication token');
       throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+    console.log('📊 [analyticsService] Making request to:', endpoint);
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ANALYTICS}${endpoint}`), {
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -70,6 +69,7 @@ class AnalyticsService {
     }
 
     const result = await response.json();
+    console.log('✅ [analyticsService] Request successful:', endpoint);
     return result.data;
   }
 
@@ -77,6 +77,7 @@ class AnalyticsService {
    * Obtiene métricas generales de la plataforma
    */
   async getPlatformMetrics(): Promise<PlatformMetrics> {
+    console.log('📈 [analyticsService] Getting platform metrics');
     return this.makeAuthenticatedRequest<PlatformMetrics>('/platform');
   }
 
@@ -84,6 +85,7 @@ class AnalyticsService {
    * Obtiene cursos más populares
    */
   async getPopularCourses(periodDays: string = '30'): Promise<{ courses: PopularCourse[] }> {
+    console.log('🏆 [analyticsService] Getting popular courses for period:', periodDays);
     return this.makeAuthenticatedRequest<{ courses: PopularCourse[] }>(`/courses/popular?period_days=${periodDays}`);
   }
 
@@ -91,6 +93,7 @@ class AnalyticsService {
    * Obtiene datos de ingresos
    */
   async getRevenueData(): Promise<RevenueData> {
+    console.log('💰 [analyticsService] Getting revenue data');
     return this.makeAuthenticatedRequest<RevenueData>('/revenue');
   }
 
@@ -98,6 +101,7 @@ class AnalyticsService {
    * Obtiene analytics específicos de un curso
    */
   async getCourseAnalytics(courseId: string): Promise<any> {
+    console.log('📚 [analyticsService] Getting course analytics for:', courseId);
     return this.makeAuthenticatedRequest<any>(`/courses/${courseId}`);
   }
 
@@ -105,6 +109,7 @@ class AnalyticsService {
    * Obtiene analytics personales del usuario
    */
   async getUserAnalytics(): Promise<any> {
+    console.log('👤 [analyticsService] Getting user analytics');
     return this.makeAuthenticatedRequest<any>('/my-stats');
   }
 
@@ -131,21 +136,20 @@ class AnalyticsService {
     const token = localStorage.getItem('auth_token');
     
     if (!token) {
-      console.warn('No token available for activity tracking');
+      console.warn('⚠️ [analyticsService] No token available for activity tracking');
       return;
     }
 
     try {
-      await fetch(`${this.baseURL}/activity`, {
+      console.log('📝 [analyticsService] Tracking activity:', activityData.activity_type);
+      await fetch(buildApiUrl(`${API_ENDPOINTS.ANALYTICS}/activity`), {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(activityData),
       });
+      console.log('✅ [analyticsService] Activity tracked successfully');
     } catch (error) {
-      console.error('Error tracking activity:', error);
+      console.error('❌ [analyticsService] Error tracking activity:', error);
       // No lanzamos el error para no interrumpir la UX
     }
   }
