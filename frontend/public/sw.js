@@ -60,8 +60,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Estrategia para API calls - Network First
-  if (url.pathname.startsWith('/api/')) {
+  // DESHABILITADO: Service Worker NO debe interceptar API calls
+  // Causa problemas con POST requests y mixed routing
+  if (false && url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request)
         .then(response => {
@@ -74,26 +75,18 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback al cache en caso de error de red
-          return caches.match(request)
-            .then(cachedResponse => {
-              if (cachedResponse) {
-                console.log('[SW] Serving from cache:', request.url);
-                return cachedResponse;
-              }
-              // Si no hay cache, retornar respuesta de error genérica
-              return new Response(
-                JSON.stringify({ 
-                  error: 'No network connection', 
-                  cached: false 
-                }),
-                {
-                  status: 503,
-                  statusText: 'Service Unavailable',
-                  headers: { 'Content-Type': 'application/json' }
-                }
-              );
-            });
+          // DESHABILITADO: No retornar fallback para APIs
+          return new Response(
+            JSON.stringify({ 
+              error: 'API Service Worker disabled', 
+              cached: false 
+            }),
+            {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
         })
     );
     return;

@@ -16,9 +16,7 @@ import {
   CourseEnrollmentStatus
 } from '../types/enrollment';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.stegmaier.com' 
-  : 'http://localhost:8000';
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 class EnrollmentService {
   /**
