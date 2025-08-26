@@ -15,7 +15,7 @@ import {
   LockClosedIcon,
   LockOpenIcon
 } from '@heroicons/react/24/outline';
-import { moduleService } from '../../services/moduleService';
+import moduleService from '../../services/moduleService';
 import { courseService } from '../../services/courseService';
 import {
   ModuleResponse,
@@ -220,7 +220,7 @@ const AdminModules: React.FC = () => {
         }
 
         return {
-          module_id: module.id,
+          id: module.id,
           order: newOrder
         };
       });
