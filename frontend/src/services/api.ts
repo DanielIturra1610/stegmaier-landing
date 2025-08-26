@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 
-const API_URL = (import.meta as any).env.VITE_API_BASE_URL || 'https://stegmaier-backend-production.up.railway.app';
+const API_URL = (import.meta as any).env.VITE_API_BASE_URL || 'https://stegmaier-backend-production.up.railway.app/api/v1';
 
 // Debug para verificar la URL en producción
 console.log('🔍 API_URL configurada:', API_URL);
