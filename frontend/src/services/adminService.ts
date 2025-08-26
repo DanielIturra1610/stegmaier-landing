@@ -2,6 +2,8 @@
  * Servicio para operaciones administrativas
  */
 
+import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
+
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api/v1' 
   : 'http://localhost:8000/api/v1';
@@ -15,15 +17,11 @@ interface AdminStats {
 
 class AdminService {
   private getHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
+    return getAuthHeaders();
   }
 
   async getDashboardStats(): Promise<AdminStats> {
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/dashboard`), {
       headers: this.getHeaders()
     });
 
@@ -35,7 +33,7 @@ class AdminService {
   }
 
   async getUsers(skip: number = 0, limit: number = 20) {
-    const response = await fetch(`${API_BASE_URL}/admin/users?skip=${skip}&limit=${limit}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users?skip=${skip}&limit=${limit}`), {
       headers: this.getHeaders()
     });
 
@@ -47,7 +45,7 @@ class AdminService {
   }
 
   async getCourses(skip: number = 0, limit: number = 20, isPublished?: boolean) {
-    let url = `${API_BASE_URL}/admin/courses?skip=${skip}&limit=${limit}`;
+    let url = buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses?skip=${skip}&limit=${limit}`);
     if (isPublished !== undefined) {
       url += `&is_published=${isPublished}`;
     }
@@ -89,7 +87,7 @@ class AdminService {
       params.append('limit', filters.limit.toString());
     }
     
-    const response = await fetch(`${API_BASE_URL}/admin/courses?${params.toString()}`, {
+    const response = await fetch(`${buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses`)}?${params.toString()}`, {
       headers: this.getHeaders()
     });
     
@@ -101,7 +99,7 @@ class AdminService {
   }
   
   async getCourse(courseId: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/courses/${courseId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses/${courseId}`), {
       headers: this.getHeaders()
     });
     
@@ -113,11 +111,10 @@ class AdminService {
   }
   
   async createCourse(courseData: FormData) {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE_URL}/admin/courses`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses`), {
       method: 'POST',
       headers: { 
-        'Authorization': `Bearer ${token}`
+        'Authorization': getAuthHeaders()['Authorization']
         // No incluir Content-Type para FormData
       },
       body: courseData
@@ -132,11 +129,10 @@ class AdminService {
   }
   
   async updateCourse(courseId: string, courseData: FormData) {
-    const token = localStorage.getItem('auth_token');
-    const response = await fetch(`${API_BASE_URL}/admin/courses/${courseId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses/${courseId}`), {
       method: 'PUT',
       headers: { 
-        'Authorization': `Bearer ${token}`
+        'Authorization': getAuthHeaders()['Authorization']
         // No incluir Content-Type para FormData
       },
       body: courseData
@@ -151,7 +147,7 @@ class AdminService {
   }
   
   async toggleCoursePublication(courseId: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/courses/${courseId}/publish`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses/${courseId}/publish`), {
       method: 'POST',
       headers: this.getHeaders()
     });
@@ -165,7 +161,7 @@ class AdminService {
   }
   
   async deleteCourse(courseId: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/courses/${courseId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/courses/${courseId}`), {
       method: 'DELETE',
       headers: this.getHeaders()
     });
@@ -179,7 +175,7 @@ class AdminService {
   }
   
   async changeUserRole(userId: string, newRole: string) {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/role?new_role=${encodeURIComponent(newRole)}`, {
+    const response = await fetch(buildApiUrl(`users/${userId}/role?new_role=${encodeURIComponent(newRole)}`), {
       method: 'PUT',
       headers: this.getHeaders()
     });

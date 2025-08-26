@@ -1,19 +1,20 @@
 /**
  * Página de visualización de curso con reproductor avanzado
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import { moduleService } from '../../services/moduleService';
+import moduleService from '../../services/moduleService';
 import enrollmentService from '../../services/enrollmentService';
 import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
 import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
 import quizService from '../../services/quizService';
 import QuizCard from '../../components/course/QuizCard';
 import AssignmentLessonRenderer from '../../components/assignments/AssignmentLessonRenderer';
+import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api.config';
 
 interface Lesson {
   id: string;
@@ -87,19 +88,17 @@ const CourseViewPage: React.FC = () => {
     calculateCourseProgress();
   }, [lessonProgress]);
 
-  const loadCourseData = async () => {
+  const loadCourseData = useCallback(async () => {
+    if (!courseId) return;
+    
     try {
       setIsLoading(true);
       setError(null);
-
       console.log('🔍 [CourseViewPage] Loading course data for ID:', courseId);
 
-      // ✅ FIX DIRECTO: Usar fetch con baseURL completa
-      const courseResponse = await fetch(`http://localhost:8000/api/v1/courses/${courseId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
-        }
+      // ✅ FIX: Usar buildApiUrl en lugar de URL hardcodeada
+      const courseResponse = await fetch(buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}`), {
+        headers: getAuthHeaders()
       });
 
       if (!courseResponse.ok) {
@@ -166,7 +165,7 @@ const CourseViewPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [courseId]);
 
   const toggleModuleExpansion = (moduleId: string) => {
     setExpandedModules(prev => {

@@ -2,49 +2,43 @@
  * Servicio para gestión de módulos
  * Comunicación con API backend para operaciones CRUD de módulos
  */
-import axios, { AxiosResponse } from 'axios';
-import {
-  ModuleResponse,
-  ModuleWithLessons,
+import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
+import { 
+  ModuleResponse, 
+  ModuleCreate, 
+  ModuleUpdate, 
+  ModuleWithLessons, 
   CourseStructureResponse,
-  ModuleCreate,
-  ModuleUpdate,
-  ModuleOrderUpdate,
   LessonAssignment,
   CourseModulesResponse
 } from '../types/module';
-
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1';
+import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
 class ModuleService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
+  private getAuthHeaders(): AxiosRequestConfig {
     return {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders()
     };
   }
 
   /**
-   * Crear nuevo módulo en un curso
+   * Crear un nuevo módulo para un curso
    */
   async createModule(courseId: string, moduleData: ModuleCreate): Promise<ModuleResponse> {
-    console.log('🔍 [moduleService] Creating module for course:', courseId, moduleData);
+    console.log('🚀 [moduleService] Creating module for course:', courseId, moduleData);
     
     try {
       const response: AxiosResponse<ModuleResponse> = await axios.post(
-        `${API_BASE_URL}/courses/${courseId}/modules`,
+        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/modules`),
         moduleData,
         this.getAuthHeaders()
       );
       
-      console.log('✅ [moduleService] Module created successfully:', response.data);
+      console.log('✅ [moduleService] Module created:', response.data.title);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error creating module:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al crear módulo');
     }
   }
 
@@ -52,18 +46,18 @@ class ModuleService {
    * Obtener todos los módulos de un curso
    */
   async getCourseModules(courseId: string): Promise<ModuleResponse[]> {
-    console.log('🔍 [moduleService] Fetching modules for course:', courseId);
+    console.log('🔍 [moduleService] Getting modules for course:', courseId);
     
     try {
       const response: AxiosResponse<ModuleResponse[]> = await axios.get(
-        `${API_BASE_URL}/courses/${courseId}/modules`
+        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/modules`)
       );
       
       console.log('✅ [moduleService] Modules fetched:', response.data.length, 'modules');
       return response.data;
-    } catch (error) {
-      console.error('❌ [moduleService] Error fetching course modules:', error);
-      throw error;
+    } catch (error: any) {
+      console.error('❌ [moduleService] Error fetching modules:', error);
+      throw new Error(error.response?.data?.detail || 'Error al obtener módulos');
     }
   }
 
@@ -71,163 +65,161 @@ class ModuleService {
    * Obtener estructura completa del curso con módulos y lecciones
    */
   async getCourseStructure(courseId: string): Promise<CourseStructureResponse> {
-    console.log('🔍 [moduleService] Fetching course structure for:', courseId);
+    console.log('🏗️ [moduleService] Getting course structure for:', courseId);
     
     try {
       const response: AxiosResponse<CourseStructureResponse> = await axios.get(
-        `${API_BASE_URL}/courses/${courseId}/structure`
+        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/structure`)
       );
       
       console.log('✅ [moduleService] Course structure fetched:', {
-        modules: response.data.total_modules,
-        lessons: response.data.total_lessons,
-        duration: response.data.total_duration
+        modules: response.data.modules?.length || 0,
+        total_lessons: response.data.total_lessons || 0
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error fetching course structure:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al obtener estructura del curso');
     }
   }
 
   /**
-   * Obtener módulo específico
+   * Obtener un módulo específico por ID
    */
   async getModule(moduleId: string): Promise<ModuleResponse> {
-    console.log('🔍 [moduleService] Fetching module:', moduleId);
+    console.log('🔍 [moduleService] Getting module:', moduleId);
     
     try {
       const response: AxiosResponse<ModuleResponse> = await axios.get(
-        `${API_BASE_URL}/modules/${moduleId}`
+        buildApiUrl(`/modules/${moduleId}`)
       );
       
       console.log('✅ [moduleService] Module fetched:', response.data.title);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error fetching module:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al obtener módulo');
     }
   }
 
   /**
-   * Obtener módulo con sus lecciones completas
+   * Obtener un módulo con sus lecciones
    */
   async getModuleWithLessons(moduleId: string): Promise<ModuleWithLessons> {
-    console.log('🔍 [moduleService] Fetching module with lessons:', moduleId);
+    console.log('📚 [moduleService] Getting module with lessons:', moduleId);
     
     try {
       const response: AxiosResponse<ModuleWithLessons> = await axios.get(
-        `${API_BASE_URL}/modules/${moduleId}/with-lessons`
+        buildApiUrl(`/modules/${moduleId}/with-lessons`)
       );
       
       console.log('✅ [moduleService] Module with lessons fetched:', {
         title: response.data.title,
-        lessons: response.data.lessons_count,
-        duration: response.data.total_duration
+        lessons_count: response.data.lessons?.length || 0
       });
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error fetching module with lessons:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al obtener módulo con lecciones');
     }
   }
 
   /**
-   * Actualizar módulo
+   * Actualizar un módulo
    */
   async updateModule(moduleId: string, moduleData: ModuleUpdate): Promise<ModuleResponse> {
-    console.log('🔍 [moduleService] Updating module:', moduleId, moduleData);
+    console.log('✏️ [moduleService] Updating module:', moduleId, moduleData);
     
     try {
       const response: AxiosResponse<ModuleResponse> = await axios.put(
-        `${API_BASE_URL}/modules/${moduleId}`,
+        buildApiUrl(`/modules/${moduleId}`),
         moduleData,
         this.getAuthHeaders()
       );
       
-      console.log('✅ [moduleService] Module updated successfully:', response.data.title);
+      console.log('✅ [moduleService] Module updated:', response.data.title);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error updating module:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al actualizar módulo');
     }
   }
 
   /**
-   * Eliminar módulo
+   * Eliminar un módulo
    */
   async deleteModule(moduleId: string): Promise<void> {
-    console.log('🔍 [moduleService] Deleting module:', moduleId);
+    console.log('🗑️ [moduleService] Deleting module:', moduleId);
     
     try {
       await axios.delete(
-        `${API_BASE_URL}/modules/${moduleId}`,
+        buildApiUrl(`/modules/${moduleId}`),
         this.getAuthHeaders()
       );
       
       console.log('✅ [moduleService] Module deleted successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error deleting module:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al eliminar módulo');
     }
   }
 
   /**
    * Reordenar módulos de un curso
    */
-  async reorderModules(courseId: string, moduleOrders: ModuleOrderUpdate[]): Promise<void> {
-    console.log('🔍 [moduleService] Reordering modules for course:', courseId, moduleOrders);
+  async reorderModules(courseId: string, moduleOrders: Array<{ id: string; order: number }>): Promise<void> {
+    console.log('🔄 [moduleService] Reordering modules for course:', courseId, moduleOrders);
     
     try {
       await axios.put(
-        `${API_BASE_URL}/courses/${courseId}/modules/reorder`,
+        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/modules/reorder`),
         moduleOrders,
         this.getAuthHeaders()
       );
       
       console.log('✅ [moduleService] Modules reordered successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error reordering modules:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al reordenar módulos');
     }
   }
 
   /**
-   * Agregar lección a un módulo
+   * Asignar una lección a un módulo
    */
-  async addLessonToModule(moduleId: string, lessonId: string): Promise<void> {
-    console.log('🔍 [moduleService] Adding lesson to module:', { moduleId, lessonId });
+  async assignLessonToModule(moduleId: string, lessonId: string): Promise<void> {
+    console.log('🔗 [moduleService] Assigning lesson to module:', { moduleId, lessonId });
     
     try {
       await axios.post(
-        `${API_BASE_URL}/modules/${moduleId}/lessons`,
+        buildApiUrl(`/modules/${moduleId}/lessons`),
         { lesson_id: lessonId } as LessonAssignment,
         this.getAuthHeaders()
       );
       
-      console.log('✅ [moduleService] Lesson added to module successfully');
-    } catch (error) {
-      console.error('❌ [moduleService] Error adding lesson to module:', error);
-      throw error;
+      console.log('✅ [moduleService] Lesson assigned to module successfully');
+    } catch (error: any) {
+      console.error('❌ [moduleService] Error assigning lesson to module:', error);
+      throw new Error(error.response?.data?.detail || 'Error al asignar lección al módulo');
     }
   }
 
   /**
-   * Remover lección de un módulo
+   * Remover una lección de un módulo
    */
   async removeLessonFromModule(moduleId: string, lessonId: string): Promise<void> {
-    console.log('🔍 [moduleService] Removing lesson from module:', { moduleId, lessonId });
+    console.log('🔗 [moduleService] Removing lesson from module:', { moduleId, lessonId });
     
     try {
       await axios.delete(
-        `${API_BASE_URL}/modules/${moduleId}/lessons/${lessonId}`,
+        buildApiUrl(`/modules/${moduleId}/lessons/${lessonId}`),
         this.getAuthHeaders()
       );
       
       console.log('✅ [moduleService] Lesson removed from module successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [moduleService] Error removing lesson from module:', error);
-      throw error;
+      throw new Error(error.response?.data?.detail || 'Error al remover lección del módulo');
     }
   }
 
@@ -330,6 +322,4 @@ class ModuleService {
   }
 }
 
-// Exportar instancia singleton
-export const moduleService = new ModuleService();
-export default moduleService;
+export default new ModuleService();

@@ -1,10 +1,28 @@
 /**
  * Service Worker para Stegmaier LMS
  * Maneja push notifications y cache strategies
+ * ✅ CORREGIDO: URLs HTTPS y configuración centralizada
  */
 
 const CACHE_NAME = 'stegmaier-lms-v1';
 const API_CACHE_NAME = 'stegmaier-api-cache-v1';
+
+// ✅ Configuración centralizada de API para Service Worker
+const getApiBaseUrl = () => {
+  // En production siempre usar HTTPS
+  if (self.location.hostname.includes('railway.app') || 
+      self.location.hostname.includes('vercel.app') ||
+      self.location.protocol === 'https:') {
+    return 'https://stegmaier-backend-production.up.railway.app/api/v1';
+  }
+  // Solo en desarrollo local usar HTTP
+  return 'http://localhost:8000/api/v1';
+};
+
+const buildApiUrl = (endpoint) => {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  return `${getApiBaseUrl()}/${cleanEndpoint}`;
+};
 
 // URLs a cachear para funcionamiento offline
 const STATIC_CACHE_URLS = [
@@ -253,7 +271,7 @@ self.addEventListener('sync', (event) => {
   
   if (event.tag === 'background-sync') {
     event.waitUntil(
-      fetch('/api/v1/notifications/sync', {
+      fetch(buildApiUrl('notifications/sync'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -274,8 +292,7 @@ self.addEventListener('sync', (event) => {
 
 // Función auxiliar para obtener token de auth del IndexedDB/localStorage
 function getStoredAuthToken() {
-  // Esta función necesitaría implementarse para acceder al token
-  // desde el Service Worker context
+  // En Service Worker context, usar postMessage para solicitar token al cliente
   return null;
 }
 

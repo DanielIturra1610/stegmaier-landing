@@ -1,47 +1,44 @@
 import axios, { AxiosError } from 'axios';
-
-const API_URL = (import.meta as any).env.VITE_API_BASE_URL || 'https://stegmaier-backend-production.up.railway.app/api/v1';
+import { API_CONFIG } from '../config/api.config';
 
 // Debug para verificar la URL en producción
-console.log('🔍 API_URL configurada:', API_URL);
+console.log('🔍 API_URL configurada:', API_CONFIG.BASE_URL);
 console.log('🔍 Todas las variables:', (import.meta as any).env);
 
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+// Instancia de axios configurada
+export const apiClient = axios.create({
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
+  headers: API_CONFIG.DEFAULT_HEADERS
 });
 
-// Interceptor para agregar token de autenticación
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  return config;
-});
-
-// Interceptor de respuestas para manejar errores comunes
-api.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    const { response } = error;
-    
-    // Manejar error de autenticación (401)
-    if (response?.status === 401) {
-      // Si el token expiró, limpiar almacenamiento local
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
-      
-      // Opcional: Redirigir a login
-      // window.location.href = '/login';
+// Interceptor para requests
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    
+    return config;
+  },
+  (error) => {
     return Promise.reject(error);
   }
 );
 
-export default api;
+// Interceptor para responses
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Token expirado o inválido
+      localStorage.removeItem('auth_token');
+      window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;

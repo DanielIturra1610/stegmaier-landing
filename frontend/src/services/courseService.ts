@@ -7,6 +7,7 @@ import {
   UserCourseAccess 
 } from '../types/course';
 import { LessonResponse } from '../types/lesson';
+import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -55,19 +56,11 @@ export interface CoursesResponse {
 }
 
 class CourseService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
-    };
-  }
-
   // Obtener cursos para estudiantes (solo cursos publicados en los que están inscritos o disponibles)
   async getStudentCourses(page: number = 1, limit: number = 10): Promise<CoursesResponse> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/v1/courses/student`, {
-        headers: this.getAuthHeaders(),
+      const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.COURSES}/student`), {
+        headers: getAuthHeaders(),
         params: { page, limit }
       });
       return response.data;
@@ -81,9 +74,9 @@ class CourseService {
   async getAvailableCourses(page: number = 1, limit: number = 10): Promise<Course[] | CoursesResponse> {
     try {
       console.log('🔍 [courseService] Calling getAvailableCourses with params:', { page, limit });
-      const response = await axios.get(`${API_BASE_URL}/api/v1/courses/available`, {
+      const response = await axios.get(buildApiUrl(API_ENDPOINTS.COURSES_AVAILABLE), {
         headers: {
-          ...this.getAuthHeaders(),
+          ...getAuthHeaders(),
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
           'Expires': '0'
@@ -99,13 +92,11 @@ class CourseService {
     }
   }
 
-  // ✅ ELIMINADO: Función duplicada - usar la versión robusta al final del archivo
-
   // Inscribirse en un curso
   async enrollInCourse(courseId: string): Promise<void> {
     try {
-      await axios.post(`${API_BASE_URL}/api/v1/courses/${courseId}/enroll`, {}, {
-        headers: this.getAuthHeaders(),
+      await axios.post(buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/enroll`), {}, {
+        headers: getAuthHeaders(),
       });
     } catch (error: any) {
       console.error('Error enrolling in course:', error);
@@ -120,8 +111,8 @@ class CourseService {
     try {
       console.log('🔍 [courseService] Getting course detail for ID:', courseId);
       
-      const response = await axios.get(`${API_BASE_URL}/api/v1/courses/${courseId}`, {
-        headers: this.getAuthHeaders()
+      const response = await axios.get(buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}`), {
+        headers: getAuthHeaders()
       });
       
       console.log('✅ [courseService] Course detail retrieved:', response.data);
@@ -220,8 +211,8 @@ class CourseService {
       console.log('🔍 [CourseService] Getting lessons for course:', courseId);
       
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/lessons/course/${courseId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.LESSONS}/course/${courseId}`),
+        { headers: getAuthHeaders() }
       );
       
       console.log('✅ [CourseService] Lessons fetched successfully:', response.data?.length || 0);
@@ -241,8 +232,8 @@ class CourseService {
       console.log('🔍 [CourseService] Getting course:', courseId);
       
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/courses/${courseId}`,
-        { headers: this.getAuthHeaders() }
+        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}`),
+        { headers: getAuthHeaders() }
       );
       
       const course = response.data;

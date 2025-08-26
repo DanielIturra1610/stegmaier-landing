@@ -2,9 +2,7 @@
  * Servicio para operaciones de lecciones
  */
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/v1' 
-  : 'http://localhost:8000/api/v1';
+import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
 // 🔥 FIX: Updated to match backend LessonCreate DTO exactly
 interface LessonCreate {
@@ -36,22 +34,18 @@ interface LessonResponse {
 
 class LessonService {
   private getHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    };
+    return getAuthHeaders();
   }
 
   // 🔥 FIX 1: Enhanced with extensive debugging logs
   async getCourseLessons(courseId: string): Promise<LessonResponse[]> {
     console.log('🔍 [LessonService] Getting lessons for course:', courseId);
-    console.log('🔍 [LessonService] API URL:', `${API_BASE_URL}/lessons/course/${courseId}`);
+    console.log('🔍 [LessonService] API URL:', buildApiUrl(`${API_ENDPOINTS.LESSONS}/course/${courseId}`));
     console.log('🔍 [LessonService] Headers:', this.getHeaders());
     
     try {
       const startTime = Date.now();
-      const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/course/${courseId}`), {
         method: 'GET',
         headers: this.getHeaders()
       });
@@ -102,7 +96,7 @@ class LessonService {
   }
 
   async getLessonById(lessonId: string): Promise<LessonResponse> {
-    const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/${lessonId}`), {
       headers: this.getHeaders()
     });
 
@@ -116,7 +110,7 @@ class LessonService {
   async createLesson(courseId: string, lessonData: LessonCreate): Promise<LessonResponse> {
     console.log('🚀 [LessonService] Creating lesson for course:', courseId, lessonData);
     
-    const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/course/${courseId}`), {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(lessonData)
@@ -134,7 +128,7 @@ class LessonService {
   }
 
   async updateLesson(lessonId: string, lessonData: Partial<LessonCreate>): Promise<LessonResponse> {
-    const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/${lessonId}`), {
       method: 'PUT',
       headers: this.getHeaders(),
       body: JSON.stringify(lessonData)
@@ -149,7 +143,7 @@ class LessonService {
   }
 
   async deleteLesson(lessonId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/lessons/${lessonId}`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/${lessonId}`), {
       method: 'DELETE',
       headers: this.getHeaders()
     });
@@ -161,7 +155,7 @@ class LessonService {
   }
 
   async reorderLessons(courseId: string, lessonOrders: Array<{ id: string; order: number }>): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/lessons/course/${courseId}/reorder`, {
+    const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/course/${courseId}/reorder`), {
       method: 'PUT',
       headers: this.getHeaders(),
       body: JSON.stringify(lessonOrders)

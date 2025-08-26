@@ -3,6 +3,7 @@
  * Integrado con el sistema de notificaciones existente de Stegmaier LMS
  */
 import { notificationService } from './notificationService';
+import { buildApiUrl } from '../config/api.config';
 
 export interface PushSubscriptionData {
   endpoint: string;
@@ -20,7 +21,7 @@ export interface NotificationPermissionState {
 
 class PushNotificationService {
   private swRegistration: ServiceWorkerRegistration | null = null;
-  private vapidPublicKey = process.env.REACT_APP_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM-8Ll2OkuefZx7c27y6HyP9zt3J4FhJKhUQfqPx5f8BdHxmqZx0q4';
+  private vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM-8Ll2OkuefZx7c27y6HyP9zt3J4FhJKhUQfqPx5f8BdHxmqZx0q4';
 
   /**
    * Inicializa el servicio de push notifications
@@ -274,7 +275,7 @@ class PushNotificationService {
       };
 
       // Enviar al endpoint del backend
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/push-subscriptions`, {
+      const response = await fetch(buildApiUrl('push-subscriptions'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,7 +298,7 @@ class PushNotificationService {
    */
   private async removeSubscriptionFromBackend(subscription: PushSubscription): Promise<void> {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/push-subscriptions`, {
+      const response = await fetch(buildApiUrl('push-subscriptions'), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
