@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import QuizTaker from '../../components/quizzes/QuizTaker';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import type { Quiz } from '../../types/quiz';

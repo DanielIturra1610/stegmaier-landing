@@ -2,7 +2,7 @@
  * Página "Mis Cursos" - Lista de cursos en los que el usuario está inscrito
  */
 import React, { useState, useEffect } from 'react';
-import { enrollmentService } from '../../services/enrollmentService';
+import enrollmentService from '../../services/enrollmentService';
 import { EnrolledCourse, EnrollmentStatus } from '../../types/enrollment';
 import EnrollmentStatusComponent from '../../components/enrollment/EnrollmentStatus';
 import { useNavigate } from 'react-router-dom';

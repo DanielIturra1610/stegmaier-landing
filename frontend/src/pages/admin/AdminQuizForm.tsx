@@ -10,7 +10,7 @@ import {
   CheckIcon,
   PencilIcon
 } from '@heroicons/react/24/outline';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import { Quiz, QuizCreate, Question, QuestionType, QuizStatus } from '../../types/quiz';
 import { courseService } from '../../services/courseService';
 import { adminService } from '../../services/adminService';

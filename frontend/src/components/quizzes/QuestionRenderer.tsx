@@ -7,7 +7,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { QuestionRendererProps, QuestionType, Question } from '../../types/quiz';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import { 
   CheckCircleIcon, 
   XCircleIcon,
@@ -33,8 +33,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
   // Validar respuesta cuando cambia
   useEffect(() => {
     if (answer !== undefined) {
-      const result = quizService.validateAnswer(question, answer);
-      setValidation(result);
+      const isValid = quizService.validateAnswer(question, answer);
+      setValidation({ isValid, message: isValid ? undefined : 'Respuesta inválida' });
     }
   }, [question, answer]);
 
@@ -474,7 +474,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({
       {timeRemaining && question.time_limit && (
         <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
           <p className="text-sm text-orange-800">
-            Tiempo restante para esta pregunta: {quizService.formatTimeRemaining(timeRemaining)}
+            Tiempo restante para esta pregunta: {quizService.formatTimeRemaining(timeRemaining || 0)}
           </p>
         </div>
       )}

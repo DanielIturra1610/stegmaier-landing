@@ -8,10 +8,10 @@ import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { moduleService } from '../../services/moduleService';
-import { enrollmentService } from '../../services/enrollmentService';
+import enrollmentService from '../../services/enrollmentService';
 import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
 import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import QuizCard from '../../components/course/QuizCard';
 import AssignmentLessonRenderer from '../../components/assignments/AssignmentLessonRenderer';
 

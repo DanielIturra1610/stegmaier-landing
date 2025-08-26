@@ -6,7 +6,7 @@ import { notificationService, CreateNotificationData, BulkNotificationData } fro
 import { emailService } from './emailService';
 import { Assignment, AssignmentSubmission } from '../types/assignment';
 import { assignmentService } from './assignmentService';
-import { enrollmentService } from './enrollmentService';
+import enrollmentService from './enrollmentService';
 
 export interface AssignmentNotificationConfig {
   due_date_reminders: boolean;

@@ -6,7 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCourseDetail } from '../../hooks/useCourseDetail';
 import { UserCourseAccess } from '../../types/course';
-import { enrollmentService } from '../../services/enrollmentService';
+import enrollmentService from '../../services/enrollmentService';
 
 // Componentes
 import CourseHero from '../../components/course/CourseHero';

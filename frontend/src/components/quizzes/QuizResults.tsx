@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { QuizResultsProps, QuestionType } from '../../types/quiz';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import { 
   CheckCircleIcon, 
   XCircleIcon, 

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { courseService } from '../../services/courseService';
 import { adminService } from '../../services/adminService';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import { Quiz, QuizStatus, QuizListItem } from '../../types/quiz';
 import {
   PlusIcon,
@@ -87,7 +87,7 @@ const AdminQuizzes: React.FC = () => {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[color as keyof typeof colorClasses] || colorClasses.gray}`}>
-        {quizService.getStatusLabel(status as string)}
+        {status}
       </span>
     );
   };

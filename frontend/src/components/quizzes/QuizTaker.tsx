@@ -8,7 +8,7 @@ import {
   Quiz, Question, StudentAnswer, AttemptStatus, 
   QuizTakerProps, QuizState 
 } from '../../types/quiz';
-import { quizService } from '../../services/quizService';
+import quizService from '../../services/quizService';
 import { analyticsService } from '../../services/analyticsService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import QuestionRenderer from './QuestionRenderer';
@@ -147,7 +147,7 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
         created_at: new Date().toISOString()
       };
 
-      await quizService.submitAnswer(state.attempt.id, answerData);
+      await quizService.submitAnswer(state.quiz!.id, currentQuestion.id, answerData.answer);
       setHasUnsavedChanges(false);
       
     } catch (error: any) {
@@ -195,7 +195,12 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
       await saveCurrentAnswer();
       
       // Enviar quiz
-      const completedAttempt = await quizService.submitQuizAttempt(state.attempt.id);
+      const allAnswers = Array.from(state.answers.entries()).map(([questionId, answer]) => ({
+        question_id: questionId,
+        answer,
+        time_spent: 0
+      }));
+      const completedAttempt = await quizService.submitQuizAttempt(state.quiz!.id, allAnswers);
       
       setState(prev => ({ 
         ...prev, 

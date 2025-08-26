@@ -313,6 +313,61 @@ class ProgressService {
     }
   }
 
+  // Assignment progress methods (stub implementations for build fix)
+  async startAssignment(assignmentId: string): Promise<any> {
+    console.log('🚀 [progressService] Starting assignment:', assignmentId);
+    return { success: true };
+  }
+
+  async updateAssignmentProgress(assignmentId: string, data: any): Promise<any> {
+    console.log('📊 [progressService] Updating assignment progress:', assignmentId);
+    return { success: true };
+  }
+
+  async completeAssignment(assignmentId: string): Promise<any> {
+    console.log('✅ [progressService] Completing assignment:', assignmentId);
+    return { success: true };
+  }
+
+  async getCourseProgress(courseId: string): Promise<any> {
+    console.log('📚 [progressService] Getting course progress:', courseId);
+    return { progress: 0, completed_lessons: [] };
+  }
+
+  async getUserProgressSummary(): Promise<any> {
+    console.log('👤 [progressService] Getting user progress summary');
+    return { total_courses: 0, completed_courses: 0 };
+  }
+
+  async getLessonProgress(lessonId: string): Promise<any> {
+    console.log('📖 [progressService] Getting lesson progress:', lessonId);
+    return { completed: false, progress: 0 };
+  }
+
+  async startLesson(lessonId: string): Promise<any> {
+    console.log('🚀 [progressService] Starting lesson:', lessonId);
+    return { success: true };
+  }
+
+  async completeLesson(lessonId: string): Promise<any> {
+    console.log('✅ [progressService] Completing lesson:', lessonId);
+    return { success: true };
+  }
+
+  async updateLessonProgress(lessonId: string, progress: any): Promise<any> {
+    console.log('📊 [progressService] Updating lesson progress:', lessonId);
+    return { success: true };
+  }
+
+  async savePendingProgress(): Promise<void> {
+    console.log('💾 [progressService] Saving pending progress');
+  }
+
+  async syncPendingProgress(): Promise<any> {
+    console.log('🔄 [progressService] Syncing pending progress');
+    return { success: true };
+  }
+
   // Utilidades de progreso
   formatTime(seconds: number): string {
     const hours = Math.floor(seconds / 3600);

@@ -3,7 +3,7 @@
  * Maneja el estado de enrollment y muestra el botón apropiado
  */
 import React, { useState, useEffect } from 'react';
-import { enrollmentService } from '../../services/enrollmentService';
+import enrollmentService from '../../services/enrollmentService';
 import { CourseEnrollmentStatus, EnrollmentStatus } from '../../types/enrollment';
 
 interface EnrollmentButtonProps {
