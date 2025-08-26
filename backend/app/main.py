@@ -9,6 +9,7 @@ import asyncio
 
 from .core.config import get_settings
 from .infrastructure.database import connect_to_mongo, close_mongo_connection
+from .api.v1.api import api_router
 
 def create_application() -> FastAPI:
     """
@@ -76,6 +77,9 @@ def create_application() -> FastAPI:
             "docs": "/api/docs",
             "health": "/health"
         }
+    
+    # Incluir routers de la API
+    app.include_router(api_router, prefix="/api/v1")
     
     return app
 
