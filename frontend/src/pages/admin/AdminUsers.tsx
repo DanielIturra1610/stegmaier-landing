@@ -97,16 +97,16 @@ const AdminUsers: React.FC = () => {
                   <div className="flex-shrink-0 h-10 w-10">
                     <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                       <span className="text-sm font-medium text-gray-700">
-                        {user.full_name.charAt(0).toUpperCase()}
+                        {(user?.full_name || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                   </div>
                   <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900">
-                      {user.full_name}
+                      {user?.full_name || 'No disponible'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {user.email}
+                      {user?.email || 'No disponible'}
                     </div>
                   </div>
                 </div>

@@ -21,7 +21,7 @@ export interface NotificationPermissionState {
 
 class PushNotificationService {
   private swRegistration: ServiceWorkerRegistration | null = null;
-  private vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM-8Ll2OkuefZx7c27y6HyP9zt3J4FhJKhUQfqPx5f8BdHxmqZx0q4';
+  private vapidPublicKey = (import.meta as any)?.env?.VITE_VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM-8Ll2OkuefZx7c27y6HyP9zt3J4FhJKhUQfqPx5f8BdHxmqZx0q4';
 
   /**
    * Inicializa el servicio de push notifications

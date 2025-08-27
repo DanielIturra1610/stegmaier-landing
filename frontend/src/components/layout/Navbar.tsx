@@ -122,7 +122,7 @@ const Navbar = () => {
 
   const isActive = (href: string) => {
     // Obtener la ruta sin hash
-    const pathWithoutHash = currentPath.split('#')[0]
+    const pathWithoutHash = currentPath?.split('#')[0] || ''
     
     // Manejo especial para la ruta principal
     if (href === '/') {

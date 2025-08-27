@@ -137,42 +137,42 @@ const InstructorDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <StatCard
             title="Cursos Totales"
-            value={stats.totalCourses}
+            value={stats?.totalCourses || 0}
             icon={<Book className="h-8 w-8" />}
             change="+2 este mes"
             changeType="positive"
           />
           <StatCard
             title="Estudiantes Activos"
-            value={stats.totalStudents}
+            value={stats?.totalStudents || 0}
             icon={<Users className="h-8 w-8" />}
             change="+12% vs mes anterior"
             changeType="positive"
           />
           <StatCard
             title="Calificación Promedio"
-            value={stats.averageRating.toFixed(1)}
+            value={(stats?.averageRating || 0).toFixed(1)}
             icon={<TrendingUp className="h-8 w-8" />}
             change="4.8/5.0"
             changeType="positive"
           />
           <StatCard
             title="Nuevas Inscripciones"
-            value={stats.newEnrollments}
+            value={stats?.newEnrollments || 0}
             icon={<Bell className="h-8 w-8" />}
             change="Esta semana"
             changeType="neutral"
           />
           <StatCard
             title="Quizzes Activos"
-            value={stats.activeQuizzes}
+            value={stats?.activeQuizzes || 0}
             icon={<Calendar className="h-8 w-8" />}
             change="Pendientes de revisión"
             changeType="neutral"
           />
           <StatCard
             title="Reseñas Pendientes"
-            value={stats.pendingReviews}
+            value={stats?.pendingReviews || 0}
             icon={<User className="h-8 w-8" />}
             change="Por revisar"
             changeType="neutral"

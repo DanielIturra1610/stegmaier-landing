@@ -205,12 +205,12 @@ export const useUserProgressSummary = () => {
     if (!summary) return null;
     
     return {
-      total_courses: summary.summary.total_courses_enrolled,
+      enrolled_courses: summary.summary.total_courses_enrolled,
       completed_courses: summary.summary.courses_completed,
       in_progress_courses: summary.summary.courses_in_progress,
       total_time: summary.summary.total_time_spent,
       certificates: summary.summary.certificates_earned,
-      completion_rate: summary.summary.completion_rate
+      completion_rate: summary.summary.completion_rate || 0
     };
   }, [summary]);
 

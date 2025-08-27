@@ -45,7 +45,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Verificar roles si se especifican
   if (allowedRoles && allowedRoles.length > 0) {
-    if (!user || !allowedRoles.includes(user.role)) {
+    if (!user || !allowedRoles.includes(user?.role || '')) {
       return <Navigate to="/" state={{ from: location.pathname }} replace />;
     }
   }

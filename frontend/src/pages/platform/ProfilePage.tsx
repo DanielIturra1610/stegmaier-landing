@@ -18,7 +18,7 @@ const ProfilePage: React.FC = () => {
     if (!user) return 'U';
     
     // Si existe full_name, usar eso para generar iniciales
-    if (user.full_name) {
+    if (user?.full_name) {
       const nameParts = user.full_name.split(' ');
       if (nameParts.length >= 2) {
         return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`;
@@ -28,8 +28,8 @@ const ProfilePage: React.FC = () => {
     }
     
     // Fallback a firstName y lastName si están disponibles
-    const firstInitial = user.firstName ? user.firstName.charAt(0) : '';
-    const lastInitial = user.lastName ? user.lastName.charAt(0) : '';
+    const firstInitial = user?.firstName ? user.firstName.charAt(0) : '';
+    const lastInitial = user?.lastName ? user.lastName.charAt(0) : '';
     
     // Si no hay iniciales disponibles, devolver 'U' por defecto
     return firstInitial || lastInitial ? `${firstInitial}${lastInitial}` : 'U';
@@ -61,10 +61,10 @@ const ProfilePage: React.FC = () => {
             <h1 className="text-2xl md:text-3xl font-bold">
               {user ? (
                 // Aseguramos mostrar el nombre completo correctamente
-                user.full_name ? 
+                user?.full_name ? 
                   user.full_name : 
-                  (user.firstName || user.lastName ? 
-                    `${user.firstName || ''} ${user.lastName || ''}`.trim() : 
+                  (user?.firstName || user?.lastName ? 
+                    `${user?.firstName || ''} ${user?.lastName || ''}`.trim() : 
                     'Usuario')
               ) : 'Usuario'}
             </h1>
@@ -241,7 +241,7 @@ const ProfilePage: React.FC = () => {
                     <div className="grid grid-cols-1 gap-4">
                       <div>
                         <p className="text-sm font-medium text-gray-500">Nombre completo</p>
-                        <p className="mt-1 text-gray-900 font-medium">{user ? (user.full_name ? user.full_name : `${user.firstName || ''} ${user.lastName || ''}`.trim()) : 'No disponible'}</p>
+                        <p className="mt-1 text-gray-900 font-medium">{user ? (user?.full_name ? user.full_name : `${user?.firstName || ''} ${user?.lastName || ''}`.trim()) : 'No disponible'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-500">Correo electrónico</p>

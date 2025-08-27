@@ -79,7 +79,7 @@ class NotificationService {
    */
   async getUnreadCount(): Promise<number> {
     const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread-count`), { headers: getAuthHeaders() });
-    return response.data.unread_count;
+    return response.data?.unread_count || 0;
   }
 
   /**
@@ -94,7 +94,7 @@ class NotificationService {
    */
   async markAllAsRead(): Promise<number> {
     const response = await axios.patch(buildApiUrl(`${this.baseUrl}/mark-all-read`), {}, { headers: getAuthHeaders() });
-    return response.data.message.match(/\d+/)?.[0] || 0;
+    return response.data?.message?.match(/\d+/)?.[0] || 0;
   }
 
   /**
