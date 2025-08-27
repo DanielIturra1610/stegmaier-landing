@@ -291,7 +291,13 @@ const AdminAnalytics: React.FC = () => {
                       <dl>
                         <dt className="text-sm font-medium text-gray-500 truncate">Tasa de Finalización</dt>
                         <dd className="text-lg font-medium text-gray-900">
-                          {(metrics?.content?.completion_rate ?? 0).toFixed(1)}%
+                          {(() => {
+                            console.log('🔍 [AdminAnalytics] metrics:', metrics);
+                            console.log('🔍 [AdminAnalytics] completion_rate:', metrics?.content?.completion_rate);
+                            const rate = metrics?.content?.completion_rate;
+                            const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                            return safeRate.toFixed(1);
+                          })()}%
                         </dd>
                       </dl>
                     </div>
@@ -338,7 +344,11 @@ const AdminAnalytics: React.FC = () => {
                             {course.course_title}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {(course?.completion_rate ?? 0).toFixed(1)}% completado
+                            {(() => {
+                              const rate = course?.completion_rate;
+                              const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                              return safeRate.toFixed(1);
+                            })()}% completado
                           </p>
                         </div>
                       </div>
@@ -445,11 +455,19 @@ const AdminAnalytics: React.FC = () => {
                             <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                               <div 
                                 className="bg-green-500 h-2 rounded-full" 
-                                style={{ width: `${course?.completion_rate ?? 0}%` }}
+                                style={{ width: `${(() => {
+                                  const rate = course?.completion_rate;
+                                  const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                                  return safeRate;
+                                })()}%` }}
                               />
                             </div>
                             <span className="text-sm text-gray-900">
-                              {(course?.completion_rate ?? 0).toFixed(1)}%
+                              {(() => {
+                                const rate = course?.completion_rate;
+                                const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                                return safeRate.toFixed(1);
+                              })()}%
                             </span>
                           </div>
                         </td>
