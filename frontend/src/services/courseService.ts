@@ -9,7 +9,7 @@ import {
 import { LessonResponse } from '../types/lesson';
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
-const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// ELIMINADO: No necesitamos API_BASE_URL local, usamos buildApiUrl() centralizado
 
 // Interface para lección individual
 export interface LessonDetail {

@@ -4,9 +4,7 @@
 
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api/v1' 
-  : 'http://localhost:8000/api/v1';
+// ELIMINADO: Usar buildApiUrl() centralizado para evitar Mixed Content
 
 interface AdminStats {
   users_total: number;

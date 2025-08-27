@@ -259,29 +259,12 @@ self.addEventListener('notificationclose', (event) => {
   );
 });
 
-// Sincronización en background
+// Sincronización en background - DESHABILITADA para evitar Mixed Content
 self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync:', event.tag);
+  console.log('[SW] Background sync DISABLED to prevent Mixed Content:', event.tag);
   
-  if (event.tag === 'background-sync') {
-    event.waitUntil(
-      fetch(buildApiUrl('notifications/sync'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getStoredAuthToken()}`
-        }
-      })
-      .then(response => {
-        console.log('[SW] Background sync completed');
-        return response;
-      })
-      .catch(error => {
-        console.error('[SW] Background sync failed:', error);
-        throw error;
-      })
-    );
-  }
+  // NO hacer sync desde Service Worker - causar problemas HTTPS/HTTP
+  // La sincronización se maneja desde el frontend principal
 });
 
 // Función auxiliar para obtener token de auth del IndexedDB/localStorage
