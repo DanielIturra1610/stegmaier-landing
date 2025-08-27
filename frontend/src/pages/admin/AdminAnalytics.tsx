@@ -440,15 +440,15 @@ const AdminAnalytics: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {popularCourses.map((course) => (
+                    {(popularCourses || []).filter(course => course && course.course_id).map((course) => (
                       <tr key={course.course_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {course.course_title}
+                            {course.course_title || 'Sin título'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {course.enrollment_count}
+                          {course.enrollment_count || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -456,27 +456,25 @@ const AdminAnalytics: React.FC = () => {
                               <div 
                                 className="bg-green-500 h-2 rounded-full" 
                                 style={{ width: `${(() => {
-                                  // VALIDACIÓN EXHAUSTIVA CON MÚLTIPLES CHECKS
-                                  console.log('🔍 [AdminAnalytics] Validating completion_rate for course:', course?.course_id);
-                                  console.log('🔍 [AdminAnalytics] Raw completion_rate value:', course?.completion_rate);
-                                  console.log('🔍 [AdminAnalytics] Type of completion_rate:', typeof course?.completion_rate);
+                                  // PROTECCIÓN COMPLETA CONTRA UNDEFINED
+                                  if (!course) return 0;
                                   
-                                  const rate = course?.completion_rate;
+                                  const rate = course.completion_rate;
                                   let safeRate = 0;
                                   
                                   if (rate !== null && rate !== undefined && !isNaN(Number(rate))) {
                                     safeRate = Math.max(0, Math.min(100, Number(rate)));
                                   }
                                   
-                                  console.log('✅ [AdminAnalytics] Safe completion_rate:', safeRate);
                                   return safeRate;
                                 })()}%` }}
                               />
                             </div>
                             <span className="text-sm text-gray-900">
                               {(() => {
-                                // VALIDACIÓN EXHAUSTIVA CON MÚLTIPLES CHECKS
-                                const rate = course?.completion_rate;
+                                // PROTECCIÓN COMPLETA CONTRA UNDEFINED
+                                if (!course) return '0%';
+                                const rate = course.completion_rate;
                                 let safeRate = 0;
                                 
                                 if (rate !== null && rate !== undefined && !isNaN(Number(rate))) {
