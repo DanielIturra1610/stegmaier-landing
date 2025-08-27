@@ -10,6 +10,12 @@ export const API_CONFIG = {
     const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
     const fallbackUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
     
+    // 🚨 CRÍTICO: FORZAR backend URL en producción
+    if ((import.meta as any).env.PROD || window.location.hostname.includes('railway.app')) {
+      // En producción, SIEMPRE usar backend Railway
+      return 'https://stegmaier-backend-production.up.railway.app/api/v1';
+    }
+    
     // Si estamos en producción, FORZAR HTTPS
     if ((import.meta as any).env.VITE_ENVIRONMENT === 'production' || 
         window.location.protocol === 'https:') {
@@ -107,6 +113,13 @@ if ((import.meta as any).env?.DEV) {
   console.log('🔧 [API Config] Base URL:', API_CONFIG.BASE_URL);
   console.log('🔧 [API Config] Environment:', (import.meta as any).env?.VITE_ENVIRONMENT);
 }
+
+// Debug logging EN PRODUCCIÓN para diagnosticar problema
+console.log('🔧 [API Config] Base URL:', API_CONFIG.BASE_URL);
+console.log('🔧 [API Config] Environment:', (import.meta as any).env?.VITE_ENVIRONMENT);
+console.log('🔧 [API Config] Protocol:', typeof window !== 'undefined' ? window.location.protocol : 'server');
+console.log('🔧 [API Config] VITE_API_BASE_URL:', (import.meta as any).env.VITE_API_BASE_URL);
+console.log('🔧 [API Config] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
 
 // Export default para compatibilidad
 export default API_CONFIG;

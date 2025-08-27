@@ -132,7 +132,7 @@ const MyProgressPage: React.FC = () => {
       // Usar analyticsService correcto que llama a /my-stats
       const result = await analyticsService.getUserAnalytics();
       
-      // ✅ Validación defensiva de estructura de datos
+      // Validación defensiva de estructura de datos
       const validatedStats = {
         period: result.data?.period || {
           start_date: new Date().toISOString(),
@@ -169,12 +169,12 @@ const MyProgressPage: React.FC = () => {
         recent_activity: result.data?.recent_activity || []
       };
 
-      console.log('✅ [MyProgressPage] Validated stats structure:', validatedStats);
+      console.log(' Validated stats structure:', validatedStats);
       setStats(validatedStats);
     } catch (err) {
-      console.error('❌ [MyProgressPage] Error fetching user stats:', err);
+      console.error(' Error fetching user stats:', err);
       
-      // ✅ Fallback con datos por defecto en caso de error
+      // Fallback con datos por defecto en caso de error
       const fallbackStats = {
         period: {
           start_date: new Date().toISOString(),
@@ -211,7 +211,7 @@ const MyProgressPage: React.FC = () => {
         recent_activity: []
       };
       
-      console.log('🔄 [MyProgressPage] Using fallback stats due to error');
+      console.log(' Using fallback stats due to error');
       setStats(fallbackStats);
       setStatsError('Error cargando estadísticas. Mostrando datos por defecto.');
     } finally {
@@ -361,7 +361,7 @@ const MyProgressPage: React.FC = () => {
               <h3 className="text-lg font-semibold">Tasa de Finalización</h3>
             </div>
             <CircularProgress 
-              percentage={stats?.learning?.completion_rate || 0} 
+              percentage={stats?.learning?.completion_rate ?? 0} 
               color="#10B981"
             />
             <div className="mt-4">
@@ -414,7 +414,7 @@ const MyProgressPage: React.FC = () => {
         {/* Footer Info */}
         <div className="mt-12 bg-gray-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            💡 Consejos para mejorar tu progreso
+            Consejos para mejorar tu progreso
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
             <div>

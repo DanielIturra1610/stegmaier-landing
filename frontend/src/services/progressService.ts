@@ -2,7 +2,7 @@
  * Servicio para gestión de progreso de videos
  * ✅ CORREGIDO: URLs centralizadas, sin URLs relativas
  */
-import { API_CONFIG, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
+import { API_CONFIG, API_ENDPOINTS, getAuthHeaders, buildApiUrl } from '../config/api.config';
 
 export interface VideoProgress {
   lesson_id: string;
@@ -77,7 +77,7 @@ class ProgressService {
       console.log('📊 [progressService] Updating video progress:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`),
         {
           method: 'PUT',
           headers: getAuthHeaders(),
@@ -106,7 +106,7 @@ class ProgressService {
       console.log('📊 [progressService] Getting video progress:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`),
         {
           method: 'GET',
           headers: getAuthHeaders()
@@ -141,7 +141,7 @@ class ProgressService {
       console.log('🔖 [progressService] Creating bookmark:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`),
         {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -170,7 +170,7 @@ class ProgressService {
       console.log('🔖 [progressService] Getting video bookmarks:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`),
         {
           method: 'GET',
           headers: getAuthHeaders()
@@ -205,7 +205,7 @@ class ProgressService {
       console.log('📝 [progressService] Creating note:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`),
         {
           method: 'POST',
           headers: getAuthHeaders(),
@@ -234,7 +234,7 @@ class ProgressService {
       console.log('📝 [progressService] Getting video notes:', { lessonId, videoId });
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`),
         {
           method: 'GET',
           headers: getAuthHeaders()
@@ -265,7 +265,7 @@ class ProgressService {
       console.log('📈 [progressService] Getting progress summary');
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/summary`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/summary`),
         {
           method: 'GET',
           headers: getAuthHeaders()
@@ -293,7 +293,7 @@ class ProgressService {
       console.log('📊 [progressService] Getting detailed progress');
       
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PROGRESS}/detailed`,
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/detailed`),
         {
           method: 'GET',
           headers: getAuthHeaders()
