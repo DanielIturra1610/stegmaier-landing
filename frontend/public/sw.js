@@ -84,60 +84,48 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // DESHABILITADO: Service Worker NO debe interceptar API calls
-  // Causa problemas con POST requests y mixed routing
-  if (false && url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          // Solo cachear responses exitosas
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(API_CACHE_NAME)
-              .then(cache => cache.put(request, responseClone));
-          }
-          return response;
-        })
-        .catch(() => {
-          // DESHABILITADO: No retornar fallback para APIs
-          return new Response(
-            JSON.stringify({ 
-              error: 'API Service Worker disabled', 
-              cached: false 
-            }),
-            {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
-        })
-    );
+  // 🚨 CRÍTICO: NO INTERCEPTAR API CALLS - CAUSA PANTALLAS BLANCAS
+  // Saltamos COMPLETAMENTE cualquier request a backend APIs
+  if (url.hostname.includes('stegmaier-backend') || 
+      url.pathname.startsWith('/api/') ||
+      url.pathname.includes('/api/') ||
+      url.href.includes('/api/')) {
+    // NO hacer nada, dejar que el browser maneje directamente
+    console.log('[SW] Skipping API request:', url.href);
     return;
   }
 
-  // Estrategia para assets estáticos - Cache First
-  event.respondWith(
-    caches.match(request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(request)
-          .then(response => {
-            // Cachear assets estáticos exitosos
-            if (response.ok && 
-                (request.destination === 'script' || 
-                 request.destination === 'style' || 
-                 request.destination === 'image')) {
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME)
-                .then(cache => cache.put(request, responseClone));
-            }
-            return response;
-          });
-      })
-  );
+  // Solo manejar assets estáticos (JS, CSS, imágenes)
+  if (request.destination === 'script' || 
+      request.destination === 'style' || 
+      request.destination === 'image' ||
+      request.destination === 'document') {
+    
+    event.respondWith(
+      caches.match(request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(request)
+            .then(response => {
+              // Cachear assets estáticos exitosos
+              if (response.ok) {
+                const responseClone = response.clone();
+                caches.open(CACHE_NAME)
+                  .then(cache => cache.put(request, responseClone))
+                  .catch(err => console.error('[SW] Cache error:', err));
+              }
+              return response;
+            })
+            .catch(err => {
+              console.error('[SW] Fetch error for static asset:', err);
+              return new Response('Network Error', { status: 503 });
+            });
+        })
+    );
+  }
+  // Para todo lo demás, no interceptar
 });
 
 // Manejo de Push Notifications

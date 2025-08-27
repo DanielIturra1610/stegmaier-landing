@@ -5,8 +5,23 @@
 
 // Configuración base de la API
 export const API_CONFIG = {
-  // URL base del backend - siempre apunta al backend en Railway
-  BASE_URL: (import.meta as any).env.VITE_API_BASE_URL || 'https://stegmaier-backend-production.up.railway.app/api/v1',
+  // URL base del backend - FORZAR HTTPS SIEMPRE EN PRODUCCIÓN
+  BASE_URL: (() => {
+    const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
+    const fallbackUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
+    
+    // Si estamos en producción, FORZAR HTTPS
+    if ((import.meta as any).env.VITE_ENVIRONMENT === 'production' || 
+        window.location.protocol === 'https:') {
+      if (envUrl && envUrl.startsWith('http://')) {
+        // Forzar conversión a HTTPS
+        return envUrl.replace('http://', 'https://');
+      }
+      return envUrl || fallbackUrl;
+    }
+    
+    return envUrl || fallbackUrl;
+  })(),
   
   // Timeout para requests
   TIMEOUT: 30000,
