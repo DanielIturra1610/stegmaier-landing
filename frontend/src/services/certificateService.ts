@@ -1,4 +1,5 @@
-import api from './api';
+import axios from 'axios';
+import { buildApiUrl, getAuthHeaders } from '../config/api.config';
 
 export interface Certificate {
   id: string;
@@ -44,7 +45,7 @@ class CertificateService {
    */
   async getUserCertificates(): Promise<Certificate[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/my-certificates`);
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/my-certificates`), { headers: getAuthHeaders() });
       return response.data;
     } catch (error) {
       console.error('Error fetching user certificates:', error);
@@ -57,7 +58,7 @@ class CertificateService {
    */
   async generateCertificate(data: CertificateGenerationData): Promise<Certificate> {
     try {
-      const response = await api.post(`${this.baseUrl}/generate`, data);
+      const response = await axios.post(buildApiUrl(`${this.baseUrl}/generate`), data, { headers: getAuthHeaders() });
       return response.data;
     } catch (error) {
       console.error('Error generating certificate:', error);
@@ -70,7 +71,7 @@ class CertificateService {
    */
   async getCertificate(certificateId: string): Promise<Certificate> {
     try {
-      const response = await api.get(`${this.baseUrl}/${certificateId}`);
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/${certificateId}/verify`), { headers: getAuthHeaders() });
       return response.data;
     } catch (error) {
       console.error('Error fetching certificate:', error);
@@ -83,9 +84,7 @@ class CertificateService {
    */
   async downloadCertificate(certificateId: string): Promise<Blob> {
     try {
-      const response = await api.get(`${this.baseUrl}/${certificateId}/download`, {
-        responseType: 'blob'
-      });
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/${certificateId}/download`), { headers: getAuthHeaders(), responseType: 'blob' });
       return response.data;
     } catch (error) {
       console.error('Error downloading certificate:', error);
@@ -98,7 +97,7 @@ class CertificateService {
    */
   async verifyCertificate(verificationCode: string): Promise<CertificateVerification> {
     try {
-      const response = await api.get(`${this.baseUrl}/verify/${verificationCode}`);
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/verify/${verificationCode}`), { headers: getAuthHeaders() });
       return response.data;
     } catch (error) {
       console.error('Error verifying certificate:', error);

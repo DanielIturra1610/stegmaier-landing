@@ -179,7 +179,11 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
               </div>
               <div className="text-right">
                 <span className="text-xs font-semibold inline-block text-blue-600">
-                  {(summary?.completion_rate ?? 0).toFixed(1)}%
+                  {(() => {
+                    console.log('🔍 [UserProgressSummary] summary:', summary);
+                    console.log('🔍 [UserProgressSummary] completion_rate:', summary?.completion_rate);
+                    return (summary?.completion_rate ?? 0).toFixed(1);
+                  })()}%
                 </span>
               </div>
             </div>

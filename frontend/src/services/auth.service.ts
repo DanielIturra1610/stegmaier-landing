@@ -1,4 +1,5 @@
-import api from './api';
+import axios from 'axios';
+import { buildApiUrl, getAuthHeaders } from '../config/api.config';
 import { 
   LoginCredentials, 
   RegisterData, 
@@ -21,7 +22,7 @@ export const authService = {
       password: credentials.password
     };
     
-    const response = await api.post<AuthResponse>('/auth/login', backendCredentials);
+    const response = await axios.post<AuthResponse>(buildApiUrl('/auth/login'), backendCredentials);
     
     // Guardar el token y los datos del usuario en localStorage para mantener la sesión
     if (response.data && response.data.access_token) {
@@ -43,7 +44,7 @@ export const authService = {
    * Registrar un nuevo usuario
    */
   register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/register', userData);
+    const response = await axios.post<AuthResponse>(buildApiUrl('/auth/register'), userData);
     
     // Guardar el token y los datos del usuario en localStorage para mantener la sesión
     if (response.data && response.data.access_token) {
@@ -65,7 +66,7 @@ export const authService = {
    * Verificar el correo electrónico con token
    */
   verifyEmail: async (token: string): Promise<VerificationResponse> => {
-    const response = await api.post<VerificationResponse>(`/auth/verify-email/${token}`);
+    const response = await axios.post<VerificationResponse>(buildApiUrl('/auth/verify-email'), { token });
     return response.data;
   },
 
@@ -73,7 +74,7 @@ export const authService = {
    * Solicitar un nuevo correo de verificación
    */
   resendVerification: async (email: string): Promise<VerificationResponse> => {
-    const response = await api.post<VerificationResponse>('/auth/resend-verification', { email });
+    const response = await axios.post<VerificationResponse>(buildApiUrl('/auth/resend-verification'), { email });
     return response.data;
   },
 
@@ -97,7 +98,7 @@ export const authService = {
    * Obtener información del usuario actual
    */
   getCurrentUser: async () => {
-    const response = await api.get('/users/me');
+    const response = await axios.get(buildApiUrl('/auth/me'), {});
     const apiData = response.data;
     
     // Mapeo de los datos recibidos del API al formato que espera nuestra aplicación

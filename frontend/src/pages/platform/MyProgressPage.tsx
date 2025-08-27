@@ -361,7 +361,11 @@ const MyProgressPage: React.FC = () => {
               <h3 className="text-lg font-semibold">Tasa de Finalización</h3>
             </div>
             <CircularProgress 
-              percentage={stats?.learning?.completion_rate ?? 0} 
+              percentage={(() => {
+                console.log('🔍 [MyProgressPage] stats:', stats);
+                console.log('🔍 [MyProgressPage] completion_rate:', stats?.learning?.completion_rate);
+                return stats?.learning?.completion_rate ?? 0;
+              })()}
               color="#10B981"
             />
             <div className="mt-4">

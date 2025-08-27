@@ -219,7 +219,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
             />
             <MetricCard
               title="Tasa Completitud"
-              value={`${analytics.overview.completion_rate}%`}
+              value={`${analytics?.overview?.completion_rate ?? 0}%`}
               icon={<ChartBarIcon className="h-6 w-6" />}
               color="purple"
             />
@@ -393,7 +393,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                           {assignment.average_grade.toFixed(1)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {assignment.completion_rate.toFixed(1)}%
+                          {(assignment?.completion_rate ?? 0).toFixed(1)}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${difficultyColor}`}>

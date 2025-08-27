@@ -1,4 +1,4 @@
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Hero from './components/sections/home/Hero';
 import Services from './components/sections/home/Services';
 import Process from './components/sections/home/Process';
@@ -8,6 +8,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppRoutes from './routes';
+import { buildApiUrl } from './config/api.config';
+import { Toaster } from 'react-hot-toast';
+import './index.css';
 
 // Componente para la página de inicio que contiene todas las secciones
 const HomePage = () => (
@@ -31,7 +34,7 @@ const App = () => {
       if (process.env.NODE_ENV === 'production') {
         try {
           // Send error to monitoring service
-          fetch('/api/v1/analytics/activity', {
+          fetch(buildApiUrl('/analytics/activity'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
