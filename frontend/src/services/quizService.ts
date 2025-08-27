@@ -2,22 +2,23 @@
  * Quiz Service - Frontend service for quiz management
  * ✅ CORREGIDO: URLs centralizadas, sin URLs relativas
  */
-import axios from 'axios';
 import {
   Quiz, QuizListItem, Question, QuizAttempt, QuizAnswer, StudentAnswer,
   QuizCreate, QuizUpdate, QuizConfiguration, QuizStatistics, StudentQuizProgress,
   QuestionType, QuizStatus, AttemptStatus
 } from '../types/quiz';
-import { API_CONFIG, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
+import { buildApiUrl, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
+import axios from 'axios';
 
 class QuizService {
   // Quiz Management (Admin/Instructor)
   async createQuiz(quizData: QuizCreate): Promise<Quiz> {
     try {
+      console.log(' [quizService] Creating quiz:', quizData.title);
       console.log('📝 [quizService] Creating quiz:', quizData.title);
       
       const response = await axios.post(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}`,
+        buildApiUrl(API_ENDPOINTS.QUIZZES),
         quizData,
         { headers: getAuthHeaders() }
       );
@@ -35,7 +36,7 @@ class QuizService {
       console.log('📚 [quizService] Getting quizzes');
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}`,
+        buildApiUrl(API_ENDPOINTS.QUIZZES),
         { headers: getAuthHeaders() }
       );
       
@@ -52,7 +53,7 @@ class QuizService {
       console.log('📚 [quizService] Getting quizzes by course:', { courseId, publishedOnly });
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/course/${courseId}?published_only=${publishedOnly}`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/course/${courseId}?published_only=${publishedOnly}`),
         { headers: getAuthHeaders() }
       );
       
@@ -69,7 +70,7 @@ class QuizService {
       console.log('📝 [quizService] Getting quiz:', quizId);
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}`),
         { headers: getAuthHeaders() }
       );
       
@@ -86,7 +87,7 @@ class QuizService {
       console.log('📝 [quizService] Updating quiz:', quizId);
       
       const response = await axios.put(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}`),
         updateData,
         { headers: getAuthHeaders() }
       );
@@ -104,7 +105,7 @@ class QuizService {
       console.log('🗑️ [quizService] Deleting quiz:', quizId);
       
       await axios.delete(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}`),
         { headers: getAuthHeaders() }
       );
       
@@ -120,7 +121,7 @@ class QuizService {
       console.log('📢 [quizService] Publishing quiz:', quizId);
       
       const response = await axios.put(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/publish`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/publish`),
         {},
         { headers: getAuthHeaders() }
       );
@@ -139,7 +140,7 @@ class QuizService {
       console.log('🚀 [quizService] Starting quiz attempt:', quizId);
       
       const response = await axios.post(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/attempts`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/attempts`),
         {},
         { headers: getAuthHeaders() }
       );
@@ -157,7 +158,7 @@ class QuizService {
       console.log('📤 [quizService] Submitting quiz answers:', { attemptId, answersCount: answers.length });
       
       const response = await axios.post(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}/submit`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}/submit`),
         { answers },
         { headers: getAuthHeaders() }
       );
@@ -175,7 +176,7 @@ class QuizService {
       console.log('📊 [quizService] Getting quiz attempt:', attemptId);
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/attempts/${attemptId}`),
         { headers: getAuthHeaders() }
       );
       
@@ -192,7 +193,7 @@ class QuizService {
       console.log('📈 [quizService] Getting student quiz progress:', quizId);
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/progress`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/progress`),
         { headers: getAuthHeaders() }
       );
       
@@ -209,7 +210,7 @@ class QuizService {
       console.log('📊 [quizService] Getting quiz statistics:', quizId);
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/statistics`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/statistics`),
         { headers: getAuthHeaders() }
       );
       
@@ -226,7 +227,7 @@ class QuizService {
       console.log('📚 [quizService] Getting student attempts for quiz:', quizId);
       
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.QUIZZES}/${quizId}/my-attempts`,
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/my-attempts`),
         { headers: getAuthHeaders() }
       );
       

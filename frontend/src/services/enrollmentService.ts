@@ -7,12 +7,12 @@ import { Course } from '../types/course';
 import {
   Enrollment,
   EnrollmentStatus,
-  EnrollmentProgressResponse,
   EnrolledCourse,
-  EnrollmentStats,
-  CourseEnrollmentStatus
+  CourseEnrollmentStatus,
+  EnrollmentProgressResponse,
+  EnrollmentStats
 } from '../types/enrollment';
-import { API_CONFIG, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
+import { buildApiUrl, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 
 // Tipos para requests internos
 interface EnrollmentCreate {
@@ -37,7 +37,7 @@ class EnrollmentService {
       };
 
       const response = await axios.post<Enrollment>(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/`),
         enrollmentData,
         { headers: getAuthHeaders() }
       );
@@ -64,7 +64,7 @@ class EnrollmentService {
 
       // Obtener enrollments del usuario - ✅ CORREGIDO: Sin duplicación API path
       const response = await axios.get(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/`),
         { 
           headers: getAuthHeaders(),
           params 
@@ -80,7 +80,7 @@ class EnrollmentService {
           try {
             // ✅ CORREGIDO: URL correcta sin duplicación
             const courseResponse = await axios.get(
-              `${API_CONFIG.BASE_URL}${API_ENDPOINTS.COURSES}/${enrollment.course_id}`,
+              buildApiUrl(`${API_ENDPOINTS.COURSES}/${enrollment.course_id}`),
               { headers: getAuthHeaders() }
             );
             
@@ -199,7 +199,7 @@ class EnrollmentService {
       console.log('🔄 [enrollmentService] Unenrolling from course:', courseId);
       
       await axios.delete(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${courseId}/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/${courseId}/`),
         { headers: getAuthHeaders() }
       );
 
@@ -218,7 +218,7 @@ class EnrollmentService {
       console.log('📊 [enrollmentService] Getting enrollment progress:', enrollmentId);
       
       const response = await axios.get<EnrollmentProgressResponse>(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/progress/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/progress/`),
         { headers: getAuthHeaders() }
       );
 
@@ -243,7 +243,7 @@ class EnrollmentService {
       };
 
       await axios.put(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/complete-lesson/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/complete-lesson/`),
         completionData,
         { headers: getAuthHeaders() }
       );
@@ -263,7 +263,7 @@ class EnrollmentService {
       console.log('🏆 [enrollmentService] Issuing certificate for enrollment:', enrollmentId);
       
       await axios.put(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/issue-certificate/`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}/issue-certificate/`),
         {},
         { headers: getAuthHeaders() }
       );
@@ -283,7 +283,7 @@ class EnrollmentService {
       console.log('📈 [enrollmentService] Getting course enrollment stats:', courseId);
       
       const response = await axios.get<EnrollmentStats>(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}/stats`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}/stats`),
         { headers: getAuthHeaders() }
       );
 
@@ -308,7 +308,7 @@ class EnrollmentService {
       }
 
       const response = await axios.get<Enrollment[]>(
-        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}`,
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/course/${courseId}`),
         { 
           headers: getAuthHeaders(),
           params 

@@ -179,13 +179,13 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
               </div>
               <div className="text-right">
                 <span className="text-xs font-semibold inline-block text-blue-600">
-                  {summary.completion_rate.toFixed(1)}%
+                  {(summary?.completion_rate ?? 0).toFixed(1)}%
                 </span>
               </div>
             </div>
             <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
               <div 
-                style={{ width: `${summary.completion_rate}%` }}
+                style={{ width: `${summary?.completion_rate ?? 0}%` }}
                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"
               />
             </div>
@@ -257,7 +257,7 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
       </div>
 
       {/* Motivacional */}
-      {summary.completion_rate > 0 && (
+      {(summary?.completion_rate ?? 0) > 0 && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
           <div className="flex items-center space-x-4">
             <TrendingUp className="w-8 h-8 text-blue-600" />
@@ -266,9 +266,9 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
                 ¡Buen progreso! 🚀
               </h3>
               <p className="text-gray-700 mt-1">
-                {summary.completion_rate >= 80 
+                {(summary?.completion_rate ?? 0) >= 80 
                   ? 'Tienes una excelente tasa de completitud. ¡Sigue así!'
-                  : summary.completion_rate >= 50
+                  : (summary?.completion_rate ?? 0) >= 50
                   ? 'Vas por buen camino. ¡Continúa con el siguiente curso!'
                   : 'Cada paso cuenta. ¡Sigue avanzando en tu aprendizaje!'
                 }
