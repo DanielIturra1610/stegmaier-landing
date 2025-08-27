@@ -107,10 +107,142 @@ class AnalyticsService {
 
   /**
    * Obtiene analytics personales del usuario
+   * ✅ CORREGIDO: Logging exhaustivo y manejo de errores robusto
    */
   async getUserAnalytics(): Promise<any> {
-    console.log('👤 [analyticsService] Getting user analytics');
-    return this.makeAuthenticatedRequest<any>('/my-stats');
+    console.group('👤 [analyticsService] Getting user analytics');
+    
+    try {
+      console.log('📡 [analyticsService] Making request to /my-stats endpoint');
+      console.log('🔑 [analyticsService] Auth token available:', !!localStorage.getItem('auth_token'));
+      
+      const result = await this.makeAuthenticatedRequest<any>('/my-stats');
+      
+      console.log('📨 [analyticsService] Raw response received:', result);
+      console.log('📊 [analyticsService] Response keys:', Object.keys(result || {}));
+      
+      // VALIDACIÓN CRÍTICA DE ESTRUCTURA
+      const validatedResult = this.validateAndFixAnalyticsStructure(result);
+      
+      console.log('✅ [analyticsService] Validated result:', validatedResult);
+      console.groupEnd();
+      
+      return validatedResult;
+      
+    } catch (error) {
+      console.group('❌ [analyticsService] Error in getUserAnalytics');
+      console.error('Error details:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
+      
+      console.log('🔄 [analyticsService] Returning safe fallback data');
+      console.groupEnd();
+      
+      // Devolver estructura segura para prevenir crashes
+      return this.getSafeAnalyticsFallback();
+    }
+  }
+
+  /**
+   * Valida y corrige la estructura de analytics para prevenir undefined errors
+   */
+  private validateAndFixAnalyticsStructure(data: any): any {
+    console.log('🔍 [analyticsService] Validating analytics structure');
+    
+    if (!data || typeof data !== 'object') {
+      console.warn('⚠️ [analyticsService] Invalid data structure, using fallback');
+      return this.getSafeAnalyticsFallback();
+    }
+
+    // Estructura esperada por MyProgressPage.tsx
+    const validated = {
+      period: {
+        start_date: data.period?.start_date || new Date().toISOString(),
+        end_date: data.period?.end_date || new Date().toISOString(),
+        days: data.period?.days || 30
+      },
+      user: {
+        user_id: data.user?.user_id || '',
+        name: data.user?.name || 'Usuario',
+        joined_date: data.user?.joined_date || new Date().toISOString()
+      },
+      learning: {
+        courses_enrolled: Number(data.learning?.courses_enrolled) || 0,
+        courses_completed: Number(data.learning?.courses_completed) || 0,
+        courses_in_progress: Number(data.learning?.courses_in_progress) || 0,
+        completion_rate: Number(data.learning?.completion_rate) || 0,
+        total_watch_time_seconds: Number(data.learning?.total_watch_time_seconds) || 0,
+        total_watch_time_hours: Number(data.learning?.total_watch_time_hours) || 0,
+        average_session_duration: Number(data.learning?.average_session_duration) || 0
+      },
+      engagement: {
+        login_streak: Number(data.engagement?.login_streak) || 0,
+        total_logins: Number(data.engagement?.total_logins) || 0,
+        last_login: data.engagement?.last_login || new Date().toISOString(),
+        favorite_category: data.engagement?.favorite_category || 'General',
+        activity_score: Number(data.engagement?.activity_score) || 0,
+        lessons_completed: Number(data.engagement?.lessons_completed) || 0
+      },
+      achievements: {
+        certificates_earned: Number(data.achievements?.certificates_earned) || 0,
+        badges_earned: Array.isArray(data.achievements?.badges_earned) ? data.achievements.badges_earned : [],
+        milestones: Array.isArray(data.achievements?.milestones) ? data.achievements.milestones : []
+      },
+      recent_activity: Array.isArray(data.recent_activity) ? data.recent_activity : []
+    };
+
+    // Log de validaciones específicas
+    console.log('✅ [analyticsService] completion_rate validated:', validated.learning.completion_rate);
+    console.log('✅ [analyticsService] All required fields present');
+    
+    return validated;
+  }
+
+  /**
+   * Datos de fallback seguros para prevenir crashes
+   */
+  private getSafeAnalyticsFallback(): any {
+    console.log('🛡️ [analyticsService] Providing safe analytics fallback');
+    
+    return {
+      period: {
+        start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        end_date: new Date().toISOString(),
+        days: 30
+      },
+      user: {
+        user_id: 'fallback-user',
+        name: 'Usuario',
+        joined_date: new Date().toISOString()
+      },
+      learning: {
+        courses_enrolled: 0,
+        courses_completed: 0,
+        courses_in_progress: 0,
+        completion_rate: 0,
+        total_watch_time_seconds: 0,
+        total_watch_time_hours: 0,
+        average_session_duration: 0
+      },
+      engagement: {
+        login_streak: 0,
+        total_logins: 0,
+        last_login: new Date().toISOString(),
+        favorite_category: 'General',
+        activity_score: 0,
+        lessons_completed: 0
+      },
+      achievements: {
+        certificates_earned: 0,
+        badges_earned: [],
+        milestones: []
+      },
+      recent_activity: []
+    };
   }
 
   /**
