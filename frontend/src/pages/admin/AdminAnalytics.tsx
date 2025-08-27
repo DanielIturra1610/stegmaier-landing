@@ -456,16 +456,33 @@ const AdminAnalytics: React.FC = () => {
                               <div 
                                 className="bg-green-500 h-2 rounded-full" 
                                 style={{ width: `${(() => {
+                                  // VALIDACIÓN EXHAUSTIVA CON MÚLTIPLES CHECKS
+                                  console.log('🔍 [AdminAnalytics] Validating completion_rate for course:', course?.course_id);
+                                  console.log('🔍 [AdminAnalytics] Raw completion_rate value:', course?.completion_rate);
+                                  console.log('🔍 [AdminAnalytics] Type of completion_rate:', typeof course?.completion_rate);
+                                  
                                   const rate = course?.completion_rate;
-                                  const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                                  let safeRate = 0;
+                                  
+                                  if (rate !== null && rate !== undefined && !isNaN(Number(rate))) {
+                                    safeRate = Math.max(0, Math.min(100, Number(rate)));
+                                  }
+                                  
+                                  console.log('✅ [AdminAnalytics] Safe completion_rate:', safeRate);
                                   return safeRate;
                                 })()}%` }}
                               />
                             </div>
                             <span className="text-sm text-gray-900">
                               {(() => {
+                                // VALIDACIÓN EXHAUSTIVA CON MÚLTIPLES CHECKS
                                 const rate = course?.completion_rate;
-                                const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                                let safeRate = 0;
+                                
+                                if (rate !== null && rate !== undefined && !isNaN(Number(rate))) {
+                                  safeRate = Math.max(0, Math.min(100, Number(rate)));
+                                }
+                                
                                 return safeRate.toFixed(1);
                               })()}%
                             </span>
