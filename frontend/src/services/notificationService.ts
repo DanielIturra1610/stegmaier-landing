@@ -1,7 +1,8 @@
 /**
  * Servicio para gestión de notificaciones conectado al backend
  */
-import api from './api';
+import axios from 'axios';
+import { buildApiUrl, getAuthHeaders } from '../config/api.config';
 
 export interface Notification {
   id: string;
@@ -69,7 +70,7 @@ class NotificationService {
       params.append('status', status);
     }
 
-    const response = await api.get(`${this.baseUrl}?${params}`);
+    const response = await axios.get(buildApiUrl(`${this.baseUrl}?${params}`), { headers: getAuthHeaders() });
     return response.data;
   }
 
@@ -77,7 +78,7 @@ class NotificationService {
    * Obtiene el número de notificaciones no leídas
    */
   async getUnreadCount(): Promise<number> {
-    const response = await api.get(`${this.baseUrl}/unread-count`);
+    const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread-count`), { headers: getAuthHeaders() });
     return response.data.unread_count;
   }
 
@@ -85,14 +86,14 @@ class NotificationService {
    * Marca una notificación como leída
    */
   async markAsRead(notificationId: string): Promise<void> {
-    await api.patch(`${this.baseUrl}/${notificationId}/read`);
+    await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/read`), {}, { headers: getAuthHeaders() });
   }
 
   /**
    * Marca todas las notificaciones como leídas
    */
   async markAllAsRead(): Promise<number> {
-    const response = await api.patch(`${this.baseUrl}/mark-all-read`);
+    const response = await axios.patch(buildApiUrl(`${this.baseUrl}/mark-all-read`), {}, { headers: getAuthHeaders() });
     return response.data.message.match(/\d+/)?.[0] || 0;
   }
 
@@ -100,21 +101,21 @@ class NotificationService {
    * Elimina una notificación
    */
   async deleteNotification(notificationId: string): Promise<void> {
-    await api.delete(`${this.baseUrl}/${notificationId}`);
+    await axios.delete(buildApiUrl(`${this.baseUrl}/${notificationId}`), { headers: getAuthHeaders() });
   }
 
   /**
    * Archiva una notificación
    */
   async archiveNotification(notificationId: string): Promise<void> {
-    await api.patch(`${this.baseUrl}/${notificationId}/archive`);
+    await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/archive`), {}, { headers: getAuthHeaders() });
   }
 
   /**
    * Crea una nueva notificación (solo admins)
    */
   async createNotification(data: CreateNotificationData): Promise<Notification> {
-    const response = await api.post(this.baseUrl, data);
+    const response = await axios.post(buildApiUrl(this.baseUrl), data, { headers: getAuthHeaders() });
     return response.data;
   }
 
@@ -122,7 +123,7 @@ class NotificationService {
    * Crea múltiples notificaciones en lote (solo admins)
    */
   async createBulkNotifications(data: BulkNotificationData): Promise<Notification[]> {
-    const response = await api.post(`${this.baseUrl}/bulk`, data);
+    const response = await axios.post(buildApiUrl(`${this.baseUrl}/bulk`), data, { headers: getAuthHeaders() });
     return response.data;
   }
 
@@ -135,12 +136,11 @@ class NotificationService {
     courseTitle: string,
     instructorId: string
   ): Promise<void> {
-    await api.post(`${this.baseUrl}/course-completion`, {
+    await axios.post(buildApiUrl(`${this.baseUrl}/course-completion`), {
       student_id: studentId,
       course_id: courseId,
       course_title: courseTitle,
-      instructor_id: instructorId
-    });
+    }, { headers: getAuthHeaders() });
   }
 
   /**
@@ -153,13 +153,13 @@ class NotificationService {
     instructorId: string,
     progressPercentage: number
   ): Promise<void> {
-    await api.post(`${this.baseUrl}/course-progress`, {
+    await axios.post(buildApiUrl(`${this.baseUrl}/course-progress`), {
       student_id: studentId,
       course_id: courseId,
       course_title: courseTitle,
       instructor_id: instructorId,
       progress_percentage: progressPercentage
-    });
+    }, { headers: getAuthHeaders() });
   }
 
   /**
@@ -172,13 +172,13 @@ class NotificationService {
     instructorId: string,
     studentName: string
   ): Promise<void> {
-    await api.post(`${this.baseUrl}/enrollment`, {
+    await axios.post(buildApiUrl(`${this.baseUrl}/enrollment`), {
       student_id: studentId,
       course_id: courseId,
       course_title: courseTitle,
       instructor_id: instructorId,
       student_name: studentName
-    });
+    }, { headers: getAuthHeaders() });
   }
 
   /**
@@ -192,14 +192,14 @@ class NotificationService {
     instructorId: string,
     score: number
   ): Promise<void> {
-    await api.post(`${this.baseUrl}/quiz-completion`, {
+    await axios.post(buildApiUrl(`${this.baseUrl}/quiz-completion`), {
       student_id: studentId,
       quiz_id: quizId,
       quiz_title: quizTitle,
       course_id: courseId,
       instructor_id: instructorId,
       score: score
-    });
+    }, { headers: getAuthHeaders() });
   }
 
   /**
