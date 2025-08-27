@@ -10,20 +10,23 @@ export const API_CONFIG = {
     const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
     const fallbackUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
     
-    // 🚨 CRÍTICO: FORZAR backend URL en producción
-    if ((import.meta as any).env.PROD || window.location.hostname.includes('railway.app')) {
-      // En producción, SIEMPRE usar backend Railway
-      return 'https://stegmaier-backend-production.up.railway.app/api/v1';
+    // 🚨 CRÍTICO: FORZAR HTTPS en TODO momento en producción
+    if ((import.meta as any).env.PROD || 
+        window.location.hostname.includes('railway.app') || 
+        window.location.protocol === 'https:' ||
+        (import.meta as any).env.VITE_ENVIRONMENT === 'production') {
+      
+      // SIEMPRE forzar backend Railway con HTTPS
+      const httpsUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
+      console.log('🔐 [API Config] FORCING HTTPS backend URL:', httpsUrl);
+      return httpsUrl;
     }
     
-    // Si estamos en producción, FORZAR HTTPS
-    if ((import.meta as any).env.VITE_ENVIRONMENT === 'production' || 
-        window.location.protocol === 'https:') {
-      if (envUrl && envUrl.startsWith('http://')) {
-        // Forzar conversión a HTTPS
-        return envUrl.replace('http://', 'https://');
-      }
-      return envUrl || fallbackUrl;
+    // Fallback con conversión a HTTPS si es necesario
+    if (envUrl && envUrl.startsWith('http://')) {
+      const httpsConverted = envUrl.replace('http://', 'https://');
+      console.log('🔐 [API Config] Converting to HTTPS:', httpsConverted);
+      return httpsConverted;
     }
     
     return envUrl || fallbackUrl;

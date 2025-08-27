@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { ExperienceLevel } from '../services/experienceService';
 import { buildApiUrl } from '../config/api.config';
 
 interface AnalyticsEvent {
@@ -20,7 +19,11 @@ export const useAnalytics = () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
 
-      await fetch(buildApiUrl('/analytics/activity'), {
+      const analyticsUrl = buildApiUrl('/analytics/activity');
+      console.log('🔥 [Analytics] Posting to:', analyticsUrl);
+      console.log('🔥 [Analytics] Event:', event);
+      
+      await fetch(analyticsUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -248,7 +251,11 @@ export const useAnalytics = () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
 
-      await fetch(buildApiUrl('/analytics/activity/batch'), {
+      const batchUrl = buildApiUrl('/analytics/activity/batch');
+      console.log('🔥 [Analytics Batch] Posting to:', batchUrl);
+      console.log('🔥 [Analytics Batch] Events count:', events.length);
+      
+      await fetch(batchUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

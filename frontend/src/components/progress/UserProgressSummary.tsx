@@ -182,14 +182,24 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
                   {(() => {
                     console.log('🔍 [UserProgressSummary] summary:', summary);
                     console.log('🔍 [UserProgressSummary] completion_rate:', summary?.completion_rate);
-                    return (summary?.completion_rate ?? 0).toFixed(1);
+                    console.log('🔍 [UserProgressSummary] completion_rate type:', typeof summary?.completion_rate);
+                    
+                    // 🚨 CRÍTICO: Triple validación para completion_rate
+                    const rate = summary?.completion_rate;
+                    const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                    console.log('🔍 [UserProgressSummary] safe completion_rate:', safeRate);
+                    return safeRate.toFixed(1);
                   })()}%
                 </span>
               </div>
             </div>
             <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
               <div 
-                style={{ width: `${summary?.completion_rate ?? 0}%` }}
+                style={{ width: `${(() => {
+                  const rate = summary?.completion_rate;
+                  const safeRate = (typeof rate === 'number' && !isNaN(rate)) ? rate : 0;
+                  return safeRate;
+                })()}%` }}
                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"
               />
             </div>
