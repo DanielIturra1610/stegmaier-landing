@@ -53,6 +53,11 @@ const MyCourses: React.FC = () => {
   };
 
   const getFilteredCourses = () => {
+    // Validación defensiva para evitar errores de undefined
+    if (!enrolledCourses || !Array.isArray(enrolledCourses)) {
+      return [];
+    }
+    
     switch (filter) {
       case 'active':
         return enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE);
@@ -66,6 +71,11 @@ const MyCourses: React.FC = () => {
   const filteredCourses = getFilteredCourses();
 
   const getStatusCounts = () => {
+    // Validación defensiva para evitar errores de undefined
+    if (!enrolledCourses || !Array.isArray(enrolledCourses)) {
+      return { active: 0, completed: 0, total: 0 };
+    }
+    
     const active = enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE).length;
     const completed = enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.COMPLETED).length;
     return { active, completed, total: enrolledCourses.length };
