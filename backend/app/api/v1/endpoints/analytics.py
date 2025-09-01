@@ -219,3 +219,100 @@ async def get_my_analytics(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error obteniendo mis estadísticas: {str(e)}"
         )
+
+@router.post("/activity", summary="Registrar actividad de usuario (frontend compatible)")
+async def track_activity(
+    activity_data: dict,
+    current_user: User = Depends(get_current_user),
+    analytics_service: AnalyticsService = Depends(get_analytics_service)
+):
+    """
+    Endpoint compatible con frontend para registrar actividad de usuario
+    Mapea la estructura del frontend al servicio backend
+    """
+    try:
+        activity = await analytics_service.track_user_activity(
+            user_id=current_user.id,
+            activity_type=activity_data.get("activity_type"),
+            resource_id=activity_data.get("course_id") or activity_data.get("lesson_id"),
+            resource_type="course" if activity_data.get("course_id") else ("lesson" if activity_data.get("lesson_id") else None),
+            metadata=activity_data.get("metadata", {})
+        )
+        
+        return {
+            "success": True,
+            "message": "Actividad registrada exitosamente",
+            "activity_id": activity.id if activity else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error registrando actividad: {str(e)}"
+        )
+
+@router.post("/activity/batch", summary="Registrar múltiples actividades de usuario")
+async def track_batch_activities(
+    batch_data: dict,
+    current_user: User = Depends(get_current_user),
+    analytics_service: AnalyticsService = Depends(get_analytics_service)
+):
+    """
+    Endpoint para registrar múltiples actividades en lote
+    """
+    try:
+        events = batch_data.get("events", [])
+        activity_ids = []
+        
+        for event in events:
+            activity = await analytics_service.track_user_activity(
+                user_id=current_user.id,
+                activity_type=event.get("activity_type"),
+                resource_id=event.get("course_id") or event.get("lesson_id"),
+                resource_type="course" if event.get("course_id") else ("lesson" if event.get("lesson_id") else None),
+                metadata=event.get("metadata", {})
+            )
+            if activity:
+                activity_ids.append(activity.id)
+        
+        return {
+            "success": True,
+            "message": f"Se registraron {len(activity_ids)} actividades exitosamente",
+            "activity_ids": activity_ids
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error registrando actividades en lote: {str(e)}"
+        )
+
+@router.get("/users/me", summary="Analytics del usuario actual (alternativa)")
+async def get_user_me_analytics(
+    current_user: User = Depends(get_current_user),
+    analytics_service: AnalyticsService = Depends(get_analytics_service)
+):
+    """
+    Endpoint alternativo para compatibilidad con frontend testing
+    Equivalente a /my-stats pero con ruta /users/me
+    """
+    try:
+        analytics = await analytics_service.get_user_analytics(current_user.id)
+        
+        # Filtrar información sensible para usuarios no admin
+        filtered_analytics = {
+            "learning_stats": analytics.get("learning_stats", {}),
+            "engagement_stats": analytics.get("engagement_stats", {}),
+            "recent_activity": analytics.get("recent_activity", [])
+        }
+        
+        return {
+            "success": True,
+            "data": filtered_analytics
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error obteniendo analytics del usuario: {str(e)}"
+        )

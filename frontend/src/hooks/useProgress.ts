@@ -192,7 +192,7 @@ export const useUserProgressSummary = () => {
   }, [loadSummary]);
 
   const getCompletionRate = useCallback(() => {
-    return summary?.summary.completion_rate || 0;
+    return summary?.summary?.completion_rate || 0;
   }, [summary]);
 
   const getActiveCourses = useCallback(() => {
@@ -202,14 +202,14 @@ export const useUserProgressSummary = () => {
   }, [summary]);
 
   const getTotalStats = useCallback(() => {
-    if (!summary) return null;
+    if (!summary || !summary.summary) return null;
     
     return {
-      enrolled_courses: summary.summary.total_courses_enrolled,
-      completed_courses: summary.summary.courses_completed,
-      in_progress_courses: summary.summary.courses_in_progress,
-      total_time: summary.summary.total_time_spent,
-      certificates: summary.summary.certificates_earned,
+      enrolled_courses: summary.summary.total_courses_enrolled || 0,
+      completed_courses: summary.summary.courses_completed || 0,
+      in_progress_courses: summary.summary.courses_in_progress || 0,
+      total_time: summary.summary.total_time_spent || 0,
+      certificates: summary.summary.certificates_earned || 0,
       completion_rate: summary.summary.completion_rate || 0
     };
   }, [summary]);

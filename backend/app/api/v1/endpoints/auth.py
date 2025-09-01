@@ -136,6 +136,36 @@ async def resend_verification(request: ResendVerificationRequest, auth_service: 
     return verification_result
 
 
+@router.get("/me", summary="Obtener perfil del usuario actual")
+async def get_current_user(
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    """
+    Obtiene el perfil del usuario autenticado actual.
+    
+    Requiere token JWT válido en el header Authorization.
+    """
+    try:
+        # Obtener el usuario del token JWT
+        current_user = await auth_service.get_current_user()
+        
+        return {
+            "id": str(current_user.id),
+            "email": current_user.email,
+            "firstName": current_user.firstName,
+            "lastName": current_user.lastName,
+            "role": current_user.role,
+            "isEmailVerified": current_user.isEmailVerified,
+            "createdAt": current_user.createdAt.isoformat() if current_user.createdAt else None
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido o usuario no encontrado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 @router.post("/password-reset/confirm", summary="Confirmar restablecimiento de contraseña")
 async def confirm_password_reset(
     reset_data: PasswordReset,
