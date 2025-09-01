@@ -8,16 +8,15 @@ export const API_CONFIG = {
   // URL base del backend - FORZAR HTTPS SIEMPRE EN PRODUCCIÓN
   BASE_URL: (() => {
     const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
-    const fallbackUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
+    const fallbackUrl = 'https://stegmaierplatform.com/api/v1';
     
     // 🚨 CRÍTICO: FORZAR HTTPS en TODO momento en producción
     if ((import.meta as any).env.PROD || 
-        window.location.hostname.includes('railway.app') || 
-        window.location.protocol === 'https:' ||
+        (typeof window !== 'undefined' && window.location.protocol === 'https:') ||
         (import.meta as any).env.VITE_ENVIRONMENT === 'production') {
       
-      // SIEMPRE forzar backend Railway con HTTPS
-      const httpsUrl = 'https://stegmaier-backend-production.up.railway.app/api/v1';
+      // SIEMPRE forzar backend local con HTTPS
+      const httpsUrl = 'https://stegmaierplatform.com/api/v1';
       console.log('🔐 [API Config] FORCING HTTPS backend URL:', httpsUrl);
       return httpsUrl;
     }
@@ -77,15 +76,28 @@ export const API_ENDPOINTS = {
   PUSH_SUBSCRIPTIONS: '/push-subscriptions'
 } as const;
 
+import { forceHttps } from '../utils/forceHttps';
+
 /**
- * Construye URL completa del endpoint
+ * Construye una URL completa para un endpoint del API
+ * @param endpoint - El endpoint relativo (ej: '/auth/login')
+ * @returns La URL completa del API
  */
 export function buildApiUrl(endpoint: string): string {
-  // Eliminar / inicial si existe para evitar duplicación
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+  // Asegurar que el endpoint empiece con /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
-  // La BASE_URL ya incluye /api/v1, así que solo concatenamos
-  return `${API_CONFIG.BASE_URL}/${cleanEndpoint}`;
+  // Log para debug
+  const fullUrl = `${API_CONFIG.BASE_URL}${cleanEndpoint}`;
+  
+  // SIEMPRE forzar HTTPS en producción
+  const secureUrl = forceHttps(fullUrl);
+  
+  if (secureUrl !== fullUrl) {
+    console.log('🔐 [API Config] FORCING HTTPS:', secureUrl);
+  }
+  
+  return secureUrl;
 }
 
 /**

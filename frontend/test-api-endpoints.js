@@ -8,7 +8,7 @@
 const axios = require('axios');
 
 // Configuración
-const API_BASE_URL = 'https://stegmaier-backend-production.up.railway.app/api/v1';
+const API_BASE_URL = 'https://stegmaierplatform.com/api/v1';
 const TEST_TOKEN = process.env.TEST_TOKEN || 'your-jwt-token-here';
 
 // Headers de autenticación
