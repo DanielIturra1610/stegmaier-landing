@@ -85,7 +85,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
   };
 
   const calculateStats = (submissionList: AssignmentSubmission[]) => {
-    const gradedSubmissions = submissionList.filter(s => s.grade !== null);
+    const gradedSubmissions = (Array.isArray(submissionList) ? submissionList : []).filter(s => s.grade !== null);
     const totalGrade = gradedSubmissions.reduce((sum, s) => sum + (s.grade?.points_earned || 0), 0);
     const averageGrade = gradedSubmissions.length > 0 ? totalGrade / gradedSubmissions.length : 0;
 

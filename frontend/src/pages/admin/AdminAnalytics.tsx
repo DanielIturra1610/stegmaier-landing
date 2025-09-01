@@ -333,7 +333,7 @@ const AdminAnalytics: React.FC = () => {
               <div className="bg-white p-6 rounded-lg shadow">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Cursos Más Populares</h3>
                 <div className="space-y-3">
-                  {(popularCourses || []).slice(0, 5).filter(course => course && course.course_id).map((course, index) => (
+                  {(Array.isArray(popularCourses) ? popularCourses.slice(0, 5).filter(course => course && course.course_id) : []).map((course, index) => (
                     <div key={course.course_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600 mr-3">
@@ -440,7 +440,7 @@ const AdminAnalytics: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {(popularCourses || []).filter(course => course && course.course_id).map((course) => (
+                    {(Array.isArray(popularCourses) ? popularCourses : []).filter(course => course && course.course_id).map((course) => (
                       <tr key={course.course_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
@@ -549,7 +549,7 @@ const AdminAnalytics: React.FC = () => {
               
               {revenueData?.top_earning_courses?.length ? (
               <div className="space-y-4">
-                {revenueData.top_earning_courses.filter(course => course && course.course_id).map((course, index) => (
+                {(Array.isArray(revenueData?.top_earning_courses) ? revenueData.top_earning_courses : []).filter(course => course && course.course_id).map((course, index) => (
                   <div key={course.course_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-sm font-medium text-green-600 mr-3">

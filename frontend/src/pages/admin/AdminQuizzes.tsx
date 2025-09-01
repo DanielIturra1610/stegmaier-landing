@@ -62,7 +62,7 @@ const AdminQuizzes: React.FC = () => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este quiz?')) {
       try {
         await quizService.deleteQuiz(quizId);
-        setQuizzes(quizzes.filter(quiz => quiz.id !== quizId));
+        setQuizzes((Array.isArray(quizzes) ? quizzes : []).filter(quiz => quiz.id !== quizId));
       } catch (error) {
         console.error('Error deleting quiz:', error);
         alert('Error al eliminar el quiz');
@@ -70,7 +70,7 @@ const AdminQuizzes: React.FC = () => {
     }
   };
 
-  const filteredQuizzes = quizzes.filter(quiz =>
+  const filteredQuizzes = (Array.isArray(quizzes) ? quizzes : []).filter(quiz =>
     quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     quiz.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -311,13 +311,13 @@ const AdminQuizzes: React.FC = () => {
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-green-600">
-              {filteredQuizzes.filter(q => q.status === 'published').length}
+              {(Array.isArray(filteredQuizzes) ? filteredQuizzes : []).filter(q => q.status === 'published').length}
             </div>
             <div className="text-sm text-gray-600">Publicados</div>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-yellow-600">
-              {filteredQuizzes.filter(q => q.status === 'draft').length}
+              {(Array.isArray(filteredQuizzes) ? filteredQuizzes : []).filter(q => q.status === 'draft').length}
             </div>
             <div className="text-sm text-gray-600">Borradores</div>
           </div>

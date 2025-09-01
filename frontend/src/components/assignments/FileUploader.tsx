@@ -77,7 +77,7 @@ export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: st
 
   const handleFiles = useCallback((files: File[]) => {
     // Validar archivos
-    const validFiles = files.filter(file => {
+    const validFiles = (Array.isArray(files) ? files : []).filter(file => {
       const validation = assignmentService.validateFile(file, allowedTypes, maxFileSize);
       if (!validation.isValid) {
         onUploadError?.(validation.error || 'Archivo no válido');
@@ -144,7 +144,7 @@ export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: st
   }, [updateUpload, onUploadError]);
 
   const uploadAllFiles = useCallback(async (submissionId: string) => {
-    const pendingUploads = uploads.filter(upload => upload.status === 'pending');
+    const pendingUploads = (Array.isArray(uploads) ? uploads : []).filter(upload => upload.status === 'pending');
     const uploadedFiles: AssignmentFile[] = [];
 
     for (const upload of pendingUploads) {

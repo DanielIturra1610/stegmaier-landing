@@ -73,7 +73,7 @@ const CoursesPage: React.FC = () => {
   };
   
   // Función para filtrar cursos según búsqueda y categoría
-  const filteredCourses = (courses || []).filter(course => {
+  const filteredCourses = (Array.isArray(courses) ? courses : []).filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;

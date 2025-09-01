@@ -44,8 +44,8 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   const { user } = useAuth();
   
   // State management
-  const [submissions, setSubmissions] = useState<AssignmentSubmission[]>(initialSubmissions);
-  const [filteredSubmissions, setFilteredSubmissions] = useState<AssignmentSubmission[]>(initialSubmissions);
+  const [submissions, setSubmissions] = useState<AssignmentSubmission[]>(Array.isArray(initialSubmissions) ? initialSubmissions : []);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<AssignmentSubmission[]>(Array.isArray(initialSubmissions) ? initialSubmissions : []);
   const [selectedSubmissions, setSelectedSubmissions] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [sortField, setSortField] = useState<SortField>('submitted_at');
@@ -64,7 +64,7 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
 
   // Filter and sort submissions
   useEffect(() => {
-    let filtered = [...submissions];
+    let filtered = Array.isArray(submissions) ? [...submissions] : [];
 
     // Apply status filter
     switch (filterStatus) {
