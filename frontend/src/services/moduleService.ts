@@ -246,7 +246,7 @@ class ModuleService {
   calculateModuleProgress(module: ModuleWithLessons): number {
     if (module.lessons_count === 0) return 0;
     
-    const completedLessons = module.lessons.filter(lesson => lesson.is_completed).length;
+    const completedLessons = (Array.isArray(module.lessons) ? module.lessons : []).filter(lesson => lesson.is_completed).length;
     return Math.round((completedLessons / module.lessons_count) * 100);
   }
 

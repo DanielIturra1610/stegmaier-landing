@@ -157,7 +157,7 @@ export const AssignmentNotifications: React.FC<AssignmentNotificationsProps> = (
       });
 
       setNotifications(sortedNotifications);
-      setUnreadCount(sortedNotifications.filter(n => !n.is_read).length);
+      setUnreadCount((Array.isArray(sortedNotifications) ? sortedNotifications : []).filter(n => !n.is_read).length);
       
       console.log('🔔 [AssignmentNotifications] Loaded', sortedNotifications.length, 'notifications');
 
@@ -176,7 +176,7 @@ export const AssignmentNotifications: React.FC<AssignmentNotificationsProps> = (
   };
 
   const dismissNotification = (notificationId: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== notificationId));
     const notification = notifications.find(n => n.id === notificationId);
     if (notification && !notification.is_read) {
       setUnreadCount(prev => Math.max(0, prev - 1));

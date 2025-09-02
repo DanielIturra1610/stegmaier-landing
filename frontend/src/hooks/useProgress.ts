@@ -196,9 +196,11 @@ export const useUserProgressSummary = () => {
   }, [summary]);
 
   const getActiveCourses = useCallback(() => {
-    return summary?.recent_courses.filter(
-      course => course.status === ProgressStatus.IN_PROGRESS
-    ) || [];
+    return Array.isArray(summary?.recent_courses) 
+      ? summary.recent_courses.filter(
+          course => course.status === ProgressStatus.IN_PROGRESS
+        ) 
+      : [];
   }, [summary]);
 
   const getTotalStats = useCallback(() => {

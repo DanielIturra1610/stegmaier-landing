@@ -111,7 +111,7 @@ export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: st
   }, []);
 
   const removeUpload = useCallback((id: string) => {
-    setUploads(prev => prev.filter(upload => upload.id !== id));
+    setUploads(prev => (Array.isArray(prev) ? prev : []).filter(upload => upload.id !== id));
   }, []);
 
   const handleUpload = useCallback(async (upload: FileUploadItem, submissionId: string) => {
@@ -315,7 +315,7 @@ export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: st
               Archivos seleccionados ({uploads.length})
             </h3>
             <div className="text-sm text-gray-500">
-              {uploads.filter(u => u.status === 'success').length} de {uploads.length} completados
+              {(Array.isArray(uploads) ? uploads : []).filter(u => u.status === 'success').length} de {uploads.length} completados
             </div>
           </div>
           
@@ -405,7 +405,7 @@ export const FileUploader = React.forwardRef<{ uploadAllFiles: (submissionId: st
           {/* Botones de acción globales */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-500">
-              {uploads.filter(u => u.status === 'pending').length} archivo{uploads.filter(u => u.status === 'pending').length !== 1 ? 's' : ''} pendiente{uploads.filter(u => u.status === 'pending').length !== 1 ? 's' : ''}
+              {(Array.isArray(uploads) ? uploads : []).filter(u => u.status === 'pending').length} archivo{(Array.isArray(uploads) ? uploads : []).filter(u => u.status === 'pending').length !== 1 ? 's' : ''} pendiente{(Array.isArray(uploads) ? uploads : []).filter(u => u.status === 'pending').length !== 1 ? 's' : ''}
             </div>
             <div className="flex space-x-3">
               <button

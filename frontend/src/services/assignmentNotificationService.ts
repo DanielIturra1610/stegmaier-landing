@@ -44,12 +44,12 @@ class AssignmentNotificationService {
 
       // Obtener estudiantes inscritos en el curso
       const enrollments = await enrollmentService.getCourseEnrollments(assignment.course_id);
-      const studentIds = enrollments
+      const studentIds = (Array.isArray(enrollments) ? enrollments : [])
         .filter(e => e.user_role === 'student' && e.status === 'active')
         .map(e => e.user_id);
 
       if (studentIds.length === 0) {
-        console.log('⚠️ No students enrolled in course');
+        console.log(' No students enrolled in course');
         return;
       }
 
@@ -173,7 +173,7 @@ class AssignmentNotificationService {
 
       // Obtener instructores del curso
       const courseEnrollments = await enrollmentService.getCourseEnrollments(assignment.course_id);
-      const instructorIds = courseEnrollments
+      const instructorIds = (Array.isArray(courseEnrollments) ? courseEnrollments : [])
         .filter(e => ['instructor', 'admin'].includes(e.user_role))
         .map(e => e.user_id);
 

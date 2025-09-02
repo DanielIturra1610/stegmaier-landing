@@ -46,7 +46,7 @@ const StreakTracker: React.FC<StreakTrackerProps> = ({
     startOfWeek.setHours(0, 0, 0, 0);
     
     // Filter study dates for current week
-    const weekStudyDates = studyDates.filter(date => {
+    const weekStudyDates = (Array.isArray(studyDates) ? studyDates : []).filter(date => {
       return date >= startOfWeek && date <= today;
     });
     

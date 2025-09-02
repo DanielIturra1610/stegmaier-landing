@@ -49,7 +49,7 @@ const AdminCourseForm: React.FC = () => {
         
         if (response.ok) {
           const data = await response.json();
-          setInstructors(data.filter((user: any) => 
+          setInstructors((Array.isArray(data) ? data : []).filter((user: any) => 
             user.role === 'instructor' || user.role === 'admin'
           ));
         }

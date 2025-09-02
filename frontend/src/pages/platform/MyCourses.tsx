@@ -60,11 +60,11 @@ const MyCourses: React.FC = () => {
     
     switch (filter) {
       case 'active':
-        return enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE);
+        return (Array.isArray(enrolledCourses) ? enrolledCourses : []).filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE);
       case 'completed':
-        return enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.COMPLETED);
+        return (Array.isArray(enrolledCourses) ? enrolledCourses : []).filter(course => course.enrollment.status === EnrollmentStatus.COMPLETED);
       default:
-        return enrolledCourses;
+        return Array.isArray(enrolledCourses) ? enrolledCourses : [];
     }
   };
 
@@ -76,8 +76,8 @@ const MyCourses: React.FC = () => {
       return { active: 0, completed: 0, total: 0 };
     }
     
-    const active = enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE).length;
-    const completed = enrolledCourses.filter(course => course.enrollment.status === EnrollmentStatus.COMPLETED).length;
+    const active = (Array.isArray(enrolledCourses) ? enrolledCourses : []).filter(course => course.enrollment.status === EnrollmentStatus.ACTIVE).length;
+    const completed = (Array.isArray(enrolledCourses) ? enrolledCourses : []).filter(course => course.enrollment.status === EnrollmentStatus.COMPLETED).length;
     return { active, completed, total: enrolledCourses.length };
   };
 

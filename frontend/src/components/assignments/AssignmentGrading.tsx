@@ -69,18 +69,18 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
     // Apply status filter
     switch (filterStatus) {
       case 'submitted':
-        filtered = filtered.filter(s => s.status === SubmissionStatus.SUBMITTED);
+        filtered = (Array.isArray(filtered) ? filtered : []).filter(s => s.status === SubmissionStatus.SUBMITTED);
         break;
       case 'graded':
-        filtered = filtered.filter(s => s.grade_status === GradeStatus.COMPLETED);
+        filtered = (Array.isArray(filtered) ? filtered : []).filter(s => s.grade_status === GradeStatus.COMPLETED);
         break;
       case 'pending':
-        filtered = filtered.filter(s => 
+        filtered = (Array.isArray(filtered) ? filtered : []).filter(s => 
           s.status === SubmissionStatus.SUBMITTED && s.grade_status !== GradeStatus.COMPLETED
         );
         break;
       case 'late':
-        filtered = filtered.filter(s => s.is_late);
+        filtered = (Array.isArray(filtered) ? filtered : []).filter(s => s.is_late);
         break;
     }
 
@@ -153,13 +153,13 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   const handleSelectSubmission = (submissionId: string) => {
     setSelectedSubmissions(prev => 
       prev.includes(submissionId)
-        ? prev.filter(id => id !== submissionId)
+        ? (Array.isArray(prev) ? prev : []).filter(id => id !== submissionId)
         : [...prev, submissionId]
     );
   };
 
   const handleSelectAll = () => {
-    const eligibleSubmissions = filteredSubmissions
+    const eligibleSubmissions = (Array.isArray(filteredSubmissions) ? filteredSubmissions : [])
       .filter(s => s.status === SubmissionStatus.SUBMITTED)
       .map(s => s.id);
     
@@ -407,7 +407,7 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
           <div className="flex items-center">
             <input
               type="checkbox"
-              checked={selectedSubmissions.length === filteredSubmissions.filter(s => s.status === SubmissionStatus.SUBMITTED).length}
+              checked={selectedSubmissions.length === (Array.isArray(filteredSubmissions) ? filteredSubmissions : []).filter(s => s.status === SubmissionStatus.SUBMITTED).length}
               onChange={handleSelectAll}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />

@@ -432,7 +432,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Horarios de Envío</h3>
             <div className="space-y-2">
-              {analytics.distributions.submission_time_distribution
+              {(Array.isArray(analytics.distributions.submission_time_distribution) ? analytics.distributions.submission_time_distribution : [])
                 .filter(h => h.count > 0)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 3)

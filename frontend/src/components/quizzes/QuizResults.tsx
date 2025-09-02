@@ -104,7 +104,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
     };
   };
 
-  const correctAnswers = attempt.answers.filter(a => a.is_correct).length;
+  const correctAnswers = (Array.isArray(attempt.answers) ? attempt.answers : []).filter(a => a.is_correct).length;
   const totalQuestions = quiz.questions.length;
   const performance = getPerformanceMessage(attempt.score_percentage, attempt.is_passing);
 

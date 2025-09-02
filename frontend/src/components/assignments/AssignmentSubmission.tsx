@@ -182,7 +182,7 @@ export const AssignmentSubmissionComponent: React.FC<AssignmentSubmissionProps> 
 
     try {
       await assignmentService.deleteSubmissionFile(submission.id, fileId);
-      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      setUploadedFiles(prev => (Array.isArray(prev) ? prev : []).filter(f => f.id !== fileId));
     } catch (error: any) {
       onError?.(error.message);
     }

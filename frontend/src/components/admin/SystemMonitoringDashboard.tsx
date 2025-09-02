@@ -318,13 +318,13 @@ const SystemMonitoringDashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow border">
           <h3 className="text-lg font-semibold mb-4">Active Alerts</h3>
           <div className="space-y-3 max-h-80 overflow-y-auto">
-            {alerts.filter(alert => !alert.resolved).length === 0 ? (
+            {(Array.isArray(alerts) ? alerts : []).filter(alert => !alert.resolved).length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <CheckCircleIcon className="h-12 w-12 mx-auto mb-2" />
                 <p>No active alerts</p>
               </div>
             ) : (
-              alerts
+              (Array.isArray(alerts) ? alerts : [])
                 .filter(alert => !alert.resolved)
                 .map((alert) => (
                   <div 

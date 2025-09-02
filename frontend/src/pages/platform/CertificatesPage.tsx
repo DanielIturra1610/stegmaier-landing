@@ -57,9 +57,9 @@ const CertificatesPage: React.FC = () => {
       return { certificates: certificates, enrollments: [] };
     } else if (filterStatus === 'available') {
       // Mostrar enrollments completados sin certificado
-      const enrollmentsWithoutCert = (enrollments || []).filter(enrollment => 
+      const enrollmentsWithoutCert = (Array.isArray(enrollments) ? enrollments : []).filter(enrollment => 
         enrollment.progress >= 100 && 
-        !(certificates || []).some(cert => cert.enrollmentId === enrollment.id)
+        !(Array.isArray(certificates) ? certificates : []).some(cert => cert.enrollmentId === enrollment.id)
       );
       return { certificates: [], enrollments: enrollmentsWithoutCert };
     } else {

@@ -215,7 +215,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       
       const wasUnread = notifications.find(n => n.id === notificationId && n.status === 'unread');
       
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== notificationId));
       
       if (wasUnread) {
         setUnreadCount(prev => Math.max(0, prev - 1));

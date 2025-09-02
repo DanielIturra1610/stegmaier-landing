@@ -145,7 +145,7 @@ export const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
 
   const filteredStudents = selectedStudent === 'all' 
     ? Object.values(studentSubmissions)
-    : [studentSubmissions[selectedStudent]].filter(Boolean);
+    : (Array.isArray([studentSubmissions[selectedStudent]]) ? [studentSubmissions[selectedStudent]] : []).filter(Boolean);
 
   return (
     <div className="space-y-6">

@@ -390,7 +390,8 @@ class GradeExportService {
       reader.onload = (e) => {
         try {
           const csv = e.target?.result as string;
-          const lines = Array.isArray(csv.split('\n')) ? csv.split('\n').filter(line => line.trim() && !line.startsWith('#')) : [];
+          const splitLines = csv.split('\n');
+          const lines = (Array.isArray(splitLines) ? splitLines : []).filter(line => line.trim() && !line.startsWith('#'));
           const headers = lines[0].split(',');
           
           const grades = lines.slice(1).map(line => {
@@ -400,7 +401,7 @@ class GradeExportService {
               grade: parseFloat(values[3]?.trim()) || 0,
               feedback: values[4]?.trim() || ''
             };
-          }).filter(g => g.submissionId && !isNaN(g.grade));
+          }).filter(g => g && g.submissionId && !isNaN(g.grade));
           
           resolve(grades);
         } catch (error) {

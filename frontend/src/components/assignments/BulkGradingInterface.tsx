@@ -100,7 +100,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
 
     const distribution = ranges.map(range => ({
       range: range.range,
-      count: gradedSubmissions.filter(s => {
+      count: (Array.isArray(gradedSubmissions) ? gradedSubmissions : []).filter(s => {
         const gradeValue = s.grade?.points_earned || 0;
         return gradeValue >= range.min && gradeValue <= range.max;
       }).length
@@ -162,7 +162,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
     try {
       console.log('💾 [BulkGrading] Saving grades...');
       
-      const gradesToSave = Object.values(grades).filter(g => g.status === 'graded' || g.status === 'pending');
+      const gradesToSave = (Array.isArray(Object.values(grades)) ? Object.values(grades) : []).filter(g => g.status === 'graded' || g.status === 'pending');
       
       if (gradesToSave.length === 0) {
         console.log('⚠️ No grades to save');
@@ -257,7 +257,7 @@ export const BulkGradingInterface: React.FC<BulkGradingInterfaceProps> = ({
     return 'text-red-600';
   };
 
-  const pendingGrades = Object.values(grades).filter(g => g.status === 'pending').length;
+  const pendingGrades = (Array.isArray(Object.values(grades)) ? Object.values(grades) : []).filter(g => g.status === 'pending').length;
   const hasChanges = Object.values(grades).some(g => g.status !== 'graded');
 
   if (loading) {

@@ -103,7 +103,7 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
   const removeNotification = useCallback(async (id: string) => {
     try {
       await notificationService.deleteNotification(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== id));
       // Refrescar el contador desde el contexto
       refreshUnreadCount();
     } catch (error) {

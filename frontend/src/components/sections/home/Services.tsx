@@ -132,7 +132,7 @@ const Services: FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'iso' | 'legal' | 'training'>('all')
 
   // Filter services based on category
-  const filteredServices = services.filter(service => {
+  const filteredServices = (Array.isArray(services) ? services : []).filter(service => {
     if (selectedCategory === 'all') return true
     if (selectedCategory === 'iso') return [1, 2, 5].includes(service.id)
     if (selectedCategory === 'legal') return [4].includes(service.id)

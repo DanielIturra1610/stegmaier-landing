@@ -101,10 +101,10 @@ const AdminAssignmentGrading: React.FC = () => {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <span>Total submissions: {submissions.length}</span>
           <span>
-            Calificadas: {submissions.filter(s => s.status === 'graded').length}
+            Calificadas: {(Array.isArray(submissions) ? submissions : []).filter(s => s.status === 'graded').length}
           </span>
           <span>
-            Pendientes: {submissions.filter(s => s.status === 'submitted').length}
+            Pendientes: {(Array.isArray(submissions) ? submissions : []).filter(s => s.status === 'submitted').length}
           </span>
         </div>
       </div>
