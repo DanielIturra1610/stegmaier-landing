@@ -200,15 +200,15 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
           <div className="space-y-2 text-sm text-gray-600">
             <div className="flex justify-between">
               <span>En progreso:</span>
-              <span className="font-medium">{summary.courses_in_progress}</span>
+              <span className="font-medium">{summary?.courses_in_progress || 0}</span>
             </div>
             <div className="flex justify-between">
               <span>Sin empezar:</span>
-              <span className="font-medium">{summary.courses_not_started}</span>
+              <span className="font-medium">{summary?.courses_not_started || 0}</span>
             </div>
             <div className="flex justify-between">
               <span>Lecciones completadas:</span>
-              <span className="font-medium">{summary.total_lessons_completed}</span>
+              <span className="font-medium">{summary?.total_lessons_completed || 0}</span>
             </div>
           </div>
         </div>
