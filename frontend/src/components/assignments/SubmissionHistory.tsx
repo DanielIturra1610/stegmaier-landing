@@ -295,7 +295,9 @@ export const SubmissionHistory: React.FC<SubmissionHistoryProps> = ({
                                       <CalendarIcon className="h-4 w-4 mr-1" />
                                       {version.submission.submitted_at 
                                         ? formatDateTime(version.submission.submitted_at)
-                                        : 'Guardado: ' + formatDateTime(version.submission.last_modified_at)
+                                        : version.submission?.last_modified_at 
+                                          ? 'Guardado: ' + formatDateTime(version.submission.last_modified_at)
+                                          : 'Fecha no disponible'
                                       }
                                     </span>
                                     

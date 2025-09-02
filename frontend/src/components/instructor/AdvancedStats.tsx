@@ -165,7 +165,7 @@ const AdvancedStats: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100">Ingresos Totales</p>
-              <p className="text-2xl font-bold">${stats.revenueAnalytics.totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">${(stats?.revenueAnalytics?.totalRevenue || 0).toLocaleString()}</p>
             </div>
             <Award className="h-8 w-8 text-green-100" />
           </div>
@@ -175,7 +175,7 @@ const AdvancedStats: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Crecimiento Mensual</p>
-              <p className="text-2xl font-bold">+{stats.revenueAnalytics.monthlyGrowth}%</p>
+              <p className="text-2xl font-bold">+{stats?.revenueAnalytics?.monthlyGrowth || 0}%</p>
             </div>
             <TrendingUp className="h-8 w-8 text-blue-100" />
           </div>
@@ -185,7 +185,7 @@ const AdvancedStats: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100">Promedio por Estudiante</p>
-              <p className="text-2xl font-bold">${stats.revenueAnalytics.averagePerStudent}</p>
+              <p className="text-2xl font-bold">${stats?.revenueAnalytics?.averagePerStudent || 0}</p>
             </div>
             <Users className="h-8 w-8 text-purple-100" />
           </div>
@@ -195,7 +195,7 @@ const AdvancedStats: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100">Curso Top</p>
-              <p className="text-sm font-bold truncate">{stats.revenueAnalytics.topPerformingCourse}</p>
+              <p className="text-sm font-bold truncate">{stats?.revenueAnalytics?.topPerformingCourse || 'N/A'}</p>
             </div>
             <Star className="h-8 w-8 text-orange-100" />
           </div>
@@ -208,7 +208,7 @@ const AdvancedStats: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Inscripciones vs Completados</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stats.monthlyEnrollments}>
+            <BarChart data={stats?.monthlyEnrollments || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -223,7 +223,7 @@ const AdvancedStats: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Engagement de Estudiantes</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={stats.studentEngagement}>
+            <LineChart data={stats?.studentEngagement || []}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="week" />
               <YAxis />
@@ -252,7 +252,7 @@ const AdvancedStats: React.FC = () => {
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={stats.categoryDistribution}
+                data={stats?.categoryDistribution || []}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -263,7 +263,7 @@ const AdvancedStats: React.FC = () => {
                 fill="#8884d8"
                 dataKey="students"
               >
-                {stats.categoryDistribution.map((entry, index) => (
+                {(stats?.categoryDistribution || []).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
@@ -276,7 +276,7 @@ const AdvancedStats: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Rendimiento por Curso</h3>
           <div className="space-y-4">
-            {stats.coursePerformance.map((course) => (
+            {(stats?.coursePerformance || []).map((course) => (
               <div key={course.courseId} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium text-gray-900">{course.courseName}</h4>

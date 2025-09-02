@@ -207,13 +207,13 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <MetricCard
               title="Total Assignments"
-              value={analytics.overview.total_assignments}
+              value={analytics?.overview?.total_assignments || 0}
               icon={<DocumentCheckIcon className="h-6 w-6" />}
               color="blue"
             />
             <MetricCard
               title="Submissions"
-              value={analytics.overview.total_submissions}
+              value={analytics?.overview?.total_submissions || 0}
               icon={<UserGroupIcon className="h-6 w-6" />}
               color="green"
             />
@@ -225,20 +225,20 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
             />
             <MetricCard
               title="Promedio General"
-              value={analytics.overview.average_grade.toFixed(1)}
+              value={(analytics?.overview?.average_grade || 0).toFixed(1)}
               icon={<ArrowTrendingUpIcon className="h-6 w-6" />}
               color="indigo"
             />
             <MetricCard
               title="Enviadas Tarde"
-              value={analytics.overview.late_submissions}
+              value={analytics?.overview?.late_submissions || 0}
               icon={<ExclamationTriangleIcon className="h-6 w-6" />}
               color="orange"
               trend="warning"
             />
             <MetricCard
               title="Por Calificar"
-              value={analytics.overview.pending_grading}
+              value={analytics?.overview?.pending_grading || 0}
               icon={<ClockIcon className="h-6 w-6" />}
               color="red"
               trend="urgent"
@@ -250,7 +250,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Distribución de Calificaciones</h3>
               <div className="space-y-3">
-                {analytics.distributions.grade_distribution.map((range) => (
+                {(analytics?.distributions?.grade_distribution || []).map((range) => (
                   <div key={range.range} className="flex items-center">
                     <div className="w-16 text-sm text-gray-600">{range.range}</div>
                     <div className="flex-1 mx-3">
@@ -280,7 +280,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                     <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                     <span className="text-sm font-medium text-gray-900">Enviadas Temprano (&gt;3 días)</span>
                   </div>
-                  <span className="text-lg font-bold text-green-600">{analytics.engagement.submission_patterns.early_birds}</span>
+                  <span className="text-lg font-bold text-green-600">{analytics?.engagement?.submission_patterns?.early_birds || 0}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
@@ -288,7 +288,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                     <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                     <span className="text-sm font-medium text-gray-900">A Tiempo (1 día)</span>
                   </div>
-                  <span className="text-lg font-bold text-blue-600">{analytics.engagement.submission_patterns.on_time}</span>
+                  <span className="text-lg font-bold text-blue-600">{analytics?.engagement?.submission_patterns?.on_time || 0}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
@@ -296,7 +296,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                     <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
                     <span className="text-sm font-medium text-gray-900">Último Momento</span>
                   </div>
-                  <span className="text-lg font-bold text-yellow-600">{analytics.engagement.submission_patterns.last_minute}</span>
+                  <span className="text-lg font-bold text-yellow-600">{analytics?.engagement?.submission_patterns?.last_minute || 0}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
@@ -304,7 +304,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                     <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
                     <span className="text-sm font-medium text-gray-900">Tarde</span>
                   </div>
-                  <span className="text-lg font-bold text-red-600">{analytics.engagement.submission_patterns.late}</span>
+                  <span className="text-lg font-bold text-red-600">{analytics?.engagement?.submission_patterns?.late || 0}</span>
                 </div>
               </div>
             </div>
@@ -321,7 +321,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
               Mejores Estudiantes
             </h3>
             <div className="space-y-3">
-              {analytics.performance.top_performers.map((student, index) => (
+              {(analytics?.performance?.top_performers || []).map((student, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div>
                     <div className="font-medium text-gray-900">{student.student_name}</div>
@@ -342,7 +342,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
               Estudiantes que Necesitan Apoyo
             </h3>
             <div className="space-y-3">
-              {analytics.performance.struggling_students.map((student, index) => (
+              {(analytics?.performance?.struggling_students || []).map((student, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                   <div>
                     <div className="font-medium text-gray-900">{student.student_name}</div>
@@ -378,7 +378,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {analytics.performance.assignment_difficulty.map((assignment, index) => {
+                  {(analytics?.performance?.assignment_difficulty || []).map((assignment, index) => {
                     const difficulty = assignment.average_grade < 70 ? 'Difícil' : 
                                      assignment.average_grade < 80 ? 'Moderado' : 'Fácil';
                     const difficultyColor = assignment.average_grade < 70 ? 'text-red-600 bg-red-100' : 
@@ -416,7 +416,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Solicitudes de Revisión</h3>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{analytics.engagement.revision_requests}</div>
+              <div className="text-3xl font-bold text-blue-600">{analytics?.engagement?.revision_requests || 0}</div>
               <div className="text-sm text-gray-500 mt-1">Total este mes</div>
             </div>
           </div>
@@ -424,7 +424,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Engagement con Feedback</h3>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">{analytics.engagement.feedback_engagement}%</div>
+              <div className="text-3xl font-bold text-green-600">{analytics?.engagement?.feedback_engagement || 0}%</div>
               <div className="text-sm text-gray-500 mt-1">Responden a comentarios</div>
             </div>
           </div>
@@ -432,7 +432,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Horarios de Envío</h3>
             <div className="space-y-2">
-              {(Array.isArray(analytics.distributions.submission_time_distribution) ? analytics.distributions.submission_time_distribution : [])
+              {(Array.isArray(analytics?.distributions?.submission_time_distribution) ? analytics.distributions.submission_time_distribution : [])
                 .filter(h => h.count > 0)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 3)
@@ -443,7 +443,7 @@ export const AssignmentAnalytics: React.FC<AssignmentAnalyticsProps> = ({
                     <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                       <div
                         className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: `${(hour.count / Math.max(...analytics.distributions.submission_time_distribution.map(h => h.count))) * 100}%` }}
+                        style={{ width: `${(hour.count / Math.max(...(analytics?.distributions?.submission_time_distribution || []).map(h => h.count))) * 100}%` }}
                       ></div>
                     </div>
                     <span className="text-sm font-medium text-gray-900">{hour.count}</span>

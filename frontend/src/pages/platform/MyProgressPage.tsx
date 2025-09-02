@@ -279,7 +279,7 @@ const MyProgressPage: React.FC = () => {
   const dayName = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
   const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
   const displayName =
-    (stats?.user?.name && stats.user.name.trim()) ||
+    (stats?.user?.name?.trim()) ||
     (user?.full_name ? user.full_name.split(' ')[0] : '') ||
     user?.firstName ||
     (user?.email ? user.email.split('@')[0] : 'Estudiante') ||
