@@ -106,7 +106,7 @@ class CourseService:
                     try:
                         print(f"📚 [CourseService] Getting lessons for course {course.id} ({course.title})")
                         # Obtener lecciones del curso
-                        lessons = await self.lesson_repository.get_by_course_id(course.id)
+                        lessons = await self.lesson_repository.get_by_course(course.id)
                         print(f"🔍 [CourseService] Raw lessons result for {course.id}: {lessons}")
                         print(f"🔢 [CourseService] Lessons type: {type(lessons)}, Length: {len(lessons) if lessons else 0}")
                         

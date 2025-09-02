@@ -174,7 +174,7 @@ async def get_user_certificates(
                 
             # Obtener instructor
             instructor = await enrollment_service.user_repository.get_by_id(course.instructor_id)
-            instructor_name = f"{instructor.first_name} {instructor.last_name}" if instructor else "Instructor"
+            instructor_name = instructor.full_name if instructor and instructor.full_name else "Instructor"
             
             verification_code = generate_verification_code(
                 enrollment.id, 
@@ -187,7 +187,7 @@ async def get_user_certificates(
                 enrollmentId=enrollment.id,
                 courseId=enrollment.course_id,
                 courseName=course.title,
-                studentName=f"{current_user.first_name} {current_user.last_name}",
+                studentName=current_user.full_name if current_user.full_name else current_user.username,
                 instructorName=instructor_name,
                 issueDate=enrollment.updated_at.isoformat() if enrollment.updated_at else datetime.utcnow().isoformat(),
                 completionDate=enrollment.updated_at.isoformat() if enrollment.updated_at else datetime.utcnow().isoformat(),

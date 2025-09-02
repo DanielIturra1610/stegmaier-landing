@@ -175,15 +175,24 @@ async def get_current_user_info(
     
     Requiere autenticación con token JWT.
     """
+    # Extraer nombres del full_name si existe
+    first_name, last_name = "", ""
+    if current_user.full_name:
+        name_parts = current_user.full_name.strip().split()
+        if len(name_parts) >= 1:
+            first_name = name_parts[0]
+        if len(name_parts) >= 2:
+            last_name = " ".join(name_parts[1:])
+    
     return {
         "id": str(current_user.id),
         "email": current_user.email,
         "username": current_user.username,
-        "firstName": current_user.first_name,
-        "lastName": current_user.last_name,
+        "firstName": first_name,
+        "lastName": last_name,
         "full_name": current_user.full_name,
         "role": current_user.role.value,
-        "verified": current_user.verified,
+        "verified": current_user.is_verified,  # Corregido: is_verified no verified
         "createdAt": current_user.created_at.isoformat() if current_user.created_at else None,
         "updatedAt": current_user.updated_at.isoformat() if current_user.updated_at else None
     }
