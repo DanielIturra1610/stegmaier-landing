@@ -70,7 +70,7 @@ class NotificationService {
       params.append('status', status);
     }
 
-    const response = await axios.get(buildApiUrl(`${this.baseUrl}?${params}`), { headers: getAuthHeaders() });
+    const response = await axios.get(buildApiUrl(`${this.baseUrl}/?${params}`), { headers: getAuthHeaders() });
     return response.data;
   }
 

@@ -94,7 +94,7 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
     );
   }
 
-  const { summary, recent_courses } = summaryData;
+  const { summary, recent_courses = [] } = summaryData || { summary: null, recent_courses: [] };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -222,7 +222,7 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
             <BarChart3 className="w-5 h-5 text-gray-400" />
           </div>
 
-          {recent_courses.length > 0 ? (
+          {recent_courses && recent_courses.length > 0 ? (
             <div className="space-y-3">
               {recent_courses.slice(0, 5).map((course) => (
                 <div key={course.course_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

@@ -8,7 +8,10 @@ from ....application.dtos.auth_dto import (
     PasswordResetRequest, PasswordReset,
     VerificationResponse, ResendVerificationRequest
 )
-from ....dependencies import get_auth_service
+from ....dependencies import get_auth_service, get_user_service
+from fastapi.security import SecurityScopes
+from ...deps import get_current_user
+from ....domain.entities.user import User
 
 router = APIRouter()
 
@@ -136,34 +139,6 @@ async def resend_verification(request: ResendVerificationRequest, auth_service: 
     return verification_result
 
 
-@router.get("/me", summary="Obtener perfil del usuario actual")
-async def get_current_user(
-    auth_service: AuthService = Depends(get_auth_service)
-):
-    """
-    Obtiene el perfil del usuario autenticado actual.
-    
-    Requiere token JWT válido en el header Authorization.
-    """
-    try:
-        # Obtener el usuario del token JWT
-        current_user = await auth_service.get_current_user()
-        
-        return {
-            "id": str(current_user.id),
-            "email": current_user.email,
-            "firstName": current_user.firstName,
-            "lastName": current_user.lastName,
-            "role": current_user.role,
-            "isEmailVerified": current_user.isEmailVerified,
-            "createdAt": current_user.createdAt.isoformat() if current_user.createdAt else None
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o usuario no encontrado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
 
 @router.post("/password-reset/confirm", summary="Confirmar restablecimiento de contraseña")
@@ -188,3 +163,27 @@ async def confirm_password_reset(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail="Funcionalidad de restablecimiento de contraseña no implementada completamente"
     )
+
+
+@router.get("/me", summary="Obtener información del usuario actual")
+async def get_current_user_info(
+    security_scopes: SecurityScopes = SecurityScopes(),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Obtiene la información del usuario autenticado actual.
+    
+    Requiere autenticación con token JWT.
+    """
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "username": current_user.username,
+        "firstName": current_user.first_name,
+        "lastName": current_user.last_name,
+        "full_name": current_user.full_name,
+        "role": current_user.role.value,
+        "verified": current_user.verified,
+        "createdAt": current_user.created_at.isoformat() if current_user.created_at else None,
+        "updatedAt": current_user.updated_at.isoformat() if current_user.updated_at else None
+    }
