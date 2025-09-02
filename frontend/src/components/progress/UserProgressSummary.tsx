@@ -107,7 +107,7 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <Calendar className="w-4 h-4" />
             <span>
-              {summary.last_activity 
+              {summary?.last_activity 
                 ? `Última actividad: ${formatDate(summary.last_activity)}`
                 : 'Sin actividad reciente'
               }
@@ -118,43 +118,35 @@ const UserProgressSummary: React.FC<UserProgressSummaryProps> = ({
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-3">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+            <BookOpen className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+            <div className="text-2xl font-bold text-gray-900">
+              {summary?.total_courses_enrolled || 0}
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {summary.total_courses_enrolled}
-            </p>
-            <p className="text-sm text-gray-600">Cursos inscritos</p>
+            <div className="text-sm text-gray-600">Cursos Inscritos</div>
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mx-auto mb-3">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <TrendingUp className="w-8 h-8 mx-auto mb-2 text-green-600" />
+            <div className="text-2xl font-bold text-gray-900">
+              {summary?.courses_completed || 0}
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {summary.courses_completed}
-            </p>
-            <p className="text-sm text-gray-600">Cursos completados</p>
+            <div className="text-sm text-gray-600">Completados</div>
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full mx-auto mb-3">
-              <Clock className="w-6 h-6 text-purple-600" />
+            <Clock className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+            <div className="text-2xl font-bold text-gray-900">
+              {formatTime(summary?.total_time_spent || 0)}
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {formatTime(summary.total_time_spent)}
-            </p>
-            <p className="text-sm text-gray-600">Tiempo total</p>
+            <div className="text-sm text-gray-600">Tiempo Total</div>
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mx-auto mb-3">
-              <Award className="w-6 h-6 text-yellow-600" />
+            <Award className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
+            <div className="text-2xl font-bold text-gray-900">
+              {summary?.certificates_earned || 0}
             </div>
-            <p className="text-3xl font-bold text-gray-900">
-              {summary.certificates_earned}
-            </p>
-            <p className="text-sm text-gray-600">Certificados</p>
+            <div className="text-sm text-gray-600">Certificados</div>
           </div>
         </div>
       </div>

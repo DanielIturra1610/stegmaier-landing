@@ -98,7 +98,9 @@ export const authService = {
    * Obtener información del usuario actual
    */
   getCurrentUser: async () => {
-    const response = await axios.get(buildApiUrl('/auth/me'), {});
+    const response = await axios.get(buildApiUrl('/auth/me'), {
+      headers: getAuthHeaders()
+    });
     const apiData = response.data;
     
     // Mapeo de los datos recibidos del API al formato que espera nuestra aplicación
