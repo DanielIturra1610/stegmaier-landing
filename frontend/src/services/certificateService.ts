@@ -45,7 +45,12 @@ class CertificateService {
    */
   async getUserCertificates(): Promise<Certificate[]> {
     try {
-      const response = await axios.get(buildApiUrl(`${this.baseUrl}/my-certificates`), { headers: getAuthHeaders() });
+      // El endpoint correcto en backend es /certificates/user, no /my-certificates
+      const fullUrl = buildApiUrl(`${this.baseUrl}/user`);
+      console.log('🔍 [certificateService] Calling getUserCertificates URL:', fullUrl);
+      
+      const response = await axios.get(fullUrl, { headers: getAuthHeaders() });
+      console.log('🔍 [certificateService] Response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching user certificates:', error);

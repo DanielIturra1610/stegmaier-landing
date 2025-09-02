@@ -73,8 +73,11 @@ class CourseService {
   // Obtener cursos disponibles para inscripción
   async getAvailableCourses(page: number = 1, limit: number = 10): Promise<Course[] | CoursesResponse> {
     try {
+      const fullUrl = buildApiUrl(API_ENDPOINTS.COURSES_AVAILABLE);
+      console.log('🔍 [courseService] Full URL:', fullUrl);
       console.log('🔍 [courseService] Calling getAvailableCourses with params:', { page, limit });
-      const response = await axios.get(buildApiUrl(API_ENDPOINTS.COURSES_AVAILABLE), {
+      
+      const response = await axios.get(fullUrl, {
         headers: {
           ...getAuthHeaders(),
           'Cache-Control': 'no-cache',

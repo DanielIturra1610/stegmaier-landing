@@ -103,18 +103,18 @@ export const authService = {
     });
     const apiData = response.data;
     
+    // Console para debugging
+    console.log('🔍 [authService] Raw API data:', apiData);
+    
     // Mapeo de los datos recibidos del API al formato que espera nuestra aplicación
     const userData = {
       id: apiData._id || apiData.id || '',
       email: apiData.email || '',
-      // Manejo de nombres
-      firstName: apiData.firstName || apiData.first_name || '',
-      lastName: apiData.lastName || apiData.last_name || '',
-      full_name: apiData.full_name || '',
-      // Si no hay full_name pero hay firstName o lastName, lo construimos
-      ...((!apiData.full_name && (apiData.firstName || apiData.first_name || apiData.lastName || apiData.last_name)) && {
-        full_name: `${apiData.firstName || apiData.first_name || ''} ${apiData.lastName || apiData.last_name || ''}`.trim()
-      }),
+      username: apiData.username || '',
+      // Manejo de nombres - priorizar full_name del backend
+      full_name: apiData.full_name || `${apiData.firstName || apiData.first_name || ''} ${apiData.lastName || apiData.last_name || ''}`.trim() || apiData.username || 'Usuario',
+      firstName: apiData.firstName || apiData.first_name || (apiData.full_name ? apiData.full_name.split(' ')[0] : ''),
+      lastName: apiData.lastName || apiData.last_name || (apiData.full_name ? apiData.full_name.split(' ').slice(1).join(' ') : ''),
       // Otros campos
       role: apiData.role || 'student',
       verified: apiData.verified || apiData.is_verified || false,
@@ -123,6 +123,8 @@ export const authService = {
       createdAt: apiData.createdAt || apiData.created_at || new Date().toISOString(),
       updatedAt: apiData.updatedAt || apiData.updated_at || new Date().toISOString()
     };
+    
+    console.log('🔍 [authService] Mapped user data:', userData);
     
     // Guardamos los datos actualizados en localStorage para acceso rápido
     localStorage.setItem('auth_user', JSON.stringify(userData));
