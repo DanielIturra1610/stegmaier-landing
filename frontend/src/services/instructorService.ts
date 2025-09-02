@@ -46,7 +46,7 @@ export interface StudentProgress {
   progress_percentage: number;
   completed_lessons: number;
   total_lessons: number;
-  last_activity: string;
+  last_activity?: string;
   quiz_scores: Array<{
     quiz_id: string;
     quiz_title: string;

@@ -106,15 +106,30 @@ const InstructorStudents: React.FC = () => {
     return 'text-red-600 bg-red-100';
   };
 
-  const getLastActivityText = (lastActivity: string) => {
-    const date = new Date(lastActivity);
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  const getLastActivityText = (lastActivity: string | undefined) => {
+    // Validación defensiva para last_activity
+    if (!lastActivity) {
+      return 'Sin actividad reciente';
+    }
     
-    if (diffInDays === 0) return 'Hoy';
-    if (diffInDays === 1) return 'Ayer';
-    if (diffInDays < 7) return `Hace ${diffInDays} días`;
-    return date.toLocaleDateString();
+    try {
+      const date = new Date(lastActivity);
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        return 'Sin actividad reciente';
+      }
+      
+      const now = new Date();
+      const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffInDays === 0) return 'Hoy';
+      if (diffInDays === 1) return 'Ayer';
+      if (diffInDays < 7) return `Hace ${diffInDays} días`;
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error('Error parsing last_activity date:', error);
+      return 'Sin actividad reciente';
+    }
   };
 
   const StudentCard: React.FC<{ student: StudentProgress }> = ({ student }) => (
@@ -162,7 +177,7 @@ const InstructorStudents: React.FC = () => {
         </div>
         <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
           <span>{student.completed_lessons} de {student.total_lessons} lecciones</span>
-          <span>Última actividad: {getLastActivityText(student.last_activity)}</span>
+          <span>Última actividad: {getLastActivityText(student?.last_activity)}</span>
         </div>
       </div>
 
