@@ -95,7 +95,7 @@ const CoursesListPage: React.FC = () => {
   ];
 
   // Filtrar cursos según categoría y término de búsqueda
-  const filteredCourses = coursesData.filter(course => {
+  const filteredCourses = (Array.isArray(coursesData) ? coursesData : []).filter(course => {
     const matchesCategory = activeCategory === 'todos' || course.category === activeCategory;
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          course.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -103,7 +103,7 @@ const CoursesListPage: React.FC = () => {
   });
 
   // Cursos destacados
-  const featuredCourses = coursesData.filter(course => course.featured);
+  const featuredCourses = (Array.isArray(coursesData) ? coursesData : []).filter(course => course.featured);
 
   return (
     <div className="space-y-6 pb-10">

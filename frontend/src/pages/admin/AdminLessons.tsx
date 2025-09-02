@@ -256,19 +256,19 @@ const AdminLessons: React.FC = () => {
           <div>
             <div className="text-sm font-medium text-gray-500">Lecciones de Video</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {lessons.filter(l => l.content_type === 'video').length}
+              {(Array.isArray(lessons) ? lessons : []).filter(l => l.content_type === 'video').length}
             </div>
           </div>
           <div>
             <div className="text-sm font-medium text-gray-500">Lecciones de Texto</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {lessons.filter(l => l.content_type === 'text').length}
+              {(Array.isArray(lessons) ? lessons : []).filter(l => l.content_type === 'text').length}
             </div>
           </div>
           <div>
             <div className="text-sm font-medium text-gray-500">Assignments</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {lessons.filter(l => l.lesson_type === 'assignment').length}
+              {(Array.isArray(lessons) ? lessons : []).filter(l => l.lesson_type === 'assignment').length}
             </div>
           </div>
         </div>

@@ -69,7 +69,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
 
   const handleFiles = useCallback((files: File[]) => {
     // Filtrar solo archivos de video y validar
-    const videoFiles = files.filter(file => {
+    const videoFiles = (Array.isArray(files) ? files : []).filter(file => {
       const validation = mediaService.validateVideoFile(file);
       if (!validation.isValid) {
         onUploadError?.(validation.error || 'Archivo no válido');
@@ -140,7 +140,7 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
   }, [updateUpload, onUploadSuccess, onUploadError]);
 
   const removeUpload = useCallback((id: string) => {
-    setUploads(prev => prev.filter(upload => upload.id !== id));
+    setUploads(prev => (Array.isArray(prev) ? prev : []).filter(upload => upload.id !== id));
   }, []);
 
   const getStatusIcon = (status: FileUpload['status']) => {

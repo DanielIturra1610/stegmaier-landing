@@ -322,7 +322,7 @@ class LateSubmissionService {
       needs_intervention: boolean;
     }>;
   } {
-    const lateSubmissions = submissions.filter(s => {
+    const lateSubmissions = (Array.isArray(submissions) ? submissions : []).filter(s => {
       const assignment = assignments.find(a => a.id === s.assignment_id);
       if (!assignment) return false;
       
@@ -344,8 +344,8 @@ class LateSubmissionService {
 
     // Generar datos por assignment
     const byAssignment = assignments.map(assignment => {
-      const assignmentSubmissions = submissions.filter(s => s.assignment_id === assignment.id);
-      const lateAssignmentSubmissions = assignmentSubmissions.filter(s => {
+      const assignmentSubmissions = (Array.isArray(submissions) ? submissions : []).filter(s => s.assignment_id === assignment.id);
+      const lateAssignmentSubmissions = (Array.isArray(assignmentSubmissions) ? assignmentSubmissions : []).filter(s => {
         const analysis = this.analyzeSubmission(assignment, s, 
           s.submitted_at ? new Date(s.submitted_at) : new Date()
         );

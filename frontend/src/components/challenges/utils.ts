@@ -189,8 +189,8 @@ export const getNewlyReachedMilestones = (
   if (!progress) return [];
 
   const currentValue = progress.currentValue;
-  const reachedMilestones = challenge.milestones.filter(m => currentValue >= m);
-  const newlyReached = reachedMilestones.filter(
+  const reachedMilestones = (Array.isArray(challenge.milestones) ? challenge.milestones : []).filter(m => currentValue >= m);
+  const newlyReached = (Array.isArray(reachedMilestones) ? reachedMilestones : []).filter(
     m => !progress.milestoneReached?.includes(m)
   );
   

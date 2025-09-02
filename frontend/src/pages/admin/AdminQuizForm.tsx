@@ -124,7 +124,7 @@ const AdminQuizForm: React.FC = () => {
     }
 
     if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE || currentQuestion.type === QuestionType.MULTIPLE_SELECT) {
-      const validOptions = currentQuestion.options?.filter(opt => opt.text?.trim()) || [];
+      const validOptions = Array.isArray(currentQuestion.options) ? currentQuestion.options.filter(opt => opt.text?.trim()) : [];
       if (validOptions.length < 2) {
         alert('Debes proporcionar al menos 2 opciones válidas');
         return;
@@ -162,7 +162,7 @@ const AdminQuizForm: React.FC = () => {
 
   const deleteQuestion = (index: number) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta pregunta?')) {
-      setQuestions(questions.filter((_, i) => i !== index));
+      setQuestions((Array.isArray(questions) ? questions : []).filter((_, i) => i !== index));
     }
   };
 
@@ -203,7 +203,7 @@ const AdminQuizForm: React.FC = () => {
         ...formData,
         questions: questions,
         question_pool: [],
-        question_ids: questions.map(q => q.id).filter(Boolean),
+        question_ids: (Array.isArray(questions) ? questions : []).map(q => q.id).filter(Boolean),
         config: {
           shuffle_questions: formData.shuffle_questions || false,
           shuffle_answers: false,

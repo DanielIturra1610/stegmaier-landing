@@ -132,7 +132,7 @@ export const RubricEditor: React.FC<RubricEditorProps> = ({
   };
 
   const removeCriterion = (index: number) => {
-    setCriteria(prev => prev.filter((_, i) => i !== index));
+    setCriteria(prev => (Array.isArray(prev) ? prev : []).filter((_, i) => i !== index));
   };
 
   const updateCriterion = (index: number, field: keyof CriterionFormData, value: any) => {
@@ -164,7 +164,7 @@ export const RubricEditor: React.FC<RubricEditorProps> = ({
   };
 
   const removeLevel = (criterionIndex: number, levelIndex: number) => {
-    const newLevels = criteria[criterionIndex].levels.filter((_, i) => i !== levelIndex);
+    const newLevels = Array.isArray(criteria[criterionIndex]?.levels) ? criteria[criterionIndex].levels.filter((_, i) => i !== levelIndex) : [];
     updateCriterion(criterionIndex, 'levels', newLevels);
   };
 

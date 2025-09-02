@@ -26,7 +26,7 @@ export const formatDate = (date: Date): string => {
  */
 export const getActivityLevel = (date: Date, studyDates: Date[]): ActivityLevel => {
   const dateString = date.toDateString();
-  const matchingDates = studyDates.filter(d => d.toDateString() === dateString);
+  const matchingDates = (Array.isArray(studyDates) ? studyDates : []).filter(d => d.toDateString() === dateString);
   
   if (matchingDates.length === 0) return ActivityLevel.NONE;
   
@@ -47,7 +47,7 @@ export const getActivityLevel = (date: Date, studyDates: Date[]): ActivityLevel 
  */
 export const getMinutesStudied = (date: Date, studyDates: Date[]): number | undefined => {
   const dateString = date.toDateString();
-  const matchingDates = studyDates.filter(d => d.toDateString() === dateString);
+  const matchingDates = (Array.isArray(studyDates) ? studyDates : []).filter(d => d.toDateString() === dateString);
   
   if (matchingDates.length === 0) return undefined;
   
@@ -114,7 +114,7 @@ export const getStreakEmoji = (streakLength: number): string => {
  * @returns Percentage of completion (0-100)
  */
 export const calculateWeeklyCompletion = (weekDays: ActivityData[], weeklyGoal: number): number => {
-  const activeDays = weekDays.filter(day => day.level > ActivityLevel.NONE).length;
+  const activeDays = (Array.isArray(weekDays) ? weekDays : []).filter(day => day.level > ActivityLevel.NONE).length;
   return Math.min(Math.round((activeDays / weeklyGoal) * 100), 100);
 };
 

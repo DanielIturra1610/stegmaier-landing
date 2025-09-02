@@ -225,7 +225,7 @@ class GradeExportService {
 
     // Resumen por assignment
     assignments.forEach(assignment => {
-      const assignmentData = data.filter(d => d.assignment_title === assignment.title);
+      const assignmentData = (Array.isArray(data) ? data : []).filter(d => d.assignment_title === assignment.title);
       const stats = this.calculateStats(assignmentData);
       
       content.push(`${assignment.title}:`);
@@ -284,7 +284,7 @@ class GradeExportService {
    * Calcular estadísticas
    */
   private calculateStats(data: GradeExportData[]) {
-    const gradedData = data.filter(d => d.grade !== null);
+    const gradedData = (Array.isArray(data) ? data : []).filter(d => d.grade !== null);
     const grades = gradedData.map(d => d.grade!);
     
     return {
@@ -390,7 +390,7 @@ class GradeExportService {
       reader.onload = (e) => {
         try {
           const csv = e.target?.result as string;
-          const lines = csv.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+          const lines = Array.isArray(csv.split('\n')) ? csv.split('\n').filter(line => line.trim() && !line.startsWith('#')) : [];
           const headers = lines[0].split(',');
           
           const grades = lines.slice(1).map(line => {
