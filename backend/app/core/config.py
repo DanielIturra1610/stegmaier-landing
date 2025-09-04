@@ -94,7 +94,7 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-    FROM_EMAIL: str = os.getenv("EMAIL_FROM", "noreply@localhost")
+    FROM_EMAIL: str = os.getenv("EMAIL_FROM", "noreply@stegmaierplatform.com")
     FROM_NAME: str = os.getenv("FROM_NAME", "Stegmaier LMS")
     SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support@stegmaierplatform.com")
     
