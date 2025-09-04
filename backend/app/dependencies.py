@@ -134,13 +134,13 @@ async def get_course_service(
     course_repository: CourseRepository = Depends(get_course_repository),
     user_repository: UserRepository = Depends(get_user_repository),
     lesson_repository: LessonRepository = Depends(get_lesson_repository),
-    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository)
+    enrollment_repository: EnrollmentRepository = Depends(get_enrollment_repository),
+    notification_repository: NotificationRepository = Depends(get_notification_repository)
 ) -> CourseService:
     """
     Proporciona una instancia configurada del servicio de cursos.
     """
-    # Avoid circular dependency by getting notification_service inside the function
-    notification_repository = await get_notification_repository()
+    # Create notification service with proper dependency injection
     notification_service = NotificationService(notification_repository)
     
     return CourseService(
