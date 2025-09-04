@@ -88,6 +88,16 @@ class Settings(BaseSettings):
     # Redis for rate limiting
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
+    # Email/SMTP Configuration
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "localhost")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+    FROM_EMAIL: str = os.getenv("EMAIL_FROM", "noreply@localhost")
+    FROM_NAME: str = os.getenv("FROM_NAME", "Stegmaier LMS")
+    SUPPORT_EMAIL: str = os.getenv("SUPPORT_EMAIL", "support@stegmaierplatform.com")
+    
     class Config:
         case_sensitive = True
         env_file = ".env"

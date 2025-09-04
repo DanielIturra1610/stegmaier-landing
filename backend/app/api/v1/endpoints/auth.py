@@ -8,7 +8,7 @@ from ....application.dtos.auth_dto import (
     PasswordResetRequest, PasswordReset,
     VerificationResponse, ResendVerificationRequest
 )
-from ....dependencies import get_auth_service, get_user_service
+from ....dependencies import get_auth_service, get_user_service, get_email_service
 from fastapi.security import SecurityScopes
 from ...deps import get_current_user
 from ....domain.entities.user import User
@@ -43,7 +43,11 @@ async def login(
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED, summary="Registrar un nuevo usuario")
-async def register_user(registration_data: RegistrationData, auth_service: AuthService = Depends(get_auth_service)):
+async def register_user(
+    registration_data: RegistrationData, 
+    auth_service: AuthService = Depends(get_auth_service),
+    email_service = Depends(get_email_service)
+):
     """Registra un nuevo usuario en el sistema.
     
     - **email**: Email del usuario
@@ -53,18 +57,27 @@ async def register_user(registration_data: RegistrationData, auth_service: AuthS
     """
     try:
         user, verification_token = await auth_service.register_user(registration_data)
-        # En una implementación real, aquí se enviaría el correo con el enlace de verificación
-        # que contendría el token
-        verification_url = f"/verify-email/{verification_token}"
         
-        # Log temporal para desarrollo (en producción se eliminaría)
-        print(f"[DEBUG] Token de verificación para {user.email}: {verification_token}")
-        print(f"[DEBUG] URL de verificación: {verification_url}")
+        # Enviar correo de verificación
+        print(f"🔧 [AUTH] Sending verification email to {user.email}")
+        email_sent = await email_service.send_welcome_email(
+            user_email=user.email,
+            user_name=user.full_name or user.username,
+            verification_token=verification_token
+        )
+        
+        if email_sent:
+            print(f"✅ [AUTH] Verification email sent successfully to {user.email}")
+        else:
+            print(f"❌ [AUTH] Failed to send verification email to {user.email}")
+        
+        # Log temporal para desarrollo 
+        print(f"🔍 [DEBUG] Token de verificación para {user.email}: {verification_token}")
         
         return {
-            "message": "Usuario registrado correctamente. Debe verificar su correo electrónico.",
+            "message": "Usuario registrado correctamente. Se ha enviado un correo de verificación a tu email.",
             "user_id": user.id,
-            "verification_token": verification_token  # Solo para desarrollo, en producción no se devolvería
+            "email_sent": email_sent
         }
     except ValueError as e:
         raise HTTPException(

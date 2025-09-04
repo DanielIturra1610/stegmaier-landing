@@ -47,6 +47,7 @@ from .application.services.module_service import ModuleService
 from .application.services.quiz_service import QuizService
 from .application.services.notification_service import NotificationService
 from .application.services.media_service import MediaService
+from .infrastructure.email.email_service import EmailService
 
 # Dependencias de repositorios
 
@@ -276,3 +277,9 @@ def get_media_service(
     Proporciona una instancia configurada del servicio de media.
     """
     return MediaService(media_repository)
+
+def get_email_service() -> EmailService:
+    """
+    Proporciona una instancia configurada del servicio de email.
+    """
+    return EmailService()
