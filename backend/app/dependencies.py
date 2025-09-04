@@ -279,7 +279,7 @@ def get_media_service(
     """
     return MediaService(media_repository)
 
-def get_email_service() -> EmailService:
+async def get_email_service() -> EmailService:
     """
     Proporciona una instancia configurada del servicio de email.
     """
