@@ -12,7 +12,7 @@ from ...domain.repositories.verification_token_repository import VerificationTok
 from ...domain.entities.user import User
 from ...domain.entities.verification_token import VerificationToken
 from ..dtos.auth_dto import Token, TokenData, LoginData, RegistrationData, VerificationResponse
-from ..services.email_service import EmailService
+from ...infrastructure.email.email_service import EmailService
 
 class AuthService:
     """
@@ -309,7 +309,11 @@ class AuthService:
         if self.email_service:
             try:
                 print(f"🔧 [AUTH] Resending verification email to {user.email}")
-                await self.email_service.send_welcome_email(user, verification_token_value)
+                await self.email_service.send_welcome_email(
+                    user_email=user.email,
+                    user_name=user.first_name or user.email,
+                    verification_token=verification_token_value
+                )
                 print(f"✅ [AUTH] Verification email resent successfully to {user.email}")
                 print(f"🔍 [DEBUG] Token de verificación para {user.email}: {verification_token_value}")
                 
