@@ -122,6 +122,12 @@ async def get_user_service(user_repository: UserRepository = Depends(get_user_re
     """
     return UserService(user_repository)
 
+async def get_email_service() -> EmailService:
+    """
+    Proporciona una instancia configurada del servicio de email.
+    """
+    return EmailService()
+
 async def get_auth_service(
     user_repository: UserRepository = Depends(get_user_repository),
     verification_token_repository: VerificationTokenRepository = Depends(get_verification_token_repository),
@@ -278,9 +284,3 @@ def get_media_service(
     Proporciona una instancia configurada del servicio de media.
     """
     return MediaService(media_repository)
-
-async def get_email_service() -> EmailService:
-    """
-    Proporciona una instancia configurada del servicio de email.
-    """
-    return EmailService()
