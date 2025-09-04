@@ -311,7 +311,7 @@ class AuthService:
                 print(f"🔧 [AUTH] Resending verification email to {user.email}")
                 await self.email_service.send_welcome_email(
                     user_email=user.email,
-                    user_name=user.first_name or user.email,
+                    user_name=user.full_name or user.email,
                     verification_token=verification_token_value
                 )
                 print(f"✅ [AUTH] Verification email resent successfully to {user.email}")

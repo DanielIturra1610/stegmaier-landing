@@ -115,7 +115,7 @@ class EnrollmentService:
                     course_id=course.id,
                     course_title=course.title,
                     instructor_id=course.instructor_id,
-                    student_name=f"{user.first_name} {user.last_name}"
+                    student_name=user.full_name or user.email
                 )
             except Exception as e:
                 # Log error but don't fail enrollment

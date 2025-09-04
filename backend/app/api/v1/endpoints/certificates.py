@@ -113,7 +113,7 @@ async def generate_certificate(
         )
     
     instructor = await user_service.get_user_by_id(course.instructor_id)
-    instructor_name = f"{instructor.first_name} {instructor.last_name}" if instructor else "Instructor"
+    instructor_name = instructor.full_name if instructor else "Instructor"
     
     # Generar el certificado
     certificate_id = create_certificate_id()
@@ -128,7 +128,7 @@ async def generate_certificate(
         enrollmentId=enrollment.id,
         courseId=enrollment.course_id,
         courseName=course.title,
-        studentName=f"{student.first_name} {student.last_name}",
+        studentName=student.full_name or student.email,
         instructorName=instructor_name,
         issueDate=datetime.utcnow().isoformat(),
         completionDate=enrollment.updated_at.isoformat() if enrollment.updated_at else datetime.utcnow().isoformat(),
