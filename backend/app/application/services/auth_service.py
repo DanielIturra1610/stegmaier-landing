@@ -12,15 +12,17 @@ from ...domain.repositories.verification_token_repository import VerificationTok
 from ...domain.entities.user import User
 from ...domain.entities.verification_token import VerificationToken
 from ..dtos.auth_dto import Token, TokenData, LoginData, RegistrationData, VerificationResponse
+from ..services.email_service import EmailService
 
 class AuthService:
     """
     Servicio para la autenticación y autorización que implementa la lógica de negocio
     """
     
-    def __init__(self, user_repository: UserRepository, verification_token_repository: Optional[VerificationTokenRepository] = None):
+    def __init__(self, user_repository: UserRepository, verification_token_repository: Optional[VerificationTokenRepository] = None, email_service: Optional[EmailService] = None):
         self.user_repository = user_repository
         self.verification_token_repository = verification_token_repository
+        self.email_service = email_service
         self.settings = get_settings()
     
     async def authenticate_user(self, login_data: LoginData) -> Optional[User]:
@@ -303,16 +305,33 @@ class AuthService:
         # Guardar el nuevo token en la base de datos
         await self.verification_token_repository.create(verification_token)
         
-        # Aquí iría la lógica para enviar el correo electrónico con el enlace de verificación
-        # Por ejemplo, usando un servicio de email como SendGrid, Mailgun, etc.
-        
-        return VerificationResponse(
-            success=True,
-            message="Se ha enviado un nuevo correo de verificación",
-            user_id=user.id,
-            # Solo para desarrollo, en producción no se devolvería
-            # verification_token: verification_token_value
-        )
+        # Enviar correo de verificación si el servicio está disponible
+        if self.email_service:
+            try:
+                print(f"🔧 [AUTH] Resending verification email to {user.email}")
+                await self.email_service.send_welcome_email(user, verification_token_value)
+                print(f"✅ [AUTH] Verification email resent successfully to {user.email}")
+                print(f"🔍 [DEBUG] Token de verificación para {user.email}: {verification_token_value}")
+                
+                return VerificationResponse(
+                    success=True,
+                    message="Se ha enviado un nuevo correo de verificación",
+                    user_id=user.id
+                )
+            except Exception as e:
+                print(f"❌ [ERROR] Failed to resend verification email to {user.email}: {str(e)}")
+                return VerificationResponse(
+                    success=False,
+                    message="Error al enviar el correo de verificación. Inténtalo de nuevo más tarde.",
+                    user_id=user.id
+                )
+        else:
+            print(f"⚠️ [WARNING] EmailService not available for resending verification to {user.email}")
+            return VerificationResponse(
+                success=False,
+                message="Servicio de correo no disponible",
+                user_id=user.id
+            )
         
     def _generate_verification_token(self) -> str:
         """

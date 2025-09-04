@@ -124,12 +124,13 @@ async def get_user_service(user_repository: UserRepository = Depends(get_user_re
 
 async def get_auth_service(
     user_repository: UserRepository = Depends(get_user_repository),
-    verification_token_repository: VerificationTokenRepository = Depends(get_verification_token_repository)
+    verification_token_repository: VerificationTokenRepository = Depends(get_verification_token_repository),
+    email_service: EmailService = Depends(get_email_service)
 ) -> AuthService:
     """
     Proporciona una instancia configurada del servicio de autenticación.
     """
-    return AuthService(user_repository, verification_token_repository)
+    return AuthService(user_repository, verification_token_repository, email_service)
 
 async def get_course_service(
     course_repository: CourseRepository = Depends(get_course_repository),
