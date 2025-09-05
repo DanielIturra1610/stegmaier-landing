@@ -7,6 +7,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from '../app';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ResendVerificationPage from '../pages/auth/ResendVerificationPage';
+import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import CompanyPage from '../pages/CompanyPage';
 import ConsultingPage from '../pages/ConsultingPage';
@@ -70,6 +71,7 @@ const AppRoutes: React.FC = () => {
         {/* Rutas de autenticación */}
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         
         {/* Ruta 404 */}
         <Route path="/404" element={<NotFoundPage />} />
