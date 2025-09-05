@@ -15,10 +15,15 @@ const VerifyEmailPage: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState<string>('');
   const [isRetrying, setIsRetrying] = useState(false);
+  const [hasVerified, setHasVerified] = useState(false);
 
   const token = searchParams.get('token');
 
   const verifyEmail = async (verificationToken: string) => {
+    // Prevenir múltiples llamadas
+    if (hasVerified) return;
+    setHasVerified(true);
+    
     try {
       setStatus('loading');
       
@@ -27,6 +32,8 @@ const VerifyEmailPage: React.FC = () => {
         throw new Error('Token de verificación inválido');
       }
 
+      console.log('🔍 [VerifyEmail] Calling API:', buildApiUrl(`/auth/verify-email/${verificationToken}`));
+      
       const response = await fetch(buildApiUrl(`/auth/verify-email/${verificationToken}`), {
         method: 'POST',
         headers: {
@@ -36,7 +43,14 @@ const VerifyEmailPage: React.FC = () => {
         credentials: 'include',
       });
 
+      console.log('🔍 [VerifyEmail] Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data: VerificationResponse = await response.json();
+      console.log('🔍 [VerifyEmail] Response data:', data);
       
       if (data.success) {
         setStatus('success');
@@ -56,7 +70,7 @@ const VerifyEmailPage: React.FC = () => {
         setMessage(data.message || 'Error al verificar el email');
       }
     } catch (error) {
-      console.error('Error verificando email:', error);
+      console.error('❌ [VerifyEmail] Error:', error);
       setStatus('error');
       setMessage(
         error instanceof Error 
@@ -70,6 +84,7 @@ const VerifyEmailPage: React.FC = () => {
     if (!token) return;
     
     setIsRetrying(true);
+    setHasVerified(false); // Reset para permitir retry
     await verifyEmail(token);
     setIsRetrying(false);
   };
@@ -81,9 +96,11 @@ const VerifyEmailPage: React.FC = () => {
       return;
     }
 
-    // Verificar email automáticamente al cargar la página
-    verifyEmail(token);
-  }, [token]);
+    // Verificar email automáticamente al cargar la página (solo una vez)
+    if (!hasVerified) {
+      verifyEmail(token);
+    }
+  }, [token, hasVerified]);
 
   const renderContent = () => {
     switch (status) {
