@@ -50,8 +50,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Production domains (set via environment variables)
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    ADMIN_URL: str = os.getenv("ADMIN_URL", "http://localhost:3000")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://stegmaierplatform.com")
+    ADMIN_URL: str = os.getenv("ADMIN_URL", "https://stegmaierplatform.com")
     
     @property
     def cors_origins(self) -> List[str]:
