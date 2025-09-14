@@ -75,7 +75,7 @@ export interface CourseStructureResponse {
 // Following CLAUDE.md: "Always define proper types instead of using any"
 export interface ModuleCreate {
   title: string;
-  description?: string; // Opcional para permitir creación iterativa de módulos
+  description: string; // Backend requiere este campo, puede ser string vacío para módulos sin descripción
   order?: number; // Se auto-asigna si no se proporciona
   estimated_duration: number;
   is_required: boolean;

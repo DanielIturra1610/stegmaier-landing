@@ -164,8 +164,8 @@ const AdminModules: React.FC = () => {
         // Crear nuevo módulo - Following CLAUDE.md: "Write self-documenting code"
         const createData: ModuleCreate = {
           title: formData.title.trim(),
-          // Solo incluir descripción si no está vacía (opcional)
-          ...(formData.description.trim() && { description: formData.description.trim() }),
+          // Backend requiere description siempre, enviar string vacío si no hay contenido
+          description: formData.description.trim() || '',
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
           unlock_previous: formData.unlock_previous,
