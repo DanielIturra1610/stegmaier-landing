@@ -14,6 +14,15 @@ import {
 } from '../types/enrollment';
 import { buildApiUrl, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 
+// Interface for API error responses
+interface APIError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
 // Tipos para requests internos
 interface EnrollmentCreate {
   course_id: string;
@@ -44,9 +53,10 @@ class EnrollmentService {
 
       console.log('✅ [enrollmentService] Successfully enrolled:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error enrolling in course:', error);
-      throw new Error(error.response?.data?.detail || 'Error al inscribirse en el curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error enrolling in course:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al inscribirse en el curso');
     }
   }
 
@@ -57,7 +67,7 @@ class EnrollmentService {
     try {
       console.log('📚 [enrollmentService] Getting user enrolled courses');
       
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (status) {
         params.status = status;
       }
@@ -76,7 +86,7 @@ class EnrollmentService {
 
       // Para cada enrollment, obtener información del curso
       const enrolledCourses = await Promise.all(
-        enrollments.map(async (enrollment: any) => {
+        enrollments.map(async (enrollment: Enrollment) => {
           try {
             // ✅ CORREGIDO: URL correcta sin duplicación
             const courseResponse = await axios.get(
@@ -154,9 +164,10 @@ class EnrollmentService {
       
       console.log('✅ [enrollmentService] Processed enrolled courses:', enrolledCourses.length);
       return enrolledCourses;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error getting enrolled courses:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener cursos inscritos');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error getting enrolled courses:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener cursos inscritos');
     }
   }
 
@@ -180,8 +191,9 @@ class EnrollmentService {
 
       console.log('✅ [enrollmentService] Enrollment status:', status);
       return status;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error checking enrollment status:', error);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error checking enrollment status:', apiError);
       return {
         course_id: courseId,
         is_enrolled: false,
@@ -204,9 +216,10 @@ class EnrollmentService {
       );
 
       console.log('✅ [enrollmentService] Successfully unenrolled from course');
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error unenrolling from course:', error);
-      throw new Error(error.response?.data?.detail || 'Error al desinscribirse del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error unenrolling from course:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al desinscribirse del curso');
     }
   }
 
@@ -224,9 +237,10 @@ class EnrollmentService {
 
       console.log('✅ [enrollmentService] Retrieved enrollment progress:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error getting enrollment progress:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener progreso de inscripción');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error getting enrollment progress:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener progreso de inscripción');
     }
   }
 
@@ -249,9 +263,10 @@ class EnrollmentService {
       );
 
       console.log('✅ [enrollmentService] Lesson marked as completed');
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error marking lesson as completed:', error);
-      throw new Error(error.response?.data?.detail || 'Error al marcar lección como completada');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error marking lesson as completed:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al marcar lección como completada');
     }
   }
 
@@ -269,9 +284,10 @@ class EnrollmentService {
       );
 
       console.log('✅ [enrollmentService] Certificate issued successfully');
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error issuing certificate:', error);
-      throw new Error(error.response?.data?.detail || 'Error al emitir certificado');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error issuing certificate:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al emitir certificado');
     }
   }
 
@@ -289,9 +305,10 @@ class EnrollmentService {
 
       console.log('✅ [enrollmentService] Retrieved enrollment stats:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error getting enrollment stats:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener estadísticas de inscripciones');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error getting enrollment stats:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener estadísticas de inscripciones');
     }
   }
 
@@ -302,7 +319,7 @@ class EnrollmentService {
     try {
       console.log('👥 [enrollmentService] Getting course enrollments:', { courseId, status });
       
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (status) {
         params.status = status;
       }
@@ -317,9 +334,10 @@ class EnrollmentService {
 
       console.log('✅ [enrollmentService] Retrieved course enrollments:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [enrollmentService] Error getting course enrollments:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener inscripciones del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [enrollmentService] Error getting course enrollments:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener inscripciones del curso');
     }
   }
 }

@@ -29,7 +29,9 @@ const AdminCourses: React.FC = () => {
   
   const fetchCourses = async () => {
     try {
+      console.log('🔄 [AdminCourses] Loading courses with filters:', { publishedFilter, categoryFilter });
       setLoading(true);
+      setError(null);
       
       let url = '/api/v1/admin/courses';
       const params = new URLSearchParams();
@@ -46,6 +48,7 @@ const AdminCourses: React.FC = () => {
         url += `?${params.toString()}`;
       }
       
+      console.log('🌐 [AdminCourses] Fetching from URL:', url);
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
@@ -55,16 +58,26 @@ const AdminCourses: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ [AdminCourses] Courses loaded successfully:', data.length);
         setCourses(data);
       } else {
-        setError('Error al cargar cursos');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.detail || `Error ${response.status}: ${response.statusText}`;
+        console.error('❌ [AdminCourses] HTTP Error:', response.status, errorMessage);
+        setError(errorMessage);
       }
-    } catch (err) {
-      console.error('Error fetching courses:', err);
-      setError('Error de conexión');
+    } catch (err: any) {
+      console.error('❌ [AdminCourses] Network/Parse Error:', err);
+      const errorMessage = err.message || 'Error de conexión al servidor. Verifica tu conexión a internet.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const retryFetch = () => {
+    console.log('🔄 [AdminCourses] Retrying courses fetch...');
+    fetchCourses();
   };
   
   useEffect(() => {
@@ -127,7 +140,33 @@ const AdminCourses: React.FC = () => {
   }
   
   if (error) {
-    return <div className="text-center py-8 text-red-500">{error}</div>;
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error al cargar cursos</h3>
+            <div className="mt-2 text-sm text-red-700">
+              <p>{error}</p>
+            </div>
+            <div className="mt-4">
+              <button
+                type="button"
+                className="bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200 border border-transparent rounded"
+                onClick={retryFetch}
+                disabled={loading}
+              >
+                {loading ? 'Cargando...' : 'Reintentar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   return (

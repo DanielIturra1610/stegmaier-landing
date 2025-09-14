@@ -5,6 +5,15 @@
 import axios from 'axios';
 import { API_CONFIG, API_ENDPOINTS, buildApiUrl, getAuthHeaders } from '../config/api.config';
 
+// Interface for API error responses
+interface APIError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
 export interface VideoInfo {
   id: string;
   title: string;
@@ -76,9 +85,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Video uploaded successfully:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error uploading video:', error);
-      throw new Error(error.response?.data?.detail || 'Error al subir video');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error uploading video:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al subir video');
     }
   }
 
@@ -117,9 +127,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Image uploaded successfully:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error uploading image:', error);
-      throw new Error(error.response?.data?.detail || 'Error al subir imagen');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error uploading image:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al subir imagen');
     }
   }
 
@@ -137,9 +148,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Video info retrieved:', response.data.title);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error getting video info:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener información del video');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error getting video info:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener información del video');
     }
   }
 
@@ -157,9 +169,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Image info retrieved:', response.data.purpose);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error getting image info:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener información de la imagen');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error getting image info:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener información de la imagen');
     }
   }
 
@@ -197,9 +210,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Video deleted successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error deleting video:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar video');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error deleting video:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar video');
     }
   }
 
@@ -217,9 +231,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Image deleted successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error deleting image:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar imagen');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error deleting image:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar imagen');
     }
   }
 
@@ -237,9 +252,10 @@ class MediaService {
 
       console.log('✅ [mediaService] Videos listed:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [mediaService] Error listing videos:', error);
-      throw new Error(error.response?.data?.detail || 'Error al listar videos');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [mediaService] Error listing videos:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al listar videos');
     }
   }
 

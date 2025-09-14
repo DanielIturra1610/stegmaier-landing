@@ -21,6 +21,17 @@ import {
   PeerReview
 } from '../types/assignment';
 
+// Error handling interface
+interface APIError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 class AssignmentService {
   private getMultipartHeaders() {
     return {
@@ -43,9 +54,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Course assignments retrieved:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting course assignments:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener assignments del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting course assignments:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener assignments del curso');
     }
   }
 
@@ -61,9 +73,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] User assignments retrieved:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting user assignments:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener assignments del usuario');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting user assignments:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener assignments del usuario');
     }
   }
 
@@ -79,9 +92,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] User submissions retrieved:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting user submissions:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener submissions del usuario');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting user submissions:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener submissions del usuario');
     }
   }
 
@@ -97,9 +111,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment retrieved:', response.data.title);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener assignment');
     }
   }
 
@@ -116,9 +131,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment created:', response.data.id);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error creating assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al crear assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error creating assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al crear assignment');
     }
   }
 
@@ -135,9 +151,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment updated successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error updating assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al actualizar assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error updating assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al actualizar assignment');
     }
   }
 
@@ -152,9 +169,10 @@ class AssignmentService {
         { headers: getAuthHeaders() }
       );
       console.log('✅ [assignmentService] Assignment deleted successfully');
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error deleting assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error deleting assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar assignment');
     }
   }
 
@@ -171,9 +189,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment published successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error publishing assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al publicar assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error publishing assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al publicar assignment');
     }
   }
 
@@ -214,11 +233,12 @@ class AssignmentService {
         }
       );
 
-      console.log('✅ [assignmentService] Assignment file uploaded successfully');
+      console.log(' [assignmentService] Assignment file uploaded successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error uploading assignment file:', error);
-      throw new Error(error.response?.data?.detail || 'Error al subir archivo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error(' [assignmentService] Error uploading assignment file:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al subir archivo');
     }
   }
 
@@ -227,15 +247,16 @@ class AssignmentService {
    */
   async deleteAssignmentFile(assignmentId: string, fileId: string): Promise<void> {
     try {
-      console.log('🗑️ [assignmentService] Deleting assignment file:', fileId);
+      console.log(' [assignmentService] Deleting assignment file:', fileId);
       await axios.delete(
         buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files/${fileId}`),
         { headers: getAuthHeaders() }
       );
-      console.log('✅ [assignmentService] Assignment file deleted successfully');
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error deleting assignment file:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar archivo');
+      console.log(' [assignmentService] Assignment file deleted successfully');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error(' [assignmentService] Error deleting assignment file:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar archivo');
     }
   }
 
@@ -246,16 +267,17 @@ class AssignmentService {
    */
   async getAssignmentSubmissions(assignmentId: string): Promise<AssignmentSubmission[]> {
     try {
-      console.log('📥 [assignmentService] Getting assignment submissions for:', assignmentId);
+      console.log(' [assignmentService] Getting assignment submissions for:', assignmentId);
       const response = await axios.get(
         buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/submissions`),
         { headers: getAuthHeaders() }
       );
-      console.log('✅ [assignmentService] Assignment submissions retrieved:', response.data.length);
+      console.log(' [assignmentService] Assignment submissions retrieved:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting assignment submissions:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener entregas');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error(' [assignmentService] Error getting assignment submissions:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener entregas');
     }
   }
 
@@ -271,13 +293,14 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] My submission retrieved');
       return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error) {
+      const apiError = error as APIError;
+      if (apiError.response?.status === 404) {
         console.log('ℹ️ [assignmentService] No submission found for assignment:', assignmentId);
         return null; // No submission found
       }
-      console.error('❌ [assignmentService] Error getting my submission:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener mi entrega');
+      console.error('❌ [assignmentService] Error getting my submission:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener mi entrega');
     }
   }
 
@@ -294,9 +317,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Submission created:', response.data.id);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error creating submission:', error);
-      throw new Error(error.response?.data?.detail || 'Error al crear entrega');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error creating submission:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al crear entrega');
     }
   }
 
@@ -313,9 +337,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Submission updated successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error updating submission:', error);
-      throw new Error(error.response?.data?.detail || 'Error al actualizar entrega');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error updating submission:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al actualizar entrega');
     }
   }
 
@@ -332,9 +357,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment submitted successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error submitting assignment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al enviar assignment');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error submitting assignment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al enviar assignment');
     }
   }
 
@@ -377,9 +403,10 @@ class AssignmentService {
 
       console.log('✅ [assignmentService] Submission file uploaded successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error uploading submission file:', error);
-      throw new Error(error.response?.data?.detail || 'Error al subir archivo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error uploading submission file:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al subir archivo');
     }
   }
 
@@ -394,9 +421,10 @@ class AssignmentService {
         { headers: getAuthHeaders() }
       );
       console.log('✅ [assignmentService] Submission file deleted successfully');
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error deleting submission file:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar archivo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error deleting submission file:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar archivo');
     }
   }
 
@@ -419,9 +447,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Submission graded successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error grading submission:', error);
-      throw new Error(error.response?.data?.detail || 'Error al calificar entrega');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error grading submission:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al calificar entrega');
     }
   }
 
@@ -438,9 +467,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Bulk grading completed:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error bulk grading:', error);
-      throw new Error(error.response?.data?.detail || 'Error en calificación masiva');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error bulk grading:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error en calificación masiva');
     }
   }
 
@@ -459,9 +489,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Comment added successfully');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error adding comment:', error);
-      throw new Error(error.response?.data?.detail || 'Error al agregar comentario');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error adding comment:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al agregar comentario');
     }
   }
 
@@ -479,9 +510,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Assignment statistics retrieved');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting assignment statistics:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener estadísticas');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting assignment statistics:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener estadísticas');
     }
   }
 
@@ -501,9 +533,10 @@ class AssignmentService {
       );
       console.log('✅ [assignmentService] Student progress retrieved');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [assignmentService] Error getting student progress:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener progreso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting student progress:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener progreso');
     }
   }
 

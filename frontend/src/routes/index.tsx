@@ -26,6 +26,15 @@ import MyProgressPage from '../pages/platform/MyProgressPage';
 import SupportPage from '../pages/platform/SupportPage';
 import QuizTakePage from '../pages/platform/QuizTakePage';
 
+// Demo pages (solo en desarrollo)
+import InteractiveLessonDemo from '../pages/demo/InteractiveLessonDemo';
+
+// Helper simple para detectar producción
+const isProduction = () => {
+  return (import.meta as any).env.PROD || 
+         (import.meta as any).env.VITE_ENVIRONMENT === 'production';
+};
+
 // Protección de rutas
 import ProtectedRoute from './ProtectedRoute';
 
@@ -131,6 +140,11 @@ const AppRoutes: React.FC = () => {
         
         {/* Ruta para tomar un quiz */}
         <Route path="quiz/take/:quizId" element={<QuizTakePage />} />
+        
+        {/* Demo de lecciones interactivas - Solo en desarrollo */}
+        {!isProduction() && (
+          <Route path="demo/interactive-lessons" element={<InteractiveLessonDemo />} />
+        )}
       </Route>
       
       {/* Las rutas administrativas ahora están integradas en /platform */}

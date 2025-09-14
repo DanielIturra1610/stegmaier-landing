@@ -4,6 +4,15 @@
 import axios from 'axios';
 import { buildApiUrl, getAuthHeaders } from '../config/api.config';
 
+interface APIError {
+  response?: {
+    status: number;
+    data: {
+      detail: string;
+    };
+  };
+}
+
 export interface Notification {
   id: string;
   recipient_id: string;
@@ -61,70 +70,144 @@ class NotificationService {
     page: number = 1,
     per_page: number = 20
   ): Promise<NotificationListResponse> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      per_page: per_page.toString()
-    });
+    try {
+      console.log('🔍 [notificationService] Fetching user notifications:', { status, page, per_page });
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: per_page.toString()
+      });
 
-    if (status) {
-      params.append('status', status);
+      if (status) {
+        params.append('status', status);
+      }
+
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/?${params}`), { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Notifications loaded:', response.data?.notifications?.length || 0);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Get notifications error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error fetching notifications';
+      throw new Error(errorMessage);
     }
-
-    const response = await axios.get(buildApiUrl(`${this.baseUrl}/?${params}`), { headers: getAuthHeaders() });
-    return response.data;
   }
 
   /**
    * Obtiene el número de notificaciones no leídas
    */
   async getUnreadCount(): Promise<number> {
-    const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread-count`), { headers: getAuthHeaders() });
-    return response.data?.unread_count || 0;
+    try {
+      console.log('🔍 [notificationService] Fetching unread count');
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread-count`), { headers: getAuthHeaders() });
+      const count = response.data?.unread_count || 0;
+      console.log('✅ [notificationService] Unread count:', count);
+      return count;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Get unread count error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error fetching unread count';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Marca una notificación como leída
    */
   async markAsRead(notificationId: string): Promise<void> {
-    await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/read`), {}, { headers: getAuthHeaders() });
+    try {
+      console.log('🔍 [notificationService] Marking notification as read:', notificationId);
+      await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/read`), {}, { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Notification marked as read:', notificationId);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Mark as read error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error marking notification as read';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Marca todas las notificaciones como leídas
    */
   async markAllAsRead(): Promise<number> {
-    const response = await axios.patch(buildApiUrl(`${this.baseUrl}/mark-all-read`), {}, { headers: getAuthHeaders() });
-    return response.data?.message?.match(/\d+/)?.[0] || 0;
+    try {
+      console.log('🔍 [notificationService] Marking all notifications as read');
+      const response = await axios.patch(buildApiUrl(`${this.baseUrl}/mark-all-read`), {}, { headers: getAuthHeaders() });
+      const count = response.data?.message?.match(/\d+/)?.[0] || 0;
+      console.log('✅ [notificationService] All notifications marked as read, count:', count);
+      return count;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Mark all as read error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error marking all notifications as read';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Elimina una notificación
    */
   async deleteNotification(notificationId: string): Promise<void> {
-    await axios.delete(buildApiUrl(`${this.baseUrl}/${notificationId}`), { headers: getAuthHeaders() });
+    try {
+      console.log('🔍 [notificationService] Deleting notification:', notificationId);
+      await axios.delete(buildApiUrl(`${this.baseUrl}/${notificationId}`), { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Notification deleted:', notificationId);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Delete notification error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error deleting notification';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Archiva una notificación
    */
   async archiveNotification(notificationId: string): Promise<void> {
-    await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/archive`), {}, { headers: getAuthHeaders() });
+    try {
+      console.log('🔍 [notificationService] Archiving notification:', notificationId);
+      await axios.patch(buildApiUrl(`${this.baseUrl}/${notificationId}/archive`), {}, { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Notification archived:', notificationId);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Archive notification error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error archiving notification';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Crea una nueva notificación (solo admins)
    */
   async createNotification(data: CreateNotificationData): Promise<Notification> {
-    const response = await axios.post(buildApiUrl(this.baseUrl), data, { headers: getAuthHeaders() });
-    return response.data;
+    try {
+      console.log('🔍 [notificationService] Creating notification:', data.title);
+      const response = await axios.post(buildApiUrl(this.baseUrl), data, { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Notification created:', response.data?.id);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Create notification error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error creating notification';
+      throw new Error(errorMessage);
+    }
   }
 
   /**
    * Crea múltiples notificaciones en lote (solo admins)
    */
   async createBulkNotifications(data: BulkNotificationData): Promise<Notification[]> {
-    const response = await axios.post(buildApiUrl(`${this.baseUrl}/bulk`), data, { headers: getAuthHeaders() });
-    return response.data;
+    try {
+      console.log('🔍 [notificationService] Creating bulk notifications:', data.recipient_ids.length, 'recipients');
+      const response = await axios.post(buildApiUrl(`${this.baseUrl}/bulk`), data, { headers: getAuthHeaders() });
+      console.log('✅ [notificationService] Bulk notifications created:', response.data?.length || 0);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [notificationService] Create bulk notifications error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error creating bulk notifications';
+      throw new Error(errorMessage);
+    }
   }
 
   /**

@@ -14,6 +14,15 @@ import {
 } from '../types/module';
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
+// Interface for API error responses
+interface APIError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
 class ModuleService {
   private getAuthHeaders(): AxiosRequestConfig {
     return {
@@ -25,20 +34,34 @@ class ModuleService {
    * Crear un nuevo módulo para un curso
    */
   async createModule(courseId: string, moduleData: ModuleCreate): Promise<ModuleResponse> {
-    console.log('🚀 [moduleService] Creating module for course:', courseId, moduleData);
-    
+    const url = buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/modules`);
+    console.log('🚀 [moduleService] Creating module for course:', courseId);
+    console.log('📤 [moduleService] Request URL:', url);
+    console.log('📤 [moduleService] Request payload:', JSON.stringify(moduleData, null, 2));
+    console.log('📤 [moduleService] Request headers:', JSON.stringify(this.getAuthHeaders(), null, 2));
+
     try {
       const response: AxiosResponse<ModuleResponse> = await axios.post(
-        buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/modules`),
+        url,
         moduleData,
         this.getAuthHeaders()
       );
-      
+
       console.log('✅ [moduleService] Module created:', response.data.title);
       return response.data;
     } catch (error: any) {
-      console.error('❌ [moduleService] Error creating module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al crear módulo');
+      console.error('❌ [moduleService] Full error object:', error);
+      console.error('❌ [moduleService] Error response:', error.response?.data);
+      console.error('❌ [moduleService] Error status:', error.response?.status);
+      console.error('❌ [moduleService] Error headers:', error.response?.headers);
+
+      const apiError = error as APIError;
+      const errorMessage = apiError.response?.data?.detail ||
+                          apiError.response?.data?.message ||
+                          apiError.message ||
+                          'Error al crear módulo';
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -55,9 +78,10 @@ class ModuleService {
       
       console.log('✅ [moduleService] Modules fetched:', response.data.length, 'modules');
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error fetching modules:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener módulos');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error fetching modules:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener módulos');
     }
   }
 
@@ -77,9 +101,10 @@ class ModuleService {
         total_lessons: response.data.total_lessons || 0
       });
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error fetching course structure:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener estructura del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error fetching course structure:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener estructura del curso');
     }
   }
 
@@ -96,9 +121,10 @@ class ModuleService {
       
       console.log('✅ [moduleService] Module fetched:', response.data.title);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error fetching module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener módulo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error fetching module:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener módulo');
     }
   }
 
@@ -118,9 +144,10 @@ class ModuleService {
         lessons_count: response.data.lessons?.length || 0
       });
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error fetching module with lessons:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener módulo con lecciones');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error fetching module with lessons:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener módulo con lecciones');
     }
   }
 
@@ -139,9 +166,10 @@ class ModuleService {
       
       console.log('✅ [moduleService] Module updated:', response.data.title);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error updating module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al actualizar módulo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error updating module:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al actualizar módulo');
     }
   }
 
@@ -158,9 +186,10 @@ class ModuleService {
       );
       
       console.log('✅ [moduleService] Module deleted successfully');
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error deleting module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al eliminar módulo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error deleting module:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al eliminar módulo');
     }
   }
 
@@ -178,9 +207,10 @@ class ModuleService {
       );
       
       console.log('✅ [moduleService] Modules reordered successfully');
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error reordering modules:', error);
-      throw new Error(error.response?.data?.detail || 'Error al reordenar módulos');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error reordering modules:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al reordenar módulos');
     }
   }
 
@@ -198,9 +228,10 @@ class ModuleService {
       );
       
       console.log('✅ [moduleService] Lesson assigned to module successfully');
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error assigning lesson to module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al asignar lección al módulo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error assigning lesson to module:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al asignar lección al módulo');
     }
   }
 
@@ -217,9 +248,10 @@ class ModuleService {
       );
       
       console.log('✅ [moduleService] Lesson removed from module successfully');
-    } catch (error: any) {
-      console.error('❌ [moduleService] Error removing lesson from module:', error);
-      throw new Error(error.response?.data?.detail || 'Error al remover lección del módulo');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [moduleService] Error removing lesson from module:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al remover lección del módulo');
     }
   }
 

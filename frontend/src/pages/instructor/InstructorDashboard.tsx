@@ -33,6 +33,7 @@ const InstructorDashboard: React.FC = () => {
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -40,19 +41,44 @@ const InstructorDashboard: React.FC = () => {
 
   const loadDashboardData = async () => {
     try {
+      console.log('🔄 [InstructorDashboard] Loading dashboard data...');
       setLoading(true);
+      setError(null);
+      
       const [statsResponse, activityResponse] = await Promise.all([
         instructorService.getDashboardStats(),
         instructorService.getRecentActivity()
       ]);
       
+      console.log('✅ [InstructorDashboard] Dashboard data loaded successfully');
+      console.log('📊 [InstructorDashboard] Stats:', statsResponse);
+      console.log('📋 [InstructorDashboard] Activity items:', activityResponse.length);
+      
       setStats(statsResponse);
       setRecentActivity(activityResponse);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+    } catch (error: any) {
+      console.error('❌ [InstructorDashboard] Error loading dashboard data:', error);
+      const errorMessage = error?.message || 'Error al cargar los datos del panel. Por favor, inténtalo de nuevo.';
+      setError(errorMessage);
+      
+      // Provide fallback data to prevent blank dashboard
+      setStats({
+        totalCourses: 0,
+        totalStudents: 0,
+        averageRating: 0,
+        pendingReviews: 0,
+        newEnrollments: 0,
+        activeQuizzes: 0
+      });
+      setRecentActivity([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const retryFetch = () => {
+    console.log('🔄 [InstructorDashboard] Retrying dashboard data fetch...');
+    loadDashboardData();
   };
 
   const StatCard: React.FC<{
@@ -132,6 +158,35 @@ const InstructorDashboard: React.FC = () => {
             Bienvenido de vuelta, {user?.firstName} {user?.lastName}
           </p>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error al cargar el panel</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    className="bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200 border border-transparent rounded"
+                    onClick={retryFetch}
+                    disabled={loading}
+                  >
+                    {loading ? 'Cargando...' : 'Reintentar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

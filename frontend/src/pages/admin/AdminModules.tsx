@@ -164,7 +164,8 @@ const AdminModules: React.FC = () => {
           description: formData.description.trim(),
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
-          unlock_previous: formData.unlock_previous
+          unlock_previous: formData.unlock_previous,
+          order: modules.length + 1 // Agregar el campo order explícitamente
         };
 
         await moduleService.createModule(courseId, createData);

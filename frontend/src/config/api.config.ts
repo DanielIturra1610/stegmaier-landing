@@ -1,34 +1,55 @@
 /**
- * Configuración centralizada de API para Stegmaier LMS
- * Elimina inconsistencias y URLs relativas
+ * Configuración centralizada de API
  */
+
+// Helper simple para detectar producción
+const isProduction = () => {
+  return (import.meta as any).env.PROD || 
+         (import.meta as any).env.VITE_ENVIRONMENT === 'production' ||
+         (typeof window !== 'undefined' && window.location.hostname !== 'localhost');
+};
+
+// Logger simple
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`ℹ️ ${message}`, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`⚠️ ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`❌ ${message}`, ...args),
+  debug: (message: string, ...args: any[]) => {
+    if (!isProduction()) console.debug(`🐛 ${message}`, ...args);
+  }
+};
 
 // Configuración base de la API
 export const API_CONFIG = {
-  // URL base del backend - FORZAR HTTPS SIEMPRE EN PRODUCCIÓN
+  // URL base del backend - Dinámico y seguro
   BASE_URL: (() => {
     const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
-    const fallbackUrl = 'https://stegmaierplatform.com/api/v1';
+    const isProductionEnv = isProduction();
     
-    // 🚨 CRÍTICO: FORZAR HTTPS en TODO momento en producción
-    if ((import.meta as any).env.PROD || 
-        (typeof window !== 'undefined' && window.location.protocol === 'https:') ||
-        (import.meta as any).env.VITE_ENVIRONMENT === 'production') {
+    // En producción, usar variable de entorno o construir automáticamente
+    if (isProductionEnv) {
+      // Si hay URL de entorno, usarla
+      if (envUrl) {
+        const secureUrl = envUrl.replace(/^http:\/\//, 'https://');
+        logger.info('[API Config] Using environment API URL', secureUrl);
+        return secureUrl;
+      }
       
-      // SIEMPRE forzar backend local con HTTPS
-      const httpsUrl = 'https://stegmaierplatform.com/api/v1';
-      console.log('🔐 [API Config] FORCING HTTPS backend URL:', httpsUrl);
-      return httpsUrl;
+      // Construir URL basada en el hostname actual
+      if (typeof window !== 'undefined') {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const constructedUrl = `${protocol}//${hostname}/api/v1`;
+        logger.info('[API Config] Constructed API URL from hostname', constructedUrl);
+        return constructedUrl;
+      }
+      
+      // Fallback para SSR
+      return '/api/v1';
     }
     
-    // Fallback con conversión a HTTPS si es necesario
-    if (envUrl && envUrl.startsWith('http://')) {
-      const httpsConverted = envUrl.replace('http://', 'https://');
-      console.log('🔐 [API Config] Converting to HTTPS:', httpsConverted);
-      return httpsConverted;
-    }
-    
-    return envUrl || fallbackUrl;
+    // En desarrollo, usar variable de entorno o proxy local
+    return envUrl || 'http://localhost:8000/api/v1';
   })(),
   
   // Timeout para requests
@@ -76,8 +97,6 @@ export const API_ENDPOINTS = {
   PUSH_SUBSCRIPTIONS: '/push-subscriptions'
 } as const;
 
-import { forceHttps } from '../utils/forceHttps';
-
 /**
  * Construye una URL completa para un endpoint del API
  * @param endpoint - El endpoint relativo (ej: '/auth/login')
@@ -87,17 +106,17 @@ export function buildApiUrl(endpoint: string): string {
   // Asegurar que el endpoint empiece con /
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   
-  // Log para debug
+  // Construir URL completa
   const fullUrl = `${API_CONFIG.BASE_URL}${cleanEndpoint}`;
   
-  // SIEMPRE forzar HTTPS en producción
-  const secureUrl = forceHttps(fullUrl);
-  
-  if (secureUrl !== fullUrl) {
-    console.log('🔐 [API Config] FORCING HTTPS:', secureUrl);
+  // En producción, forzar HTTPS si es necesario
+  if (isProduction() && fullUrl.startsWith('http://')) {
+    const secureUrl = fullUrl.replace('http://', 'https://');
+    logger.warn('[API Config] Converting to HTTPS', secureUrl);
+    return secureUrl;
   }
   
-  return secureUrl;
+  return fullUrl;
 }
 
 /**
@@ -123,18 +142,16 @@ export function getAuthFormDataHeaders(): Record<string, string> {
   };
 }
 
-// Debug logging en desarrollo
-if ((import.meta as any).env?.DEV) {
-  console.log('🔧 [API Config] Base URL:', API_CONFIG.BASE_URL);
-  console.log('🔧 [API Config] Environment:', (import.meta as any).env?.VITE_ENVIRONMENT);
+// Debug logging solo en desarrollo
+if (!isProduction()) {
+  logger.debug('[API Config] Base URL:', API_CONFIG.BASE_URL);
+  logger.debug('[API Config] Timeout:', API_CONFIG.TIMEOUT);
 }
 
-// Debug logging EN PRODUCCIÓN para diagnosticar problema
-console.log('🔧 [API Config] Base URL:', API_CONFIG.BASE_URL);
-console.log('🔧 [API Config] Environment:', (import.meta as any).env?.VITE_ENVIRONMENT);
-console.log('🔧 [API Config] Protocol:', typeof window !== 'undefined' ? window.location.protocol : 'server');
-console.log('🔧 [API Config] VITE_API_BASE_URL:', (import.meta as any).env.VITE_API_BASE_URL);
-console.log('🔧 [API Config] Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
+// Validation en producción
+if (isProduction() && !API_CONFIG.BASE_URL) {
+  logger.error('[API Config] No API base URL configured for production!');
+}
 
 // Export default para compatibilidad
 export default API_CONFIG;

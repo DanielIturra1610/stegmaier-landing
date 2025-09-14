@@ -5,6 +5,15 @@
 import { notificationService } from './notificationService';
 import { buildApiUrl } from '../config/api.config';
 
+// Interface for notification event data
+interface NotificationEventData {
+  action_url?: string;
+  notification_id?: string;
+  [key: string]: unknown;
+}
+
+export interface PushNotificationPayload {}
+
 export interface PushSubscriptionData {
   endpoint: string;
   keys: {
@@ -239,7 +248,7 @@ class PushNotificationService {
   /**
    * Maneja clicks en notificaciones
    */
-  private handleNotificationClick(data: any): void {
+  private handleNotificationClick(data: NotificationEventData): void {
     console.log('Notificación clickeada:', data);
     
     // Si hay una URL de acción, navegar a ella
@@ -256,7 +265,7 @@ class PushNotificationService {
   /**
    * Maneja cierre de notificaciones
    */
-  private handleNotificationClose(data: any): void {
+  private handleNotificationClose(data: NotificationEventData): void {
     console.log('Notificación cerrada:', data);
     // Aquí se podrían agregar analytics o tracking
   }

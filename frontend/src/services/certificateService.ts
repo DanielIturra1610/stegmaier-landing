@@ -1,6 +1,15 @@
 import axios from 'axios';
 import { buildApiUrl, getAuthHeaders } from '../config/api.config';
 
+interface APIError {
+  response?: {
+    status: number;
+    data: {
+      detail: string;
+    };
+  };
+}
+
 export interface Certificate {
   id: string;
   enrollmentId: string;
@@ -47,14 +56,16 @@ class CertificateService {
     try {
       // El endpoint correcto en backend es /certificates/user, no /my-certificates
       const fullUrl = buildApiUrl(`${this.baseUrl}/user`);
-      console.log('🔍 [certificateService] Calling getUserCertificates URL:', fullUrl);
+      console.log('🔍 [certificateService] Fetching user certificates from:', fullUrl);
       
       const response = await axios.get(fullUrl, { headers: getAuthHeaders() });
-      console.log('🔍 [certificateService] Response:', response.data);
+      console.log('✅ [certificateService] User certificates loaded:', response.data?.length || 0, 'certificates');
       return response.data;
     } catch (error) {
-      console.error('Error fetching user certificates:', error);
-      throw error;
+      const apiError = error as APIError;
+      console.error('❌ [certificateService] Get user certificates error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error fetching user certificates';
+      throw new Error(errorMessage);
     }
   }
 
@@ -63,11 +74,15 @@ class CertificateService {
    */
   async generateCertificate(data: CertificateGenerationData): Promise<Certificate> {
     try {
+      console.log('🔍 [certificateService] Generating certificate for enrollment:', data.enrollmentId);
       const response = await axios.post(buildApiUrl(`${this.baseUrl}/generate`), data, { headers: getAuthHeaders() });
+      console.log('✅ [certificateService] Certificate generated successfully:', response.data?.id);
       return response.data;
     } catch (error) {
-      console.error('Error generating certificate:', error);
-      throw error;
+      const apiError = error as APIError;
+      console.error('❌ [certificateService] Generate certificate error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error generating certificate';
+      throw new Error(errorMessage);
     }
   }
 
@@ -76,11 +91,15 @@ class CertificateService {
    */
   async getCertificate(certificateId: string): Promise<Certificate> {
     try {
+      console.log('🔍 [certificateService] Fetching certificate:', certificateId);
       const response = await axios.get(buildApiUrl(`${this.baseUrl}/${certificateId}/verify`), { headers: getAuthHeaders() });
+      console.log('✅ [certificateService] Certificate loaded:', response.data?.verificationCode);
       return response.data;
     } catch (error) {
-      console.error('Error fetching certificate:', error);
-      throw error;
+      const apiError = error as APIError;
+      console.error('❌ [certificateService] Get certificate error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error fetching certificate';
+      throw new Error(errorMessage);
     }
   }
 
@@ -89,11 +108,15 @@ class CertificateService {
    */
   async downloadCertificate(certificateId: string): Promise<Blob> {
     try {
+      console.log('🔍 [certificateService] Downloading certificate:', certificateId);
       const response = await axios.get(buildApiUrl(`${this.baseUrl}/${certificateId}/download`), { headers: getAuthHeaders(), responseType: 'blob' });
+      console.log('✅ [certificateService] Certificate downloaded, size:', response.data?.size || 'unknown');
       return response.data;
     } catch (error) {
-      console.error('Error downloading certificate:', error);
-      throw error;
+      const apiError = error as APIError;
+      console.error('❌ [certificateService] Download certificate error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error downloading certificate';
+      throw new Error(errorMessage);
     }
   }
 
@@ -102,11 +125,15 @@ class CertificateService {
    */
   async verifyCertificate(verificationCode: string): Promise<CertificateVerification> {
     try {
+      console.log('🔍 [certificateService] Verifying certificate code:', verificationCode);
       const response = await axios.get(buildApiUrl(`${this.baseUrl}/verify/${verificationCode}`), { headers: getAuthHeaders() });
+      console.log('✅ [certificateService] Certificate verification result:', response.data?.isValid ? 'VALID' : 'INVALID');
       return response.data;
     } catch (error) {
-      console.error('Error verifying certificate:', error);
-      throw error;
+      const apiError = error as APIError;
+      console.error('❌ [certificateService] Verify certificate error:', apiError);
+      const errorMessage = apiError.response?.data?.detail || 'Error verifying certificate';
+      throw new Error(errorMessage);
     }
   }
 

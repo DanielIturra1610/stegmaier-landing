@@ -1,101 +1,102 @@
 // src/lib/email.ts
-import type { EmailProvider, EmailPayload, EmailResponse } from '../types/email';
+import type { EmailPayload, EmailResponse } from '../types/email';
+import { buildApiUrl } from '../config/api.config';
 
-// Factory para proveedores de email
-const createEmailProvider = (provider: string): EmailProvider => {
-  switch (provider.toLowerCase()) {
-    case 'sendgrid':
-      return new SendGridProvider();
-    //case 'ses':
-    //  return new SESProvider();
-    default:
-      throw new Error(`Email provider "${provider}" not supported`);
-  }
-};
+/**
+ * ✅ SEGURIDAD: Email service refactorizado para usar backend API
+ * 
+ * PROBLEMA ANTERIOR:
+ * - Frontend intentaba acceder a process.env.SENDGRID_API_KEY
+ * - Credenciales backend expuestas en cliente
+ * - Violación de seguridad crítica
+ * 
+ * SOLUCIÓN:
+ * - Delegar envío de emails al backend
+ * - Frontend solo envía payload al endpoint seguro
+ * - Backend maneja credenciales de manera segura
+ */
 
-// Función principal exportada
+// Función principal exportada - Ahora usa backend API
 export async function sendMail(payload: EmailPayload): Promise<EmailResponse> {
-  const provider = process.env.EMAIL_PROVIDER || 'sendgrid';
-  const emailProvider = createEmailProvider(provider);
-  return emailProvider.send(payload);
+  try {
+    console.log('📧 [EmailService] Sending email via backend API');
+    
+    const response = await fetch(buildApiUrl('/contact/send-email'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // No auth required for contact form
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    
+    console.log('✅ [EmailService] Email sent successfully');
+    return {
+      success: true,
+      message: result.message || 'Email enviado correctamente',
+      messageId: result.messageId
+    };
+    
+  } catch (error: any) {
+    console.error('❌ [EmailService] Failed to send email:', error);
+    
+    return {
+      success: false,
+      message: 'Error al enviar el email. Por favor intenta nuevamente.',
+      error: error.message
+    };
+  }
 }
 
-// Implementación de SendGrid
-class SendGridProvider implements EmailProvider {
-  async send(payload: EmailPayload): Promise<EmailResponse> {
-    const sgMail = require('@sendgrid/mail');
-    
-    // Usar la API key correcta
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error("SendGrid API Key no encontrada");
-    }
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+/**
+ * Función de respaldo para casos donde el backend no esté disponible
+ * Muestra mensaje apropiado al usuario
+ */
+export async function sendMailFallback(payload: EmailPayload): Promise<EmailResponse> {
+  console.warn('⚠️ [EmailService] Using fallback - backend unavailable');
+  
+  // En un caso real, podrías:
+  // 1. Guardar en localStorage para reintento posterior
+  // 2. Mostrar información de contacto alternativa
+  // 3. Usar un servicio de terceros directo (si tienes API keys públicas)
+  
+  return {
+    success: false,
+    message: 'Servicio de email temporalmente no disponible. Contacta directamente a contacto@stegmaierconsulting.cl',
+    error: 'Backend service unavailable'
+  };
+}
 
-    const msg = {
-      to: process.env.SENDGRID_TO || 'contacto@stegmaierconsulting.cl',
-      from: process.env.SENDGRID_FROM || 'daniel.eduardo1610@gmail.com',
-      replyTo: payload.email,
-      subject: `Nuevo contacto: ${payload.subject || 'Formulario web'}`,
-      text: this.generatePlainText(payload),
-      html: this.generateHtml(payload),
-      categories: ['landing-contact'],
-    };
-
-    try {
-      const response = await sgMail.send(msg);
-      return { 
-        success: true, 
-        message: 'Email enviado correctamente',
-        messageId: response[0]?.messageId // Agregamos el messageId para debug
-      };
-    } catch (error: any) {
-      console.error('SendGrid error:', error);
-      return { 
-        success: false, 
-        message: 'Error al enviar el email',
-        error: error.message
-      };
-    }
+/**
+ * Utilidad para validar payload antes del envío
+ */
+export function validateEmailPayload(payload: EmailPayload): string[] {
+  const errors: string[] = [];
+  
+  if (!payload.name?.trim()) {
+    errors.push('Nombre es requerido');
   }
-
-  // Helpers para generar contenido del email
-  private generatePlainText(payload: EmailPayload): string {
-    return `
-      Nuevo mensaje de contacto:
-      
-      Nombre: ${payload.name}
-      Email: ${payload.email}
-      ${payload.company ? `Empresa: ${payload.company}` : ''}
-      ${payload.phone ? `Teléfono: ${payload.phone}` : ''}
-      ${payload.service ? `Servicio: ${payload.service}` : ''}
-      
-      Mensaje:
-      ${payload.message}
-    `;
+  
+  if (!payload.email?.trim()) {
+    errors.push('Email es requerido');
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+    errors.push('Email inválido');
   }
-
-  private generateHtml(payload: EmailPayload): string {
-    return `
-      <h2>Nuevo mensaje desde stegmaierconsulting.cl</h2>
-      <p><strong>Nombre:</strong> ${this.sanitizeHtml(payload.name)}</p>
-      <p><strong>Email:</strong> ${this.sanitizeHtml(payload.email)}</p>
-      ${payload.company ? `<p><strong>Empresa:</strong> ${this.sanitizeHtml(payload.company)}</p>` : ''}
-      ${payload.phone ? `<p><strong>Teléfono:</strong> ${this.sanitizeHtml(payload.phone)}</p>` : ''}
-      ${payload.service ? `<p><strong>Servicio:</strong> ${this.sanitizeHtml(payload.service)}</p>` : ''}
-      <p><strong>Mensaje:</strong></p>
-      <div style="padding: 15px; background-color: #f7f7f7; border-left: 4px solid #0070f3;">
-        ${this.sanitizeHtml(payload.message).replace(/\n/g, '<br>')}
-      </div>
-    `;
+  
+  if (!payload.message?.trim()) {
+    errors.push('Mensaje es requerido');
   }
-
-  private sanitizeHtml(input?: string): string {
-    if (!input) return '';
-    return input
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  
+  if (payload.message && payload.message.length > 5000) {
+    errors.push('Mensaje demasiado largo (máx. 5000 caracteres)');
   }
+  
+  return errors;
 }

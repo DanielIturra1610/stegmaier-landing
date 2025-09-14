@@ -19,6 +19,7 @@ interface LessonCreate {
 
 interface LessonResponse {
   id: string;
+  _id?: string; // MongoDB ObjectId field for backward compatibility
   title: string;
   description: string;
   content_type: 'text' | 'video' | 'quiz' | 'assignment';
@@ -77,7 +78,7 @@ class LessonService {
       
       // Log each lesson for debugging
       if (lessons && lessons.length > 0) {
-        lessons.forEach((lesson: any, index: number) => {
+        lessons.forEach((lesson: LessonResponse, index: number) => {
           console.log(`📝 [LessonService] Lesson ${index + 1}:`, {
             id: lesson.id || lesson._id,
             title: lesson.title,

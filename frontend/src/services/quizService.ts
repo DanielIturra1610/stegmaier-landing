@@ -10,6 +10,17 @@ import {
 import { buildApiUrl, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 import axios from 'axios';
 
+// Error handling interface
+interface APIError {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 class QuizService {
   // Quiz Management (Admin/Instructor)
   async createQuiz(quizData: QuizCreate): Promise<Quiz> {
@@ -25,13 +36,14 @@ class QuizService {
       
       console.log('✅ [quizService] Quiz created:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error creating quiz:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to create quiz');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error creating quiz:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to create quiz');
     }
   }
 
-  async getQuizzes(filters?: any): Promise<QuizListItem[]> {
+  async getQuizzes(filters?: Record<string, unknown>): Promise<QuizListItem[]> {
     try {
       console.log('📚 [quizService] Getting quizzes');
       
@@ -42,9 +54,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved quizzes:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching quizzes:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quizzes');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quizzes:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quizzes');
     }
   }
 
@@ -59,9 +72,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved course quizzes:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching course quizzes:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch course quizzes');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching course quizzes:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch course quizzes');
     }
   }
 
@@ -76,9 +90,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved quiz:', response.data.title);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching quiz:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quiz:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quiz');
     }
   }
 
@@ -94,9 +109,10 @@ class QuizService {
       
       console.log('✅ [quizService] Quiz updated:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error updating quiz:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to update quiz');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error updating quiz:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to update quiz');
     }
   }
 
@@ -110,9 +126,10 @@ class QuizService {
       );
       
       console.log('✅ [quizService] Quiz deleted successfully');
-    } catch (error: any) {
-      console.error('❌ [quizService] Error deleting quiz:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to delete quiz');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error deleting quiz:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to delete quiz');
     }
   }
 
@@ -128,9 +145,10 @@ class QuizService {
       
       console.log('✅ [quizService] Quiz published:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error publishing quiz:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to publish quiz');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error publishing quiz:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to publish quiz');
     }
   }
 
@@ -147,9 +165,10 @@ class QuizService {
       
       console.log('✅ [quizService] Quiz attempt started:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error starting quiz attempt:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to start quiz attempt');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error starting quiz attempt:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to start quiz attempt');
     }
   }
 
@@ -165,9 +184,10 @@ class QuizService {
       
       console.log('✅ [quizService] Quiz answers submitted:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error submitting quiz answers:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to submit quiz answers');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error submitting quiz answers:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to submit quiz answers');
     }
   }
 
@@ -182,9 +202,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved quiz attempt:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching quiz attempt:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz attempt');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quiz attempt:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quiz attempt');
     }
   }
 
@@ -199,9 +220,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved quiz progress:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching quiz progress:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz progress');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quiz progress:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quiz progress');
     }
   }
 
@@ -216,9 +238,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved quiz statistics:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching quiz statistics:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch quiz statistics');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quiz statistics:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quiz statistics');
     }
   }
 
@@ -233,9 +256,10 @@ class QuizService {
       
       console.log('✅ [quizService] Retrieved student attempts:', response.data.length);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [quizService] Error fetching student attempts:', error);
-      throw new Error(error.response?.data?.detail || 'Failed to fetch student attempts');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching student attempts:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch student attempts');
     }
   }
 
@@ -271,7 +295,7 @@ class QuizService {
     return questions.length > 0 ? (correctAnswers / questions.length) * 100 : 0;
   }
 
-  validateAnswer(question: Question, answer: any): boolean {
+  validateAnswer(question: Question, answer: unknown): boolean {
     console.log('🔍 [quizService] Validating answer for question:', question.id);
     return true;
   }
@@ -282,7 +306,7 @@ class QuizService {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
-  async submitAnswer(quizId: string, questionId: string, answer: any): Promise<any> {
+  async submitAnswer(quizId: string, questionId: string, answer: unknown): Promise<QuizAttempt> {
     console.log('📝 [quizService] Submitting answer:', { quizId, questionId });
     const answerData: StudentAnswer = { 
       question_id: questionId, 
@@ -293,7 +317,7 @@ class QuizService {
     return this.submitQuizAnswer(quizId, [answerData]);
   }
 
-  async submitQuizAttempt(quizId: string, answers: any[]): Promise<any> {
+  async submitQuizAttempt(quizId: string, answers: StudentAnswer[]): Promise<{ success: boolean; attempt_id: string }> {
     console.log('📤 [quizService] Submitting quiz attempt:', quizId);
     return { success: true, attempt_id: 'temp-' + Date.now() };
   }

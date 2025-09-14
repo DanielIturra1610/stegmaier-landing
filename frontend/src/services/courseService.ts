@@ -7,9 +7,24 @@ import {
   UserCourseAccess 
 } from '../types/course';
 import { LessonResponse } from '../types/lesson';
-import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
+import { buildApiUrl, API_ENDPOINTS, getAuthHeaders } from '../config/api.config';
 
-// ELIMINADO: No necesitamos API_BASE_URL local, usamos buildApiUrl() centralizado
+// Interface for API error responses
+interface APIError {
+  response?: {
+    status?: number;
+    data?: {
+      detail?: string;
+    };
+  };
+}
+
+interface CoursesResponse {
+  courses: Course[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 // Interface para lección individual
 export interface LessonDetail {
@@ -48,13 +63,6 @@ export interface Course {
   updated_at?: string;
 }
 
-export interface CoursesResponse {
-  courses: Course[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
 class CourseService {
   // Obtener cursos para estudiantes (solo cursos publicados en los que están inscritos o disponibles)
   async getStudentCourses(page: number = 1, limit: number = 10): Promise<CoursesResponse> {
@@ -64,9 +72,10 @@ class CourseService {
         params: { page, limit }
       });
       return response.data;
-    } catch (error: any) {
-      console.error('Error fetching student courses:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener cursos');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('Error fetching student courses:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener cursos');
     }
   }
 
@@ -89,9 +98,12 @@ class CourseService {
       console.log('🔍 [courseService] Response from API:', response.data);
       console.log('🔍 [courseService] Response status:', response.status);
       return response.data;
-    } catch (error: any) {
-      console.error('Error fetching available courses:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener cursos disponibles');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('Error fetching available courses:', apiError);
+      console.error('Response status:', apiError.response?.status);
+      console.error('Response data:', apiError.response?.data);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener cursos disponibles');
     }
   }
 
@@ -101,9 +113,10 @@ class CourseService {
       await axios.post(buildApiUrl(`${API_ENDPOINTS.COURSES}/${courseId}/enroll`), {}, {
         headers: getAuthHeaders(),
       });
-    } catch (error: any) {
-      console.error('Error enrolling in course:', error);
-      throw new Error(error.response?.data?.detail || 'Error al inscribirse en el curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('Error creating course:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al crear curso');
     }
   }
 
@@ -120,9 +133,10 @@ class CourseService {
       
       console.log('✅ [courseService] Course detail retrieved:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ [courseService] Error getting course detail:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener detalle del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('Error fetching course details:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener detalles del curso');
     }
   }
 
@@ -183,9 +197,10 @@ class CourseService {
         lessons,
         user_access: userAccess
       };
-    } catch (error: any) {
-      console.error('❌ [courseService] Error getting complete course data:', error);
-      throw new Error(error.response?.data?.detail || 'Error al obtener datos completos del curso');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [courseService] Error getting complete course data:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener datos completos del curso');
     }
   }
 
@@ -200,8 +215,9 @@ class CourseService {
         published: course.is_published,
         accessible: course.is_published || false // TODO: Verificar permisos de instructor/admin
       };
-    } catch (error: any) {
-      if (error.response?.status === 404) {
+    } catch (error) {
+      const apiError = error as APIError;
+      if (apiError.response?.status === 404) {
         return { exists: false, published: false, accessible: false };
       }
       throw error;
@@ -220,9 +236,10 @@ class CourseService {
       
       console.log('✅ [CourseService] Lessons fetched successfully:', response.data?.length || 0);
       return response.data || [];
-    } catch (error: any) {
-      console.error('❌ [CourseService] Error fetching course lessons:', error);
-      console.error('❌ [CourseService] Response:', error.response?.data);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [CourseService] Error fetching course lessons:', apiError);
+      console.error('❌ [CourseService] Response:', apiError.response?.data);
       
       // ✅ ROBUSTEZ: Devolver array vacío en lugar de crash
       return [];
@@ -250,10 +267,11 @@ class CourseService {
       console.log('📋 [CourseService] Course lessons count:', course?.lessons?.length || 0);
       
       return course;
-    } catch (error: any) {
-      console.error('❌ [CourseService] Error fetching course:', error);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [CourseService] Error fetching course:', apiError);
       
-      if (error.response?.status === 404) {
+      if (apiError.response?.status === 404) {
         return null;
       }
       

@@ -319,17 +319,17 @@ class ProgressService {
     return { success: true };
   }
 
-  async updateAssignmentProgress(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, data: any): Promise<any> {
+  async updateAssignmentProgress(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, data: Record<string, unknown>): Promise<{ success: boolean }> {
     console.log('📊 [progressService] Updating assignment progress:', assignmentId, 'for lesson:', lessonId);
     return { success: true };
   }
 
-  async completeAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, submissionId: string): Promise<any> {
+  async completeAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, submissionId: string): Promise<{ success: boolean }> {
     console.log('✅ [progressService] Completing assignment:', assignmentId, 'for lesson:', lessonId);
     return { success: true };
   }
 
-  async getCourseProgress(courseId: string): Promise<any> {
+  async getCourseProgress(courseId: string): Promise<{ progress: number; completed_lessons: string[] }> {
     console.log('📚 [progressService] Getting course progress:', courseId);
     return { progress: 0, completed_lessons: [] };
   }
@@ -354,16 +354,16 @@ class ProgressService {
     return { success: true };
   }
 
-  async updateLessonProgress(lessonId: string, courseId: string, enrollmentId: string, progress: any): Promise<any> {
+  async updateLessonProgress(lessonId: string, courseId: string, enrollmentId: string, progress: Record<string, unknown>): Promise<{ success: boolean }> {
     console.log('📊 [progressService] Updating lesson progress:', lessonId, 'for course:', courseId);
     return { success: true };
   }
 
-  async savePendingProgress(lessonId: string, progressData: any): Promise<void> {
+  async savePendingProgress(lessonId: string, progressData: Record<string, unknown>): Promise<void> {
     console.log('💾 [progressService] Saving pending progress for lesson:', lessonId);
   }
 
-  async syncPendingProgress(): Promise<any> {
+  async syncPendingProgress(): Promise<{ success: boolean }> {
     console.log('🔄 [progressService] Syncing pending progress');
     return { success: true };
   }
