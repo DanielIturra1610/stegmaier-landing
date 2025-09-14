@@ -114,21 +114,23 @@ const AdminModules: React.FC = () => {
     setShowModal(true);
   };
 
+  // Following CLAUDE.md: "Keep functions small and focused on single responsibility"
   const validateForm = (): boolean => {
     const errors: ModuleFormErrors = {};
 
+    // Validación de título (obligatorio)
     if (!formData.title.trim()) {
       errors.title = 'El título es requerido';
     } else if (formData.title.length < 3) {
       errors.title = 'El título debe tener al menos 3 caracteres';
     }
 
-    if (!formData.description.trim()) {
-      errors.description = 'La descripción es requerida';
-    } else if (formData.description.length < 10) {
-      errors.description = 'La descripción debe tener al menos 10 caracteres';
+    // Validación de descripción (opcional, pero si se proporciona debe ser válida)
+    if (formData.description.trim() && formData.description.length < 10) {
+      errors.description = 'La descripción debe tener al menos 10 caracteres si se proporciona';
     }
 
+    // Validación de duración
     if (formData.estimated_duration < 0) {
       errors.estimated_duration = 'La duración no puede ser negativa';
     }
@@ -146,9 +148,10 @@ const AdminModules: React.FC = () => {
 
     try {
       if (editingModule) {
-        // Actualizar módulo existente
+        // Actualizar módulo existente - Following CLAUDE.md: "Use consistent naming conventions"
         const updateData: ModuleUpdate = {
           title: formData.title.trim(),
+          // Siempre incluir descripción en updates (puede ser string vacío)
           description: formData.description.trim(),
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
@@ -158,14 +161,15 @@ const AdminModules: React.FC = () => {
         await moduleService.updateModule(editingModule.id, updateData);
         console.log('✅ [AdminModules] Module updated successfully');
       } else {
-        // Crear nuevo módulo
+        // Crear nuevo módulo - Following CLAUDE.md: "Write self-documenting code"
         const createData: ModuleCreate = {
           title: formData.title.trim(),
-          description: formData.description.trim(),
+          // Solo incluir descripción si no está vacía (opcional)
+          ...(formData.description.trim() && { description: formData.description.trim() }),
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
           unlock_previous: formData.unlock_previous,
-          order: modules.length + 1 // Agregar el campo order explícitamente
+          order: modules.length + 1 // Auto-asignar orden basado en módulos existentes
         };
 
         await moduleService.createModule(courseId, createData);
@@ -348,8 +352,13 @@ const AdminModules: React.FC = () => {
                         {module.title}
                       </h3>
                       
+                      {/* Descripción con fallback - Following CLAUDE.md: "Show user-friendly error messages" */}
                       <p className="text-gray-600 mb-4">
-                        {module.description}
+                        {module.description || (
+                          <span className="italic text-gray-400">
+                            Sin descripción - Puedes agregar una editando el módulo
+                          </span>
+                        )}
                       </p>
                       
                       <div className="flex items-center gap-6 text-sm text-gray-500">
@@ -438,10 +447,10 @@ const AdminModules: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Descripción */}
+                  {/* Descripción - Following CLAUDE.md: "Maintain design system consistency" */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Descripción *
+                      Descripción <span className="text-gray-400 text-xs">(opcional)</span>
                     </label>
                     <textarea
                       value={formData.description}
@@ -450,11 +459,14 @@ const AdminModules: React.FC = () => {
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         formErrors.description ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Describe el contenido y objetivos del módulo..."
+                      placeholder="Describe el contenido y objetivos del módulo (opcional)..."
                     />
                     {formErrors.description && (
                       <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>
                     )}
+                    <p className="text-gray-500 text-xs mt-1">
+                      Puedes agregar la descripción más tarde si prefieres crear el módulo primero
+                    </p>
                   </div>
 
                   {/* Duración estimada */}

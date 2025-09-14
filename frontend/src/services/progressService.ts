@@ -3,6 +3,7 @@
  * ✅ CORREGIDO: URLs centralizadas, sin URLs relativas
  */
 import { API_CONFIG, API_ENDPOINTS, getAuthHeaders, buildApiUrl } from '../config/api.config';
+import { CourseProgressResponse, LessonProgressResponse, UserProgressSummaryResponse, ProgressStatus } from '../types/progress';
 
 export interface VideoProgress {
   lesson_id: string;
@@ -329,9 +330,26 @@ class ProgressService {
     return { success: true };
   }
 
-  async getCourseProgress(courseId: string): Promise<{ progress: number; completed_lessons: string[] }> {
+  async getCourseProgress(courseId: string): Promise<CourseProgressResponse> {
     console.log('📚 [progressService] Getting course progress:', courseId);
-    return { progress: 0, completed_lessons: [] };
+
+    // TODO: Implement actual API call when backend is ready
+    return {
+      course_progress: {
+        id: 'temp-progress-id',
+        course_id: courseId,
+        progress_percentage: 0,
+        status: ProgressStatus.NOT_STARTED,
+        lessons_completed: 0,
+        total_lessons: 0,
+        total_time_spent: 0,
+        certificate_issued: false,
+      },
+      lessons_progress: [],
+      completion_percentage: 0,
+      certificate_available: false,
+      message: 'Mock data - implementation pending'
+    };
   }
 
   async getUserProgressSummary(): Promise<any> {

@@ -317,9 +317,31 @@ class QuizService {
     return this.submitQuizAnswer(quizId, [answerData]);
   }
 
-  async submitQuizAttempt(quizId: string, answers: StudentAnswer[]): Promise<{ success: boolean; attempt_id: string }> {
+  async submitQuizAttempt(quizId: string, answers: StudentAnswer[]): Promise<QuizAttempt> {
     console.log('📤 [quizService] Submitting quiz attempt:', quizId);
-    return { success: true, attempt_id: 'temp-' + Date.now() };
+
+    // TODO: Implement actual API call when backend is ready
+    const mockAttempt: QuizAttempt = {
+      id: 'temp-attempt-' + Date.now(),
+      quiz_id: quizId,
+      student_id: 'current-user-id',
+      attempt_number: 1,
+      status: AttemptStatus.SUBMITTED,
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+      score: 85,
+      score_percentage: 85,
+      percentage: 85,
+      is_passing: true,
+      time_spent: 300, // 5 minutes
+      answers: answers,
+      points_earned: 17,
+      total_points: 20,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    return mockAttempt;
   }
 
   getStatusColor(status: string): string {

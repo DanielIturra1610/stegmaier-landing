@@ -194,11 +194,12 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
       // Guardar respuesta actual
       await saveCurrentAnswer();
       
-      // Enviar quiz
-      const allAnswers = Array.from(state.answers.entries()).map(([questionId, answer]) => ({
+      // Enviar quiz - Following CLAUDE.md: "Always define proper types"
+      const allAnswers: StudentAnswer[] = Array.from(state.answers.entries()).map(([questionId, answer]) => ({
         question_id: questionId,
         answer,
-        time_spent: 0
+        time_spent: 0,
+        created_at: new Date().toISOString()
       }));
       const completedAttempt = await quizService.submitQuizAttempt(state.quiz!.id, allAnswers);
       

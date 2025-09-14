@@ -72,9 +72,10 @@ export interface CourseStructureResponse {
 }
 
 // Para creación de módulos (formularios admin)
+// Following CLAUDE.md: "Always define proper types instead of using any"
 export interface ModuleCreate {
   title: string;
-  description: string;
+  description?: string; // Opcional para permitir creación iterativa de módulos
   order?: number; // Se auto-asigna si no se proporciona
   estimated_duration: number;
   is_required: boolean;
@@ -112,9 +113,10 @@ export interface ModuleDetailState {
 }
 
 // Estado del formulario de módulo
+// Following CLAUDE.md: "Use consistent naming conventions and proper types"
 export interface ModuleFormData {
   title: string;
-  description: string;
+  description: string; // Mantener como string para el formulario (puede estar vacío)
   estimated_duration: number;
   is_required: boolean;
   unlock_previous: boolean;

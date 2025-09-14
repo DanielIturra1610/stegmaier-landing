@@ -14,11 +14,13 @@ import {
 } from '../types/module';
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
 
-// Interface for API error responses
-interface APIError {
+// Interface for API error responses - Following CLAUDE.md TypeScript best practices
+interface APIError extends Error {
   response?: {
+    status?: number;
     data?: {
       detail?: string;
+      message?: string;
     };
   };
 }
