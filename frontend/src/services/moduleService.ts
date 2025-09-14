@@ -42,12 +42,19 @@ class ModuleService {
     console.log('📤 [moduleService] Request payload:', JSON.stringify(moduleData, null, 2));
     console.log('📤 [moduleService] Request headers:', JSON.stringify(this.getAuthHeaders(), null, 2));
 
-    // DEBUG: Verificar si description está presente
-    console.log('🔍 [moduleService] Description field analysis:', {
+    // DEBUG: Verificar estructura completa del payload
+    console.log('🔍 [moduleService] Complete payload analysis:', {
       hasDescription: 'description' in moduleData,
       descriptionValue: moduleData.description,
       descriptionType: typeof moduleData.description,
-      descriptionLength: moduleData.description?.length || 0
+      descriptionLength: moduleData.description?.length || 0,
+      titleLength: moduleData.title?.length || 0,
+      estimatedDurationType: typeof moduleData.estimated_duration,
+      estimatedDurationValue: moduleData.estimated_duration,
+      isRequiredType: typeof moduleData.is_required,
+      unlockPreviousType: typeof moduleData.unlock_previous,
+      orderValue: moduleData.order,
+      allFields: Object.keys(moduleData)
     });
 
     try {
@@ -65,11 +72,20 @@ class ModuleService {
       console.error('❌ [moduleService] Error status:', error.response?.status);
       console.error('❌ [moduleService] Error headers:', error.response?.headers);
 
+      // Manejo específico para error 422
+      if (error.response?.status === 422) {
+        console.error('🔍 [moduleService] Validation Error (422) Details:', {
+          validationErrors: error.response?.data,
+          sentData: moduleData,
+          url: url
+        });
+      }
+
       const apiError = error as APIError;
       const errorMessage = apiError.response?.data?.detail ||
                           apiError.response?.data?.message ||
                           apiError.message ||
-                          'Error al crear módulo';
+                          `Error al crear módulo (${apiError.response?.status || 'unknown'})`;
 
       throw new Error(errorMessage);
     }
