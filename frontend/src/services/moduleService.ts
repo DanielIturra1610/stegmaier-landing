@@ -42,6 +42,14 @@ class ModuleService {
     console.log('📤 [moduleService] Request payload:', JSON.stringify(moduleData, null, 2));
     console.log('📤 [moduleService] Request headers:', JSON.stringify(this.getAuthHeaders(), null, 2));
 
+    // DEBUG: Verificar si description está presente
+    console.log('🔍 [moduleService] Description field analysis:', {
+      hasDescription: 'description' in moduleData,
+      descriptionValue: moduleData.description,
+      descriptionType: typeof moduleData.description,
+      descriptionLength: moduleData.description?.length || 0
+    });
+
     try {
       const response: AxiosResponse<ModuleResponse> = await axios.post(
         url,
