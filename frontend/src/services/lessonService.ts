@@ -26,6 +26,7 @@ interface LessonResponse {
   lesson_type?: 'text' | 'video' | 'quiz' | 'assignment';
   content?: string;
   video_url?: string;
+  content_url?: string;  // Agregar soporte para content_url también
   assignment_id?: string;
   duration: number;
   order: number;

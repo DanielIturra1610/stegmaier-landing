@@ -590,13 +590,13 @@ const AdminModuleLessons: React.FC = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {lesson.content_type === 'video' && (lesson.video_url || (lesson as any).content_url) && (() => {
+                    {lesson.content_type === 'video' && (lesson.video_url || lesson.content_url) && (() => {
                       console.log('🔍 Video lesson debug:', {
                         id: lesson.id,
                         title: lesson.title,
                         content_type: lesson.content_type,
                         video_url: lesson.video_url,
-                        content_url: (lesson as any).content_url
+                        content_url: lesson.content_url
                       });
                       return true;
                     })() && (
@@ -614,7 +614,7 @@ const AdminModuleLessons: React.FC = () => {
 
                         <button
                           onClick={() => {
-                            const videoUrl = lesson.video_url || (lesson as any).content_url;
+                            const videoUrl = lesson.video_url || lesson.content_url;
                             const videoId = extractVideoId(videoUrl!);
                             if (videoId) {
                               const baseRoute = user?.role === 'admin' ? 'admin' : 'instructor';
@@ -674,7 +674,7 @@ const AdminModuleLessons: React.FC = () => {
 
             <div className="aspect-video">
               <VideoPlayer
-                videoId={extractVideoIdFromUrl(selectedLesson.video_url) || ''}
+                videoId={extractVideoIdFromUrl(selectedLesson.video_url || selectedLesson.content_url) || ''}
                 className="w-full h-full"
               />
             </div>
