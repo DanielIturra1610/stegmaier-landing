@@ -3,7 +3,7 @@ Dependencias para la API que implementan la autenticación y autorización.
 """
 from typing import Optional, List
 
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Security, status, Query
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import jwt, JWTError
 from pydantic import ValidationError
@@ -131,11 +131,92 @@ def get_current_instructor_user(
 ) -> User:
     """
     Devuelve el usuario actual si es instructor o administrador.
-    
+
     Args:
         current_user: Usuario actual autenticado
-        
+
     Returns:
         Usuario autenticado con rol de instructor o administrador
     """
+    return current_user
+
+async def get_current_user_from_query_token(
+    token: str = Query(...),
+    auth_service: AuthService = Depends(get_auth_service)
+) -> User:
+    """
+    Valida el token JWT desde query parameter y devuelve el usuario actual.
+    Útil para endpoints que necesitan autenticación pero son accedidos por elementos HTML
+    como <video> que no pueden enviar headers personalizados.
+
+    Args:
+        token: Token JWT desde query parameter
+        auth_service: Servicio de autenticación
+
+    Returns:
+        Usuario autenticado
+
+    Raises:
+        HTTPException: Si el token es inválido o el usuario no existe
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token inválido o expirado",
+    )
+
+    try:
+        # Decodificar el token JWT
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM]
+        )
+
+        # Extraer los datos del token
+        token_data = TokenData(
+            sub=payload.get("sub"),
+            email=payload.get("email"),
+            username=payload.get("username"),
+            role=payload.get("role"),
+            exp=payload.get("exp")
+        )
+
+    except (JWTError, ValidationError):
+        raise credentials_exception
+
+    # Obtener el usuario a partir de los datos del token
+    user = await auth_service.get_current_user(token_data)
+    if not user:
+        raise credentials_exception
+
+    # Verificar si el usuario está activo
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario inactivo"
+        )
+
+    return user
+
+def get_current_instructor_user_from_query_token(
+    current_user: User = Depends(get_current_user_from_query_token)
+) -> User:
+    """
+    Valida que el usuario desde query token sea instructor o administrador.
+
+    Args:
+        current_user: Usuario autenticado desde query token
+
+    Returns:
+        Usuario autenticado con rol de instructor o administrador
+
+    Raises:
+        HTTPException: Si el usuario no tiene permisos suficientes
+    """
+    if current_user.role not in ["admin", "instructor"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permisos insuficientes. Se requiere rol de instructor o administrador"
+        )
+
     return current_user

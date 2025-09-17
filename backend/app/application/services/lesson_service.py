@@ -314,7 +314,7 @@ class LessonService:
                 raise ValueError("No tienes permiso para actualizar esta lección")
         
         # Actualizar el video de la lección
-        lesson.video_url = f"/api/v1/media/video/{video_id}/stream"
+        lesson.video_url = f"/api/v1/media/videos/{video_id}/stream"
         lesson.content_type = "video"
         
         return await self.lesson_repository.update(lesson_id, lesson)
@@ -357,7 +357,7 @@ class LessonService:
             duration=duration or 0,
             order=0,  # Se calculará automáticamente
             is_free=False,
-            video_url=f"/api/v1/media/video/{video_id}/stream"
+            video_url=f"/api/v1/media/videos/{video_id}/stream"
         )
         
         return await self.create_lesson(instructor_id, lesson_data)

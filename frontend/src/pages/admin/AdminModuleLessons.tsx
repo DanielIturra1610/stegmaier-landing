@@ -190,7 +190,7 @@ const AdminModuleLessons: React.FC = () => {
         course_id: courseId!,
         order: lessons.length + 1,
         content_type: ContentType.VIDEO,
-        content_url: mediaService.getVideoStreamUrl(videoId),
+        content_url: `/api/v1/media/videos/${videoId}/stream`,
         duration: videoInfo.duration || 0,
         is_free_preview: false,
         attachments: []

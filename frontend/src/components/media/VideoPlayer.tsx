@@ -57,9 +57,17 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   let finalVideoUrl = '';
 
   if (videoUrl) {
-    // Use the provided videoUrl directly - it should already include the token
-    finalVideoUrl = videoUrl;
-    console.log('🎬 [VideoPlayer] Using provided videoUrl with existing token');
+    // Check if the provided URL already has a token
+    if (videoUrl.includes('token=')) {
+      // URL already has token, use as is
+      finalVideoUrl = videoUrl;
+      console.log('🎬 [VideoPlayer] Using provided videoUrl with existing token');
+    } else {
+      // URL doesn't have token, add current auth token
+      const token = localStorage.getItem('auth_token');
+      finalVideoUrl = `${videoUrl}?token=${token}`;
+      console.log('🎬 [VideoPlayer] Added token to provided videoUrl');
+    }
   } else if (videoId) {
     // Fallback: generar URL usando mediaService
     finalVideoUrl = mediaService.getVideoStreamUrl(videoId);
