@@ -604,39 +604,32 @@ const AdminModuleLessons: React.FC = () => {
                         extracted_id: testVideoId
                       });
 
+                      // Check if the content_url contains undefined - if so, this is corrupted data
+                      if (lesson.content_url.includes('undefined')) {
+                        console.error('🚨 Found corrupted lesson with undefined in content_url, will show delete option');
+                        return false;
+                      }
+
                       return true;
                     })() && (
-                      <>
-                        <button
-                          onClick={() => {
-                            setSelectedLesson(lesson);
-                            setShowVideoPlayer(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-500 p-1"
-                          title="Ver video"
-                        >
-                          <PlayIcon className="h-5 w-5" />
-                        </button>
+                      <button
+                        onClick={() => {
+                          setSelectedLesson(lesson);
+                          setShowVideoPlayer(true);
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+                        title="Reproducir video"
+                      >
+                        <PlayIcon className="h-4 w-4 mr-1.5" />
+                        Ver Video
+                      </button>
+                    )}
 
-                        <button
-                          onClick={() => {
-                            const videoUrl = lesson.content_url;
-                            const videoId = extractVideoId(videoUrl!);
-                            if (videoId) {
-                              const baseRoute = user?.role === 'admin' ? 'admin' : 'instructor';
-                              navigate(`/platform/${baseRoute}/videos/${videoId}/preview`);
-                            } else {
-                              toast.error('No se pudo obtener el ID del video');
-                              console.error('🔍 Failed to extract video ID from:', videoUrl);
-                            }
-                          }}
-                          className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-md text-sm font-medium transition-colors"
-                          title="Ver detalles completos del video"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-1.5" />
-                          Ver Video
-                        </button>
-                      </>
+                    {/* Show special message for corrupted lessons */}
+                    {lesson.content_type === ContentType.VIDEO && lesson.content_url && lesson.content_url.includes('undefined') && (
+                      <div className="text-red-600 text-sm">
+                        ⚠️ Lección corrupta - eliminar y recrear
+                      </div>
                     )}
 
                     <button
