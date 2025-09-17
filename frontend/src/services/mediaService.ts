@@ -55,7 +55,7 @@ class MediaService {
     title: string,
     description?: string,
     onProgress?: (progress: UploadProgress) => void
-  ): Promise<{ message: string; video_id: string; title: string; status: string; upload_date: string }> {
+  ): Promise<{ id: string; title: string; original_filename: string; file_size: number; duration: number; url: string; file_path: string; upload_date: string }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', title);

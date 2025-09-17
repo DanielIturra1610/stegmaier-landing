@@ -126,10 +126,11 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
 
       updateUpload(upload.id, {
         status: 'success',
-        videoId: result.video_id
+        videoId: result.id
       });
 
-      onUploadSuccess?.(result.video_id, result);
+      console.log('📊 [VideoUploader] Upload success, calling onUploadSuccess with videoId:', result.id);
+      onUploadSuccess?.(result.id, result);
     } catch (error: any) {
       updateUpload(upload.id, {
         status: 'error',
