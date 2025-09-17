@@ -695,7 +695,7 @@ const AdminModuleLessons: React.FC = () => {
 
             <div className="aspect-video">
               <VideoPlayer
-                videoId={extractVideoId(selectedLesson.content_url) || ''}
+                videoUrl={selectedLesson.content_url}
                 className="w-full h-full"
               />
             </div>

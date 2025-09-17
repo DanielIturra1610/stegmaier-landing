@@ -14,7 +14,8 @@ import {
 import { mediaService } from '../../services/mediaService';
 
 interface VideoPlayerProps {
-  videoId: string;
+  videoId?: string;
+  videoUrl?: string;
   className?: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -28,6 +29,7 @@ interface VideoPlayerProps {
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoId,
+  videoUrl,
   className = '',
   autoPlay = false,
   controls = true,
@@ -51,9 +53,21 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   
-  console.log('🎬 [VideoPlayer] Received videoId:', videoId);
-  const videoUrl = mediaService.getVideoStreamUrl(videoId);
-  console.log('🎬 [VideoPlayer] Generated videoUrl:', videoUrl);
+  // Determine which URL to use: provided videoUrl or generate from videoId
+  let finalVideoUrl = '';
+
+  if (videoUrl) {
+    // Use the provided videoUrl directly - it should already include the token
+    finalVideoUrl = videoUrl;
+    console.log('🎬 [VideoPlayer] Using provided videoUrl with existing token');
+  } else if (videoId) {
+    // Fallback: generar URL usando mediaService
+    finalVideoUrl = mediaService.getVideoStreamUrl(videoId);
+    console.log('🎬 [VideoPlayer] Generated new URL from videoId');
+  }
+
+  console.log('🎬 [VideoPlayer] Props received - videoId:', videoId, 'videoUrl:', videoUrl);
+  console.log('🎬 [VideoPlayer] Final videoUrl to use:', finalVideoUrl);
 
   // Control de visibilidad de controles
   useEffect(() => {
@@ -229,7 +243,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       {/* Video Element */}
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={finalVideoUrl}
         poster={poster}
         className="w-full h-full object-contain"
         autoPlay={autoPlay}
