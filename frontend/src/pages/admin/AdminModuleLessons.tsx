@@ -567,7 +567,16 @@ const AdminModuleLessons: React.FC = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {lesson.content_type === 'video' && lesson.video_url && (
+                    {lesson.content_type === 'video' && (lesson.video_url || (lesson as any).content_url) && (() => {
+                      console.log('🔍 Video lesson debug:', {
+                        id: lesson.id,
+                        title: lesson.title,
+                        content_type: lesson.content_type,
+                        video_url: lesson.video_url,
+                        content_url: (lesson as any).content_url
+                      });
+                      return true;
+                    })() && (
                       <>
                         <button
                           onClick={() => {
@@ -582,12 +591,14 @@ const AdminModuleLessons: React.FC = () => {
 
                         <button
                           onClick={() => {
-                            const videoId = extractVideoId(lesson.video_url!);
+                            const videoUrl = lesson.video_url || (lesson as any).content_url;
+                            const videoId = extractVideoId(videoUrl!);
                             if (videoId) {
                               const baseRoute = user?.role === 'admin' ? 'admin' : 'instructor';
                               navigate(`/platform/${baseRoute}/videos/${videoId}/preview`);
                             } else {
                               toast.error('No se pudo obtener el ID del video');
+                              console.error('🔍 Failed to extract video ID from:', videoUrl);
                             }
                           }}
                           className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-md text-sm font-medium transition-colors"

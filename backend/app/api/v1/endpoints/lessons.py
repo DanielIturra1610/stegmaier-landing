@@ -249,7 +249,8 @@ async def reorder_lessons(
 async def delete_lesson(
     lesson_id: str = Path(..., description="ID de la lección"),
     current_user: User = Depends(get_current_instructor_user),
-    lesson_service: LessonService = Depends(get_lesson_service)
+    lesson_service: LessonService = Depends(get_lesson_service),
+    course_service: CourseService = Depends(get_course_service)
 ):
     """
     Elimina una lección específica.
@@ -259,14 +260,22 @@ async def delete_lesson(
     - **lesson_id**: ID de la lección a eliminar
     """
     try:
-        # Verificar que el usuario sea el instructor del curso o administrador
-        course = await lesson_service.get_course_by_lesson(lesson_id)
-        if not course:
+        # Verificar que la lección existe y obtener el curso
+        lesson = await lesson_service.get_lesson_by_id(lesson_id)
+        if not lesson:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Lección no encontrada"
             )
-        
+
+        # Obtener el curso usando el course_id de la lección
+        course = await course_service.get_course_by_id(lesson.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Curso no encontrado"
+            )
+
         if current_user.id != course.instructor_id and current_user.role != "admin":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
