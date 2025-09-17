@@ -124,35 +124,52 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
         }
       );
 
+      // Extract video ID from response (handles both nested and flat structures)
+      const extractedVideoId = (result as any).video?.id || (result as any).id;
+
       updateUpload(upload.id, {
         status: 'success',
-        videoId: result.id
+        videoId: extractedVideoId
       });
 
       // CRITICAL DEBUG LOGS
       console.log('🔥 [VideoUploader] CRITICAL DEBUG - Full result object:', JSON.stringify(result, null, 2));
-      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.id:', result.id);
-      console.log('🔥 [VideoUploader] CRITICAL DEBUG - typeof result.id:', typeof result.id);
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.id:', (result as any).id);
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.video:', (result as any).video);
       console.log('🔥 [VideoUploader] CRITICAL DEBUG - result keys:', Object.keys(result));
-      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.video_id (old):', (result as any).video_id);
-      console.log('📊 [VideoUploader] Upload success, calling onUploadSuccess with videoId:', result.id);
+      console.log('📊 [VideoUploader] Upload success, processing response...');
 
-      if (!result.id) {
-        console.error('💥 [VideoUploader] CRITICAL ERROR: result.id is undefined!');
-        console.error('💥 [VideoUploader] Falling back to check other properties...');
+      // The backend returns { video: { id: "...", ... } } structure
+      let videoId: string | undefined;
+      let videoInfo: any;
 
-        const fallbackId = (result as any).video_id || (result as any).videoId || (result as any).uuid;
-        console.log('💥 [VideoUploader] Fallback ID found:', fallbackId);
-
-        if (fallbackId) {
-          console.log('💥 [VideoUploader] Using fallback ID:', fallbackId);
-          onUploadSuccess?.(fallbackId, result);
-        } else {
-          console.error('💥 [VideoUploader] No valid ID found in response!');
-          onUploadError?.('No se pudo obtener el ID del video subido');
-        }
+      if ((result as any).video && (result as any).video.id) {
+        // New nested structure: { video: { id: "...", ... } }
+        videoId = (result as any).video.id;
+        videoInfo = (result as any).video;
+        console.log('✅ [VideoUploader] Using nested video.id:', videoId);
+      } else if ((result as any).id) {
+        // Fallback to flat structure: { id: "...", ... }
+        videoId = (result as any).id;
+        videoInfo = result;
+        console.log('✅ [VideoUploader] Using flat result.id:', videoId);
       } else {
-        onUploadSuccess?.(result.id, result);
+        // Last resort fallbacks
+        const fallbackId = (result as any).video_id || (result as any).videoId || (result as any).uuid;
+        if (fallbackId) {
+          videoId = fallbackId;
+          videoInfo = result;
+          console.log('✅ [VideoUploader] Using fallback ID:', videoId);
+        }
+      }
+
+      if (!videoId || videoId === 'undefined') {
+        console.error('💥 [VideoUploader] CRITICAL ERROR: No valid video ID found!');
+        console.error('💥 [VideoUploader] Full response structure:', JSON.stringify(result, null, 2));
+        onUploadError?.('No se pudo obtener el ID del video subido');
+      } else {
+        console.log('✅ [VideoUploader] Calling onUploadSuccess with videoId:', videoId);
+        onUploadSuccess?.(videoId, videoInfo);
       }
     } catch (error: any) {
       updateUpload(upload.id, {
