@@ -299,16 +299,39 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
                       </div>
                     )}
 
-                    {/* Botón de subir */}
-                    {upload.status === 'pending' && (
-                      <div className="mt-3">
+                    {/* Botón de subir o reintentar */}
+                    {(upload.status === 'pending' || upload.status === 'error') && (
+                      <div className="mt-3 flex space-x-2">
                         <button
-                          onClick={() => handleUpload(upload)}
+                          onClick={() => {
+                            // Reset status para reintentar
+                            if (upload.status === 'error') {
+                              updateUpload(upload.id, {
+                                status: 'pending',
+                                error: undefined,
+                                progress: { loaded: 0, total: 0, percentage: 0 }
+                              });
+                            }
+                            handleUpload(upload);
+                          }}
                           disabled={!upload.title.trim()}
-                          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                          className={`px-4 py-2 text-white text-sm font-medium rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed ${
+                            upload.status === 'error'
+                              ? 'bg-orange-600 hover:bg-orange-700'
+                              : 'bg-blue-600 hover:bg-blue-700'
+                          }`}
                         >
-                          Subir Video
+                          {upload.status === 'error' ? 'Reintentar' : 'Subir Video'}
                         </button>
+
+                        {upload.status === 'error' && (
+                          <button
+                            onClick={() => removeUpload(upload.id)}
+                            className="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700"
+                          >
+                            Cancelar
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

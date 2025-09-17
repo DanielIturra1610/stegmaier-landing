@@ -48,6 +48,7 @@ class MediaService {
 
   /**
    * Subir archivo de video con progress tracking
+   * Incluye fallback para endpoints alternativos
    */
   async uploadVideo(
     file: File,
@@ -62,34 +63,74 @@ class MediaService {
       formData.append('description', description);
     }
 
-    try {
-      console.log('📹 [mediaService] Uploading video:', title);
-      
-      const response = await axios.post(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/upload/video`),
-        formData,
-        {
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'multipart/form-data',
-          },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const loaded = progressEvent.loaded;
-            const total = progressEvent.total;
-            const percentage = Math.round((loaded * 100) / total);
-            onProgress({ loaded, total, percentage });
-          }
-        },
-      });
+    // Lista de endpoints a probar (en orden de preferencia)
+    // CORREGIDO: Usar endpoints reales del backend
+    const endpointsToTry = [
+      `${API_ENDPOINTS.MEDIA}/videos/upload`,  // ✅ ENDPOINT CORRECTO
+      `${API_ENDPOINTS.MEDIA}/upload/video`,   // ❌ Fallback anterior
+      `${API_ENDPOINTS.MEDIA}/video/upload`,   // ❌ Fallback alternativo
+      `/upload/video`,                         // ❌ Fallback simple
+      `/media/upload`                          // ❌ Fallback genérico
+    ];
 
-      console.log('✅ [mediaService] Video uploaded successfully:', response.data);
-      return response.data;
-    } catch (error) {
-      const apiError = error as APIError;
-      console.error('❌ [mediaService] Error uploading video:', apiError);
-      throw new Error(apiError.response?.data?.detail || 'Error al subir video');
+    console.log('📹 [mediaService] Uploading video:', title);
+    console.log('🔍 [mediaService] Trying endpoints:', endpointsToTry);
+
+    for (let i = 0; i < endpointsToTry.length; i++) {
+      const endpoint = endpointsToTry[i];
+      console.log(`🌐 [mediaService] Attempt ${i + 1}: Trying endpoint:`, endpoint);
+
+      try {
+        const response = await axios.post(
+          buildApiUrl(endpoint),
+          formData,
+          {
+            headers: {
+              ...getAuthHeaders(),
+              'Content-Type': 'multipart/form-data',
+            },
+            onUploadProgress: (progressEvent) => {
+              if (onProgress && progressEvent.total) {
+                const loaded = progressEvent.loaded;
+                const total = progressEvent.total;
+                const percentage = Math.round((loaded * 100) / total);
+                onProgress({ loaded, total, percentage });
+              }
+            },
+          }
+        );
+
+        console.log('✅ [mediaService] Video uploaded successfully with endpoint:', endpoint);
+        console.log('✅ [mediaService] Response:', response.data);
+        return response.data;
+      } catch (error: any) {
+        console.warn(`⚠️ [mediaService] Endpoint ${endpoint} failed:`, error?.response?.status || error?.message);
+
+        // Si es 404, continuar con el siguiente endpoint
+        if (error?.response?.status === 404 && i < endpointsToTry.length - 1) {
+          continue;
+        }
+
+        // Si llegamos aquí y es el último endpoint, o si es un error diferente de 404
+        const apiError = error as APIError;
+        console.error('❌ [mediaService] All endpoints failed or critical error:', apiError);
+
+        // Mejorar el mensaje de error
+        let errorMessage = 'Error al subir video';
+        if (error?.response?.status === 404) {
+          errorMessage = '🚫 Servicio de subida de videos no disponible. El backend no tiene configurado el endpoint de media.';
+        } else if (error?.response?.data?.detail) {
+          errorMessage = error.response.data.detail;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+
+        throw new Error(errorMessage);
+      }
     }
+
+    // Esto no debería ejecutarse nunca, pero por seguridad
+    throw new Error('🚫 No se pudo encontrar un endpoint válido para subir videos');
   }
 
   /**
@@ -108,7 +149,7 @@ class MediaService {
       console.log('🖼️ [mediaService] Uploading image with purpose:', purpose);
       
       const response = await axios.post(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/upload/image`),
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/images/upload`),
         formData,
         {
           headers: {
@@ -142,7 +183,7 @@ class MediaService {
       console.log('📹 [mediaService] Getting video info:', videoId);
       
       const response = await axios.get(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}/info`),
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/videos/${videoId}`),
         { headers: getAuthHeaders() }
       );
 
@@ -163,7 +204,7 @@ class MediaService {
       console.log('🖼️ [mediaService] Getting image info:', imageId);
       
       const response = await axios.get(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}/info`),
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/images/${imageId}`),
         { headers: getAuthHeaders() }
       );
 
@@ -181,7 +222,7 @@ class MediaService {
    */
   getVideoStreamUrl(videoId: string): string {
     const token = localStorage.getItem('auth_token');
-    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}/stream?token=${token}`);
+    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/videos/${videoId}/stream?token=${token}`);
     console.log('🎥 [mediaService] Generated video stream URL for:', videoId);
     return url;
   }
@@ -191,7 +232,7 @@ class MediaService {
    */
   getImageUrl(imageId: string): string {
     const token = localStorage.getItem('auth_token');
-    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}?token=${token}`);
+    const url = buildApiUrl(`${API_ENDPOINTS.MEDIA}/images/${imageId}?token=${token}`);
     console.log('🖼️ [mediaService] Generated image URL for:', imageId);
     return url;
   }
@@ -204,7 +245,7 @@ class MediaService {
       console.log('🗑️ [mediaService] Deleting video:', videoId);
       
       const response = await axios.delete(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/video/${videoId}`),
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/videos/${videoId}`),
         { headers: getAuthHeaders() }
       );
 
@@ -225,7 +266,7 @@ class MediaService {
       console.log('🗑️ [mediaService] Deleting image:', imageId);
       
       const response = await axios.delete(
-        buildApiUrl(`${API_ENDPOINTS.MEDIA}/image/${imageId}`),
+        buildApiUrl(`${API_ENDPOINTS.MEDIA}/images/${imageId}`),
         { headers: getAuthHeaders() }
       );
 
