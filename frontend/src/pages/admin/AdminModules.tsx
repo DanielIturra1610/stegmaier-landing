@@ -105,7 +105,8 @@ const AdminModules: React.FC = () => {
     setEditingModule(module);
     setFormData({
       title: module.title,
-      description: module.description,
+      // Si la descripción es el placeholder, mostrar campo vacío para edición
+      description: module.description === 'Descripción pendiente' ? '' : module.description,
       estimated_duration: module.estimated_duration,
       is_required: module.is_required,
       unlock_previous: module.unlock_previous
@@ -164,16 +165,27 @@ const AdminModules: React.FC = () => {
         // Crear nuevo módulo - Following CLAUDE.md: "Write self-documenting code"
         const createData: ModuleCreate = {
           title: formData.title.trim(),
-          // Backend requiere description siempre, enviar string vacío si no hay contenido
-          description: formData.description.trim() || '',
+          // Backend requiere description con min_length=1, usar placeholder si está vacía
+          description: formData.description.trim() || 'Descripción pendiente',
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
           unlock_previous: formData.unlock_previous,
           order: modules.length + 1 // Auto-asignar orden basado en módulos existentes
         };
 
-        await moduleService.createModule(courseId, createData);
+        const createdModule = await moduleService.createModule(courseId, createData);
         console.log('✅ [AdminModules] Module created successfully');
+
+        // Preguntar si quiere agregar lecciones inmediatamente
+        const shouldAddLessons = window.confirm(
+          `✅ Módulo "${createData.title}" creado exitosamente.\n\n¿Quieres agregar lecciones a este módulo ahora?`
+        );
+
+        if (shouldAddLessons) {
+          // Navegar directamente a gestión de lecciones del módulo recién creado
+          navigate(`/platform/admin/courses/${courseId}/modules/${createdModule.id}/lessons`);
+          return; // No cerrar modal ni recargar, ya que navegamos
+        }
       }
 
       setShowModal(false);
@@ -354,10 +366,12 @@ const AdminModules: React.FC = () => {
                       
                       {/* Descripción con fallback - Following CLAUDE.md: "Show user-friendly error messages" */}
                       <p className="text-gray-600 mb-4">
-                        {module.description || (
+                        {module.description === 'Descripción pendiente' ? (
                           <span className="italic text-gray-400">
                             Sin descripción - Puedes agregar una editando el módulo
                           </span>
+                        ) : (
+                          module.description
                         )}
                       </p>
                       
@@ -396,13 +410,21 @@ const AdminModules: React.FC = () => {
 
                       {/* Botones de acción */}
                       <button
+                        onClick={() => navigate(`/platform/admin/courses/${courseId}/modules/${module.id}/lessons`)}
+                        className="px-3 py-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md text-sm font-medium border border-green-300"
+                        title="Gestionar lecciones de este módulo"
+                      >
+                        Lecciones ({module.lessons.length})
+                      </button>
+
+                      <button
                         onClick={() => handleEditModule(module)}
                         className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
                         title="Editar módulo"
                       >
                         <PencilIcon className="w-4 h-4" />
                       </button>
-                      
+
                       <button
                         onClick={() => handleDeleteModule(module)}
                         className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"

@@ -44,6 +44,7 @@ import AdminUsers from '../pages/admin/AdminUsers';
 import AdminCourseForm from '../pages/admin/AdminCourseForm';
 import AdminLessons from '../pages/admin/AdminLessons';
 import AdminModules from '../pages/admin/AdminModules';
+import AdminModuleLessons from '../pages/admin/AdminModuleLessons';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
@@ -111,6 +112,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
+        <Route path="admin/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
         <Route path="admin/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />

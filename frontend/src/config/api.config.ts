@@ -120,14 +120,30 @@ export function buildApiUrl(endpoint: string): string {
 }
 
 /**
- * Obtiene headers de autenticación
+ * Obtiene headers de autenticación con validación de token
  */
 export function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('auth_token');
-  
+
+  // Validar que el token existe y no esté vacío
+  if (!token || token.trim() === '' || token === 'null' || token === 'undefined') {
+    logger.warn('[API Config] No valid auth token found, user may need to login again');
+    // Limpiar token corrupto
+    localStorage.removeItem('auth_token');
+
+    return {
+      ...API_CONFIG.DEFAULT_HEADERS
+    };
+  }
+
+  // Log para debugging en desarrollo
+  if (!isProduction()) {
+    logger.debug('[API Config] Using auth token:', token.substring(0, 20) + '...');
+  }
+
   return {
     ...API_CONFIG.DEFAULT_HEADERS,
-    ...(token && { Authorization: `Bearer ${token}` })
+    Authorization: `Bearer ${token}`
   };
 }
 

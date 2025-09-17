@@ -3,16 +3,17 @@
  * Comunicación con API backend para operaciones CRUD de módulos
  */
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
-import { 
-  ModuleResponse, 
-  ModuleCreate, 
-  ModuleUpdate, 
-  ModuleWithLessons, 
+import {
+  ModuleResponse,
+  ModuleCreate,
+  ModuleUpdate,
+  ModuleWithLessons,
   CourseStructureResponse,
   LessonAssignment,
   CourseModulesResponse
 } from '../types/module';
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
+import { handleApiError } from '../utils/apiErrorHandler';
 
 // Interface for API error responses - Following CLAUDE.md TypeScript best practices
 interface APIError extends Error {
@@ -67,12 +68,10 @@ class ModuleService {
       console.log('✅ [moduleService] Module created:', response.data.title);
       return response.data;
     } catch (error: any) {
-      console.error('❌ [moduleService] Full error object:', error);
-      console.error('❌ [moduleService] Error response:', error.response?.data);
-      console.error('❌ [moduleService] Error status:', error.response?.status);
-      console.error('❌ [moduleService] Error headers:', error.response?.headers);
+      // Usar el nuevo manejador de errores centralizado
+      const errorMessage = handleApiError(error, 'createModule');
 
-      // Manejo específico para error 422
+      // Log específico para error 422 de validación
       if (error.response?.status === 422) {
         console.error('🔍 [moduleService] Validation Error (422) Details:', {
           validationErrors: error.response?.data,
@@ -81,13 +80,7 @@ class ModuleService {
         });
       }
 
-      const apiError = error as APIError;
-      const errorMessage = apiError.response?.data?.detail ||
-                          apiError.response?.data?.message ||
-                          apiError.message ||
-                          `Error al crear módulo (${apiError.response?.status || 'unknown'})`;
-
-      throw new Error(errorMessage);
+      throw new Error(errorMessage || 'Error al crear módulo');
     }
   }
 
