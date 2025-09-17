@@ -1,37 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import {
-  ArrowLeft,
-  Download,
-  Edit,
-  Trash2,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Calendar,
-  FileText,
-  User,
-  Clock
-} from 'lucide-react';
+  ArrowLeftIcon,
+  ArrowDownTrayIcon,
+  PencilIcon,
+  TrashIcon,
+  PlayIcon,
+  PauseIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
+  ArrowsPointingOutIcon,
+  CalendarIcon,
+  DocumentTextIcon,
+  UserIcon,
+  ClockIcon
+} from '@heroicons/react/24/outline';
+import { toast } from 'react-hot-toast';
+import Button from '../../components/ui/button';
 import { mediaService, VideoInfo } from '../../services/mediaService';
-import { useToast } from '../../hooks/use-toast';
 import { useAuth } from '../../contexts/AuthContext';
 
 const VideoPreviewPage: React.FC = () => {
   const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const [video, setVideo] = useState<VideoInfo | null>(null);
@@ -58,17 +49,13 @@ const VideoPreviewPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error loading video info:', error);
       setError(error.message || 'Error al cargar información del video');
-      toast({
-        title: 'Error',
-        description: 'No se pudo cargar la información del video',
-        variant: 'destructive',
-      });
+      toast.error('No se pudo cargar la información del video');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePlayPause = () => {
+  const handlePlayIconPauseIcon = () => {
     if (videoElement) {
       if (isPlaying) {
         videoElement.pause();
@@ -105,18 +92,11 @@ const VideoPreviewPage: React.FC = () => {
 
     try {
       await mediaService.deleteVideo(videoId);
-      toast({
-        title: 'Éxito',
-        description: 'Video eliminado correctamente',
-      });
+      toast.success('Video eliminado correctamente');
       navigate(-1); // Volver a la página anterior
     } catch (error: any) {
       console.error('Error deleting video:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'No se pudo eliminar el video',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'No se pudo eliminar el video');
     }
   };
 
@@ -168,16 +148,16 @@ const VideoPreviewPage: React.FC = () => {
     return (
       <div className="container mx-auto py-6">
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={() => navigate(-1)}
           className="mb-6"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
           Volver
         </Button>
 
-        <Card>
-          <CardContent className="p-6">
+        <div className="bg-white shadow rounded-lg">
+          <div className="p-6">
             <div className="text-center">
               <div className="text-red-500 text-6xl mb-4">⚠️</div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -190,8 +170,8 @@ const VideoPreviewPage: React.FC = () => {
                 Volver
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -204,10 +184,10 @@ const VideoPreviewPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => navigate(-1)}
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Volver
           </Button>
           <div>
@@ -217,16 +197,20 @@ const VideoPreviewPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Badge variant={video.status === 'uploaded' ? 'default' : 'secondary'}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            video.status === 'uploaded'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
             {video.status}
-          </Badge>
+          </span>
           {(user?.role === 'admin' || user?.role === 'instructor') && (
             <Button
-              variant="destructive"
+              className="bg-red-600 text-white hover:bg-red-700"
               size="sm"
               onClick={handleDeleteVideo}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <TrashIcon className="h-4 w-4 mr-2" />
               Eliminar
             </Button>
           )}
@@ -234,10 +218,10 @@ const VideoPreviewPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Video Player */}
+        {/* Video PlayIconer */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardContent className="p-0">
+          <div className="bg-white shadow rounded-lg">
+            <div className="p-0">
               <div className="relative bg-black rounded-lg overflow-hidden">
                 <video
                   ref={setVideoElement}
@@ -255,47 +239,47 @@ const VideoPreviewPage: React.FC = () => {
                 <div className="absolute bottom-4 left-4 flex items-center space-x-2">
                   <Button
                     size="sm"
-                    variant="secondary"
-                    onClick={handlePlayPause}
+                    variant="ghost"
+                    onClick={handlePlayIconPauseIcon}
                     className="bg-black/50 text-white hover:bg-black/70"
                   >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
                   </Button>
 
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="ghost"
                     onClick={handleMuteToggle}
                     className="bg-black/50 text-white hover:bg-black/70"
                   >
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    {isMuted ? <SpeakerXMarkIcon className="h-4 w-4" /> : <SpeakerWaveIcon className="h-4 w-4" />}
                   </Button>
 
                   <Button
                     size="sm"
-                    variant="secondary"
+                    variant="ghost"
                     onClick={handleFullscreen}
                     className="bg-black/50 text-white hover:bg-black/70"
                   >
-                    <Maximize className="h-4 w-4" />
+                    <ArrowsPointingOutIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Video Information */}
         <div className="space-y-6">
           {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                <DocumentTextIcon className="h-5 w-5 mr-2" />
                 Información del Video
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-600">Título</label>
                 <p className="text-gray-900">{video.title}</p>
@@ -312,15 +296,15 @@ const VideoPreviewPage: React.FC = () => {
                 <label className="text-sm font-medium text-gray-600">Archivo Original</label>
                 <p className="text-gray-900 text-sm">{video.original_filename}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Technical Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Detalles Técnicos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Detalles Técnicos</h3>
+            </div>
+            <div className="p-6 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Tamaño</span>
                 <span className="text-sm font-medium">{formatFileSize(video.file_size)}</span>
@@ -329,36 +313,40 @@ const VideoPreviewPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Duración</span>
                 <span className="text-sm font-medium">
-                  <Clock className="h-4 w-4 inline mr-1" />
+                  <ClockIcon className="h-4 w-4 inline mr-1" />
                   {formatDuration(video.duration || 0)}
                 </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Tipo MIME</span>
-                <Badge variant="outline" className="text-xs">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-300">
                   {video.mime_type}
-                </Badge>
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Estado</span>
-                <Badge variant={video.status === 'uploaded' ? 'default' : 'secondary'}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            video.status === 'uploaded'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-gray-100 text-gray-800'
+          }`}>
                   {video.status}
-                </Badge>
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Upload Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                <CalendarIcon className="h-5 w-5 mr-2" />
                 Información de Subida
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </h3>
+            </div>
+            <div className="p-6 space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-600">Fecha de subida</label>
                 <p className="text-sm">{formatDate(video.upload_date)}</p>
@@ -366,45 +354,42 @@ const VideoPreviewPage: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium text-gray-600 flex items-center">
-                  <User className="h-4 w-4 mr-1" />
+                  <UserIcon className="h-4 w-4 mr-1" />
                   Subido por
                 </label>
                 <p className="text-sm">{video.uploaded_by}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Acciones</h3>
+            </div>
+            <div className="p-6 space-y-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 className="w-full justify-start"
                 onClick={() => window.open(videoStreamUrl, '_blank')}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
                 Descargar Video
               </Button>
 
               <Button
-                variant="outline"
+                variant="secondary"
                 className="w-full justify-start"
                 onClick={() => {
                   // TODO: Implementar edición de video
-                  toast({
-                    title: 'Funcionalidad en desarrollo',
-                    description: 'La edición de videos estará disponible pronto',
-                  });
+                  toast('La edición de videos estará disponible pronto');
                 }}
               >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Información
+                <PencilIcon className="h-4 w-4 mr-2" />
+                PencilIconar Información
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
