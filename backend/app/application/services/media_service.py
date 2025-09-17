@@ -5,6 +5,7 @@ Maneja upload, almacenamiento y metadata de videos e imágenes
 import os
 import json
 import shutil
+import subprocess
 from typing import Optional, Dict, Any
 from pathlib import Path
 from datetime import datetime
@@ -33,6 +34,78 @@ class MediaService:
         self.videos_dir.mkdir(parents=True, exist_ok=True)
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.covers_dir.mkdir(parents=True, exist_ok=True)
+
+    def _extract_video_duration(self, file_path: str) -> float:
+        """
+        Extrae la duración real del video usando FFprobe
+        Retorna la duración en segundos, o 0 si no se puede extraer
+        """
+        try:
+            # Intentar usar ffprobe para extraer duración
+            cmd = [
+                'ffprobe',
+                '-v', 'quiet',
+                '-print_format', 'json',
+                '-show_format',
+                file_path
+            ]
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30  # Timeout de 30 segundos
+            )
+
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                duration_str = data.get('format', {}).get('duration')
+                if duration_str:
+                    return float(duration_str)
+
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as e:
+            print(f"⚠️ [MediaService] Could not extract video duration using ffprobe: {e}")
+
+        # Fallback: intentar usando ffmpeg si ffprobe no está disponible
+        try:
+            cmd = [
+                'ffmpeg',
+                '-i', file_path,
+                '-f', 'null',
+                '-'
+            ]
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+
+            # FFmpeg imprime información en stderr
+            stderr_output = result.stderr
+
+            # Buscar la línea que contiene "Duration:"
+            for line in stderr_output.split('\n'):
+                if 'Duration:' in line:
+                    # Formato: Duration: 00:01:23.45, start: 0.000000, bitrate: 1234 kb/s
+                    duration_part = line.split('Duration:')[1].split(',')[0].strip()
+
+                    # Convertir formato HH:MM:SS.ff a segundos
+                    time_parts = duration_part.split(':')
+                    if len(time_parts) >= 3:
+                        hours = float(time_parts[0])
+                        minutes = float(time_parts[1])
+                        seconds = float(time_parts[2])
+                        total_seconds = hours * 3600 + minutes * 60 + seconds
+                        return total_seconds
+
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, ValueError, IndexError) as e:
+            print(f"⚠️ [MediaService] Could not extract video duration using ffmpeg: {e}")
+
+        # Si todo falla, retornar 0
+        print(f"⚠️ [MediaService] Failed to extract duration for {file_path}, using default value 0")
+        return 0.0
     
     async def save_video_file(
         self, 
@@ -67,7 +140,17 @@ class MediaService:
             
             # Obtener información básica del archivo
             file_size = os.path.getsize(file_path)
-            
+
+            # Extraer duración real del video si está habilitado
+            duration_minutes = 0
+            if hasattr(settings, 'ENABLE_VIDEO_DURATION_EXTRACTION') and settings.ENABLE_VIDEO_DURATION_EXTRACTION:
+                print(f"🎬 [MediaService] Extracting duration for video: {file_path}")
+                duration_seconds = self._extract_video_duration(str(file_path))
+                duration_minutes = round(duration_seconds / 60, 1) if duration_seconds > 0 else 0
+                print(f"🎬 [MediaService] Video duration: {duration_seconds}s ({duration_minutes}min)")
+            else:
+                print(f"⚠️ [MediaService] Video duration extraction is disabled")
+
             # Crear registro en base de datos con hash de seguridad
             video_asset = VideoAsset(
                 original_filename=file.filename,
@@ -79,7 +162,7 @@ class MediaService:
                 uploaded_by=user_id,
                 upload_date=datetime.utcnow(),
                 mime_type=file.content_type or 'video/mp4',
-                duration=0,  # TODO: Extraer duración real del video
+                duration=duration_minutes,  # Duración extraída del video en minutos
                 status='uploaded'
             )
             

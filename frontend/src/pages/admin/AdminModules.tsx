@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import moduleService from '../../services/moduleService';
 import { courseService } from '../../services/courseService';
+import { lessonService } from '../../services/lessonService';
 import {
   ModuleResponse,
   ModuleWithLessons,
@@ -36,6 +37,9 @@ const AdminModules: React.FC = () => {
   const [modules, setModules] = useState<ModuleResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Estados para estadísticas de lecciones por módulo
+  const [moduleStats, setModuleStats] = useState<Record<string, { lessonsCount: number; totalDuration: number }>>({});
 
   // Estados para modal de creación/edición
   const [showModal, setShowModal] = useState(false);
@@ -67,19 +71,42 @@ const AdminModules: React.FC = () => {
     setError(null);
 
     try {
-      // Cargar curso e información básica
-      const [courseData, modulesData] = await Promise.all([
+      // Cargar curso, módulos y lecciones
+      const [courseData, modulesData, lessonsData] = await Promise.all([
         courseService.getCourse(courseId),
-        moduleService.getCourseModules(courseId)
+        moduleService.getCourseModules(courseId),
+        lessonService.getCourseLessons(courseId)
       ]);
 
       console.log('✅ [AdminModules] Data loaded:', {
         course: courseData?.title,
-        modules: modulesData.length
+        modules: modulesData.length,
+        lessons: lessonsData.length
       });
 
       setCourse(courseData);
       setModules(modulesData);
+
+      // Calcular estadísticas por módulo
+      // Nota: Como actualmente las lecciones no tienen module_id en el backend,
+      // vamos a dividir las lecciones entre los módulos basado en el orden
+      const stats: Record<string, { lessonsCount: number; totalDuration: number }> = {};
+
+      modulesData.forEach((module, index) => {
+        // Por ahora, vamos a mostrar las lecciones divididas proporcionalmente
+        const lessonsPerModule = Math.ceil(lessonsData.length / modulesData.length);
+        const startIndex = index * lessonsPerModule;
+        const endIndex = Math.min(startIndex + lessonsPerModule, lessonsData.length);
+        const moduleLessons = lessonsData.slice(startIndex, endIndex);
+
+        stats[module.id] = {
+          lessonsCount: moduleLessons.length,
+          totalDuration: moduleLessons.reduce((acc, lesson) => acc + (lesson.duration || 0), 0)
+        };
+      });
+
+      setModuleStats(stats);
+
     } catch (err) {
       console.error('❌ [AdminModules] Error loading data:', err);
       setError('Error al cargar los módulos del curso');
@@ -403,11 +430,11 @@ const AdminModules: React.FC = () => {
                       <div className="flex items-center gap-6 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <BookOpenIcon className="w-4 h-4" />
-                          <span>{module.lessons.length} lecciones</span>
+                          <span>{moduleStats[module.id]?.lessonsCount || 0} lecciones</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <ClockIcon className="w-4 h-4" />
-                          <span>{formatDuration(module.estimated_duration)}</span>
+                          <span>{formatDuration(moduleStats[module.id]?.totalDuration || module.estimated_duration)}</span>
                         </div>
                       </div>
                     </div>

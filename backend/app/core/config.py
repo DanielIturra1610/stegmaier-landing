@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     # File scanning
     ENABLE_VIRUS_SCAN: bool = os.getenv("ENABLE_VIRUS_SCAN", "false").lower() == "true"
     MAX_FILES_PER_REQUEST: int = int(os.getenv("MAX_FILES_PER_REQUEST", "5"))
+
+    # Video processing
+    # IMPORTANT: FFmpeg/FFprobe must be installed for video duration extraction
+    # Install with: apt-get install ffmpeg (Ubuntu) or brew install ffmpeg (macOS)
+    ENABLE_VIDEO_DURATION_EXTRACTION: bool = os.getenv("ENABLE_VIDEO_DURATION_EXTRACTION", "true").lower() == "true"
     
     # CORS settings - SECURITY: No wildcards in production
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")

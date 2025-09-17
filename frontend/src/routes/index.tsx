@@ -49,17 +49,18 @@ import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
 import AdminAssignmentGrading from '../pages/admin/AdminAssignmentGrading';
+import VideoPreviewPage from '../pages/admin/VideoPreviewPage';
 import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional
 const AdminRedirect: React.FC = () => {
   const { user } = useAuth();
-  
-  if (user?.role === 'admin') {
+
+  if (user?.role === 'admin' || user?.role === 'instructor') {
     return <Navigate to="/platform/courses" replace />;
   }
-  
+
   return <MyProgressPage />;
 };
 
@@ -113,6 +114,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
         <Route path="admin/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
+        <Route path="admin/videos/:videoId/preview" element={<VideoPreviewPage />} />
         <Route path="admin/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />

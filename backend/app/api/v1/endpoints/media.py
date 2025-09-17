@@ -155,11 +155,11 @@ async def stream_video(
 @router.delete("/videos/{video_id}", summary="Eliminar video")
 async def delete_video(
     video_id: str,
-    current_user: User = Depends(get_current_admin_user),  # Solo admin puede eliminar
+    current_user: User = Depends(get_current_instructor_user),  # Admin e instructor pueden eliminar
     media_service: MediaService = Depends(get_media_service)
 ):
     """
-    Elimina un video del sistema (solo administradores)
+    Elimina un video del sistema (administradores e instructores)
     """
     success = await media_service.delete_video(video_id)
     

@@ -9,7 +9,7 @@ from ....application.dtos.module_dto import (
 )
 from ....application.services.module_service import ModuleService
 from ....dependencies import get_module_service
-from ...deps import get_current_admin_user
+from ...deps import get_current_admin_user, get_current_instructor_user
 from ....domain.entities.user import User
 
 router = APIRouter()
@@ -19,9 +19,9 @@ async def create_module(
     course_id: str,
     module_data: ModuleCreate,
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Crear nuevo módulo en un curso (Solo admins)"""
+    """Crear nuevo módulo en un curso (Admins e instructores)"""
     module = await module_service.create_module(course_id, module_data.dict())
     if not module:
         raise HTTPException(
@@ -90,9 +90,9 @@ async def update_module(
     module_id: str,
     module_data: ModuleUpdate,
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Actualizar módulo (Solo admins)"""
+    """Actualizar módulo (Admins e instructores)"""
     # Filtrar campos no nulos
     update_data = {k: v for k, v in module_data.dict().items() if v is not None}
     
@@ -108,9 +108,9 @@ async def update_module(
 async def delete_module(
     module_id: str,
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Eliminar módulo (Solo admins)"""
+    """Eliminar módulo (Admins e instructores)"""
     success = await module_service.delete_module(module_id)
     if not success:
         raise HTTPException(
@@ -124,9 +124,9 @@ async def reorder_modules(
     course_id: str,
     module_orders: List[ModuleOrderUpdate],
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Reordenar módulos de un curso (Solo admins)"""
+    """Reordenar módulos de un curso (Admins e instructores)"""
     orders_dict = [{"module_id": item.module_id, "order": item.order} for item in module_orders]
     
     success = await module_service.reorder_course_modules(course_id, orders_dict)
@@ -142,9 +142,9 @@ async def add_lesson_to_module(
     module_id: str,
     lesson_assignment: LessonAssignment,
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Agregar lección a un módulo (Solo admins)"""
+    """Agregar lección a un módulo (Admins e instructores)"""
     success = await module_service.add_lesson_to_module(module_id, lesson_assignment.lesson_id)
     if not success:
         raise HTTPException(
@@ -158,9 +158,9 @@ async def remove_lesson_from_module(
     module_id: str,
     lesson_id: str,
     module_service: ModuleService = Depends(get_module_service),
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_instructor_user)
 ):
-    """Remover lección de un módulo (Solo admins)"""
+    """Remover lección de un módulo (Admins e instructores)"""
     success = await module_service.remove_lesson_from_module(module_id, lesson_id)
     if not success:
         raise HTTPException(

@@ -14,7 +14,8 @@ import {
   ArrowLeftIcon,
   ClipboardDocumentCheckIcon,
   ChevronUpIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 
@@ -36,6 +37,16 @@ const AdminModuleLessons: React.FC = () => {
   const [showVideoUploader, setShowVideoUploader] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<LessonResponse | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+  // Estados para edición de lecciones
+  const [showEditLessonModal, setShowEditLessonModal] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<LessonResponse | null>(null);
+  const [editLessonData, setEditLessonData] = useState({
+    title: '',
+    content_text: '',
+    duration: 0,
+    is_free_preview: false
+  });
 
   // Estados para crear nueva lección
   const [showNewLessonForm, setShowNewLessonForm] = useState(false);
@@ -77,6 +88,12 @@ const AdminModuleLessons: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para extraer video ID del URL
+  const extractVideoId = (videoUrl: string): string | null => {
+    const match = videoUrl.match(/\/videos\/([^\/\?]+)/);
+    return match ? match[1] : null;
   };
 
   const handleCreateLesson = async () => {
@@ -125,6 +142,8 @@ const AdminModuleLessons: React.FC = () => {
   const handleVideoUploadSuccess = async (videoId: string, videoInfo: any) => {
     try {
       // Crear lección de video automáticamente
+      console.log('📊 [AdminModuleLessons] Video info received:', videoInfo);
+
       const videoLessonData: LessonCreate = {
         title: videoInfo.title || 'Video sin título',
         course_id: courseId!,
@@ -135,6 +154,8 @@ const AdminModuleLessons: React.FC = () => {
         is_free_preview: false,
         attachments: []
       };
+
+      console.log('📊 [AdminModuleLessons] Creating lesson with data:', videoLessonData);
 
       const createdLesson = await lessonService.createLesson(courseId!, videoLessonData);
 
@@ -177,6 +198,57 @@ const AdminModuleLessons: React.FC = () => {
       console.error('❌ [AdminModuleLessons] Error deleting lesson:', error);
       toast.error(error.message || 'Error al eliminar lección');
     }
+  };
+
+  const handleEditLesson = (lesson: LessonResponse) => {
+    setEditingLesson(lesson);
+    setEditLessonData({
+      title: lesson.title,
+      content_text: lesson.content || '',
+      duration: lesson.duration || 0,
+      is_free_preview: lesson.is_free || false
+    });
+    setShowEditLessonModal(true);
+  };
+
+  const handleUpdateLesson = async () => {
+    if (!editingLesson || !editLessonData.title.trim()) {
+      toast.error('El título es requerido');
+      return;
+    }
+
+    try {
+      console.log('🔄 [AdminModuleLessons] Updating lesson:', editingLesson.id, editLessonData);
+
+      const updateData = {
+        title: editLessonData.title.trim(),
+        content: editLessonData.content_text.trim() || undefined,
+        duration: editLessonData.duration,
+        is_free: editLessonData.is_free_preview
+      };
+
+      await lessonService.updateLesson(editingLesson.id, updateData);
+      console.log('✅ [AdminModuleLessons] Lesson updated successfully');
+
+      toast.success('Lección actualizada exitosamente');
+      setShowEditLessonModal(false);
+      setEditingLesson(null);
+      await loadModuleAndLessons();
+    } catch (error: any) {
+      console.error('❌ [AdminModuleLessons] Error updating lesson:', error);
+      toast.error(error.message || 'Error al actualizar lección');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowEditLessonModal(false);
+    setEditingLesson(null);
+    setEditLessonData({
+      title: '',
+      content_text: '',
+      duration: 0,
+      is_free_preview: false
+    });
   };
 
   const extractVideoIdFromUrl = (videoUrl?: string): string | null => {
@@ -489,20 +561,37 @@ const AdminModuleLessons: React.FC = () => {
 
                   <div className="flex items-center space-x-2">
                     {lesson.content_type === 'video' && lesson.video_url && (
-                      <button
-                        onClick={() => {
-                          setSelectedLesson(lesson);
-                          setShowVideoPlayer(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-500 p-1"
-                        title="Ver video"
-                      >
-                        <PlayIcon className="h-5 w-5" />
-                      </button>
+                      <>
+                        <button
+                          onClick={() => {
+                            setSelectedLesson(lesson);
+                            setShowVideoPlayer(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-500 p-1"
+                          title="Ver video"
+                        >
+                          <PlayIcon className="h-5 w-5" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            const videoId = extractVideoId(lesson.video_url!);
+                            if (videoId) {
+                              navigate(`/platform/admin/videos/${videoId}/preview`);
+                            } else {
+                              toast.error('No se pudo obtener el ID del video');
+                            }
+                          }}
+                          className="text-purple-600 hover:text-purple-500 p-1"
+                          title="Previsualizar video"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </button>
+                      </>
                     )}
 
                     <button
-                      onClick={() => {/* Implementar edición */}}
+                      onClick={() => handleEditLesson(lesson)}
                       className="text-gray-400 hover:text-gray-600 p-1"
                       title="Editar lección"
                     >
@@ -545,6 +634,109 @@ const AdminModuleLessons: React.FC = () => {
                 videoId={extractVideoIdFromUrl(selectedLesson.video_url) || ''}
                 className="w-full h-full"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de edición de lección */}
+      {showEditLessonModal && editingLesson && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Editar Lección
+              </h3>
+              <button
+                onClick={handleCancelEdit}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título *
+                </label>
+                <input
+                  type="text"
+                  value={editLessonData.title}
+                  onChange={(e) => setEditLessonData(prev => ({
+                    ...prev,
+                    title: e.target.value
+                  }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Título de la lección"
+                />
+              </div>
+
+              {editingLesson.content_type === 'text' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Contenido
+                  </label>
+                  <textarea
+                    value={editLessonData.content_text}
+                    onChange={(e) => setEditLessonData(prev => ({
+                      ...prev,
+                      content_text: e.target.value
+                    }))}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Contenido de la lección"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Duración (minutos)
+                </label>
+                <input
+                  type="number"
+                  value={editLessonData.duration}
+                  onChange={(e) => setEditLessonData(prev => ({
+                    ...prev,
+                    duration: parseInt(e.target.value) || 0
+                  }))}
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={editLessonData.is_free_preview}
+                  onChange={(e) => setEditLessonData(prev => ({
+                    ...prev,
+                    is_free_preview: e.target.checked
+                  }))}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">
+                  Lección gratuita (preview)
+                </label>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  onClick={handleUpdateLesson}
+                  disabled={!editLessonData.title.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+                >
+                  Actualizar Lección
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>
