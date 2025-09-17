@@ -102,6 +102,13 @@ class MediaService {
 
         console.log('✅ [mediaService] Video uploaded successfully with endpoint:', endpoint);
         console.log('✅ [mediaService] Response:', response.data);
+
+        // CRITICAL DEBUG LOGS
+        console.log('🔥 [mediaService] CRITICAL DEBUG - Full response.data:', JSON.stringify(response.data, null, 2));
+        console.log('🔥 [mediaService] CRITICAL DEBUG - response.data.id:', response.data.id);
+        console.log('🔥 [mediaService] CRITICAL DEBUG - response.data.video_id:', response.data.video_id);
+        console.log('🔥 [mediaService] CRITICAL DEBUG - response.data keys:', Object.keys(response.data));
+
         return response.data;
       } catch (error: any) {
         console.warn(`⚠️ [mediaService] Endpoint ${endpoint} failed:`, error?.response?.status || error?.message);

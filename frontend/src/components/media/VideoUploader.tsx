@@ -129,8 +129,31 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
         videoId: result.id
       });
 
+      // CRITICAL DEBUG LOGS
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - Full result object:', JSON.stringify(result, null, 2));
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.id:', result.id);
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - typeof result.id:', typeof result.id);
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result keys:', Object.keys(result));
+      console.log('🔥 [VideoUploader] CRITICAL DEBUG - result.video_id (old):', (result as any).video_id);
       console.log('📊 [VideoUploader] Upload success, calling onUploadSuccess with videoId:', result.id);
-      onUploadSuccess?.(result.id, result);
+
+      if (!result.id) {
+        console.error('💥 [VideoUploader] CRITICAL ERROR: result.id is undefined!');
+        console.error('💥 [VideoUploader] Falling back to check other properties...');
+
+        const fallbackId = (result as any).video_id || (result as any).videoId || (result as any).uuid;
+        console.log('💥 [VideoUploader] Fallback ID found:', fallbackId);
+
+        if (fallbackId) {
+          console.log('💥 [VideoUploader] Using fallback ID:', fallbackId);
+          onUploadSuccess?.(fallbackId, result);
+        } else {
+          console.error('💥 [VideoUploader] No valid ID found in response!');
+          onUploadError?.('No se pudo obtener el ID del video subido');
+        }
+      } else {
+        onUploadSuccess?.(result.id, result);
+      }
     } catch (error: any) {
       updateUpload(upload.id, {
         status: 'error',

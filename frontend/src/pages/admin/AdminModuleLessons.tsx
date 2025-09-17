@@ -170,6 +170,18 @@ const AdminModuleLessons: React.FC = () => {
 
   const handleVideoUploadSuccess = async (videoId: string, videoInfo: any) => {
     try {
+      // CRITICAL DEBUG LOGS
+      console.log('🔥 [AdminModuleLessons] CRITICAL DEBUG - Received videoId:', videoId);
+      console.log('🔥 [AdminModuleLessons] CRITICAL DEBUG - typeof videoId:', typeof videoId);
+      console.log('🔥 [AdminModuleLessons] CRITICAL DEBUG - videoId === undefined:', videoId === undefined);
+      console.log('🔥 [AdminModuleLessons] CRITICAL DEBUG - Full videoInfo:', JSON.stringify(videoInfo, null, 2));
+
+      if (!videoId || videoId === 'undefined') {
+        console.error('💥 [AdminModuleLessons] CRITICAL ERROR: videoId is invalid!', videoId);
+        toast.error('Error: No se pudo obtener el ID del video. Intenta subirlo nuevamente.');
+        return;
+      }
+
       // Crear lección de video automáticamente
       console.log('📊 [AdminModuleLessons] Video info received:', videoInfo);
 
