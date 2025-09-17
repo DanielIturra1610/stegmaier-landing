@@ -163,15 +163,40 @@ const AdminModules: React.FC = () => {
         console.log('✅ [AdminModules] Module updated successfully');
       } else {
         // Crear nuevo módulo - Following CLAUDE.md: "Write self-documenting code"
+        const descriptionValue = formData.description.trim() || 'Descripción pendiente';
+
         const createData: ModuleCreate = {
           title: formData.title.trim(),
           // Backend requiere description con min_length=1, usar placeholder si está vacía
-          description: formData.description.trim() || 'Descripción pendiente',
+          description: descriptionValue,
           estimated_duration: formData.estimated_duration,
           is_required: formData.is_required,
           unlock_previous: formData.unlock_previous,
           order: modules.length + 1 // Auto-asignar orden basado en módulos existentes
         };
+
+        // 🔍 DEBUG: Log completo del payload antes de enviar
+        console.log('🚀 [AdminModules] PAYLOAD COMPLETO ANTES DE ENVIAR:', {
+          originalDescription: formData.description,
+          trimmedDescription: formData.description.trim(),
+          finalDescription: descriptionValue,
+          descriptionLength: descriptionValue.length,
+          completePayload: JSON.stringify(createData, null, 2),
+          timestamp: new Date().toISOString()
+        });
+
+        // 🛡️ VALIDACIÓN FRONTEND: Asegurar que nunca se envíe descripción vacía
+        if (!createData.description || createData.description.trim().length === 0) {
+          console.error('🚨 [AdminModules] CRÍTICO: Descripción vacía detectada, forzando placeholder');
+          createData.description = 'Descripción pendiente';
+        }
+
+        // 🔍 VERIFICACIÓN FINAL
+        console.log('🔒 [AdminModules] PAYLOAD FINAL VALIDADO:', {
+          descriptionFinal: createData.description,
+          lengthFinal: createData.description.length,
+          isValidForBackend: createData.description.length >= 1
+        });
 
         const createdModule = await moduleService.createModule(courseId, createData);
         console.log('✅ [AdminModules] Module created successfully');

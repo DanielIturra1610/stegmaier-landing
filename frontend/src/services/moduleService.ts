@@ -49,13 +49,17 @@ class ModuleService {
       descriptionValue: moduleData.description,
       descriptionType: typeof moduleData.description,
       descriptionLength: moduleData.description?.length || 0,
+      descriptionIsEmpty: moduleData.description === '',
+      descriptionTrimmed: moduleData.description?.trim(),
       titleLength: moduleData.title?.length || 0,
       estimatedDurationType: typeof moduleData.estimated_duration,
       estimatedDurationValue: moduleData.estimated_duration,
       isRequiredType: typeof moduleData.is_required,
       unlockPreviousType: typeof moduleData.unlock_previous,
       orderValue: moduleData.order,
-      allFields: Object.keys(moduleData)
+      allFields: Object.keys(moduleData),
+      payloadStringified: JSON.stringify(moduleData),
+      buildTimestamp: new Date().toISOString()
     });
 
     try {
