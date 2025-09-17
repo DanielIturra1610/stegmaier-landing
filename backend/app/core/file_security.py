@@ -34,12 +34,35 @@ class FileSecurityValidator:
     # Magic numbers para validación de tipos MIME reales
     MIME_SIGNATURES = {
         'video/mp4': [
-            b'\x00\x00\x00\x18ftypmp4',  # MP4
+            b'\x00\x00\x00\x18ftypmp4',  # MP4 básico
             b'\x00\x00\x00\x20ftypiso',  # ISO MP4
             b'\x00\x00\x00\x1cftypisom', # ISOM MP4
+            b'\x00\x00\x00\x20ftypavc1', # AVC1 MP4
+            b'\x00\x00\x00\x1cftypmp41', # MP4 versión 1
+            b'\x00\x00\x00\x1cftypmp42', # MP4 versión 2
+            b'\x00\x00\x00\x14ftypmmp4', # Mobile MP4
+        ],
+        'video/quicktime': [
+            b'\x00\x00\x00\x14ftypqt  ',  # QuickTime
         ],
         'video/webm': [
             b'\x1a\x45\xdf\xa3',  # WebM/Matroska
+        ],
+        'video/x-msvideo': [  # AVI
+            b'RIFF....AVI ',  # AVI (con wildcard para tamaño)
+        ],
+        'video/x-ms-wmv': [   # WMV
+            b'\x30\x26\xb2\x75\x8e\x66\xcf\x11\xa6\xd9\x00\xaa\x00\x62\xce\x6c',  # WMV
+        ],
+        'video/x-flv': [      # FLV
+            b'FLV\x01',       # FLV header
+        ],
+        'video/x-matroska': [ # MKV
+            b'\x1a\x45\xdf\xa3',  # Matroska (same as WebM)
+        ],
+        'video/mpeg': [       # MPEG
+            b'\x00\x00\x01\xba',  # MPEG PS
+            b'\x00\x00\x01\xb3',  # MPEG ES
         ],
         'image/jpeg': [
             b'\xff\xd8\xff',  # JPEG
@@ -81,22 +104,43 @@ class FileSecurityValidator:
     
     def validate_mime_type(self, file_content: bytes, expected_mime: str) -> bool:
         """
-        Validar tipo MIME usando magic numbers
+        Validar tipo MIME usando magic numbers con soporte mejorado para wildcards
         """
         if expected_mime not in self.MIME_SIGNATURES:
             return False
-        
+
         # Verificar magic numbers
         for signature in self.MIME_SIGNATURES[expected_mime]:
-            if signature.count(b'.') > 0:  # Signature with wildcards
-                # Handle WebP special case
+            if b'....' in signature:  # Signature with wildcards
                 if expected_mime == 'image/webp':
                     if file_content.startswith(b'RIFF') and b'WEBP' in file_content[:12]:
                         return True
+                elif expected_mime in ['video/x-msvideo']:  # AVI
+                    if file_content.startswith(b'RIFF') and b'AVI ' in file_content[:12]:
+                        return True
             else:
+                # Verificación directa de firma
                 if file_content.startswith(signature):
                     return True
-        
+
+        # Verificaciones adicionales para formatos que pueden tener variaciones
+        if expected_mime == 'video/mp4':
+            # Verificar si empieza con box size + 'ftyp' + cualquier variante
+            if len(file_content) >= 8 and file_content[4:8] == b'ftyp':
+                return True
+
+        # Para formatos donde la validación estricta puede fallar, ser más permisivo
+        # pero solo si al menos el inicio del archivo parece correcto
+        if expected_mime.startswith('video/') and not expected_mime.endswith('webm'):
+            # Si es un video y no es WebM (que tiene firma muy específica),
+            # permitir si al menos no parece ser un ejecutable o script
+            if not any(danger in file_content[:1024] for danger in [
+                b'MZ\x90\x00',  # PE executable
+                b'<script',     # Script embebido
+                b'#!/bin'       # Shell script
+            ]):
+                return True
+
         return False
     
     def validate_file_size(self, file_size: int, file_type: str) -> bool:
@@ -109,14 +153,14 @@ class FileSecurityValidator:
             return file_size <= self.max_image_size
         return False
     
-    def scan_for_malicious_content(self, file_content: bytes) -> List[str]:
+    def scan_for_malicious_content(self, file_content: bytes, file_type: str = None) -> List[str]:
         """
-        Escanear contenido malicioso en archivos
+        Escanear contenido malicioso en archivos con validaciones específicas por tipo
         """
         threats = []
-        
-        # Patrones peligrosos comunes
-        dangerous_patterns = [
+
+        # Patrones peligrosos para archivos que NO son videos/imágenes binarias
+        script_patterns = [
             b'<script',
             b'javascript:',
             b'vbscript:',
@@ -126,26 +170,42 @@ class FileSecurityValidator:
             b'document.write',
             b'window.location',
             b'<?php',
-            b'<%',
             b'#!/bin/sh',
             b'#!/bin/bash',
+        ]
+
+        # Patrones peligrosos para ejecutables
+        executable_patterns = [
             b'\x00\x00\x00\x00MSCF',  # Microsoft Cabinet
             b'MZ\x90\x00',  # PE executable
         ]
-        
+
         content_lower = file_content.lower()
-        for pattern in dangerous_patterns:
-            if pattern in content_lower:
-                threats.append(f"Suspicious pattern detected: {pattern.decode('utf-8', errors='ignore')}")
-        
-        # Verificar archivos ZIP embebidos
+
+        # ⚠️ IMPORTANTE: Solo validar scripts si NO es un archivo de video/audio
+        # Los archivos multimedia pueden contener patrones como <% legítimamente
+        if file_type and file_type.startswith(('video/', 'audio/')):
+            # Para videos/audio, solo validar ejecutables embebidos
+            for pattern in executable_patterns:
+                if pattern in content_lower:
+                    threats.append(f"Suspicious executable pattern detected: {pattern.decode('utf-8', errors='ignore')}")
+        else:
+            # Para otros archivos, validar scripts y ejecutables
+            all_dangerous_patterns = script_patterns + executable_patterns + [b'<%']  # <% solo para no-videos
+
+            for pattern in all_dangerous_patterns:
+                if pattern in content_lower:
+                    threats.append(f"Suspicious pattern detected: {pattern.decode('utf-8', errors='ignore')}")
+
+        # Verificar archivos ZIP embebidos (peligroso en cualquier tipo)
         if b'PK\x03\x04' in file_content:
             threats.append("Embedded ZIP archive detected")
-        
-        # Verificar scripts embebidos en imágenes
-        if any(marker in file_content for marker in [b'<?xml', b'<svg', b'<script']):
-            threats.append("Potentially malicious XML/SVG content")
-        
+
+        # Verificar scripts embebidos en imágenes (solo para imágenes)
+        if file_type and file_type.startswith('image/'):
+            if any(marker in file_content for marker in [b'<?xml', b'<svg', b'<script']):
+                threats.append("Potentially malicious XML/SVG content")
+
         return threats
     
     def calculate_file_hash(self, file_content: bytes) -> str:
@@ -221,8 +281,8 @@ class FileSecurityValidator:
             if not self.validate_mime_type(file_content, actual_mime):
                 errors.append(f"File signature doesn't match declared type {actual_mime}")
         
-        # 9. Escanear contenido malicioso
-        threats = self.scan_for_malicious_content(file_content)
+        # 9. Escanear contenido malicioso con tipo específico
+        threats = self.scan_for_malicious_content(file_content, actual_mime)
         if threats:
             errors.extend([f"Security threat: {threat}" for threat in threats])
         

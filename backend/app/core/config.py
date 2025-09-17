@@ -28,15 +28,24 @@ class Settings(BaseSettings):
             return secrets.token_urlsafe(32)
         return v
     
-    # Media settings - Enhanced security
+    # Media settings - Enhanced security con límites apropiados para educación
     MEDIA_ROOT: str = os.getenv("MEDIA_ROOT", "media")
-    MAX_VIDEO_SIZE: int = int(os.getenv("MAX_VIDEO_SIZE", str(50 * 1024 * 1024)))  # 50MB default
-    MAX_IMAGE_SIZE: int = int(os.getenv("MAX_IMAGE_SIZE", str(5 * 1024 * 1024)))   # 5MB default
-    MAX_TOTAL_UPLOAD_SIZE: int = int(os.getenv("MAX_TOTAL_UPLOAD_SIZE", str(100 * 1024 * 1024)))  # 100MB total
+    MAX_VIDEO_SIZE: int = int(os.getenv("MAX_VIDEO_SIZE", str(500 * 1024 * 1024)))  # 500MB para videos de curso
+    MAX_IMAGE_SIZE: int = int(os.getenv("MAX_IMAGE_SIZE", str(10 * 1024 * 1024)))   # 10MB para imágenes
+    MAX_TOTAL_UPLOAD_SIZE: int = int(os.getenv("MAX_TOTAL_UPLOAD_SIZE", str(500 * 1024 * 1024)))  # 500MB total
     
-    # Strict file type validation
-    ALLOWED_VIDEO_TYPES: List[str] = ["video/mp4", "video/webm"]  # Reduced for security
-    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/webp"]
+    # Strict file type validation - Ampliado para soporte completo de videos
+    ALLOWED_VIDEO_TYPES: List[str] = [
+        "video/mp4",          # MP4 (más común)
+        "video/webm",         # WebM (web optimizado)
+        "video/quicktime",    # MOV (QuickTime)
+        "video/x-msvideo",    # AVI
+        "video/x-ms-wmv",     # WMV
+        "video/x-flv",        # FLV
+        "video/x-matroska",   # MKV
+        "video/mpeg",         # MPEG
+    ]
+    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     BLOCKED_EXTENSIONS: List[str] = [
         ".exe", ".bat", ".cmd", ".com", ".pif", ".scr", ".vbs", ".js", ".jar",
         ".php", ".asp", ".aspx", ".jsp", ".py", ".sh", ".pl", ".rb"
