@@ -253,7 +253,7 @@ const AdminModuleLessons: React.FC = () => {
 
   const extractVideoIdFromUrl = (videoUrl?: string): string | null => {
     if (!videoUrl) return null;
-    const match = videoUrl.match(/\/video\/([^\/]+)\/stream/);
+    const match = videoUrl.match(/\/videos\/([^\/\?]+)/);
     return match ? match[1] : null;
   };
 
@@ -503,6 +503,11 @@ const AdminModuleLessons: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900">
             Lecciones del Módulo ({lessons.length})
           </h2>
+          {lessons.some(l => l.content_type === 'video') && (
+            <p className="mt-2 text-sm text-gray-600">
+              💡 <strong>Tip:</strong> Para lecciones de video, usa el ícono <EyeIcon className="h-4 w-4 inline text-purple-600" /> para previsualizar el video en una nueva página.
+            </p>
+          )}
         </div>
 
         {lessons.length === 0 ? (
@@ -582,10 +587,11 @@ const AdminModuleLessons: React.FC = () => {
                               toast.error('No se pudo obtener el ID del video');
                             }
                           }}
-                          className="text-purple-600 hover:text-purple-500 p-1"
-                          title="Previsualizar video"
+                          className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-md text-xs font-medium"
+                          title="Previsualizar video en nueva página"
                         >
-                          <EyeIcon className="h-5 w-5" />
+                          <EyeIcon className="h-4 w-4 mr-1" />
+                          Previsualizar
                         </button>
                       </>
                     )}
