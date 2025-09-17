@@ -466,7 +466,7 @@ const AdminModules: React.FC = () => {
                         className="px-3 py-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md text-sm font-medium border border-green-300"
                         title="Gestionar lecciones de este módulo"
                       >
-                        Lecciones ({module.lessons.length})
+                        Lecciones
                       </button>
 
                       <button

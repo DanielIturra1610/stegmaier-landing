@@ -92,10 +92,33 @@ const AdminModuleLessons: React.FC = () => {
     }
   };
 
-  // Función para extraer video ID del URL
+  // Función para extraer video ID del URL con múltiples patrones
   const extractVideoId = (videoUrl: string): string | null => {
-    const match = videoUrl.match(/\/videos\/([^\/\?]+)/);
-    return match ? match[1] : null;
+    if (!videoUrl) {
+      console.error('🔍 [extractVideoId] videoUrl is empty or null');
+      return null;
+    }
+
+    console.log('🔍 [extractVideoId] Processing URL:', videoUrl);
+
+    // Patrones posibles para extraer el video ID
+    const patterns = [
+      /\/videos\/([^\/\?]+)/,           // /videos/videoId
+      /\/api\/v1\/media\/video\/([^\/\?]+)/, // /api/v1/media/video/videoId/stream
+      /video_id[=:]([^&\s]+)/i,        // video_id=videoId
+      /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i, // UUID format
+    ];
+
+    for (const pattern of patterns) {
+      const match = videoUrl.match(pattern);
+      if (match && match[1]) {
+        console.log('✅ [extractVideoId] Extracted ID:', match[1], 'using pattern:', pattern);
+        return match[1];
+      }
+    }
+
+    console.error('❌ [extractVideoId] No ID found in URL:', videoUrl);
+    return null;
   };
 
   const handleCreateLesson = async () => {

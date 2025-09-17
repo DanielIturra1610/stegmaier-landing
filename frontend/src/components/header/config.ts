@@ -138,8 +138,7 @@ export const headerRouteConfig: Record<string, HeaderConfig> = {
     title: 'Gestión de Cursos',
     breadcrumbs: [
       { label: 'Plataforma', to: '/platform' },
-      { label: 'Administración', to: '/platform/admin' },
-      { label: 'Cursos' }
+      { label: 'Gestión de Cursos' }
     ],
     tabs: [
       { label: 'Lista', to: '#lista', ariaControls: 'lista-panel' },

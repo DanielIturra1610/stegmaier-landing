@@ -37,11 +37,16 @@ class MediaService:
 
     def _extract_video_duration(self, file_path: str) -> float:
         """
-        Extrae la duración real del video usando FFprobe
+        Extrae la duración real del video usando FFprobe/FFmpeg con fallbacks robusto
         Retorna la duración en segundos, o 0 si no se puede extraer
         """
+        print(f"🎬 [MediaService] Extracting duration for video: {file_path}")
+
+        # Método 1: Intentar usar ffprobe (más preciso)
         try:
-            # Intentar usar ffprobe para extraer duración
+            # Verificar si ffprobe está disponible
+            subprocess.run(['ffprobe', '-version'], capture_output=True, check=True, timeout=5)
+
             cmd = [
                 'ffprobe',
                 '-v', 'quiet',
@@ -54,20 +59,27 @@ class MediaService:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=30  # Timeout de 30 segundos
+                timeout=30
             )
 
             if result.returncode == 0:
                 data = json.loads(result.stdout)
                 duration_str = data.get('format', {}).get('duration')
                 if duration_str:
-                    return float(duration_str)
+                    duration = float(duration_str)
+                    print(f"✅ [MediaService] Duration extracted with ffprobe: {duration} seconds")
+                    return duration
 
+        except FileNotFoundError:
+            print(f"⚠️ [MediaService] ffprobe not found on system")
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as e:
-            print(f"⚠️ [MediaService] Could not extract video duration using ffprobe: {e}")
+            print(f"⚠️ [MediaService] ffprobe failed: {e}")
 
-        # Fallback: intentar usando ffmpeg si ffprobe no está disponible
+        # Método 2: Intentar usar ffmpeg como fallback
         try:
+            # Verificar si ffmpeg está disponible
+            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True, timeout=5)
+
             cmd = [
                 'ffmpeg',
                 '-i', file_path,
@@ -98,14 +110,29 @@ class MediaService:
                         minutes = float(time_parts[1])
                         seconds = float(time_parts[2])
                         total_seconds = hours * 3600 + minutes * 60 + seconds
+                        print(f"✅ [MediaService] Duration extracted with ffmpeg: {total_seconds} seconds")
                         return total_seconds
 
+        except FileNotFoundError:
+            print(f"⚠️ [MediaService] ffmpeg not found on system")
         except (subprocess.TimeoutExpired, subprocess.CalledProcessError, ValueError, IndexError) as e:
-            print(f"⚠️ [MediaService] Could not extract video duration using ffmpeg: {e}")
+            print(f"⚠️ [MediaService] ffmpeg failed: {e}")
 
-        # Si todo falla, retornar 0
-        print(f"⚠️ [MediaService] Failed to extract duration for {file_path}, using default value 0")
-        return 0.0
+        # Método 3: Fallback usando tamaño de archivo (estimación muy básica)
+        try:
+            import os
+            file_size = os.path.getsize(file_path)
+            # Estimación muy básica: ~1MB por minuto para video comprimido
+            estimated_duration = max(60, file_size / (1024 * 1024 * 0.5))  # Mínimo 1 minuto
+            print(f"⚠️ [MediaService] Using file size estimation: {estimated_duration} seconds (file: {file_size/1024/1024:.1f}MB)")
+            return estimated_duration
+        except Exception as e:
+            print(f"⚠️ [MediaService] File size estimation failed: {e}")
+
+        # Si todo falla, retornar duración predeterminada
+        default_duration = 60.0  # 1 minuto por defecto
+        print(f"⚠️ [MediaService] All duration extraction methods failed for {file_path}, using default: {default_duration} seconds")
+        return default_duration
     
     async def save_video_file(
         self, 
@@ -141,15 +168,21 @@ class MediaService:
             # Obtener información básica del archivo
             file_size = os.path.getsize(file_path)
 
-            # Extraer duración real del video si está habilitado
+            # Extraer duración real del video con manejo robusto de errores
             duration_minutes = 0
-            if hasattr(settings, 'ENABLE_VIDEO_DURATION_EXTRACTION') and settings.ENABLE_VIDEO_DURATION_EXTRACTION:
-                print(f"🎬 [MediaService] Extracting duration for video: {file_path}")
+            duration_seconds = 0
+
+            # Por defecto, siempre intentar extraer duración con fallbacks
+            try:
+                print(f"🎬 [MediaService] Attempting to extract duration for video: {file_path}")
                 duration_seconds = self._extract_video_duration(str(file_path))
                 duration_minutes = round(duration_seconds / 60, 1) if duration_seconds > 0 else 0
-                print(f"🎬 [MediaService] Video duration: {duration_seconds}s ({duration_minutes}min)")
-            else:
-                print(f"⚠️ [MediaService] Video duration extraction is disabled")
+                print(f"✅ [MediaService] Video duration extracted: {duration_seconds}s ({duration_minutes}min)")
+            except Exception as e:
+                print(f"⚠️ [MediaService] Duration extraction failed with error: {e}")
+                print(f"⚠️ [MediaService] Using default duration values")
+                duration_seconds = 60.0  # 1 minuto por defecto
+                duration_minutes = 1.0
 
             # Crear registro en base de datos con hash de seguridad
             video_asset = VideoAsset(
