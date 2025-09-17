@@ -21,7 +21,8 @@ import { toast } from 'react-hot-toast';
 
 import { VideoUploader } from '../../components/media/VideoUploader';
 import { VideoPlayer } from '../../components/media/VideoPlayer';
-import { lessonService, LessonCreate, LessonResponse } from '../../services/lessonService';
+import { lessonService } from '../../services/lessonService';
+import { LessonCreate, LessonResponse } from '../../types/lesson';
 import moduleService from '../../services/moduleService';
 import { mediaService } from '../../services/mediaService';
 import { ModuleResponse } from '../../types/module';
@@ -55,7 +56,7 @@ const AdminModuleLessons: React.FC = () => {
   const [newLessonData, setNewLessonData] = useState({
     title: '',
     content_text: '',
-    content_type: 'text' as 'text' | 'video',
+    content_type: ContentType.TEXT,
     is_free_preview: false,
     duration: 0
   });
@@ -152,7 +153,7 @@ const AdminModuleLessons: React.FC = () => {
       setNewLessonData({
         title: '',
         content_text: '',
-        content_type: 'text',
+        content_type: ContentType.TEXT,
         is_free_preview: false,
         duration: 0
       });
@@ -173,7 +174,7 @@ const AdminModuleLessons: React.FC = () => {
         title: videoInfo.title || 'Video sin título',
         course_id: courseId!,
         order: lessons.length + 1,
-        content_type: 'video',
+        content_type: ContentType.VIDEO,
         content_url: mediaService.getVideoStreamUrl(videoId),
         duration: videoInfo.duration || 0,
         is_free_preview: false,
@@ -229,9 +230,9 @@ const AdminModuleLessons: React.FC = () => {
     setEditingLesson(lesson);
     setEditLessonData({
       title: lesson.title,
-      content_text: lesson.content || '',
+      content_text: lesson.content_text || '',
       duration: lesson.duration || 0,
-      is_free_preview: lesson.is_free || false
+      is_free_preview: lesson.is_free_preview || false
     });
     setShowEditLessonModal(true);
   };
@@ -276,11 +277,6 @@ const AdminModuleLessons: React.FC = () => {
     });
   };
 
-  const extractVideoIdFromUrl = (videoUrl?: string): string | null => {
-    if (!videoUrl) return null;
-    const match = videoUrl.match(/\/videos\/([^\/\?]+)/);
-    return match ? match[1] : null;
-  };
 
   if (loading) {
     return (
@@ -366,7 +362,7 @@ const AdminModuleLessons: React.FC = () => {
           <div>
             <div className="text-sm font-medium text-gray-500">Lecciones de Texto</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {lessons.filter(l => l.content_type === 'text').length}
+              {lessons.filter(l => l.content_type === ContentType.TEXT).length}
             </div>
           </div>
           <div>
@@ -425,12 +421,12 @@ const AdminModuleLessons: React.FC = () => {
                 value={newLessonData.content_type}
                 onChange={(e) => setNewLessonData(prev => ({
                   ...prev,
-                  content_type: e.target.value as 'text' | 'video'
+                  content_type: e.target.value as ContentType
                 }))}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="text">Lección de Texto</option>
-                <option value="video">Lección de Video</option>
+                <option value={ContentType.TEXT}>Lección de Texto</option>
+                <option value={ContentType.VIDEO}>Lección de Video</option>
               </select>
             </div>
 
@@ -450,7 +446,7 @@ const AdminModuleLessons: React.FC = () => {
               />
             </div>
 
-            {newLessonData.content_type === 'text' && (
+            {newLessonData.content_type === ContentType.TEXT && (
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Contenido (Opcional)
@@ -564,9 +560,9 @@ const AdminModuleLessons: React.FC = () => {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      {lesson.content_type === 'video' ? (
+                      {lesson.content_type === ContentType.VIDEO ? (
                         <VideoCameraIcon className="h-5 w-5 text-blue-500" />
-                      ) : lesson.lesson_type === 'assignment' || lesson.content_type === 'assignment' ? (
+                      ) : lesson.content_type === ContentType.QUIZ ? (
                         <ClipboardDocumentCheckIcon className="h-5 w-5 text-purple-500" />
                       ) : (
                         <DocumentTextIcon className="h-5 w-5 text-green-500" />
@@ -577,25 +573,24 @@ const AdminModuleLessons: React.FC = () => {
                           {lesson.title}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {lesson.description || (lesson.content && lesson.content.length > 100 ?
-                            `${lesson.content.substring(0, 100)}...` :
-                            lesson.content) || 'Sin contenido'}
+                          {lesson.content_text && lesson.content_text.length > 100 ?
+                            `${lesson.content_text.substring(0, 100)}...` :
+                            lesson.content_text || 'Sin contenido'}
                         </p>
                         <div className="text-xs text-gray-400 mt-1">
                           {lesson.duration ? `${lesson.duration} min` : 'Sin duración'} •
-                          {lesson.is_free ? ' Gratis' : ' Premium'}
+                          {lesson.is_free_preview ? ' Gratis' : ' Premium'}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {lesson.content_type === 'video' && (lesson.video_url || lesson.content_url) && (() => {
+                    {lesson.content_type === ContentType.VIDEO && lesson.content_url && (() => {
                       console.log('🔍 Video lesson debug:', {
                         id: lesson.id,
                         title: lesson.title,
                         content_type: lesson.content_type,
-                        video_url: lesson.video_url,
                         content_url: lesson.content_url
                       });
                       return true;
@@ -614,7 +609,7 @@ const AdminModuleLessons: React.FC = () => {
 
                         <button
                           onClick={() => {
-                            const videoUrl = lesson.video_url || lesson.content_url;
+                            const videoUrl = lesson.content_url;
                             const videoId = extractVideoId(videoUrl!);
                             if (videoId) {
                               const baseRoute = user?.role === 'admin' ? 'admin' : 'instructor';
@@ -657,7 +652,7 @@ const AdminModuleLessons: React.FC = () => {
       </div>
 
       {/* Modal reproductor de video */}
-      {showVideoPlayer && selectedLesson && selectedLesson.video_url && (
+      {showVideoPlayer && selectedLesson && selectedLesson.content_url && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4">
             <div className="flex items-center justify-between mb-4">
@@ -674,7 +669,7 @@ const AdminModuleLessons: React.FC = () => {
 
             <div className="aspect-video">
               <VideoPlayer
-                videoId={extractVideoIdFromUrl(selectedLesson.video_url || selectedLesson.content_url) || ''}
+                videoId={extractVideoId(selectedLesson.content_url) || ''}
                 className="w-full h-full"
               />
             </div>
@@ -715,7 +710,7 @@ const AdminModuleLessons: React.FC = () => {
                 />
               </div>
 
-              {editingLesson.content_type === 'text' && (
+              {editingLesson.content_type === ContentType.TEXT && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Contenido

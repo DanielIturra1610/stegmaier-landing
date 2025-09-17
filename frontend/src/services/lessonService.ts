@@ -3,36 +3,7 @@
  */
 
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../config/api.config';
-
-// 🔥 FIX: Updated to match backend LessonCreate DTO exactly
-interface LessonCreate {
-  title: string;
-  course_id: string;
-  order: number;
-  content_type: 'text' | 'video' | 'quiz' | 'assignment';
-  content_url?: string;
-  content_text?: string;
-  duration: number;
-  is_free_preview: boolean;
-  attachments: string[];
-}
-
-interface LessonResponse {
-  id: string;
-  _id?: string; // MongoDB ObjectId field for backward compatibility
-  title: string;
-  description: string;
-  content_type: 'text' | 'video' | 'quiz' | 'assignment';
-  lesson_type?: 'text' | 'video' | 'quiz' | 'assignment';
-  content?: string;
-  video_url?: string;
-  content_url?: string;  // Agregar soporte para content_url también
-  assignment_id?: string;
-  duration: number;
-  order: number;
-  is_free: boolean;
-  created_at: string;
-}
+import { LessonResponse, LessonCreate, ContentType } from '../types/lesson';
 
 class LessonService {
   private getHeaders() {
@@ -81,7 +52,7 @@ class LessonService {
       if (lessons && lessons.length > 0) {
         lessons.forEach((lesson: LessonResponse, index: number) => {
           console.log(`📝 [LessonService] Lesson ${index + 1}:`, {
-            id: lesson.id || lesson._id,
+            id: lesson.id,
             title: lesson.title,
             order: lesson.order,
             content_type: lesson.content_type
@@ -172,4 +143,3 @@ class LessonService {
 
 export const lessonService = new LessonService();
 export default lessonService;
-export type { LessonCreate, LessonResponse };

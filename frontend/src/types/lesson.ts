@@ -12,7 +12,7 @@ export enum ContentType {
   INTERACTIVE = 'interactive'
 }
 
-// Interfaz básica de lección - basada en LessonResponse del backend
+// Interfaz básica de lección - coincide exactamente con backend LessonResponse DTO
 export interface LessonResponse {
   id: string;
   title: string;
@@ -120,7 +120,7 @@ export interface LessonOverview {
   thumbnail?: string;
 }
 
-// Para creación de lecciones
+// Para creación de lecciones - coincide exactamente con backend LessonCreate DTO
 export interface LessonCreate {
   title: string;
   course_id: string;
@@ -131,7 +131,6 @@ export interface LessonCreate {
   duration: number;
   is_free_preview: boolean;
   attachments: string[];
-  description?: string;
 }
 
 // Para actualización de lecciones

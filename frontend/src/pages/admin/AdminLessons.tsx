@@ -19,7 +19,8 @@ import { VideoUploader } from '../../components/media/VideoUploader';
 import { VideoPlayer } from '../../components/media/VideoPlayer';
 import { adminService } from '../../services/adminService';
 import { mediaService } from '../../services/mediaService';
-import { lessonService, LessonCreate, LessonResponse } from '../../services/lessonService';
+import { lessonService } from '../../services/lessonService';
+import { LessonCreate, LessonResponse, ContentType } from '../../types/lesson';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Using LessonResponse from service instead of local interface
@@ -35,6 +36,35 @@ const AdminLessons: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Función para extraer video ID desde URL
+  const extractVideoId = (videoUrl?: string): string | null => {
+    if (!videoUrl) {
+      console.error('🔍 [extractVideoId] videoUrl is empty or null');
+      return null;
+    }
+
+    console.log('🔍 [extractVideoId] Processing URL:', videoUrl);
+
+    // Patrones comunes para URLs de video
+    const patterns = [
+      /\/videos\/([^\/\?]+)/,           // /api/v1/media/videos/{id}/stream
+      /\/media\/videos\/([^\/\?]+)/,   // /media/videos/{id}
+      /video[_-]?id[=:]([^&\?]+)/i,    // video_id= o videoId=
+      /\/([a-f0-9-]{36})/,             // UUID directo
+    ];
+
+    for (const pattern of patterns) {
+      const match = videoUrl.match(pattern);
+      if (match && match[1]) {
+        console.log('✅ [extractVideoId] Extracted ID:', match[1], 'using pattern:', pattern);
+        return match[1];
+      }
+    }
+
+    console.error('❌ [extractVideoId] No ID found in URL:', videoUrl);
+    return null;
+  };
   
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<LessonResponse[]>([]);
@@ -48,7 +78,7 @@ const AdminLessons: React.FC = () => {
   const [newLessonData, setNewLessonData] = useState({
     title: '',
     description: '',
-    content_type: 'text' as 'text' | 'video',
+    content_type: ContentType.TEXT,
     is_free: false
   });
 
@@ -130,7 +160,7 @@ const AdminLessons: React.FC = () => {
         title: newLessonData.title.trim(),
         course_id: courseId!, // ✅ Backend requires course_id
         order: lessons.length + 1, // ✅ Backend requires order (next position)
-        content_type: newLessonData.content_type as 'text' | 'video', // ✅ Backend requires ContentType
+        content_type: newLessonData.content_type,
         content_text: newLessonData.description.trim(), // ✅ For text lessons, use content_text
         duration: 0, // ✅ Backend requires duration (default 0 for text)
         is_free_preview: newLessonData.is_free, // ✅ Backend expects is_free_preview, not is_free
@@ -149,7 +179,7 @@ const AdminLessons: React.FC = () => {
       setNewLessonData({
         title: '',
         description: '',
-        content_type: 'text',
+        content_type: ContentType.TEXT,
         is_free: false
       });
       
@@ -262,13 +292,13 @@ const AdminLessons: React.FC = () => {
           <div>
             <div className="text-sm font-medium text-gray-500">Lecciones de Texto</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {(Array.isArray(lessons) ? lessons : []).filter(l => l.content_type === 'text').length}
+              {(Array.isArray(lessons) ? lessons : []).filter(l => l.content_type === ContentType.TEXT).length}
             </div>
           </div>
           <div>
             <div className="text-sm font-medium text-gray-500">Assignments</div>
             <div className="mt-1 text-3xl font-semibold text-gray-900">
-              {(Array.isArray(lessons) ? lessons : []).filter(l => l.lesson_type === 'assignment').length}
+              {(Array.isArray(lessons) ? lessons : []).filter(l => l.content_type === ContentType.QUIZ).length}
             </div>
           </div>
         </div>
@@ -304,12 +334,12 @@ const AdminLessons: React.FC = () => {
                 value={newLessonData.content_type}
                 onChange={(e) => setNewLessonData(prev => ({
                   ...prev,
-                  content_type: e.target.value as 'text' | 'video'
+                  content_type: e.target.value as ContentType
                 }))}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="text">Lección de Texto</option>
-                <option value="video">Lección de Video</option>
+                <option value={ContentType.TEXT}>Lección de Texto</option>
+                <option value={ContentType.VIDEO}>Lección de Video</option>
               </select>
             </div>
 
@@ -410,9 +440,9 @@ const AdminLessons: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      {lesson.content_type === 'video' ? (
+                      {lesson.content_type === ContentType.VIDEO ? (
                         <VideoCameraIcon className="h-5 w-5 text-blue-500" />
-                      ) : lesson.lesson_type === 'assignment' || lesson.content_type === 'assignment' ? (
+                      ) : lesson.content_type === ContentType.QUIZ ? (
                         <ClipboardDocumentCheckIcon className="h-5 w-5 text-purple-500" />
                       ) : (
                         <DocumentTextIcon className="h-5 w-5 text-green-500" />
@@ -423,14 +453,14 @@ const AdminLessons: React.FC = () => {
                           {lesson.title}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {lesson.description}
+                          {lesson.content_text || 'Sin contenido'}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {lesson.content_type === 'video' && lesson.video_url && (
+                    {lesson.content_type === ContentType.VIDEO && lesson.content_url && (
                       <button
                         onClick={() => {
                           setSelectedLesson(lesson);
@@ -443,11 +473,11 @@ const AdminLessons: React.FC = () => {
                       </button>
                     )}
                     
-                    {(lesson.lesson_type === 'assignment' || lesson.content_type === 'assignment') && lesson.assignment_id && (
+                    {lesson.content_type === ContentType.QUIZ && (
                       <button
-                        onClick={() => navigate(`/platform/admin/assignments/${lesson.assignment_id}/grading`)}
+                        onClick={() => toast('Funcionalidad de quiz en desarrollo')}
                         className="text-purple-600 hover:text-purple-500"
-                        title="Calificar assignment"
+                        title="Ver quiz"
                       >
                         <ClipboardDocumentCheckIcon className="h-5 w-5" />
                       </button>
@@ -477,7 +507,7 @@ const AdminLessons: React.FC = () => {
       </div>
 
       {/* Modal reproductor de video */}
-      {showVideoPlayer && selectedLesson && selectedLesson.video_url && (
+      {showVideoPlayer && selectedLesson && selectedLesson.content_url && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4">
             <div className="flex items-center justify-between mb-4">
@@ -494,7 +524,7 @@ const AdminLessons: React.FC = () => {
             
             <div className="aspect-video">
               <VideoPlayer
-                videoId={extractVideoIdFromUrl(selectedLesson.video_url) || ''}
+                videoId={extractVideoId(selectedLesson.content_url) || ''}
                 className="w-full h-full"
               />
             </div>
