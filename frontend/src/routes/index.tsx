@@ -119,6 +119,19 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />
         <Route path="admin/quizzes/:quizId/edit" element={<AdminQuizForm />} />
+
+        {/* Rutas de instructor (apuntan a los mismos componentes que admin) */}
+        <Route path="instructor/dashboard" element={<AdminDashboard />} />
+        <Route path="instructor/courses/new" element={<AdminCourseForm />} />
+        <Route path="instructor/courses/:courseId/edit" element={<AdminCourseForm />} />
+        <Route path="instructor/courses/:courseId/lessons" element={<AdminLessons />} />
+        <Route path="instructor/courses/:courseId/modules" element={<AdminModules />} />
+        <Route path="instructor/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
+        <Route path="instructor/videos/:videoId/preview" element={<VideoPreviewPage />} />
+        <Route path="instructor/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
+        <Route path="instructor/quizzes" element={<AdminQuizzes />} />
+        <Route path="instructor/quizzes/new" element={<AdminQuizForm />} />
+        <Route path="instructor/quizzes/:quizId/edit" element={<AdminQuizForm />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />

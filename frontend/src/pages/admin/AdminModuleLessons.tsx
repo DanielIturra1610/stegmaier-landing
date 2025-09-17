@@ -26,10 +26,12 @@ import moduleService from '../../services/moduleService';
 import { mediaService } from '../../services/mediaService';
 import { ModuleResponse } from '../../types/module';
 import { ContentType } from '../../types/lesson';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminModuleLessons: React.FC = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [module, setModule] = useState<ModuleResponse | null>(null);
   const [lessons, setLessons] = useState<LessonResponse[]>([]);
@@ -582,16 +584,17 @@ const AdminModuleLessons: React.FC = () => {
                           onClick={() => {
                             const videoId = extractVideoId(lesson.video_url!);
                             if (videoId) {
-                              navigate(`/platform/admin/videos/${videoId}/preview`);
+                              const baseRoute = user?.role === 'admin' ? 'admin' : 'instructor';
+                              navigate(`/platform/${baseRoute}/videos/${videoId}/preview`);
                             } else {
                               toast.error('No se pudo obtener el ID del video');
                             }
                           }}
-                          className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-md text-xs font-medium"
-                          title="Previsualizar video en nueva página"
+                          className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-md text-sm font-medium transition-colors"
+                          title="Ver detalles completos del video"
                         >
-                          <EyeIcon className="h-4 w-4 mr-1" />
-                          Previsualizar
+                          <EyeIcon className="h-4 w-4 mr-1.5" />
+                          Ver Video
                         </button>
                       </>
                     )}

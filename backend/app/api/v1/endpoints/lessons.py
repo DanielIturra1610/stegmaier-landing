@@ -181,8 +181,8 @@ async def update_lesson(
         #         status_code=status.HTTP_403_FORBIDDEN,
         #         detail="No tienes permiso para actualizar esta lección"
         #     )
-        
-        updated_lesson = await lesson_service.update_lesson(lesson_id, lesson_data)
+
+        updated_lesson = await lesson_service.update_lesson(lesson_id, current_user.id, lesson_data)
         
         if not updated_lesson:
             raise HTTPException(
@@ -230,7 +230,7 @@ async def reorder_lessons(
         )
     
     try:
-        success = await lesson_service.reorder_lessons(course_id, order_data)
+        success = await lesson_service.reorder_lessons(course_id, current_user.id, order_data)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -273,7 +273,7 @@ async def delete_lesson(
                 detail="No tienes permiso para eliminar esta lección"
             )
         
-        result = await lesson_service.delete_lesson(lesson_id)
+        result = await lesson_service.delete_lesson(lesson_id, current_user.id)
         
         if not result:
             raise HTTPException(
