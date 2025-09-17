@@ -58,6 +58,7 @@ class LessonService:
         print(f"✅ [LessonService] User {instructor_id} has permission to create lesson")
         
         # Crear la nueva lección
+        print(f"📋 [LessonService] Creating lesson with content_url: {lesson_data.content_url}")
         lesson = Lesson(
             title=lesson_data.title,
             course_id=lesson_data.course_id,
@@ -127,12 +128,13 @@ class LessonService:
         try:
             lessons = await self.lesson_repository.get_by_course(course_id)
             print(f"✅ [LessonService] Found {len(lessons) if lessons else 0} lessons for course {course_id}")
-            
+
             if lessons and len(lessons) > 0:
                 print(f"📋 [LessonService] First lesson: ID={lessons[0].id}, Title={lessons[0].title}, Order={lessons[0].order}")
+                print(f"🔗 [LessonService] First lesson content_url: {lessons[0].content_url}")
                 # Log all lessons for debugging
                 for idx, lesson in enumerate(lessons):
-                    print(f"📝 [LessonService] Lesson {idx + 1}: {lesson.title} (order: {lesson.order}, type: {lesson.content_type})")
+                    print(f"📝 [LessonService] Lesson {idx + 1}: {lesson.title} (order: {lesson.order}, type: {lesson.content_type}, content_url: {lesson.content_url})")
             else:
                 print(f"⚠️ [LessonService] No lessons found for course {course_id}")
             

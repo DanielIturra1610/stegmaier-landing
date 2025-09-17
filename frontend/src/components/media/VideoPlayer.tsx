@@ -51,7 +51,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   
+  console.log('🎬 [VideoPlayer] Received videoId:', videoId);
   const videoUrl = mediaService.getVideoStreamUrl(videoId);
+  console.log('🎬 [VideoPlayer] Generated videoUrl:', videoUrl);
 
   // Control de visibilidad de controles
   useEffect(() => {

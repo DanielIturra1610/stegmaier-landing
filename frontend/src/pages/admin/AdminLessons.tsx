@@ -46,23 +46,26 @@ const AdminLessons: React.FC = () => {
 
     console.log('🔍 [extractVideoId] Processing URL:', videoUrl);
 
-    // Patrones comunes para URLs de video
+    // Patrones mejorados para extraer el video ID con soporte para query strings
     const patterns = [
-      /\/videos\/([^\/\?]+)/,           // /api/v1/media/videos/{id}/stream
-      /\/media\/videos\/([^\/\?]+)/,   // /media/videos/{id}
-      /video[_-]?id[=:]([^&\?]+)/i,    // video_id= o videoId=
-      /\/([a-f0-9-]{36})/,             // UUID directo
+      /\/videos\/([a-f0-9-]+)(?:\/[^?]*)?(?:\?|$)/i,         // /videos/{uuid}/stream?token=...
+      /\/api\/v1\/media\/videos\/([a-f0-9-]+)(?:\/[^?]*)?(?:\?|$)/i, // /api/v1/media/videos/{uuid}/stream?token=...
+      /\/media\/videos\/([a-f0-9-]+)(?:\/[^?]*)?(?:\?|$)/i, // /media/videos/{uuid}?...
+      /video[_-]?id[=:]([a-f0-9-]+)/i,                      // video_id={uuid} o videoId={uuid}
+      /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i, // UUID pattern directo
     ];
 
-    for (const pattern of patterns) {
+    for (let i = 0; i < patterns.length; i++) {
+      const pattern = patterns[i];
       const match = videoUrl.match(pattern);
       if (match && match[1]) {
-        console.log('✅ [extractVideoId] Extracted ID:', match[1], 'using pattern:', pattern);
+        console.log(`✅ [extractVideoId] Extracted ID: "${match[1]}" using pattern ${i + 1}:`, pattern);
         return match[1];
       }
     }
 
     console.error('❌ [extractVideoId] No ID found in URL:', videoUrl);
+    console.error('❌ [extractVideoId] All patterns tested but none matched.');
     return null;
   };
   
