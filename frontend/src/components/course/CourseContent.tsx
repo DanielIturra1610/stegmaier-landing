@@ -225,10 +225,10 @@ const CourseContent: React.FC<CourseContentProps> = ({
   // Renderizar tab de instructor
   const renderInstructorTab = () => (
     <div className="space-y-6">
-      <div className="flex items-start space-x-6">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
         {/* Avatar del instructor */}
         <div className="flex-shrink-0">
-          <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-full flex items-center justify-center">
             {course.instructor.avatar ? (
               <img
                 src={course.instructor.avatar}
@@ -316,7 +316,7 @@ const CourseContent: React.FC<CourseContentProps> = ({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
-        <nav className="flex space-x-8 px-6" aria-label="Tabs">
+        <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

@@ -565,3 +565,47 @@ class CourseService:
             raise ValueError(f"No se puede eliminar el curso. Tiene {enrollments_count} inscripciones activas")
         
         return await self.course_repository.delete(course_id)
+
+    async def get_course_as_student_preview(
+        self,
+        course_id: str,
+        instructor_id: str,
+        simulate_enrollment: bool = False
+    ) -> CourseResponse:
+        """
+        Simula la vista de un curso como si fuera un estudiante.
+        Permite a los instructores ver cómo se ve su curso para estudiantes
+        inscritos y no inscritos.
+        """
+        # 1. Validar que el instructor es propietario del curso
+        course = await self.course_repository.get_by_id(course_id)
+        if not course:
+            raise ValueError("Curso no encontrado")
+        
+        user = await self.user_repository.get_by_id(instructor_id)
+        
+        if course.instructor_id != instructor_id and (not user or user.role != 'admin'):
+            raise ValueError("No tienes permiso para previsualizar este curso")
+
+        # 2. Obtener lecciones y simular acceso
+        lessons = await self.lesson_repository.get_by_course(course_id)
+        
+        # Copiamos las lecciones para no modificar las originales en la sesión
+        preview_lessons = [l.copy(deep=True) for l in lessons]
+
+        if not simulate_enrollment:
+            # Si no se simula inscripción, limitar acceso
+            for lesson in preview_lessons:
+                if not lesson.is_free_preview:
+                    lesson.content_url = None
+                    lesson.content_text = None
+                    lesson.quiz_id = None
+                    # Aquí se podría añadir una bandera `is_accessible = False` si el DTO la tuviera
+
+        # 3. Retornar la estructura como si fuera un estudiante
+        course_dict = course.dict()
+        course_dict['lessons'] = [l.dict() for l in preview_lessons]
+        course_dict['is_student_preview'] = True
+        course_dict['simulated_enrollment'] = simulate_enrollment
+
+        return CourseResponse(**course_dict)

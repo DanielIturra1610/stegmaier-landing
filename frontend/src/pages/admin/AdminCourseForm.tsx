@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCategoryOptions, getCategoriesGrouped } from '../../utils/courseCategories';
+import PreviewModeToggle from '../../components/course/PreviewModeToggle';
 
 interface CourseFormData {
   title: string;

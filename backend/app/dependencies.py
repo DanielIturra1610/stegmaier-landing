@@ -270,12 +270,14 @@ async def get_module_service(
     return ModuleService(module_repository, course_repository, lesson_repository)
 
 async def get_quiz_service(
-    quiz_repository: QuizRepository = Depends(get_quiz_repository)
+    quiz_repository: QuizRepository = Depends(get_quiz_repository),
+    lesson_repository: LessonRepository = Depends(get_lesson_repository),
+    course_repository: CourseRepository = Depends(get_course_repository),
 ) -> QuizService:
     """
     Proporciona una instancia configurada del servicio de quizzes.
     """
-    return QuizService(quiz_repository)
+    return QuizService(quiz_repository, lesson_repository, course_repository)
 
 def get_media_service(
     media_repository: FileSystemMediaRepository = Depends(get_media_repository)

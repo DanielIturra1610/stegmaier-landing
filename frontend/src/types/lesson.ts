@@ -3,6 +3,8 @@
  * Basados en los DTOs del backend
  */
 
+import { Quiz } from './quiz';
+
 // Enum para tipos de contenido - debe coincidir con backend
 export enum ContentType {
   VIDEO = 'video',
@@ -17,9 +19,12 @@ export interface LessonResponse {
   id: string;
   title: string;
   course_id: string;
+  module_id?: string;
   order: number;
   content_type: ContentType;
   content_url?: string;
+  quiz_id?: string;
+  quiz?: Quiz | null;
   content_text?: string;
   duration: number;
   is_free_preview: boolean;

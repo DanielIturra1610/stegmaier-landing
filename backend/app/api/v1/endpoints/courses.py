@@ -297,3 +297,31 @@ async def delete_course(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
         )
+
+@router.get("/{course_id}/preview", response_model=CourseResponse, summary="Previsualizar curso como estudiante")
+async def preview_course_as_student(
+    course_id: str = Path(..., description="ID del curso"),
+    simulate_enrollment: bool = Query(False, description="Simular que el estudiante está inscrito"),
+    current_user: User = Depends(get_current_instructor_user),
+    course_service: CourseService = Depends(get_course_service)
+):
+    """
+    Permite a un instructor o administrador ver el curso como lo vería un estudiante.
+
+    - **course_id**: ID del curso a previsualizar.
+    - **simulate_enrollment**: Si es `True`, simula la vista de un estudiante inscrito. 
+                             Si es `False`, simula la vista de un estudiante no inscrito.
+    - Requiere permisos de instructor (propietario) o administrador.
+    """
+    try:
+        preview_course = await course_service.get_course_as_student_preview(
+            course_id=course_id,
+            instructor_id=current_user.id,
+            simulate_enrollment=simulate_enrollment
+        )
+        return preview_course
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )

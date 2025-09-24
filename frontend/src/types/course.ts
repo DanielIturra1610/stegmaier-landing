@@ -95,7 +95,7 @@ export interface CourseResponse {
   tags: string[];
   requirements: string[];
   what_you_will_learn: string[];
-  lessons: string[]; // IDs de lecciones
+  lessons: LessonDetail[];
   total_duration: number;
   total_students: number;
   average_rating: number;

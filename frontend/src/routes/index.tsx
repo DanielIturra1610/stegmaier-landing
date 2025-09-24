@@ -49,7 +49,9 @@ import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
 import AdminAssignmentGrading from '../pages/admin/AdminAssignmentGrading';
+import CoursePreviewPage from '../pages/admin/CoursePreviewPage';
 import VideoPreviewPage from '../pages/admin/VideoPreviewPage';
+import QuizAnalyticsPage from '../pages/admin/QuizAnalyticsPage';
 import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -114,11 +116,13 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="admin/courses/:courseId/modules" element={<AdminModules />} />
         <Route path="admin/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
+        <Route path="admin/courses/:courseId/preview" element={<CoursePreviewPage />} />
         <Route path="admin/videos/:videoId/preview" element={<VideoPreviewPage />} />
         <Route path="admin/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />
         <Route path="admin/quizzes/:quizId/edit" element={<AdminQuizForm />} />
+        <Route path="admin/quizzes/:quizId/analytics" element={<QuizAnalyticsPage />} />
 
         {/* Rutas de instructor (apuntan a los mismos componentes que admin) */}
         <Route path="instructor/dashboard" element={<AdminDashboard />} />
@@ -127,11 +131,13 @@ const AppRoutes: React.FC = () => {
         <Route path="instructor/courses/:courseId/lessons" element={<AdminLessons />} />
         <Route path="instructor/courses/:courseId/modules" element={<AdminModules />} />
         <Route path="instructor/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
+        <Route path="instructor/courses/:courseId/preview" element={<CoursePreviewPage />} />
         <Route path="instructor/videos/:videoId/preview" element={<VideoPreviewPage />} />
         <Route path="instructor/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="instructor/quizzes" element={<AdminQuizzes />} />
         <Route path="instructor/quizzes/new" element={<AdminQuizForm />} />
         <Route path="instructor/quizzes/:quizId/edit" element={<AdminQuizForm />} />
+        <Route path="instructor/quizzes/:quizId/analytics" element={<QuizAnalyticsPage />} />
         
         {/* Perfil de usuario */}
         <Route path="profile" element={<ProfilePage />} />

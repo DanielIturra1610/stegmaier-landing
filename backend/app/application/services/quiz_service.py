@@ -16,6 +16,9 @@ from ...domain.entities.quiz import (
     QuizStatus, AttemptStatus, QuestionType
 )
 from ...domain.repositories.quiz_repository import QuizRepository
+from ...domain.repositories.lesson_repository import LessonRepository
+from ...domain.repositories.course_repository import CourseRepository
+from ...domain.entities.lesson import ContentType
 from fastapi import HTTPException, status
 from pydantic import ValidationError
 
@@ -23,8 +26,67 @@ from pydantic import ValidationError
 class QuizService:
     """Servicio para gestión de quizzes."""
     
-    def __init__(self, quiz_repository: QuizRepository):
+    def __init__(
+        self,
+        quiz_repository: QuizRepository,
+        lesson_repository: LessonRepository,
+        course_repository: CourseRepository,
+    ):
         self.quiz_repository = quiz_repository
+        self.lesson_repository = lesson_repository
+        self.course_repository = course_repository
+
+    async def create_quiz_for_lesson(
+        self, lesson_id: str, quiz_data: QuizCreate, creator_id: str
+    ) -> QuizResponse:
+        """
+        Crea un quiz y lo vincula a una lección existente.
+        """
+        # 1. Validar que la lección existe
+        lesson = await self.lesson_repository.get_by_id(lesson_id)
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Lección con ID {lesson_id} no encontrada",
+            )
+
+        # 2. Verificar permisos del usuario sobre el curso
+        course = await self.course_repository.get_by_id(lesson.course_id)
+        if not course or course.instructor_id != creator_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No autorizado para crear un quiz para esta lección",
+            )
+
+        # 3. Verificar si la lección ya tiene un quiz
+        if lesson.content_type == ContentType.QUIZ and lesson.quiz_id:
+            existing_quiz = await self.quiz_repository.get_quiz_by_id(lesson.quiz_id)
+            if existing_quiz:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"La lección ya tiene el quiz '{existing_quiz.title}' asociado.",
+                )
+
+        # 4. Crear quiz con lesson_id vinculado
+        quiz_data.lesson_id = lesson_id
+        quiz_data.course_id = lesson.course_id
+        quiz_data.module_id = lesson.module_id
+
+        # Ensure title is set, or use lesson title
+        if not quiz_data.title:
+            quiz_data.title = f"Quiz para {lesson.title}"
+
+        new_quiz = await self.create_quiz(quiz_data, creator_id)
+
+        # 5. Actualizar la lección para vincular el quiz
+        lesson.content_type = ContentType.QUIZ
+        lesson.quiz_id = new_quiz.id
+        
+        update_data = {"content_type": ContentType.QUIZ, "quiz_id": new_quiz.id}
+        await self.lesson_repository.update(lesson_id, update_data)
+
+
+        return new_quiz
 
     # CRUD de Quizzes
     async def create_quiz(self, quiz_data: QuizCreate, creator_id: str) -> QuizResponse:
@@ -340,6 +402,125 @@ class QuizService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para ver este intento")
         
         return self._attempt_to_response(attempt)
+
+    async def get_quiz_statistics(self, quiz_id: str, user_id: str) -> QuizStatistics:
+        """
+        Obtener estadísticas detalladas de un quiz.
+        """
+        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        if not quiz:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
+
+        # Basic permission check
+        # A more robust check for admin role should be done here if needed
+        # For now, we assume the check is done at the endpoint level
+        
+        attempts = await self.quiz_repository.get_attempts_by_quiz(quiz_id)
+        
+        total_attempts = len(attempts)
+        completed_attempts = [a for a in attempts if a.status in [AttemptStatus.SUBMITTED, AttemptStatus.GRADED]]
+        
+        if not completed_attempts:
+            return QuizStatistics(
+                quiz_id=quiz.id,
+                quiz_title=quiz.title,
+                total_attempts=total_attempts,
+                unique_students=len(set(a.student_id for a in attempts)),
+                average_score=0,
+                median_score=0,
+                pass_rate=0,
+                completion_rate=0,
+                average_time=0,
+                question_statistics=[]
+            )
+
+        # Unique students
+        unique_students = len(set(a.student_id for a in attempts))
+
+        # Scores
+        scores = [a.score_percentage for a in completed_attempts if a.score_percentage is not None]
+        average_score = sum(scores) / len(scores) if scores else 0
+        
+        # Median score
+        median_score = 0
+        if scores:
+            sorted_scores = sorted(scores)
+            n = len(sorted_scores)
+            if n % 2 == 0:
+                mid1 = sorted_scores[n//2 - 1]
+                mid2 = sorted_scores[n//2]
+                median_score = (mid1 + mid2) / 2
+            else:
+                median_score = sorted_scores[n//2]
+
+        # Pass rate
+        passing_score = quiz.config.passing_score if quiz.config and quiz.config.passing_score else 70.0
+        passed_attempts = [a for a in completed_attempts if a.score_percentage is not None and a.score_percentage >= passing_score]
+        pass_rate = (len(passed_attempts) / len(completed_attempts)) * 100 if completed_attempts else 0
+
+        # Completion rate
+        completion_rate = (len(completed_attempts) / total_attempts) * 100 if total_attempts > 0 else 0
+
+        # Average time
+        time_spent_list = [a.time_spent for a in completed_attempts if a.time_spent is not None]
+        average_time = sum(time_spent_list) / len(time_spent_list) if time_spent_list else 0
+
+        # Question statistics
+        question_stats = []
+        if quiz.questions:
+            for question in quiz.questions:
+                question_attempts = [ans for attempt in completed_attempts for ans in attempt.answers if ans.question_id == question.id]
+                
+                if not question_attempts:
+                    question_stats.append({
+                        "question_id": question.id,
+                        "question_title": question.title,
+                        "correct_percentage": 0,
+                        "average_time_spent": 0,
+                        "answers_distribution": {}
+                    })
+                    continue
+
+                correct_answers = sum(1 for qa in question_attempts if qa.is_correct)
+                correct_percentage = (correct_answers / len(question_attempts)) * 100 if question_attempts else 0
+                
+                time_spent_on_question = [qa.time_spent for qa in question_attempts if qa.time_spent is not None]
+                average_time_spent = sum(time_spent_on_question) / len(time_spent_on_question) if time_spent_on_question else 0
+
+                # Answers distribution (for multiple choice)
+                answers_dist = {}
+                if question.type == QuestionType.MULTIPLE_CHOICE and question.options:
+                    option_map = {opt.id: opt.text for opt in question.options}
+                    for opt_text in option_map.values():
+                        answers_dist[opt_text] = 0
+
+                    for qa in question_attempts:
+                        # qa.answer is the option ID
+                        if qa.answer in option_map:
+                            option_text = option_map[qa.answer]
+                            if option_text in answers_dist:
+                                answers_dist[option_text] += 1
+                
+                question_stats.append({
+                    "question_id": question.id,
+                    "question_title": question.title,
+                    "correct_percentage": correct_percentage,
+                    "average_time_spent": average_time_spent,
+                    "answers_distribution": answers_dist
+                })
+
+        return QuizStatistics(
+            quiz_id=quiz.id,
+            quiz_title=quiz.title,
+            total_attempts=total_attempts,
+            unique_students=unique_students,
+            average_score=average_score,
+            median_score=median_score,
+            pass_rate=pass_rate,
+            completion_rate=completion_rate,
+            average_time=average_time,
+            question_statistics=question_stats
+        )
 
     # Métodos de utilidad
     def _evaluate_answer(self, question: Question, student_answer: Any) -> tuple[bool, float]:

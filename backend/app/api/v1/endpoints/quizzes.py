@@ -15,11 +15,46 @@ from ....application.dtos.quiz_dto import (
 from ....application.services.quiz_service import QuizService
 from ...deps import get_current_user, get_current_admin_user
 from ....dependencies import get_quiz_service
-from ....domain.entities.user import User
+from ....domain.entities.user import User, UserRole
+
 # Las excepciones se manejan directamente en el servicio usando HTTPException
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 security = HTTPBearer()
+
+
+# Endpoint para crear quiz desde lección
+@router.post("/lesson/{lesson_id}", response_model=QuizResponse)
+async def create_quiz_for_lesson(
+    lesson_id: str,
+    quiz_data: QuizCreate,
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service),
+):
+    """
+    Crear un nuevo quiz vinculado a una lección.
+
+    - Requiere permisos de instructor o admin.
+    - El quiz se crea en estado DRAFT por defecto.
+    """
+    if current_user.role not in [UserRole.INSTRUCTOR, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo instructores y administradores pueden crear quizzes para una lección",
+        )
+
+    try:
+        return await quiz_service.create_quiz_for_lesson(
+            lesson_id, quiz_data, current_user.id
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error interno del servidor: {str(e)}"
+        )
 
 
 # CRUD de Quizzes
@@ -27,49 +62,53 @@ security = HTTPBearer()
 async def create_quiz(
     quiz_data: QuizCreate,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Crear un nuevo quiz.
-    
+
     - Requiere permisos de instructor o admin
     - El quiz se crea en estado DRAFT por defecto
     """
     if current_user.role not in ["instructor", "admin"]:
-        raise HTTPException(status_code=403, detail="Solo instructores y administradores pueden crear quizzes")
-    
+        raise HTTPException(
+            status_code=403, detail="Solo instructores y administradores pueden crear quizzes"
+        )
+
     try:
         return await quiz_service.create_quiz(quiz_data, current_user.id)
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error interno del servidor: {str(e)}"
+        )
 
 
 @router.get("/{quiz_id}", response_model=QuizResponse)
 async def get_quiz(
     quiz_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Obtener quiz por ID.
-    
+
     - Los estudiantes solo pueden ver quizzes publicados y disponibles
     - Los instructores pueden ver sus propios quizzes
     - Los admins pueden ver cualquier quiz
     """
     try:
         quiz = await quiz_service.get_quiz_by_id(quiz_id, current_user.id)
-        
+
         # Verificar permisos para quiz no publicado
         if quiz.status != "published" and current_user.role == "student":
             raise HTTPException(status_code=403, detail="Quiz no disponible")
-        
+
         # Si es instructor, verificar que sea el creador
         if current_user.role == "instructor" and quiz.created_by != current_user.id:
             raise HTTPException(status_code=403, detail="No autorizado para ver este quiz")
-        
+
         return quiz
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -82,11 +121,11 @@ async def update_quiz(
     quiz_id: str,
     quiz_data: QuizUpdate,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Actualizar quiz existente.
-    
+
     - Solo el creador del quiz puede modificarlo
     - Los admins pueden modificar cualquier quiz
     """
@@ -94,7 +133,7 @@ async def update_quiz(
         # Los estudiantes no pueden actualizar quizzes
         if current_user.role == "student":
             raise HTTPException(status_code=403, detail="No autorizado para modificar quizzes")
-        
+
         return await quiz_service.update_quiz(quiz_id, quiz_data, current_user.id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -108,11 +147,11 @@ async def update_quiz(
 async def delete_quiz(
     quiz_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Eliminar quiz.
-    
+
     - Solo el creador del quiz puede eliminarlo
     - Los admins pueden eliminar cualquier quiz
     - No se puede eliminar un quiz con intentos registrados
@@ -120,7 +159,7 @@ async def delete_quiz(
     try:
         if current_user.role == "student":
             raise HTTPException(status_code=403, detail="No autorizado para eliminar quizzes")
-        
+
         success = await quiz_service.delete_quiz(quiz_id, current_user.id)
         if success:
             return {"message": "Quiz eliminado exitosamente"}
@@ -139,11 +178,11 @@ async def get_quizzes_by_course(
     course_id: str,
     published_only: bool = Query(True, description="Solo mostrar quizzes publicados"),
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Obtener quizzes por curso.
-    
+
     - Los estudiantes solo ven quizzes publicados
     - Los instructores pueden ver todos sus quizzes del curso
     - Los admins pueden ver todos los quizzes del curso
@@ -152,7 +191,7 @@ async def get_quizzes_by_course(
         # Para estudiantes, solo mostrar publicados
         if current_user.role == "student":
             published_only = True
-        
+
         return await quiz_service.get_quizzes_by_course(course_id, published_only)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener quizzes: {str(e)}")
@@ -163,16 +202,19 @@ async def get_quizzes_by_course(
 async def create_question(
     question_data: QuestionCreate,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Crear nueva pregunta.
-    
+
     - Requiere permisos de instructor o admin
     """
     if current_user.role not in ["instructor", "admin"]:
-        raise HTTPException(status_code=403, detail="Solo instructores y administradores pueden crear preguntas")
-    
+        raise HTTPException(
+            status_code=403,
+            detail="Solo instructores y administradores pueden crear preguntas",
+        )
+
     try:
         return await quiz_service.create_question(question_data, current_user.id)
     except ValidationError as e:
@@ -184,19 +226,21 @@ async def add_question_to_quiz(
     quiz_id: str,
     question_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Agregar pregunta existente a un quiz.
-    
+
     - Solo el creador del quiz puede agregar preguntas
     - Los admins pueden modificar cualquier quiz
     """
     try:
         if current_user.role == "student":
             raise HTTPException(status_code=403, detail="No autorizado para modificar quizzes")
-        
-        success = await quiz_service.add_question_to_quiz(quiz_id, question_id, current_user.id)
+
+        success = await quiz_service.add_question_to_quiz(
+            quiz_id, question_id, current_user.id
+        )
         if success:
             return {"message": "Pregunta agregada exitosamente"}
         else:
@@ -214,11 +258,11 @@ async def add_question_to_quiz(
 async def start_quiz_attempt(
     quiz_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Iniciar nuevo intento de quiz.
-    
+
     - Solo estudiantes pueden iniciar intentos
     - Verifica disponibilidad y límites de intentos
     """
@@ -235,16 +279,18 @@ async def submit_answer(
     attempt_id: str,
     answer_data: QuizAnswerSubmit,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Enviar respuesta a una pregunta específica.
-    
+
     - Solo el estudiante que inició el intento puede enviar respuestas
     - Verifica que el intento esté en progreso y no haya expirado
     """
     try:
-        success = await quiz_service.submit_answer(attempt_id, answer_data, current_user.id)
+        success = await quiz_service.submit_answer(
+            attempt_id, answer_data, current_user.id
+        )
         if success:
             return {"message": "Respuesta guardada exitosamente"}
         else:
@@ -261,11 +307,11 @@ async def submit_answer(
 async def submit_quiz_attempt(
     attempt_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Finalizar y enviar intento de quiz.
-    
+
     - Solo el estudiante que inició el intento puede finalizarlo
     - Calcula el puntaje final y actualiza estadísticas
     """
@@ -283,11 +329,11 @@ async def submit_quiz_attempt(
 async def get_quiz_attempt(
     attempt_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Obtener intento de quiz por ID.
-    
+
     - Solo el estudiante propietario puede ver sus intentos
     - Los instructores pueden ver intentos de sus quizzes
     - Los admins pueden ver cualquier intento
@@ -305,17 +351,24 @@ async def get_quiz_attempt(
 async def get_quiz_by_lesson(
     lesson_id: str,
     current_user: User = Depends(get_current_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
     """
     Obtener quiz asociado a una lección específica.
-    
-    - Solo devuelve quizzes publicados y disponibles para estudiantes
+
+    - Devuelve el primer quiz publicado asociado a la lección.
     """
     try:
-        # Buscar quiz por lesson_id
-        # Nota: Esta funcionalidad requiere implementar búsqueda por lesson_id en el repository
-        # Por ahora retornamos None si no se encuentra
+        quizzes = await quiz_service.get_quizzes_by_lesson(lesson_id)
+        
+        # Filtrar por estado publicado y devolver el primero
+        for quiz in quizzes:
+            if quiz.status == "published":
+                # Verificar permisos
+                if current_user.role == "student" and not quiz.is_available_now():
+                    continue
+                return quiz
+        
         return None
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al buscar quiz: {str(e)}")
@@ -326,32 +379,22 @@ async def get_quiz_by_lesson(
 async def get_quiz_statistics(
     quiz_id: str,
     current_user: User = Depends(get_current_admin_user),
-    quiz_service: QuizService = Depends(get_quiz_service)
+    quiz_service: QuizService = Depends(get_quiz_service),
 ):
+
     """
     Obtener estadísticas detalladas de un quiz.
     
     - Solo para administradores
     """
     try:
-        # Esta funcionalidad requiere implementación adicional en el service
-        # Por ahora retornamos estadísticas básicas
-        quiz = await quiz_service.get_quiz_by_id(quiz_id)
-        
-        return QuizStatistics(
-            quiz_id=quiz.id,
-            quiz_title=quiz.title,
-            total_attempts=quiz.total_attempts,
-            unique_students=0,  # Requiere cálculo específico
-            average_score=quiz.average_score,
-            median_score=0.0,  # Requiere cálculo específico
-            pass_rate=0.0,  # Requiere cálculo específico
-            completion_rate=quiz.completion_rate,
-            average_time=0,  # Requiere cálculo específico
-            question_statistics=[]  # Requiere análisis por pregunta
-        )
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        return await quiz_service.get_quiz_statistics(quiz_id, current_user.id)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        # Log the exception for debugging purposes
+        print(f"Error getting quiz statistics: {e}")
+        raise HTTPException(status_code=500, detail="Ocurrió un error al calcular las estadísticas del quiz.")
 
 
 @router.get("/student/{student_id}/progress", response_model=StudentQuizProgress)

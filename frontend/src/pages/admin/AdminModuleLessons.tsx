@@ -15,7 +15,8 @@ import {
   ClipboardDocumentCheckIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  EyeIcon
+  EyeIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 
@@ -28,6 +29,8 @@ import { mediaService } from '../../services/mediaService';
 import { ModuleResponse } from '../../types/module';
 import { ContentType } from '../../types/lesson';
 import { useAuth } from '../../contexts/AuthContext';
+import quizService from '../../services/quizService';
+import { Quiz, QuizCreate, QuizStatus } from '../../types/quiz';
 
 const AdminModuleLessons: React.FC = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -74,22 +77,80 @@ const AdminModuleLessons: React.FC = () => {
       console.log('🔄 [AdminModuleLessons] Loading module and lessons...');
       setLoading(true);
 
-      // Cargar información del módulo
       const moduleData = await moduleService.getModule(moduleId);
       setModule(moduleData);
 
-      // Cargar lecciones del curso (luego filtrar por módulo)
       const lessonsData = await lessonService.getCourseLessons(courseId);
 
-      // TODO: Aquí necesitarías filtrar por módulo cuando el backend soporte module_id en las lecciones
-      // Por ahora, mostrar todas las lecciones del curso
-      setLessons(lessonsData || []);
+      const lessonsWithQuizzes = await Promise.all(
+        lessonsData.map(async (lesson) => {
+          if (lesson.content_type === ContentType.QUIZ || lesson.quiz_id) {
+            try {
+              const quiz = await quizService.getQuizByLessonId(lesson.id);
+              return { ...lesson, quiz };
+            } catch (error) {
+              console.error(`Failed to fetch quiz for lesson ${lesson.id}`, error);
+              return { ...lesson, quiz: null };
+            }
+          }
+          return lesson;
+        })
+      );
+
+      setLessons(lessonsWithQuizzes || []);
 
     } catch (error: any) {
       console.error('❌ [AdminModuleLessons] Error loading data:', error);
       toast.error('Error al cargar el módulo y lecciones');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateQuizForLesson = async (lessonId: string) => {
+    if (!courseId || !moduleId) return;
+
+    try {
+      console.log(`🚀 [AdminModuleLessons] Creating quiz for lesson: ${lessonId}`);
+      const lesson = lessons.find(l => l.id === lessonId);
+      if (!lesson) {
+        toast.error('Lesson not found');
+        return;
+      }
+
+      const quizData: Omit<QuizCreate, 'lesson_id'> = {
+        title: `Quiz para ${lesson.title}`,
+        description: `Quiz asociado a la lección: ${lesson.title}`,
+        course_id: courseId,
+        module_id: moduleId,
+        instructions: 'Completa el siguiente quiz.',
+        questions: [],
+        question_pool: [],
+        config: {
+            shuffle_questions: false,
+            shuffle_answers: false,
+            show_correct_answers: true,
+            allow_retakes: true,
+            time_limit_enabled: false,
+            proctoring_enabled: false,
+            require_webcam: false,
+            prevent_copy_paste: false,
+            randomize_order: false,
+            allow_review: true,
+        },
+        estimated_duration: 10,
+        status: QuizStatus.DRAFT,
+      };
+
+      const newQuiz = await quizService.createQuizForLesson(lessonId, quizData);
+      toast.success(`Quiz "${newQuiz.title}" creado para la lección!`);
+      
+      // Navigate to the quiz editor page
+      navigate(`/platform/admin/quizzes/${newQuiz.id}`);
+
+    } catch (error: any) {
+      console.error('❌ [AdminModuleLessons] Error creating quiz for lesson:', error);
+      toast.error(error.message || 'Error creating quiz');
     }
   };
 
@@ -638,6 +699,36 @@ const AdminModuleLessons: React.FC = () => {
                       >
                         <PlayIcon className="h-4 w-4 mr-1.5" />
                         Ver Video
+                      </button>
+                    )}
+
+                    {lesson.content_type === ContentType.QUIZ && lesson.quiz ? (
+                      <>
+                        <button
+                          onClick={() => navigate(`/platform/admin/quizzes/${lesson.quiz.id}/analytics`)}
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+                          title="Ver Analíticas"
+                        >
+                          <ChartBarIcon className="h-4 w-4 mr-1.5" />
+                          Analíticas
+                        </button>
+                        <button
+                          onClick={() => navigate(`/platform/admin/quizzes/${lesson.quiz.id}/edit`)}
+                          className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-md text-sm font-medium transition-colors"
+                          title="Edit Quiz"
+                        >
+                          <PencilIcon className="h-4 w-4 mr-1.5" />
+                          Editar Quiz
+                        </button>
+                      </>
+                    ) : lesson.content_type !== ContentType.QUIZ && (
+                      <button
+                        onClick={() => handleCreateQuizForLesson(lesson.id)}
+                        className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-md text-sm font-medium transition-colors"
+                        title="Create Quiz"
+                      >
+                        <ClipboardDocumentCheckIcon className="h-4 w-4 mr-1.5" />
+                        Crear Quiz
                       </button>
                     )}
 

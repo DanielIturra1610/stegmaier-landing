@@ -16,9 +16,11 @@ class Lesson(BaseModel):
     id: Optional[str] = None
     title: str
     course_id: str
+    module_id: Optional[str] = None
     order: int  # Posición en el curso
     content_type: ContentType
     content_url: Optional[str] = None  # URL del video o recurso externo
+    quiz_id: Optional[str] = None # ID del quiz asociado
     content_text: Optional[str] = None  # Contenido en formato markdown
     duration: int = 0  # Duración en minutos
     is_free_preview: bool = False

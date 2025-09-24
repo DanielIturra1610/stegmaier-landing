@@ -169,14 +169,14 @@ export interface QuestionCreate {
 export interface QuizCreate {
   title: string;
   description: string;
-  instructions: string;
   course_id: string;
   module_id?: string;
   lesson_id?: string;
-  questions: Question[];
-  question_pool: string[];
-  config: QuizConfiguration;
-  estimated_duration: number;
+  instructions?: string;
+  questions?: Question[];
+  question_pool?: string[];
+  config?: QuizConfiguration;
+  estimated_duration?: number;
   status?: QuizStatus;
   time_limit_minutes?: number;
   max_attempts?: number;
@@ -275,27 +275,7 @@ export interface QuizStatistics {
   }>;
 }
 
-// DTOs para crear y actualizar quizzes
-export interface QuizCreate {
-  title: string;
-  description: string;
-  instructions: string;
-  course_id: string;
-  module_id?: string;
-  lesson_id?: string;
-  question_ids: string[]; // Using string[] for consistency
-  config: QuizConfiguration;
-  status?: QuizStatus;
-}
 
-export interface QuizUpdate {
-  title?: string;
-  description?: string;
-  instructions?: string;
-  question_ids?: string[]; // Using string[] for consistency
-  config?: QuizConfiguration; // Using full type for consistency
-  status?: QuizStatus;
-}
 
 // Tipos para attempts y answers
 export interface QuizAttempt {

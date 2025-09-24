@@ -131,26 +131,28 @@ class CourseListResponse(BaseModel):
         }
 
 class CourseResponse(BaseModel):
-    """DTO para respuesta con datos de curso"""
     id: str
     title: str
     description: str
     instructor_id: str
     cover_image: Optional[str] = None
-    price: Optional[float] = None
+    price: float
     discount_price: Optional[float] = None
-    level: CourseLevel
-    category: CourseCategory
+    level: str
+    category: str
     tags: List[str] = []
     requirements: List[str] = []
     what_you_will_learn: List[str] = []
-    lessons: List[Any] = []  # 🔥 FIX: Changed from List[str] to List[Any] to support full lesson objects
-    total_duration: int = 0
-    total_students: int = 0
-    average_rating: float = 0.0
     is_published: bool
     created_at: datetime
     updated_at: datetime
+    lessons: List[LessonResponse] = []
+    lessons_count: Optional[int] = 0
+    total_duration: Optional[int] = 0
+    total_students: Optional[int] = 0
+    average_rating: Optional[float] = 0.0
+    is_student_preview: Optional[bool] = None
+    simulated_enrollment: Optional[bool] = None
     
     class Config:
         schema_extra = {

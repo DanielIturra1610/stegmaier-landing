@@ -229,10 +229,10 @@ class QuizService {
 
   async getQuizStatistics(quizId: string): Promise<QuizStatistics> {
     try {
-      console.log('📊 [quizService] Getting quiz statistics:', quizId);
+      console.log('📊 [quizService] Getting quiz statistics for admin:', quizId);
       
       const response = await axios.get(
-        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/${quizId}/statistics`),
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/admin/statistics/${quizId}`),
         { headers: getAuthHeaders() }
       );
       
@@ -260,6 +260,43 @@ class QuizService {
       const apiError = error as APIError;
       console.error('❌ [quizService] Error fetching student attempts:', apiError);
       throw new Error(apiError.response?.data?.detail || 'Failed to fetch student attempts');
+    }
+  }
+
+  // Métodos para vincular quizzes a lecciones
+  async createQuizForLesson(lessonId: string, quizData: Omit<QuizCreate, 'lesson_id'>): Promise<Quiz> {
+    try {
+      console.log(`[quizService] Creating quiz for lesson: ${lessonId}`);
+      const response = await axios.post(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/lesson/${lessonId}`),
+        quizData,
+        { headers: getAuthHeaders() }
+      );
+      console.log('[quizService] Quiz created for lesson:', response.data);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('[quizService] Error creating quiz for lesson:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to create quiz for lesson');
+    }
+  }
+
+  async getQuizByLessonId(lessonId: string): Promise<Quiz | null> {
+    try {
+      console.log(`[quizService] Getting quiz for lesson: ${lessonId}`);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/lesson/${lessonId}/quiz`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('[quizService] Retrieved quiz for lesson:', response.data);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      if (apiError.response?.status === 404) {
+        return null;
+      }
+      console.error('[quizService] Error fetching quiz for lesson:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quiz for lesson');
     }
   }
 
