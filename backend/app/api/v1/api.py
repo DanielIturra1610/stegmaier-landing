@@ -33,8 +33,8 @@ api_router.include_router(monitoring.router, prefix="/monitoring", tags=["Monito
 # Sistema de certificados
 api_router.include_router(certificates.router, prefix="/certificates", tags=["Certificates"])
 
-# Sistema de quizzes
-api_router.include_router(quizzes.router, prefix="/quizzes", tags=["Quizzes"])
+# Sistema de quizzes (router ya tiene prefix="/quizzes" internamente)
+api_router.include_router(quizzes.router, prefix="", tags=["Quizzes"])
 
 # Documentación extendida
 api_router.include_router(docs.router, prefix="/docs", tags=["Documentation"])

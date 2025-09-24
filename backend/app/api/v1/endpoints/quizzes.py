@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPBearer
+from pydantic import ValidationError
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,6 +25,25 @@ from ....domain.entities.user import User, UserRole
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 security = HTTPBearer()
+
+
+# Endpoint temporal de diagnóstico - REMOVER DESPUÉS DE ARREGLAR
+@router.get("/debug/routes")
+async def debug_quiz_routes():
+    """
+    Endpoint temporal para verificar que las rutas de quiz están funcionando.
+    REMOVER DESPUÉS DE SOLUCIONAR EL PROBLEMA.
+    """
+    return {
+        "message": "Quiz routes are working!",
+        "available_endpoints": [
+            "POST /api/v1/quizzes/lesson/{lesson_id}",
+            "GET /api/v1/quizzes/lesson/{lesson_id}/quiz",
+            "GET /api/v1/quizzes/debug/routes",
+            "POST /api/v1/quizzes/",
+        ],
+        "timestamp": datetime.now().isoformat()
+    }
 
 
 # Endpoint para crear quiz desde lección
