@@ -203,7 +203,6 @@ const AdminQuizForm: React.FC = () => {
         ...formData,
         questions: questions,
         question_pool: [],
-        question_ids: (Array.isArray(questions) ? questions : []).map(q => q.id).filter(Boolean),
         config: {
           shuffle_questions: formData.shuffle_questions || false,
           shuffle_answers: false,

@@ -38,7 +38,6 @@ export interface LessonDetail extends LessonResponse {
   description?: string;
   transcript?: string;
   resources: LessonResource[];
-  quiz?: QuizData;
   user_progress?: LessonProgress;
   access_info: LessonAccessInfo;
 }
