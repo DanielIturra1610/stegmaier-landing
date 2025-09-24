@@ -146,7 +146,7 @@ class CourseResponse(BaseModel):
     is_published: bool
     created_at: datetime
     updated_at: datetime
-    lessons: List[LessonResponse] = []
+    lessons: List['LessonResponse'] = []
     lessons_count: Optional[int] = 0
     total_duration: Optional[int] = 0
     total_students: Optional[int] = 0
