@@ -62,6 +62,7 @@ class LessonService:
         lesson = Lesson(
             title=lesson_data.title,
             course_id=lesson_data.course_id,
+            module_id=lesson_data.module_id,
             order=lesson_data.order,
             content_type=lesson_data.content_type,
             content_url=lesson_data.content_url,

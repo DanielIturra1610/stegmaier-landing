@@ -198,6 +198,7 @@ const AdminModuleLessons: React.FC = () => {
       const lessonData: LessonCreate = {
         title: newLessonData.title.trim(),
         course_id: courseId,
+        module_id: moduleId,
         order: lessons.length + 1,
         content_type: newLessonData.content_type,
         content_text: newLessonData.content_text.trim() || undefined,
@@ -249,6 +250,7 @@ const AdminModuleLessons: React.FC = () => {
       const videoLessonData: LessonCreate = {
         title: videoInfo.title || 'Video sin título',
         course_id: courseId!,
+        module_id: moduleId,
         order: lessons.length + 1,
         content_type: ContentType.VIDEO,
         content_url: `/api/v1/media/videos/${videoId}/stream`,

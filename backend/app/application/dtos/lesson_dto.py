@@ -10,6 +10,7 @@ class LessonCreate(BaseModel):
     """DTO para la creación de una nueva lección"""
     title: str
     course_id: str
+    module_id: Optional[str] = None
     order: int
     content_type: ContentType
     content_url: Optional[str] = None

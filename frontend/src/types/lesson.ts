@@ -128,6 +128,7 @@ export interface LessonOverview {
 export interface LessonCreate {
   title: string;
   course_id: string;
+  module_id?: string;
   order: number;
   content_type: ContentType;
   content_url?: string;
