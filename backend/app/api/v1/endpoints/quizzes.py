@@ -62,7 +62,7 @@ async def create_quiz_for_lesson(
     - Requiere permisos de instructor o admin.
     - El quiz se crea en estado DRAFT por defecto.
     """
-    if current_user.role not in [UserRole.INSTRUCTOR, UserRole.ADMIN]:
+    if current_user.role not in ["instructor", "admin"]:
         raise HTTPException(
             status_code=403,
             detail="Solo instructores y administradores pueden crear quizzes para una lección",
