@@ -1,9 +1,12 @@
 """
 Implementación concreta del repositorio de lecciones usando MongoDB
 """
+import logging
 from typing import List, Optional
 from bson.objectid import ObjectId
 from ...domain.entities.lesson import Lesson
+
+logging.basicConfig(level=logging.INFO)
 from ...domain.repositories.lesson_repository import LessonRepository
 from ..database import get_database
 
@@ -38,10 +41,21 @@ class MongoDBLessonRepository(LessonRepository):
     
     async def get_by_id(self, lesson_id: str) -> Optional[Lesson]:
         """Obtener lección por ID"""
-        lesson_data = await self.db[self.collection_name].find_one({"_id": ObjectId(lesson_id)})
+        logging.info(f"🔍 [LessonRepository] Getting lesson by ID: {lesson_id}")
+        try:
+            obj_id = ObjectId(lesson_id)
+        except Exception as e:
+            logging.error(f"❌ [LessonRepository] Invalid ObjectId: {lesson_id} - {e}")
+            return None
+            
+        lesson_data = await self.db[self.collection_name].find_one({"_id": obj_id})
+        
         if lesson_data:
+            logging.info(f"✅ [LessonRepository] Found lesson with ID: {lesson_id}")
             return self._document_to_entity(lesson_data)
-        return None
+        else:
+            logging.warning(f"⚠️ [LessonRepository] Lesson not found with ID: {lesson_id}")
+            return None
     
     async def get_by_course(self, course_id: str) -> List[Lesson]:
         """

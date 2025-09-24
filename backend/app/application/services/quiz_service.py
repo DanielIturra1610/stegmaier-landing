@@ -1,7 +1,6 @@
 """
 Servicio de aplicación para el sistema de quizzes.
 """
-import asyncio
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
@@ -43,18 +42,12 @@ class QuizService:
         """
         Crea un quiz y lo vincula a una lección existente.
         """
-        # 1. Validar que la lección existe (con reintentos para posible lag de replicación)
-        lesson = None
-        for i in range(3):
-            lesson = await self.lesson_repository.get_by_id(lesson_id)
-            if lesson:
-                break
-            await asyncio.sleep(0.1 * (i + 1)) # Espera exponencial corta
-
+        # 1. Validar que la lección existe
+        lesson = await self.lesson_repository.get_by_id(lesson_id)
         if not lesson:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Lección con ID {lesson_id} no encontrada después de varios intentos.",
+                detail=f"Lección con ID {lesson_id} no encontrada",
             )
 
         # 2. Verificar permisos del usuario sobre el curso

@@ -1,10 +1,13 @@
 """
 Endpoints API para el sistema de quizzes.
 """
+import logging
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import HTTPBearer
+
+logging.basicConfig(level=logging.INFO)
 
 from ....application.dtos.quiz_dto import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -31,6 +34,8 @@ async def create_quiz_for_lesson(
     current_user: User = Depends(get_current_user),
     quiz_service: QuizService = Depends(get_quiz_service),
 ):
+    logging.info("!!!!!!!!!!!!!!!!! QUIZ CREATION ENDPOINT HIT !!!!!!!!!!!!!!!!!")
+    logging.info(f"!!!!!!!!!!!!!!!!! Received request for lesson ID: {lesson_id} !!!!!!!!!!!!!!!!!")
     """
     Crear un nuevo quiz vinculado a una lección.
 
