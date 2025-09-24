@@ -31,6 +31,8 @@ async def create_quiz_for_lesson(
     current_user: User = Depends(get_current_user),
     quiz_service: QuizService = Depends(get_quiz_service),
 ):
+    print("!!!!!!!!!!!!!!!!! QUIZ CREATION ENDPOINT HIT !!!!!!!!!!!!!!!!!")
+    print(f"!!!!!!!!!!!!!!!!! Received request for lesson ID: {lesson_id} !!!!!!!!!!!!!!!!!")
     """
     Crear un nuevo quiz vinculado a una lección.
 
