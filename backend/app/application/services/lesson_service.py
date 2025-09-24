@@ -5,6 +5,7 @@ from typing import List, Optional, Dict
 from ...domain.repositories.lesson_repository import LessonRepository
 from ...domain.repositories.course_repository import CourseRepository
 from ...domain.repositories.user_repository import UserRepository
+from ...domain.repositories.module_repository import ModuleRepository
 from ...domain.entities.lesson import Lesson
 from ..dtos.lesson_dto import LessonCreate, LessonUpdate, LessonOrderItem
 
@@ -17,11 +18,13 @@ class LessonService:
         self, 
         lesson_repository: LessonRepository,
         course_repository: CourseRepository,
-        user_repository: UserRepository
+        user_repository: UserRepository,
+        module_repository: ModuleRepository
     ):
         self.lesson_repository = lesson_repository
         self.course_repository = course_repository
         self.user_repository = user_repository
+        self.module_repository = module_repository
     
     async def create_lesson(self, instructor_id: str, lesson_data: LessonCreate) -> Lesson:
         """
@@ -98,6 +101,17 @@ class LessonService:
             print(f"✅ [LessonService] Course updated successfully")
         else:
             print(f"⚠️ [LessonService] Lesson ID already in course lessons list")
+
+        # Actualizar la lista de lecciones en el módulo, si aplica
+        if lesson_data.module_id:
+            module = await self.module_repository.get_by_id(lesson_data.module_id)
+            if module and created_lesson.id not in module.lessons:
+                module.lessons.append(created_lesson.id)
+                await self.module_repository.update(
+                    lesson_data.module_id,
+                    {"lessons": module.lessons}
+                )
+                print(f"✅ [LessonService] Module {lesson_data.module_id} updated successfully with new lesson.")
         
         print(f"✅ [LessonService] Lesson creation complete: {created_lesson.title}")
         return created_lesson

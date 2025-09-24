@@ -162,12 +162,13 @@ async def get_course_service(
 async def get_lesson_service(
     lesson_repository: LessonRepository = Depends(get_lesson_repository),
     course_repository: CourseRepository = Depends(get_course_repository),
-    user_repository: UserRepository = Depends(get_user_repository)
+    user_repository: UserRepository = Depends(get_user_repository),
+    module_repository: ModuleRepository = Depends(get_module_repository)
 ) -> LessonService:
     """
     Proporciona una instancia configurada del servicio de lecciones.
     """
-    return LessonService(lesson_repository, course_repository, user_repository)
+    return LessonService(lesson_repository, course_repository, user_repository, module_repository)
 
 async def get_notification_service(
     notification_repository: NotificationRepository = Depends(get_notification_repository)
