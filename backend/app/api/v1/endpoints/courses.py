@@ -165,7 +165,11 @@ async def get_course_by_id(
                 'content_text': lesson.content_text,
                 'content_url': lesson.content_url,
                 'duration': lesson.duration,
-                'is_free_preview': lesson.is_free_preview
+                'is_free_preview': lesson.is_free_preview,
+                'course_id': str(lesson.course_id),
+                'created_at': lesson.created_at,
+                'updated_at': lesson.updated_at,
+                'attachments': lesson.attachments
             } for lesson in lessons
         ]
         
