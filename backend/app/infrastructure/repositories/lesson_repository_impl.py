@@ -38,10 +38,21 @@ class MongoDBLessonRepository(LessonRepository):
     
     async def get_by_id(self, lesson_id: str) -> Optional[Lesson]:
         """Obtener lección por ID"""
-        lesson_data = await self.db[self.collection_name].find_one({"_id": ObjectId(lesson_id)})
+        print(f"🔍 [LessonRepository] Getting lesson by ID: {lesson_id}")
+        try:
+            obj_id = ObjectId(lesson_id)
+        except Exception as e:
+            print(f"❌ [LessonRepository] Invalid ObjectId: {lesson_id} - {e}")
+            return None
+            
+        lesson_data = await self.db[self.collection_name].find_one({"_id": obj_id})
+        
         if lesson_data:
+            print(f"✅ [LessonRepository] Found lesson with ID: {lesson_id}")
             return self._document_to_entity(lesson_data)
-        return None
+        else:
+            print(f"⚠️ [LessonRepository] Lesson not found with ID: {lesson_id}")
+            return None
     
     async def get_by_course(self, course_id: str) -> List[Lesson]:
         """
