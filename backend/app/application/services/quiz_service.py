@@ -154,7 +154,7 @@ class QuizService:
 
             # Guardar en repositorio
             logging.info(f"🔍 [QuizService.create_quiz] Saving to repository...")
-            saved_quiz = await self.quiz_repository.create_quiz(quiz)
+            saved_quiz = await self.quiz_repository.create(quiz)
             logging.info(f"✅ [QuizService.create_quiz] Quiz saved successfully")
 
             logging.info(f"🔍 [QuizService.create_quiz] Converting to response...")
