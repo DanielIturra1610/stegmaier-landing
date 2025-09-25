@@ -72,6 +72,9 @@ class QuizService:
         logging.info(f"✅ [QuizService] Permission granted: is_admin = {is_admin}, is_instructor_owner = {is_instructor_owner}")
 
         # 3. Verificar si la lección ya tiene un quiz
+        logging.info(f"🔍 [QuizService] Step 3: Checking if lesson already has quiz...")
+        logging.info(f"🔍 [QuizService] Lesson content_type: {lesson.content_type}, quiz_id: {lesson.quiz_id}")
+
         if lesson.content_type == ContentType.QUIZ and lesson.quiz_id:
             existing_quiz = await self.quiz_repository.get_quiz_by_id(lesson.quiz_id)
             if existing_quiz:
@@ -81,6 +84,7 @@ class QuizService:
                 )
 
         # 4. Crear quiz con lesson_id vinculado
+        logging.info(f"🔍 [QuizService] Step 4: Creating quiz data...")
         quiz_data.lesson_id = lesson_id
         quiz_data.course_id = lesson.course_id
         quiz_data.module_id = lesson.module_id
@@ -89,16 +93,24 @@ class QuizService:
         if not quiz_data.title:
             quiz_data.title = f"Quiz para {lesson.title}"
 
+        logging.info(f"🔍 [QuizService] Quiz data prepared: title='{quiz_data.title}', lesson_id={lesson_id}")
+        logging.info(f"🔍 [QuizService] Calling create_quiz method...")
+
         new_quiz = await self.create_quiz(quiz_data, creator_id)
+        logging.info(f"✅ [QuizService] Quiz created successfully with ID: {new_quiz.id}")
 
         # 5. Actualizar la lección para vincular el quiz
+        logging.info(f"🔍 [QuizService] Step 5: Updating lesson to link quiz...")
         lesson.content_type = ContentType.QUIZ
         lesson.quiz_id = new_quiz.id
-        
+
         update_data = {"content_type": ContentType.QUIZ, "quiz_id": new_quiz.id}
+        logging.info(f"🔍 [QuizService] Updating lesson {lesson_id} with data: {update_data}")
+
         await self.lesson_repository.update(lesson_id, update_data)
+        logging.info(f"✅ [QuizService] Lesson updated successfully")
 
-
+        logging.info(f"🎉 [QuizService] create_quiz_for_lesson completed successfully!")
         return new_quiz
 
     # CRUD de Quizzes
