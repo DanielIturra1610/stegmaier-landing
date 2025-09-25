@@ -116,35 +116,58 @@ class QuizService:
     # CRUD de Quizzes
     async def create_quiz(self, quiz_data: QuizCreate, creator_id: str) -> QuizResponse:
         """Crear un nuevo quiz."""
-        # Crear entidad Quiz
-        quiz = Quiz(
-            id=str(uuid4()),
-            title=quiz_data.title,
-            description=quiz_data.description,
-            instructions=quiz_data.instructions,
-            course_id=quiz_data.course_id,
-            module_id=quiz_data.module_id,
-            lesson_id=quiz_data.lesson_id,
-            config=quiz_data.config,
-            estimated_duration=quiz_data.estimated_duration,
-            created_by=creator_id,
-            status=QuizStatus.DRAFT
-        )
-        
-        # Cargar preguntas si se proporcionaron IDs
-        if quiz_data.questions:
-            questions = []
-            for question_id in quiz_data.questions:
-                question = await self.quiz_repository.get_question_by_id(question_id)
-                if question:
-                    questions.append(question)
-            quiz.questions = questions
-        
-        quiz.calculate_total_points()
-        
-        # Guardar en repositorio
-        saved_quiz = await self.quiz_repository.create_quiz(quiz)
-        return self._quiz_to_response(saved_quiz)
+        logging.info(f"🔍 [QuizService.create_quiz] Starting quiz creation...")
+        logging.info(f"🔍 [QuizService.create_quiz] Quiz data: title='{quiz_data.title}', course_id={quiz_data.course_id}")
+
+        try:
+            # Crear entidad Quiz
+            logging.info(f"🔍 [QuizService.create_quiz] Creating Quiz entity...")
+            quiz = Quiz(
+                id=str(uuid4()),
+                title=quiz_data.title,
+                description=quiz_data.description,
+                instructions=quiz_data.instructions,
+                course_id=quiz_data.course_id,
+                module_id=quiz_data.module_id,
+                lesson_id=quiz_data.lesson_id,
+                config=quiz_data.config,
+                estimated_duration=quiz_data.estimated_duration,
+                created_by=creator_id,
+                status=QuizStatus.DRAFT
+            )
+            logging.info(f"✅ [QuizService.create_quiz] Quiz entity created with ID: {quiz.id}")
+
+            # Cargar preguntas si se proporcionaron IDs
+            logging.info(f"🔍 [QuizService.create_quiz] Processing questions: {len(quiz_data.questions) if quiz_data.questions else 0} provided")
+            if quiz_data.questions:
+                questions = []
+                for question_id in quiz_data.questions:
+                    question = await self.quiz_repository.get_question_by_id(question_id)
+                    if question:
+                        questions.append(question)
+                quiz.questions = questions
+                logging.info(f"✅ [QuizService.create_quiz] Loaded {len(questions)} questions")
+
+            logging.info(f"🔍 [QuizService.create_quiz] Calculating total points...")
+            quiz.calculate_total_points()
+            logging.info(f"✅ [QuizService.create_quiz] Total points calculated: {quiz.total_points}")
+
+            # Guardar en repositorio
+            logging.info(f"🔍 [QuizService.create_quiz] Saving to repository...")
+            saved_quiz = await self.quiz_repository.create_quiz(quiz)
+            logging.info(f"✅ [QuizService.create_quiz] Quiz saved successfully")
+
+            logging.info(f"🔍 [QuizService.create_quiz] Converting to response...")
+            response = self._quiz_to_response(saved_quiz)
+            logging.info(f"✅ [QuizService.create_quiz] Quiz creation completed successfully")
+            return response
+
+        except Exception as e:
+            logging.error(f"❌ [QuizService.create_quiz] Error during quiz creation: {str(e)}")
+            logging.error(f"❌ [QuizService.create_quiz] Error type: {type(e)}")
+            import traceback
+            logging.error(f"❌ [QuizService.create_quiz] Traceback: {traceback.format_exc()}")
+            raise
 
     async def get_quiz_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
         """Obtener quiz por ID."""
