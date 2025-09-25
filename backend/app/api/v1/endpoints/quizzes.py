@@ -77,7 +77,7 @@ async def create_quiz_for_lesson(
 
     try:
         return await quiz_service.create_quiz_for_lesson(
-            lesson_id, quiz_data, current_user.id
+            lesson_id, quiz_data, current_user.id, current_user.role
         )
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))

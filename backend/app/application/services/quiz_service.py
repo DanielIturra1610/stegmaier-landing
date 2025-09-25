@@ -1,6 +1,7 @@
 """
 Servicio de aplicación para el sistema de quizzes.
 """
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
@@ -37,7 +38,7 @@ class QuizService:
         self.course_repository = course_repository
 
     async def create_quiz_for_lesson(
-        self, lesson_id: str, quiz_data: QuizCreate, creator_id: str
+        self, lesson_id: str, quiz_data: QuizCreate, creator_id: str, user_role: str = None
     ) -> QuizResponse:
         """
         Crea un quiz y lo vincula a una lección existente.
@@ -52,11 +53,23 @@ class QuizService:
 
         # 2. Verificar permisos del usuario sobre el curso
         course = await self.course_repository.get_by_id(lesson.course_id)
-        if not course or course.instructor_id != creator_id:
+        logging.info(f"🔍 [QuizService] Course found: {course.title if course else 'None'}")
+        logging.info(f"🔍 [QuizService] Course instructor_id: {course.instructor_id if course else 'None'}")
+        logging.info(f"🔍 [QuizService] Creator ID: {creator_id}")
+        logging.info(f"🔍 [QuizService] Checking permissions: course exists = {course is not None}, instructor match = {course.instructor_id == creator_id if course else False}")
+
+        # Los admins pueden crear quizzes en cualquier curso
+        is_admin = user_role == "admin"
+        is_instructor_owner = course and course.instructor_id == creator_id
+
+        if not course or (not is_admin and not is_instructor_owner):
+            logging.error(f"❌ [QuizService] Permission denied: course exists = {course is not None}, instructor_id = {course.instructor_id if course else 'None'}, creator_id = {creator_id}, user_role = {user_role}, is_admin = {is_admin}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No autorizado para crear un quiz para esta lección",
             )
+
+        logging.info(f"✅ [QuizService] Permission granted: is_admin = {is_admin}, is_instructor_owner = {is_instructor_owner}")
 
         # 3. Verificar si la lección ya tiene un quiz
         if lesson.content_type == ContentType.QUIZ and lesson.quiz_id:
