@@ -56,6 +56,10 @@ async def create_quiz_for_lesson(
 ):
     logging.info("!!!!!!!!!!!!!!!!! QUIZ CREATION ENDPOINT HIT !!!!!!!!!!!!!!!!!")
     logging.info(f"!!!!!!!!!!!!!!!!! Received request for lesson ID: {lesson_id} !!!!!!!!!!!!!!!!!")
+    logging.info(f"🔐 [DEBUG] Current user ID: {current_user.id}")
+    logging.info(f"🔐 [DEBUG] Current user email: {current_user.email}")
+    logging.info(f"🔐 [DEBUG] Current user role: '{current_user.role}' (type: {type(current_user.role)})")
+    logging.info(f"🔐 [DEBUG] Checking if role '{current_user.role}' is in ['instructor', 'admin']")
     """
     Crear un nuevo quiz vinculado a una lección.
 
@@ -63,10 +67,13 @@ async def create_quiz_for_lesson(
     - El quiz se crea en estado DRAFT por defecto.
     """
     if current_user.role not in ["instructor", "admin"]:
+        logging.error(f"❌ [DEBUG] Authorization failed! Role '{current_user.role}' not in ['instructor', 'admin']")
         raise HTTPException(
             status_code=403,
             detail="Solo instructores y administradores pueden crear quizzes para una lección",
         )
+
+    logging.info(f"✅ [DEBUG] Authorization passed! Role '{current_user.role}' is authorized")
 
     try:
         return await quiz_service.create_quiz_for_lesson(
