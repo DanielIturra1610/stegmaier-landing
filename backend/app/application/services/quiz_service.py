@@ -78,7 +78,7 @@ class QuizService:
         logging.info(f"🔍 [QuizService] Lesson content_type: {lesson.content_type}, quiz_id: {lesson.quiz_id}")
 
         if lesson.content_type == ContentType.QUIZ and lesson.quiz_id:
-            existing_quiz = await self.quiz_repository.get_quiz_by_id(lesson.quiz_id)
+            existing_quiz = await self.quiz_repository.get_by_id(lesson.quiz_id)
             if existing_quiz:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -188,9 +188,9 @@ class QuizService:
             logging.error(f"❌ [QuizService.create_quiz] Traceback: {traceback.format_exc()}")
             raise
 
-    async def get_quiz_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
+    async def get_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
         """Obtener quiz por ID."""
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
@@ -202,7 +202,7 @@ class QuizService:
 
     async def update_quiz(self, quiz_id: str, quiz_data: QuizUpdate, user_id: str) -> QuizResponse:
         """Actualizar quiz existente."""
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
@@ -234,7 +234,7 @@ class QuizService:
 
     async def delete_quiz(self, quiz_id: str, user_id: str) -> bool:
         """Eliminar quiz."""
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
@@ -312,7 +312,7 @@ class QuizService:
 
     async def add_question_to_quiz(self, quiz_id: str, question_id: str, user_id: str) -> bool:
         """Agregar pregunta a quiz."""
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
@@ -338,7 +338,7 @@ class QuizService:
     # Gestión de Intentos
     async def start_quiz_attempt(self, quiz_id: str, student_id: str) -> QuizAttemptResponse:
         """Iniciar nuevo intento de quiz."""
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
@@ -380,7 +380,7 @@ class QuizService:
             raise ValidationError("El intento no está en progreso")
         
         # Obtener quiz para validaciones
-        quiz = await self.quiz_repository.get_quiz_by_id(attempt.quiz_id)
+        quiz = await self.quiz_repository.get_by_id(attempt.quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz no encontrado")
         
@@ -444,7 +444,7 @@ class QuizService:
             raise ValidationError("El intento no está en progreso")
         
         # Obtener quiz para cálculos finales
-        quiz = await self.quiz_repository.get_quiz_by_id(attempt.quiz_id)
+        quiz = await self.quiz_repository.get_by_id(attempt.quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz no encontrado")
         
@@ -474,7 +474,7 @@ class QuizService:
         """
         Obtener estadísticas detalladas de un quiz.
         """
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if not quiz:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
 
@@ -655,7 +655,7 @@ class QuizService:
         completion_rate = (len(completed_attempts) / total_attempts) * 100 if total_attempts > 0 else 0
         
         # Actualizar quiz
-        quiz = await self.quiz_repository.get_quiz_by_id(quiz_id)
+        quiz = await self.quiz_repository.get_by_id(quiz_id)
         if quiz:
             quiz.total_attempts = total_attempts
             quiz.average_score = average_score

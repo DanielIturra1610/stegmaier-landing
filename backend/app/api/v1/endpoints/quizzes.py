@@ -167,12 +167,11 @@ async def update_quiz(
             raise HTTPException(status_code=403, detail="No autorizado para modificar quizzes")
 
         return await quiz_service.update_quiz(quiz_id, quiz_data, current_user.id)
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except UnauthorizedError as e:
-        raise HTTPException(status_code=403, detail=str(e))
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error updating quiz {quiz_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.delete("/{quiz_id}")
