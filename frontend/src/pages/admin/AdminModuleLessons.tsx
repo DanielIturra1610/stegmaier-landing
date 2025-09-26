@@ -452,8 +452,8 @@ const AdminModuleLessons: React.FC = () => {
         </div>
       </div>
 
-      {/* Video Uploader - solo si no hay lecciones de video válidas */}
-      {showVideoUploader && !lessons.some(l => l.content_type === ContentType.VIDEO && l.content_url) && (
+      {/* Video Uploader */}
+      {showVideoUploader && (
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-start space-x-3 mb-4">
             <div className="flex-shrink-0">
