@@ -481,10 +481,11 @@ const AdminQuizForm: React.FC = () => {
                   onChange={(e) => handleQuestionChange('type', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="multiple_choice">Opción Múltiple</option>
-                  <option value="true_false">Verdadero/Falso</option>
-                  <option value="short_answer">Respuesta Corta</option>
-                  <option value="multiple_select">Selección Múltiple</option>
+                  <option value={QuestionType.MULTIPLE_CHOICE}>Opción Múltiple</option>
+                  <option value={QuestionType.TRUE_FALSE}>Verdadero/Falso</option>
+                  <option value={QuestionType.FILL_IN_BLANK}>Completar Texto</option>
+                  <option value={QuestionType.MULTIPLE_SELECT}>Selección Múltiple</option>
+                  <option value={QuestionType.ESSAY}>Ensayo</option>
                 </select>
               </div>
 
@@ -618,8 +619,8 @@ const AdminQuizForm: React.FC = () => {
                 </div>
               )}
 
-              {/* Short Answer/Essay specific handling */}
-              {(currentQuestion.type === 'short_answer' || currentQuestion.type === 'essay') && (
+              {/* Fill in Blank/Essay specific handling */}
+              {(currentQuestion.type === QuestionType.FILL_IN_BLANK || currentQuestion.type === QuestionType.ESSAY) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Respuesta Esperada (opcional)
@@ -632,7 +633,7 @@ const AdminQuizForm: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Para preguntas de ensayo, la evaluación será manual
+                    Para preguntas de texto libre y ensayo, la evaluación será manual
                   </p>
                 </div>
               )}
