@@ -101,16 +101,15 @@ class QuizService:
         new_quiz = await self.create_quiz(quiz_data, creator_id)
         logging.info(f"✅ [QuizService] Quiz created successfully with ID: {new_quiz.id}")
 
-        # 5. Actualizar la lección para vincular el quiz
-        logging.info(f"🔍 [QuizService] Step 5: Updating lesson to link quiz...")
-        lesson.content_type = ContentType.QUIZ
-        lesson.quiz_id = new_quiz.id
+        # 5. Actualizar la lección para vincular el quiz (SIN cambiar el content_type)
+        logging.info(f"🔍 [QuizService] Step 5: Linking quiz to lesson...")
 
-        update_data = {"content_type": ContentType.QUIZ, "quiz_id": new_quiz.id}
-        logging.info(f"🔍 [QuizService] Updating lesson {lesson_id} with data: {update_data}")
+        # Solo agregar quiz_id, NO cambiar content_type
+        update_data = {"quiz_id": new_quiz.id}
+        logging.info(f"🔍 [QuizService] Updating lesson {lesson_id} with quiz_id: {new_quiz.id}")
 
         await self.lesson_repository.update(lesson_id, update_data)
-        logging.info(f"✅ [QuizService] Lesson updated successfully")
+        logging.info(f"✅ [QuizService] Lesson updated successfully - quiz linked without changing content type")
 
         logging.info(f"🎉 [QuizService] create_quiz_for_lesson completed successfully!")
         return new_quiz

@@ -655,9 +655,15 @@ const AdminModuleLessons: React.FC = () => {
                           {lesson.title}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {lesson.content_text && lesson.content_text.length > 100 ?
-                            `${lesson.content_text.substring(0, 100)}...` :
-                            lesson.content_text || 'Sin contenido'}
+                          {lesson.content_type === ContentType.VIDEO ? (
+                            lesson.content_url ? 'Video de entrenamiento' : 'Video sin archivo'
+                          ) : lesson.content_type === ContentType.QUIZ ? (
+                            lesson.quiz ? `Quiz: ${lesson.quiz.title}` : 'Quiz sin configurar'
+                          ) : (
+                            lesson.content_text && lesson.content_text.length > 100 ?
+                              `${lesson.content_text.substring(0, 100)}...` :
+                              lesson.content_text || 'Sin contenido'
+                          )}
                         </p>
                         <div className="text-xs text-gray-400 mt-1">
                           {lesson.duration ? `${lesson.duration} min` : 'Sin duración'} •
