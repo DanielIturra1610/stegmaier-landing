@@ -7,7 +7,7 @@ from bson import ObjectId
 from datetime import datetime
 
 from app.domain.repositories.quiz_repository import QuizRepository
-from app.domain.entities.quiz import Quiz, QuizAttempt, Question, QuestionBank, QuizStatus, AttemptStatus
+from app.domain.entities.quiz import Quiz, QuizAttempt, Question, QuestionBank, QuizStatus, AttemptStatus, QuizConfiguration
 
 
 class MongoDBQuizRepository(QuizRepository):
@@ -33,7 +33,17 @@ class MongoDBQuizRepository(QuizRepository):
             if field in quiz_dict and quiz_dict[field]:
                 if isinstance(quiz_dict[field], str):
                     quiz_dict[field] = datetime.fromisoformat(quiz_dict[field].replace('Z', '+00:00'))
-        
+
+        # Convertir diccionario config de vuelta a QuizConfiguration
+        if "config" in quiz_dict and isinstance(quiz_dict["config"], dict):
+            config_dict = quiz_dict["config"].copy()
+            # Convertir fechas en la configuración
+            for field in ["available_from", "available_until"]:
+                if field in config_dict and config_dict[field]:
+                    if isinstance(config_dict[field], str):
+                        config_dict[field] = datetime.fromisoformat(config_dict[field].replace('Z', '+00:00'))
+            quiz_dict["config"] = QuizConfiguration(**config_dict)
+
         # Crear objeto Quiz usando from_dict si existe, sino usar constructor
         try:
             return Quiz(**quiz_dict)
@@ -58,7 +68,16 @@ class MongoDBQuizRepository(QuizRepository):
         # Convertir enums a string
         if isinstance(quiz_dict.get("status"), QuizStatus):
             quiz_dict["status"] = quiz_dict["status"].value
-        
+
+        # Convertir QuizConfiguration a diccionario
+        if "config" in quiz_dict and hasattr(quiz_dict["config"], "__dict__"):
+            quiz_dict["config"] = quiz_dict["config"].__dict__.copy()
+            # Convertir fechas en la configuración
+            config = quiz_dict["config"]
+            for field in ["available_from", "available_until"]:
+                if field in config and isinstance(config[field], datetime):
+                    config[field] = config[field].isoformat()
+
         return quiz_dict
 
     def _dict_to_attempt(self, attempt_dict: dict) -> QuizAttempt:
