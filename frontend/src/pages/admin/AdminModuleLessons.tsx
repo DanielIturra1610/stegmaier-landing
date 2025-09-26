@@ -146,7 +146,7 @@ const AdminModuleLessons: React.FC = () => {
       toast.success(`Quiz "${newQuiz.title}" creado para la lección!`);
       
       // Navigate to the quiz editor page
-      navigate(`/platform/admin/quizzes/${newQuiz.id}`);
+      navigate(`/platform/admin/quizzes/${newQuiz.id}/edit`);
 
     } catch (error: any) {
       console.error('❌ [AdminModuleLessons] Error creating quiz for lesson:', error);

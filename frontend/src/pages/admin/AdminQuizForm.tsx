@@ -85,12 +85,12 @@ const AdminQuizForm: React.FC = () => {
           course_id: quiz.course_id,
           lesson_id: quiz.lesson_id || '',
           instructions: quiz.instructions || '',
-          time_limit_minutes: quiz.time_limit_minutes || 0,
-          max_attempts: quiz.max_attempts,
-          passing_score: quiz.passing_score,
-          shuffle_questions: quiz.shuffle_questions,
-          show_results: quiz.show_results,
-          allow_review: quiz.allow_review,
+          time_limit_minutes: quiz.time_limit_minutes || quiz.config?.time_limit || 0,
+          max_attempts: quiz.max_attempts || quiz.config?.max_attempts || 3,
+          passing_score: quiz.passing_score || quiz.config?.passing_score || 70,
+          shuffle_questions: quiz.shuffle_questions ?? quiz.config?.shuffle_questions ?? false,
+          show_results: quiz.show_results ?? quiz.config?.show_correct_answers ?? true,
+          allow_review: quiz.allow_review ?? quiz.config?.allow_review ?? true,
           tags: quiz.tags || [],
           status: quiz.status
         });
@@ -123,19 +123,38 @@ const AdminQuizForm: React.FC = () => {
       return;
     }
 
+    // Validaciones específicas por tipo de pregunta
     if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE || currentQuestion.type === QuestionType.MULTIPLE_SELECT) {
       const validOptions = Array.isArray(currentQuestion.options) ? currentQuestion.options.filter(opt => opt.text?.trim()) : [];
       if (validOptions.length < 2) {
         alert('Debes proporcionar al menos 2 opciones válidas');
         return;
       }
+
+      // Verificar que haya al menos una opción correcta
+      const correctOptions = validOptions.filter(opt => opt.is_correct);
+      if (correctOptions.length === 0) {
+        alert('Debes marcar al menos una opción como correcta');
+        return;
+      }
+
+      // Para multiple choice, solo debe haber una opción correcta
+      if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE && correctOptions.length > 1) {
+        alert('Para preguntas de opción múltiple, solo una respuesta puede ser correcta');
+        return;
+      }
+
       currentQuestion.options = validOptions;
     }
 
-    if (!currentQuestion.correct_answers?.length) {
-      alert('Debes especificar al menos una respuesta correcta');
-      return;
+    if (currentQuestion.type === QuestionType.TRUE_FALSE) {
+      if (!currentQuestion.correct_answers?.length) {
+        alert('Debes seleccionar Verdadero o Falso como respuesta correcta');
+        return;
+      }
     }
+
+    // Para otros tipos de preguntas, correct_answers puede estar vacío (evaluación manual)
 
     const questionData: Question = {
       ...currentQuestion as Question,
@@ -248,21 +267,33 @@ const AdminQuizForm: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/platform/admin/quizzes')}
-            className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {isEditing ? 'Editar Quiz' : 'Nuevo Quiz'}
-            </h1>
-            <p className="text-gray-600">
-              {isEditing ? 'Modifica los detalles del quiz' : 'Crea un nuevo quiz de evaluación'}
-            </p>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/platform/admin/quizzes')}
+              className="p-2 text-blue-100 hover:text-white hover:bg-blue-500/20 rounded-lg transition-colors"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold">
+                {isEditing ? 'Editar Quiz' : 'Nuevo Quiz'}
+              </h1>
+              <p className="text-blue-100">
+                {isEditing ? 'Modifica los detalles del quiz' : 'Crea un nuevo quiz de evaluación'}
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:block">
+            <div className="bg-blue-500/20 rounded-lg p-4 backdrop-blur-sm">
+              <div className="text-sm text-blue-100">
+                Stegmaier Platform
+              </div>
+              <div className="text-xs text-blue-200">
+                Sistema de Evaluación
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -411,7 +442,7 @@ const AdminQuizForm: React.FC = () => {
           </h2>
           <button
             onClick={() => setShowQuestionForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             <PlusIcon className="h-4 w-4" />
             <span>Agregar Pregunta</span>
@@ -467,6 +498,155 @@ const AdminQuizForm: React.FC = () => {
                   min="1"
                   value={currentQuestion.points}
                   onChange={(e) => handleQuestionChange('points', parseInt(e.target.value) || 1)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Options for Multiple Choice/Multiple Select */}
+              {(currentQuestion.type === QuestionType.MULTIPLE_CHOICE || currentQuestion.type === QuestionType.MULTIPLE_SELECT) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Opciones de Respuesta *
+                  </label>
+                  <div className="space-y-2">
+                    {currentQuestion.options?.map((option, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type={currentQuestion.type === QuestionType.MULTIPLE_CHOICE ? 'radio' : 'checkbox'}
+                          name="correct_answer"
+                          checked={option.is_correct}
+                          onChange={(e) => {
+                            const updatedOptions = [...(currentQuestion.options || [])];
+                            if (currentQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                              // Para múltiple choice, solo una puede ser correcta
+                              updatedOptions.forEach((opt, i) => {
+                                opt.is_correct = i === index;
+                              });
+                            } else {
+                              // Para múltiple select, múltiples pueden ser correctas
+                              updatedOptions[index].is_correct = e.target.checked;
+                            }
+                            handleQuestionChange('options', updatedOptions);
+                            // Actualizar correct_answers
+                            const correctIds = updatedOptions.filter(opt => opt.is_correct).map(opt => opt.id);
+                            handleQuestionChange('correct_answers', correctIds);
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        />
+                        <input
+                          type="text"
+                          value={option.text}
+                          onChange={(e) => {
+                            const updatedOptions = [...(currentQuestion.options || [])];
+                            updatedOptions[index].text = e.target.value;
+                            handleQuestionChange('options', updatedOptions);
+                          }}
+                          placeholder={`Opción ${index + 1}`}
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        {(currentQuestion.options?.length || 0) > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updatedOptions = (currentQuestion.options || []).filter((_, i) => i !== index);
+                              handleQuestionChange('options', updatedOptions);
+                            }}
+                            className="text-red-600 hover:text-red-800 p-1"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOption = {
+                          id: String((currentQuestion.options?.length || 0) + 1),
+                          text: '',
+                          is_correct: false,
+                          order: currentQuestion.options?.length || 0
+                        };
+                        handleQuestionChange('options', [...(currentQuestion.options || []), newOption]);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      + Agregar opción
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* True/False specific handling */}
+              {currentQuestion.type === QuestionType.TRUE_FALSE && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Respuesta Correcta *
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="true_false_answer"
+                        value="true"
+                        checked={currentQuestion.correct_answers?.includes('true')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleQuestionChange('correct_answers', ['true']);
+                          }
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Verdadero</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="true_false_answer"
+                        value="false"
+                        checked={currentQuestion.correct_answers?.includes('false')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleQuestionChange('correct_answers', ['false']);
+                          }
+                        }}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Falso</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Short Answer/Essay specific handling */}
+              {(currentQuestion.type === 'short_answer' || currentQuestion.type === 'essay') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Respuesta Esperada (opcional)
+                  </label>
+                  <textarea
+                    value={currentQuestion.correct_answers?.[0] || ''}
+                    onChange={(e) => handleQuestionChange('correct_answers', [e.target.value])}
+                    placeholder="Respuesta esperada o palabras clave..."
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Para preguntas de ensayo, la evaluación será manual
+                  </p>
+                </div>
+              )}
+
+              {/* Explanation field for all question types */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Explicación (opcional)
+                </label>
+                <textarea
+                  value={currentQuestion.explanation}
+                  onChange={(e) => handleQuestionChange('explanation', e.target.value)}
+                  placeholder="Explicación de la respuesta correcta..."
+                  rows={2}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -547,28 +727,42 @@ const AdminQuizForm: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end space-x-4">
-        <button
-          onClick={() => navigate('/admin/quizzes')}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={() => handleSubmit(QuizStatus.DRAFT)}
-          disabled={loading}
-          className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
-        >
-          <CheckIcon className="h-4 w-4" />
-          <span>Guardar Borrador</span>
-        </button>
-        <button
-          onClick={() => handleSubmit(QuizStatus.PUBLISHED)}
-          disabled={loading || questions.length === 0}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          Publicar Quiz
-        </button>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+          <button
+            onClick={() => navigate('/platform/admin/quizzes')}
+            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => handleSubmit(QuizStatus.DRAFT)}
+            disabled={loading}
+            className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-xl"
+          >
+            <CheckIcon className="h-4 w-4" />
+            <span>Guardar Borrador</span>
+          </button>
+          <button
+            onClick={() => handleSubmit(QuizStatus.PUBLISHED)}
+            disabled={loading || questions.length === 0}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+          >
+            {loading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <>
+                <CheckIcon className="h-4 w-4" />
+                <span>Publicar Quiz</span>
+              </>
+            )}
+          </button>
+        </div>
+        {questions.length === 0 && (
+          <p className="text-sm text-gray-500 mt-3 text-center">
+            💡 Agrega al menos una pregunta para poder publicar el quiz
+          </p>
+        )}
       </div>
     </div>
   );
