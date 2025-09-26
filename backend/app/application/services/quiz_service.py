@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from uuid import uuid4
+from bson import ObjectId
 
 from ..dtos.quiz_dto import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
@@ -123,7 +124,7 @@ class QuizService:
             # Crear entidad Quiz
             logging.info(f"🔍 [QuizService.create_quiz] Creating Quiz entity...")
             quiz = Quiz(
-                id=str(uuid4()),
+                id=str(ObjectId()),
                 title=quiz_data.title,
                 description=quiz_data.description,
                 instructions=quiz_data.instructions,
@@ -260,7 +261,7 @@ class QuizService:
     async def create_question(self, question_data: QuestionCreate, creator_id: str) -> QuestionResponse:
         """Crear nueva pregunta."""
         question = Question(
-            id=str(uuid4()),
+            id=str(ObjectId()),
             type=question_data.type,
             title=question_data.title,
             content=question_data.content,
@@ -279,7 +280,7 @@ class QuizService:
         if question_data.options:
             question.options = [
                 QuestionOption(
-                    id=str(uuid4()),
+                    id=str(ObjectId()),
                     text=opt.text,
                     is_correct=opt.is_correct,
                     explanation=opt.explanation,
@@ -337,7 +338,7 @@ class QuizService:
         
         # Crear nuevo intento
         attempt = QuizAttempt(
-            id=str(uuid4()),
+            id=str(ObjectId()),
             quiz_id=quiz_id,
             student_id=student_id,
             attempt_number=len(existing_attempts) + 1,
