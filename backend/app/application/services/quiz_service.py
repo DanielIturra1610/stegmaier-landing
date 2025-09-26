@@ -15,7 +15,7 @@ from ..dtos.quiz_dto import (
 )
 from ...domain.entities.quiz import (
     Quiz, Question, QuizAttempt, QuizAnswer, QuestionOption,
-    QuizStatus, AttemptStatus, QuestionType
+    QuizStatus, AttemptStatus, QuestionType, QuizConfiguration
 )
 from ...domain.repositories.quiz_repository import QuizRepository
 from ...domain.repositories.lesson_repository import LessonRepository
@@ -123,6 +123,24 @@ class QuizService:
         try:
             # Crear entidad Quiz
             logging.info(f"🔍 [QuizService.create_quiz] Creating Quiz entity...")
+
+            # Convertir DTO QuizConfigurationCreate a entidad QuizConfiguration
+            domain_config = QuizConfiguration(
+                shuffle_questions=quiz_data.config.shuffle_questions,
+                shuffle_answers=quiz_data.config.shuffle_answers,
+                show_results_immediately=quiz_data.config.show_results_immediately,
+                show_correct_answers=quiz_data.config.show_correct_answers,
+                allow_retakes=quiz_data.config.allow_retakes,
+                max_attempts=quiz_data.config.max_attempts,
+                passing_score=quiz_data.config.passing_score,
+                time_limit=quiz_data.config.time_limit,
+                available_from=quiz_data.config.available_from,
+                available_until=quiz_data.config.available_until,
+                require_proctor=quiz_data.config.require_proctor,
+                randomize_from_pool=quiz_data.config.randomize_from_pool,
+                questions_per_attempt=quiz_data.config.questions_per_attempt
+            )
+
             quiz = Quiz(
                 id=str(ObjectId()),
                 title=quiz_data.title,
@@ -131,7 +149,7 @@ class QuizService:
                 course_id=quiz_data.course_id,
                 module_id=quiz_data.module_id,
                 lesson_id=quiz_data.lesson_id,
-                config=quiz_data.config,
+                config=domain_config,
                 estimated_duration=quiz_data.estimated_duration,
                 created_by=creator_id,
                 status=QuizStatus.DRAFT
