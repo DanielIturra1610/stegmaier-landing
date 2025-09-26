@@ -11,7 +11,8 @@ from ..dtos.quiz_dto import (
     QuizCreate, QuizUpdate, QuizResponse, QuizListResponse,
     QuestionCreate, QuestionUpdate, QuestionResponse,
     QuizAttemptCreate, QuizAttemptUpdate, QuizAttemptResponse,
-    QuizAnswerSubmit, QuizStatistics, StudentQuizProgress
+    QuizAnswerSubmit, QuizStatistics, StudentQuizProgress,
+    QuizConfigurationResponse
 )
 from ...domain.entities.quiz import (
     Quiz, Question, QuizAttempt, QuizAnswer, QuestionOption,
@@ -664,6 +665,23 @@ class QuizService:
 
     def _quiz_to_response(self, quiz: Quiz) -> QuizResponse:
         """Convertir entidad Quiz a DTO de respuesta."""
+        # Convertir QuizConfiguration a QuizConfigurationResponse
+        config_response = QuizConfigurationResponse(
+            shuffle_questions=quiz.config.shuffle_questions,
+            shuffle_answers=quiz.config.shuffle_answers,
+            show_results_immediately=quiz.config.show_results_immediately,
+            show_correct_answers=quiz.config.show_correct_answers,
+            allow_retakes=quiz.config.allow_retakes,
+            max_attempts=quiz.config.max_attempts,
+            passing_score=quiz.config.passing_score,
+            time_limit=quiz.config.time_limit,
+            available_from=quiz.config.available_from,
+            available_until=quiz.config.available_until,
+            require_proctor=quiz.config.require_proctor,
+            randomize_from_pool=quiz.config.randomize_from_pool,
+            questions_per_attempt=quiz.config.questions_per_attempt
+        )
+
         return QuizResponse(
             id=quiz.id,
             title=quiz.title,
@@ -674,7 +692,7 @@ class QuizService:
             lesson_id=quiz.lesson_id,
             questions=[self._question_to_response(q) for q in quiz.questions],
             question_pool=quiz.question_pool,
-            config=quiz.config,
+            config=config_response,
             status=quiz.status,
             total_points=quiz.total_points,
             estimated_duration=quiz.estimated_duration,
