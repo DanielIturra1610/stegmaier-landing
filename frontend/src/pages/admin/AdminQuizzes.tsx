@@ -14,7 +14,8 @@ import {
   EyeIcon,
   ChartBarIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 
 interface Course {
@@ -104,9 +105,18 @@ const AdminQuizzes: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Quizzes</h1>
-          <p className="text-gray-600">Administra los quizzes de evaluación</p>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => navigate('/platform/courses')}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Volver a Gestión de Cursos"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Quizzes</h1>
+            <p className="text-gray-600">Administra los quizzes de evaluación</p>
+          </div>
         </div>
         <button
           onClick={() => navigate('/platform/admin/quizzes/new')}

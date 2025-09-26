@@ -668,29 +668,8 @@ const AdminModuleLessons: React.FC = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    {lesson.content_type === ContentType.VIDEO && lesson.content_url && (() => {
-                      console.log('🔍 Video lesson debug:', {
-                        id: lesson.id,
-                        title: lesson.title,
-                        content_type: lesson.content_type,
-                        content_url: lesson.content_url
-                      });
-
-                      // Test video ID extraction right here
-                      const testVideoId = extractVideoId(lesson.content_url);
-                      console.log('🔍 Video ID extraction test:', {
-                        original_url: lesson.content_url,
-                        extracted_id: testVideoId
-                      });
-
-                      // Check if the content_url contains undefined - if so, this is corrupted data
-                      if (lesson.content_url.includes('undefined')) {
-                        console.error('🚨 Found corrupted lesson with undefined in content_url, will show delete option');
-                        return false;
-                      }
-
-                      return true;
-                    })() && (
+                    {/* Ver Video - Solo para lecciones de video con contenido válido */}
+                    {lesson.content_type === ContentType.VIDEO && lesson.content_url && !lesson.content_url.includes('undefined') && (
                       <button
                         onClick={() => {
                           setSelectedLesson(lesson);
@@ -704,6 +683,7 @@ const AdminModuleLessons: React.FC = () => {
                       </button>
                     )}
 
+                    {/* Gestión de Quiz */}
                     {lesson.content_type === ContentType.QUIZ && lesson.quiz ? (
                       <>
                         <button
@@ -723,7 +703,8 @@ const AdminModuleLessons: React.FC = () => {
                           Editar Quiz
                         </button>
                       </>
-                    ) : lesson.content_type !== ContentType.QUIZ && (
+                    ) : (
+                      /* Crear Quiz - Para cualquier lección que no sea ya un quiz */
                       <button
                         onClick={() => handleCreateQuizForLesson(lesson.id)}
                         className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-md text-sm font-medium transition-colors"
