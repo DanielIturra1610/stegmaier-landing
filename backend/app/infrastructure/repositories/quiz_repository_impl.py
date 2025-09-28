@@ -40,12 +40,22 @@ class MongoDBQuizRepository(QuizRepository):
             if isinstance(quiz_dict["config"], dict):
                 config_dict = quiz_dict["config"].copy()
 
-                # ✅ Agregar valores por defecto para campos faltantes
+                # ✅ Agregar valores por defecto para campos faltantes (solo campos válidos)
                 default_config = QuizConfiguration()
-                for field in default_config.__dict__.keys():
+                valid_fields = {
+                    'shuffle_questions', 'shuffle_answers', 'show_results_immediately',
+                    'show_correct_answers', 'allow_review', 'allow_retakes', 'max_attempts',
+                    'passing_score', 'time_limit', 'available_from', 'available_until',
+                    'require_proctor', 'randomize_from_pool', 'questions_per_attempt'
+                }
+
+                for field in valid_fields:
                     if field not in config_dict:
-                        default_value = getattr(default_config, field)
+                        default_value = getattr(default_config, field, None)
                         config_dict[field] = default_value
+
+                # ✅ Limpiar campos no válidos que puedan existir en la BD
+                config_dict = {k: v for k, v in config_dict.items() if k in valid_fields}
 
                 # Convertir fechas en la configuración
                 for field in ["available_from", "available_until"]:

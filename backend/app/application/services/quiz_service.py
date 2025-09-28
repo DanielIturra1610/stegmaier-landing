@@ -326,18 +326,44 @@ class QuizService:
         try:
             logging.info(f"🔍 [QuizService.get_all_quizzes] Getting all quizzes for user {user_id} with role {user_role}")
 
+            # ✅ CORREGIDO: Manejar tanto string como enum para user_role
+            role_str = str(user_role).lower() if hasattr(user_role, 'value') else str(user_role).lower()
+            role_str = role_str.replace('userrole.', '')  # Remover prefijo enum si existe
+
+            logging.info(f"🔍 [QuizService.get_all_quizzes] Processed role: {role_str}")
+
             # Obtener quizzes basado en el rol
-            if user_role == "admin":
-                # Admins pueden ver todos los quizzes
-                quizzes = await self.quiz_repository.get_published(None) if published_only else []
-                # TODO: Implementar método para obtener todos los quizzes
-                quizzes = []
-            elif user_role == "instructor" and user_id:
-                # Instructores pueden ver sus propios quizzes
+            if role_str == "admin":
+                # ✅ SIMPLIFICADO: Admins ven todos los quizzes que crearon
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Admin user, getting quizzes by instructor for user: {user_id}")
                 quizzes = await self.quiz_repository.get_by_instructor(user_id)
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Got {len(quizzes)} quizzes from get_by_instructor")
+
+                # Si también queremos publicados de otros usuarios, agregar:
+                if not published_only:
+                    try:
+                        published_quizzes = await self.quiz_repository.get_published(None)
+                        logging.info(f"🔍 [QuizService.get_all_quizzes] Got {len(published_quizzes)} published quizzes")
+
+                        # Combinar y evitar duplicados
+                        existing_ids = {q.id for q in quizzes}
+                        for quiz in published_quizzes:
+                            if quiz.id not in existing_ids:
+                                quizzes.append(quiz)
+                        logging.info(f"🔍 [QuizService.get_all_quizzes] Total after merging: {len(quizzes)}")
+                    except Exception as e:
+                        logging.warning(f"⚠️ [QuizService.get_all_quizzes] Could not get published quizzes: {e}")
+
+            elif role_str == "instructor" and user_id:
+                # Instructores pueden ver sus propios quizzes
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Instructor user, getting quizzes for: {user_id}")
+                quizzes = await self.quiz_repository.get_by_instructor(user_id)
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Got {len(quizzes)} instructor quizzes")
             else:
                 # Estudiantes solo ven quizzes publicados
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Student user, getting published quizzes")
                 quizzes = await self.quiz_repository.get_published(None)
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Got {len(quizzes)} published quizzes")
 
             response_list = []
             for quiz in quizzes:
