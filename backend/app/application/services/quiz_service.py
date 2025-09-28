@@ -229,7 +229,7 @@ class QuizService:
         quiz.updated_at = datetime.utcnow()
         quiz.calculate_total_points()
         
-        updated_quiz = await self.quiz_repository.update_quiz(quiz)
+        updated_quiz = await self.quiz_repository.update(quiz_id, quiz.to_dict())
         return self._quiz_to_response(updated_quiz)
 
     async def delete_quiz(self, quiz_id: str, user_id: str) -> bool:
@@ -331,8 +331,8 @@ class QuizService:
         quiz.questions.append(question)
         quiz.calculate_total_points()
         quiz.updated_at = datetime.utcnow()
-        
-        await self.quiz_repository.update_quiz(quiz)
+
+        await self.quiz_repository.update(quiz_id, quiz.to_dict())
         return True
 
     # Gestión de Intentos
@@ -660,7 +660,7 @@ class QuizService:
             quiz.total_attempts = total_attempts
             quiz.average_score = average_score
             quiz.completion_rate = completion_rate
-            await self.quiz_repository.update_quiz(quiz)
+            await self.quiz_repository.update(quiz.id, quiz.to_dict())
 
     def _quiz_to_response(self, quiz: Quiz) -> QuizResponse:
         """Convertir entidad Quiz a DTO de respuesta."""
