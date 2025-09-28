@@ -130,6 +130,7 @@ class QuizService:
                 shuffle_answers=quiz_data.config.shuffle_answers,
                 show_results_immediately=quiz_data.config.show_results_immediately,
                 show_correct_answers=quiz_data.config.show_correct_answers,
+                allow_review=getattr(quiz_data.config, 'allow_review', True),  # ✅ AÑADIDO
                 allow_retakes=quiz_data.config.allow_retakes,
                 max_attempts=quiz_data.config.max_attempts,
                 passing_score=quiz_data.config.passing_score,
@@ -190,15 +191,37 @@ class QuizService:
 
     async def get_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
         """Obtener quiz por ID."""
-        quiz = await self.quiz_repository.get_by_id(quiz_id)
-        if not quiz:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
-        
-        # Verificar disponibilidad para estudiantes
-        if user_id and not quiz.is_available_now():
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Quiz no disponible actualmente")
-        
-        return self._quiz_to_response(quiz)
+        try:
+            logging.info(f"🔍 [QuizService.get_by_id] Getting quiz {quiz_id} for user {user_id}")
+
+            quiz = await self.quiz_repository.get_by_id(quiz_id)
+            if not quiz:
+                logging.warning(f"❌ [QuizService.get_by_id] Quiz {quiz_id} not found")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
+
+            # ✅ Validar que el quiz tenga configuración válida
+            if not quiz.config:
+                logging.warning(f"⚠️ [QuizService.get_by_id] Quiz {quiz_id} sin configuración, usando valores por defecto")
+                from ...domain.entities.quiz import QuizConfiguration
+                quiz.config = QuizConfiguration()
+
+            # Verificar disponibilidad para estudiantes
+            if user_id and not quiz.is_available_now():
+                logging.warning(f"❌ [QuizService.get_by_id] Quiz {quiz_id} not available for user {user_id}")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Quiz no disponible actualmente")
+
+            logging.info(f"✅ [QuizService.get_by_id] Quiz {quiz_id} retrieved successfully")
+            return self._quiz_to_response(quiz)
+
+        except HTTPException as he:
+            # Re-raise HTTP exceptions
+            raise he
+        except Exception as e:
+            logging.error(f"❌ [QuizService.get_by_id] Unexpected error for quiz {quiz_id}: {str(e)}")
+            logging.error(f"❌ [QuizService.get_by_id] Error type: {type(e)}")
+            import traceback
+            logging.error(f"❌ [QuizService.get_by_id] Traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno del servidor: {str(e)}")
 
     async def get_quiz_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
         """Alias para get_by_id - obtener quiz por ID."""
@@ -206,35 +229,81 @@ class QuizService:
 
     async def update_quiz(self, quiz_id: str, quiz_data: QuizUpdate, user_id: str) -> QuizResponse:
         """Actualizar quiz existente."""
-        quiz = await self.quiz_repository.get_by_id(quiz_id)
-        if not quiz:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
-        
-        # Verificar permisos
-        if quiz.created_by != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para modificar este quiz")
-        
-        # Actualizar campos
-        if quiz_data.title is not None:
-            quiz.title = quiz_data.title
-        if quiz_data.description is not None:
-            quiz.description = quiz_data.description
-        if quiz_data.instructions is not None:
-            quiz.instructions = quiz_data.instructions
-        if quiz_data.config is not None:
-            quiz.config = quiz_data.config
-        if quiz_data.estimated_duration is not None:
-            quiz.estimated_duration = quiz_data.estimated_duration
-        if quiz_data.status is not None:
-            quiz.status = quiz_data.status
-            if quiz_data.status == QuizStatus.PUBLISHED:
-                quiz.published_at = datetime.utcnow()
-        
-        quiz.updated_at = datetime.utcnow()
-        quiz.calculate_total_points()
-        
-        updated_quiz = await self.quiz_repository.update(quiz_id, quiz.to_dict())
-        return self._quiz_to_response(updated_quiz)
+        try:
+            logging.info(f"🔍 [QuizService.update_quiz] Updating quiz {quiz_id} for user {user_id}")
+
+            quiz = await self.quiz_repository.get_by_id(quiz_id)
+            if not quiz:
+                logging.warning(f"❌ [QuizService.update_quiz] Quiz {quiz_id} not found")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
+
+            # ✅ Validar que el quiz tenga configuración válida
+            if not quiz.config:
+                logging.warning(f"⚠️ [QuizService.update_quiz] Quiz {quiz_id} sin configuración, usando valores por defecto")
+                from ...domain.entities.quiz import QuizConfiguration
+                quiz.config = QuizConfiguration()
+
+            # Verificar permisos
+            if quiz.created_by != user_id:
+                logging.warning(f"❌ [QuizService.update_quiz] User {user_id} not authorized to modify quiz {quiz_id}")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para modificar este quiz")
+
+            # Actualizar campos con validación
+            if quiz_data.title is not None:
+                quiz.title = quiz_data.title
+            if quiz_data.description is not None:
+                quiz.description = quiz_data.description
+            if quiz_data.instructions is not None:
+                quiz.instructions = quiz_data.instructions
+            if quiz_data.config is not None:
+                # ✅ Convertir DTO a entidad con validación
+                from ...domain.entities.quiz import QuizConfiguration
+                new_config = QuizConfiguration(
+                    shuffle_questions=quiz_data.config.shuffle_questions,
+                    shuffle_answers=quiz_data.config.shuffle_answers,
+                    show_results_immediately=quiz_data.config.show_results_immediately,
+                    show_correct_answers=quiz_data.config.show_correct_answers,
+                    allow_review=getattr(quiz_data.config, 'allow_review', True),
+                    allow_retakes=quiz_data.config.allow_retakes,
+                    max_attempts=quiz_data.config.max_attempts,
+                    passing_score=quiz_data.config.passing_score,
+                    time_limit=quiz_data.config.time_limit,
+                    available_from=quiz_data.config.available_from,
+                    available_until=quiz_data.config.available_until,
+                    require_proctor=quiz_data.config.require_proctor,
+                    randomize_from_pool=quiz_data.config.randomize_from_pool,
+                    questions_per_attempt=quiz_data.config.questions_per_attempt
+                )
+                quiz.config = new_config
+            if quiz_data.estimated_duration is not None:
+                quiz.estimated_duration = quiz_data.estimated_duration
+            if quiz_data.status is not None:
+                quiz.status = quiz_data.status
+                if quiz_data.status == QuizStatus.PUBLISHED:
+                    quiz.published_at = datetime.utcnow()
+
+            quiz.updated_at = datetime.utcnow()
+            quiz.calculate_total_points()
+
+            logging.info(f"🔍 [QuizService.update_quiz] Saving updated quiz {quiz_id}")
+            updated_quiz = await self.quiz_repository.update(quiz_id, quiz.to_dict())
+
+            if not updated_quiz:
+                logging.error(f"❌ [QuizService.update_quiz] Failed to save quiz {quiz_id}")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al guardar el quiz")
+
+            logging.info(f"✅ [QuizService.update_quiz] Quiz {quiz_id} updated successfully")
+            return self._quiz_to_response(updated_quiz)
+
+        except HTTPException as he:
+            # Re-raise HTTP exceptions
+            raise he
+        except Exception as e:
+            logging.error(f"❌ [QuizService.update_quiz] Unexpected error for quiz {quiz_id}: {str(e)}")
+            logging.error(f"❌ [QuizService.update_quiz] Error type: {type(e)}")
+            import traceback
+            logging.error(f"❌ [QuizService.update_quiz] Traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno del servidor: {str(e)}")
 
     async def delete_quiz(self, quiz_id: str, user_id: str) -> bool:
         """Eliminar quiz."""
@@ -674,6 +743,7 @@ class QuizService:
             shuffle_answers=quiz.config.shuffle_answers,
             show_results_immediately=quiz.config.show_results_immediately,
             show_correct_answers=quiz.config.show_correct_answers,
+            allow_review=getattr(quiz.config, 'allow_review', True),  # ✅ AÑADIDO
             allow_retakes=quiz.config.allow_retakes,
             max_attempts=quiz.config.max_attempts,
             passing_score=quiz.config.passing_score,

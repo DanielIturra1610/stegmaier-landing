@@ -5,6 +5,7 @@ from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from datetime import datetime
+from uuid import uuid4
 
 from app.domain.repositories.quiz_repository import QuizRepository
 from app.domain.entities.quiz import Quiz, QuizAttempt, Question, QuestionBank, QuizStatus, AttemptStatus, QuizConfiguration
@@ -34,23 +35,52 @@ class MongoDBQuizRepository(QuizRepository):
                 if isinstance(quiz_dict[field], str):
                     quiz_dict[field] = datetime.fromisoformat(quiz_dict[field].replace('Z', '+00:00'))
 
-        # Convertir diccionario config de vuelta a QuizConfiguration
-        if "config" in quiz_dict and isinstance(quiz_dict["config"], dict):
-            config_dict = quiz_dict["config"].copy()
-            # Convertir fechas en la configuración
-            for field in ["available_from", "available_until"]:
-                if field in config_dict and config_dict[field]:
-                    if isinstance(config_dict[field], str):
-                        config_dict[field] = datetime.fromisoformat(config_dict[field].replace('Z', '+00:00'))
-            quiz_dict["config"] = QuizConfiguration(**config_dict)
+        # Convertir diccionario config de vuelta a QuizConfiguration con validación robusta
+        if "config" in quiz_dict and quiz_dict["config"]:
+            if isinstance(quiz_dict["config"], dict):
+                config_dict = quiz_dict["config"].copy()
+
+                # ✅ Agregar valores por defecto para campos faltantes
+                default_config = QuizConfiguration()
+                for field in default_config.__dict__.keys():
+                    if field not in config_dict:
+                        default_value = getattr(default_config, field)
+                        config_dict[field] = default_value
+
+                # Convertir fechas en la configuración
+                for field in ["available_from", "available_until"]:
+                    if field in config_dict and config_dict[field]:
+                        if isinstance(config_dict[field], str):
+                            try:
+                                config_dict[field] = datetime.fromisoformat(config_dict[field].replace('Z', '+00:00'))
+                            except (ValueError, AttributeError):
+                                config_dict[field] = None
+
+                try:
+                    quiz_dict["config"] = QuizConfiguration(**config_dict)
+                except (TypeError, ValueError) as e:
+                    # ✅ Si falla la creación, usar configuración por defecto
+                    print(f"Warning: Error creating QuizConfiguration, using defaults: {e}")
+                    quiz_dict["config"] = QuizConfiguration()
+            else:
+                quiz_dict["config"] = QuizConfiguration()
+        else:
+            # ✅ Si no hay config o es None, usar configuración por defecto
+            quiz_dict["config"] = QuizConfiguration()
 
         # Crear objeto Quiz usando from_dict si existe, sino usar constructor
         try:
             return Quiz(**quiz_dict)
         except TypeError as e:
-            # Manejar campos faltantes o extra
-            filtered_dict = {k: v for k, v in quiz_dict.items() if k in Quiz.__dataclass_fields__}
-            return Quiz(**filtered_dict)
+            # ✅ Manejar campos faltantes o extra con logging
+            print(f"Warning: Error creating Quiz with all fields, filtering: {e}")
+            try:
+                filtered_dict = {k: v for k, v in quiz_dict.items() if k in Quiz.__dataclass_fields__}
+                return Quiz(**filtered_dict)
+            except Exception as filter_error:
+                print(f"Error: Could not create Quiz even with filtered fields: {filter_error}")
+                # ✅ Retornar None en lugar de fallar completamente
+                return None
 
     def _quiz_to_dict(self, quiz: Quiz) -> dict:
         """Convierte una entidad Quiz a diccionario para MongoDB."""
@@ -336,36 +366,178 @@ class MongoDBQuizRepository(QuizRepository):
         except:
             return 0
 
-    # Métodos simplificados para Question y QuestionBank (implementación básica)
+    # ✅ Métodos de conversión para Question
+    def _dict_to_question(self, question_dict: dict) -> Optional[Question]:
+        """Convierte un diccionario de MongoDB a una entidad Question."""
+        if not question_dict:
+            return None
+
+        # Convertir _id a id
+        question_dict["id"] = str(question_dict.pop("_id", ""))
+
+        # Convertir campos de fecha
+        for field in ["created_at", "updated_at"]:
+            if field in question_dict and question_dict[field]:
+                if isinstance(question_dict[field], str):
+                    try:
+                        question_dict[field] = datetime.fromisoformat(question_dict[field].replace('Z', '+00:00'))
+                    except (ValueError, AttributeError):
+                        question_dict[field] = datetime.utcnow()
+
+        # Convertir opciones si existen
+        if "options" in question_dict and question_dict["options"]:
+            from ...domain.entities.quiz import QuestionOption
+            options = []
+            for opt_dict in question_dict["options"]:
+                option = QuestionOption(
+                    id=opt_dict.get("id", str(uuid4())),
+                    text=opt_dict.get("text", ""),
+                    is_correct=opt_dict.get("is_correct", False),
+                    explanation=opt_dict.get("explanation"),
+                    order=opt_dict.get("order", 0)
+                )
+                options.append(option)
+            question_dict["options"] = options
+
+        # Asegurar valores por defecto
+        question_dict.setdefault("correct_answers", [])
+        question_dict.setdefault("case_sensitive", False)
+        question_dict.setdefault("pairs", [])
+        question_dict.setdefault("tags", [])
+        question_dict.setdefault("difficulty", "medium")
+
+        try:
+            return Question(**question_dict)
+        except Exception as e:
+            print(f"Error creating Question from dict: {e}")
+            return None
+
+    def _question_to_dict(self, question: Question) -> dict:
+        """Convierte una entidad Question a diccionario para MongoDB."""
+        question_dict = {
+            "type": question.type.value if hasattr(question.type, 'value') else question.type,
+            "title": question.title,
+            "content": question.content,
+            "explanation": question.explanation,
+            "points": question.points,
+            "time_limit": question.time_limit,
+            "correct_answers": question.correct_answers,
+            "case_sensitive": question.case_sensitive,
+            "pairs": question.pairs,
+            "tags": question.tags,
+            "difficulty": question.difficulty,
+            "created_at": question.created_at.isoformat() if question.created_at else datetime.utcnow().isoformat(),
+            "updated_at": question.updated_at.isoformat() if question.updated_at else datetime.utcnow().isoformat(),
+            "created_by": question.created_by
+        }
+
+        # Convertir opciones
+        if question.options:
+            options_dict = []
+            for option in question.options:
+                opt_dict = {
+                    "id": option.id,
+                    "text": option.text,
+                    "is_correct": option.is_correct,
+                    "explanation": option.explanation,
+                    "order": option.order
+                }
+                options_dict.append(opt_dict)
+            question_dict["options"] = options_dict
+        else:
+            question_dict["options"] = []
+
+        # Convertir id a _id si existe
+        if hasattr(question, 'id') and question.id:
+            try:
+                question_dict["_id"] = ObjectId(question.id)
+            except:
+                question_dict["_id"] = ObjectId()
+
+        return question_dict
+
+    # Implementación completa de métodos Question
     async def create_question(self, question: Question) -> Question:
         """Crea una nueva pregunta."""
-        # Implementación simplificada
-        pass
+        try:
+            question_dict = self._question_to_dict(question)
+            result = await self.question_collection.insert_one(question_dict)
+            question.id = str(result.inserted_id)
+            return question
+        except Exception as e:
+            print(f"Error creating question: {e}")
+            raise
 
     async def get_question_by_id(self, question_id: str) -> Optional[Question]:
         """Obtiene una pregunta por su ID."""
-        # Implementación simplificada
-        pass
+        try:
+            question_dict = await self.question_collection.find_one({"_id": ObjectId(question_id)})
+            return self._dict_to_question(question_dict)
+        except Exception as e:
+            print(f"Error getting question {question_id}: {e}")
+            return None
 
     async def update_question(self, question_id: str, question_data: dict) -> Optional[Question]:
         """Actualiza una pregunta."""
-        # Implementación simplificada
-        pass
+        try:
+            # Agregar timestamp de actualización
+            question_data["updated_at"] = datetime.utcnow().isoformat()
+
+            result = await self.question_collection.update_one(
+                {"_id": ObjectId(question_id)},
+                {"$set": question_data}
+            )
+
+            if result.modified_count > 0:
+                return await self.get_question_by_id(question_id)
+            return None
+        except Exception as e:
+            print(f"Error updating question {question_id}: {e}")
+            return None
 
     async def delete_question(self, question_id: str) -> bool:
         """Elimina una pregunta."""
-        # Implementación simplificada
-        pass
+        try:
+            result = await self.question_collection.delete_one({"_id": ObjectId(question_id)})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Error deleting question {question_id}: {e}")
+            return False
 
     async def get_questions_by_quiz(self, quiz_id: str) -> List[Question]:
         """Obtiene todas las preguntas de un quiz."""
-        # Implementación simplificada
-        return []
+        try:
+            # Las preguntas están embebidas en el quiz, no como documentos separados
+            quiz = await self.get_by_id(quiz_id)
+            return quiz.questions if quiz else []
+        except Exception as e:
+            print(f"Error getting questions for quiz {quiz_id}: {e}")
+            return []
 
     async def search_questions(self, query: str, filters: dict = None) -> List[Question]:
         """Busca preguntas por contenido, tipo, etc."""
-        # Implementación simplificada
-        return []
+        try:
+            search_filter = {
+                "$or": [
+                    {"title": {"$regex": query, "$options": "i"}},
+                    {"content": {"$regex": query, "$options": "i"}},
+                    {"tags": {"$in": [query]}}
+                ]
+            }
+
+            if filters:
+                search_filter.update(filters)
+
+            cursor = self.question_collection.find(search_filter)
+            questions = []
+            async for question_dict in cursor:
+                question = self._dict_to_question(question_dict)
+                if question:
+                    questions.append(question)
+            return questions
+        except Exception as e:
+            print(f"Error searching questions: {e}")
+            return []
 
     async def create_question_bank(self, bank: QuestionBank) -> QuestionBank:
         """Crea un banco de preguntas."""

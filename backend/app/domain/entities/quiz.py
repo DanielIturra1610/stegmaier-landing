@@ -159,9 +159,18 @@ class Quiz:
                 "id": question.id,
                 "type": question.type.value if isinstance(question.type, QuestionType) else question.type,
                 "title": question.title,
-                "text": question.text,
+                "content": question.content,  # ✅ Corregido: era 'text' ahora 'content'
                 "points": question.points,
-                "required": question.required,
+                "explanation": question.explanation,
+                "time_limit": question.time_limit,
+                "correct_answers": question.correct_answers,
+                "case_sensitive": question.case_sensitive,
+                "pairs": question.pairs,
+                "tags": question.tags,
+                "difficulty": question.difficulty,
+                "created_at": question.created_at.isoformat() if question.created_at else None,
+                "updated_at": question.updated_at.isoformat() if question.updated_at else None,
+                "created_by": question.created_by,
                 "options": []
             }
 
@@ -178,19 +187,42 @@ class Quiz:
 
             questions_dict.append(q_dict)
 
-        # Convertir configuración a dict
-        config_dict = {
-            "shuffle_questions": self.config.shuffle_questions,
-            "shuffle_answers": self.config.shuffle_answers,
-            "show_results_immediately": self.config.show_results_immediately,
-            "show_correct_answers": self.config.show_correct_answers,
-            "allow_review": self.config.allow_review,
-            "max_attempts": self.config.max_attempts,
-            "time_limit_minutes": self.config.time_limit,
-            "passing_score": self.config.passing_score,
-            "available_from": self.config.available_from.isoformat() if self.config.available_from else None,
-            "available_until": self.config.available_until.isoformat() if self.config.available_until else None
-        }
+        # Convertir configuración a dict con validación
+        if self.config:
+            config_dict = {
+                "shuffle_questions": self.config.shuffle_questions,
+                "shuffle_answers": self.config.shuffle_answers,
+                "show_results_immediately": self.config.show_results_immediately,
+                "show_correct_answers": self.config.show_correct_answers,
+                "allow_review": getattr(self.config, 'allow_review', True),  # ✅ Valor por defecto
+                "allow_retakes": getattr(self.config, 'allow_retakes', True),
+                "max_attempts": self.config.max_attempts,
+                "time_limit": self.config.time_limit,  # ✅ Corregido nombre
+                "passing_score": self.config.passing_score,
+                "available_from": self.config.available_from.isoformat() if self.config.available_from else None,
+                "available_until": self.config.available_until.isoformat() if self.config.available_until else None,
+                "require_proctor": getattr(self.config, 'require_proctor', False),
+                "randomize_from_pool": getattr(self.config, 'randomize_from_pool', False),
+                "questions_per_attempt": getattr(self.config, 'questions_per_attempt', None)
+            }
+        else:
+            # ✅ Configuración por defecto si es None
+            config_dict = {
+                "shuffle_questions": False,
+                "shuffle_answers": False,
+                "show_results_immediately": True,
+                "show_correct_answers": True,
+                "allow_review": True,
+                "allow_retakes": True,
+                "max_attempts": None,
+                "time_limit": None,
+                "passing_score": 70.0,
+                "available_from": None,
+                "available_until": None,
+                "require_proctor": False,
+                "randomize_from_pool": False,
+                "questions_per_attempt": None
+            }
 
         return {
             "title": self.title,

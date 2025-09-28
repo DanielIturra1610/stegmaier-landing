@@ -117,6 +117,7 @@ class QuizConfigurationCreate(BaseModel):
     shuffle_answers: bool = False
     show_results_immediately: bool = True
     show_correct_answers: bool = True
+    allow_review: bool = True  # ✅ AÑADIDO: Campo faltante
     allow_retakes: bool = True
     max_attempts: Optional[int] = Field(None, ge=1, le=10)
     passing_score: float = Field(70.0, ge=0, le=100)
@@ -134,6 +135,7 @@ class QuizConfigurationResponse(BaseModel):
     shuffle_answers: bool
     show_results_immediately: bool
     show_correct_answers: bool
+    allow_review: bool  # ✅ AÑADIDO: Campo faltante
     allow_retakes: bool
     max_attempts: Optional[int] = None
     passing_score: float

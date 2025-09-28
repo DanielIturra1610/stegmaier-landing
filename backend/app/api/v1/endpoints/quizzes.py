@@ -131,22 +131,34 @@ async def get_quiz(
     - Los admins pueden ver cualquier quiz
     """
     try:
+        logging.info(f"🔍 [GET /quizzes/{quiz_id}] Starting quiz retrieval for user {current_user.id}")
+
         quiz = await quiz_service.get_quiz_by_id(quiz_id, current_user.id)
 
         # Verificar permisos para quiz no publicado
         if quiz.status != "published" and current_user.role == "student":
+            logging.warning(f"❌ [GET /quizzes/{quiz_id}] Student {current_user.id} tried to access unpublished quiz")
             raise HTTPException(status_code=403, detail="Quiz no disponible")
 
         # Si es instructor, verificar que sea el creador
         if current_user.role == "instructor" and quiz.created_by != current_user.id:
+            logging.warning(f"❌ [GET /quizzes/{quiz_id}] Instructor {current_user.id} tried to access quiz not owned by them")
             raise HTTPException(status_code=403, detail="No autorizado para ver este quiz")
 
+        logging.info(f"✅ [GET /quizzes/{quiz_id}] Quiz retrieved successfully for user {current_user.id}")
         return quiz
+    except HTTPException as he:
+        # Re-raise HTTP exceptions as-is
+        raise he
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logging.error(f"❌ [GET /quizzes/{quiz_id}] Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
     except Exception as e:
-        logging.error(f"Error getting quiz {quiz_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
+        logging.error(f"❌ [GET /quizzes/{quiz_id}] Unexpected error: {str(e)}")
+        logging.error(f"❌ [GET /quizzes/{quiz_id}] Error type: {type(e)}")
+        import traceback
+        logging.error(f"❌ [GET /quizzes/{quiz_id}] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.put("/{quiz_id}", response_model=QuizResponse)
@@ -163,16 +175,30 @@ async def update_quiz(
     - Los admins pueden modificar cualquier quiz
     """
     try:
+        logging.info(f"🔍 [PUT /quizzes/{quiz_id}] Starting quiz update for user {current_user.id}")
+        logging.info(f"🔍 [PUT /quizzes/{quiz_id}] Update data: {quiz_data.dict(exclude_unset=True)}")
+
         # Los estudiantes no pueden actualizar quizzes
         if current_user.role == "student":
+            logging.warning(f"❌ [PUT /quizzes/{quiz_id}] Student {current_user.id} tried to update quiz")
             raise HTTPException(status_code=403, detail="No autorizado para modificar quizzes")
 
-        return await quiz_service.update_quiz(quiz_id, quiz_data, current_user.id)
+        updated_quiz = await quiz_service.update_quiz(quiz_id, quiz_data, current_user.id)
+
+        logging.info(f"✅ [PUT /quizzes/{quiz_id}] Quiz updated successfully for user {current_user.id}")
+        return updated_quiz
+    except HTTPException as he:
+        # Re-raise HTTP exceptions as-is
+        raise he
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}] Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
     except Exception as e:
-        logging.error(f"Error updating quiz {quiz_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error interno del servidor")
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}] Unexpected error: {str(e)}")
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}] Error type: {type(e)}")
+        import traceback
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.delete("/{quiz_id}")
