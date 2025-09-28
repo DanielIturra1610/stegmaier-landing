@@ -196,7 +196,7 @@ class QuizService:
         
         # Verificar disponibilidad para estudiantes
         if user_id and not quiz.is_available_now():
-            raise ValidationError("Quiz no disponible actualmente")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Quiz no disponible actualmente")
         
         return self._quiz_to_response(quiz)
 
@@ -248,7 +248,7 @@ class QuizService:
         # Verificar si hay intentos
         attempts = await self.quiz_repository.get_attempts_by_quiz(quiz_id)
         if attempts:
-            raise ValidationError("No se puede eliminar un quiz con intentos registrados")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede eliminar un quiz con intentos registrados")
         
         return await self.quiz_repository.delete_quiz(quiz_id)
 
@@ -330,7 +330,7 @@ class QuizService:
         # Verificar que no esté ya agregada
         existing_ids = [q.id for q in quiz.questions]
         if question_id in existing_ids:
-            raise ValidationError("La pregunta ya está en este quiz")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La pregunta ya está en este quiz")
         
         quiz.questions.append(question)
         quiz.calculate_total_points()
@@ -347,16 +347,16 @@ class QuizService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
         
         if not quiz.is_available_now():
-            raise ValidationError("Quiz no disponible actualmente")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Quiz no disponible actualmente")
         
         # Verificar intentos previos
         existing_attempts = await self.quiz_repository.get_attempts_by_student_and_quiz(student_id, quiz_id)
         
         if not quiz.config.allow_retakes and existing_attempts:
-            raise ValidationError("No se permiten reintentos para este quiz")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se permiten reintentos para este quiz")
         
         if quiz.config.max_attempts and len(existing_attempts) >= quiz.config.max_attempts:
-            raise ValidationError(f"Máximo de {quiz.config.max_attempts} intentos alcanzado")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Máximo de {quiz.config.max_attempts} intentos alcanzado")
         
         # Crear nuevo intento
         attempt = QuizAttempt(
@@ -381,7 +381,7 @@ class QuizService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para este intento")
         
         if attempt.status != AttemptStatus.IN_PROGRESS:
-            raise ValidationError("El intento no está en progreso")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El intento no está en progreso")
         
         # Obtener quiz para validaciones
         quiz = await self.quiz_repository.get_by_id(attempt.quiz_id)
@@ -392,7 +392,7 @@ class QuizService:
         if attempt.is_expired(quiz):
             attempt.status = AttemptStatus.EXPIRED
             await self.quiz_repository.update_attempt(attempt)
-            raise ValidationError("El intento ha expirado")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El intento ha expirado")
         
         # Buscar la pregunta
         question = None
@@ -445,7 +445,7 @@ class QuizService:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para este intento")
         
         if attempt.status != AttemptStatus.IN_PROGRESS:
-            raise ValidationError("El intento no está en progreso")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El intento no está en progreso")
         
         # Obtener quiz para cálculos finales
         quiz = await self.quiz_repository.get_by_id(attempt.quiz_id)

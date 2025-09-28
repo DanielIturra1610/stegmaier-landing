@@ -145,8 +145,8 @@ const AdminModuleLessons: React.FC = () => {
       const newQuiz = await quizService.createQuizForLesson(lessonId, quizData);
       toast.success(`Quiz "${newQuiz.title}" creado para la lección!`);
       
-      // Navigate to the quiz editor page
-      navigate(`/platform/admin/quizzes/${newQuiz.id}/edit`);
+      // Navigate to the quiz editor page with context
+      navigate(`/platform/admin/quizzes/${newQuiz.id}/edit?courseId=${courseId}&moduleId=${moduleId}&lessonId=${lesson.id}&lessonTitle=${encodeURIComponent(lesson.title)}&moduleTitle=${encodeURIComponent(module?.title || '')}`);
 
     } catch (error: any) {
       console.error('❌ [AdminModuleLessons] Error creating quiz for lesson:', error);
@@ -710,7 +710,7 @@ const AdminModuleLessons: React.FC = () => {
                           Analíticas
                         </button>
                         <button
-                          onClick={() => navigate(`/platform/admin/quizzes/${lesson.quiz.id}/edit`)}
+                          onClick={() => navigate(`/platform/admin/quizzes/${lesson.quiz.id}/edit?courseId=${courseId}&moduleId=${moduleId}&lessonId=${lesson.id}&lessonTitle=${encodeURIComponent(lesson.title)}&moduleTitle=${encodeURIComponent(module?.title || '')}`)}
                           className="inline-flex items-center px-3 py-1.5 bg-purple-600 text-white hover:bg-purple-700 rounded-md text-sm font-medium transition-colors"
                           title="Edit Quiz"
                         >

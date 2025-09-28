@@ -2,7 +2,7 @@
  * AdminQuizForm - Formulario para crear/editar quizzes
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   PlusIcon,
   TrashIcon,
@@ -23,7 +23,15 @@ interface Course {
 const AdminQuizForm: React.FC = () => {
   const navigate = useNavigate();
   const { quizId } = useParams<{ quizId: string }>();
+  const [searchParams] = useSearchParams();
   const isEditing = !!quizId;
+
+  // Context parameters from URL
+  const courseId = searchParams.get('courseId');
+  const moduleId = searchParams.get('moduleId');
+  const lessonId = searchParams.get('lessonId');
+  const lessonTitle = searchParams.get('lessonTitle') ? decodeURIComponent(searchParams.get('lessonTitle')!) : '';
+  const moduleTitle = searchParams.get('moduleTitle') ? decodeURIComponent(searchParams.get('moduleTitle')!) : '';
 
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -67,6 +75,18 @@ const AdminQuizForm: React.FC = () => {
   useEffect(() => {
     loadInitialData();
   }, [quizId]);
+
+  // Initialize form with context data when creating from lesson
+  useEffect(() => {
+    if (!isEditing && lessonId && courseId) {
+      setFormData(prev => ({
+        ...prev,
+        lesson_id: lessonId,
+        course_id: courseId,
+        title: lessonTitle ? `Quiz para ${lessonTitle}` : prev.title
+      }));
+    }
+  }, [lessonId, courseId, lessonTitle, isEditing]);
 
   const loadInitialData = async () => {
     try {
@@ -283,6 +303,21 @@ const AdminQuizForm: React.FC = () => {
               <p className="text-blue-100">
                 {isEditing ? 'Modifica los detalles del quiz' : 'Crea un nuevo quiz de evaluación'}
               </p>
+              {/* Context Information */}
+              {(moduleTitle || lessonTitle) && (
+                <div className="mt-3 p-3 bg-blue-500/20 rounded-lg border border-blue-400/30">
+                  <div className="text-sm text-blue-100">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium">📁 Módulo:</span>
+                      <span>{moduleTitle || 'Sin especificar'}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className="font-medium">📖 Lección:</span>
+                      <span>{lessonTitle || 'Sin especificar'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="hidden sm:block">

@@ -80,6 +80,7 @@ class QuizConfiguration:
     shuffle_answers: bool = False
     show_results_immediately: bool = True
     show_correct_answers: bool = True
+    allow_review: bool = True
     allow_retakes: bool = True
     max_attempts: Optional[int] = None
     passing_score: float = 70.0  # Porcentaje mínimo para aprobar
@@ -185,7 +186,7 @@ class Quiz:
             "show_correct_answers": self.config.show_correct_answers,
             "allow_review": self.config.allow_review,
             "max_attempts": self.config.max_attempts,
-            "time_limit_minutes": self.config.time_limit_minutes,
+            "time_limit_minutes": self.config.time_limit,
             "passing_score": self.config.passing_score,
             "available_from": self.config.available_from.isoformat() if self.config.available_from else None,
             "available_until": self.config.available_until.isoformat() if self.config.available_until else None
