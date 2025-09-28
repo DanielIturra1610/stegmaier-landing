@@ -137,17 +137,81 @@ class Quiz:
     def is_available_now(self) -> bool:
         """Verifica si el quiz está disponible actualmente."""
         now = datetime.utcnow()
-        
+
         if self.status != QuizStatus.PUBLISHED:
             return False
-            
+
         if self.config.available_from and now < self.config.available_from:
             return False
-            
+
         if self.config.available_until and now > self.config.available_until:
             return False
-            
+
         return True
+
+    def to_dict(self) -> dict:
+        """Convierte la entidad Quiz a diccionario para persistencia en MongoDB."""
+        # Convertir questions a dict
+        questions_dict = []
+        for question in self.questions:
+            q_dict = {
+                "id": question.id,
+                "type": question.type.value if isinstance(question.type, QuestionType) else question.type,
+                "title": question.title,
+                "text": question.text,
+                "points": question.points,
+                "required": question.required,
+                "options": []
+            }
+
+            # Convertir opciones si existen
+            for option in question.options:
+                opt_dict = {
+                    "id": option.id,
+                    "text": option.text,
+                    "is_correct": option.is_correct,
+                    "explanation": option.explanation,
+                    "order": option.order
+                }
+                q_dict["options"].append(opt_dict)
+
+            questions_dict.append(q_dict)
+
+        # Convertir configuración a dict
+        config_dict = {
+            "shuffle_questions": self.config.shuffle_questions,
+            "shuffle_answers": self.config.shuffle_answers,
+            "show_results_immediately": self.config.show_results_immediately,
+            "show_correct_answers": self.config.show_correct_answers,
+            "allow_review": self.config.allow_review,
+            "max_attempts": self.config.max_attempts,
+            "time_limit_minutes": self.config.time_limit_minutes,
+            "passing_score": self.config.passing_score,
+            "available_from": self.config.available_from.isoformat() if self.config.available_from else None,
+            "available_until": self.config.available_until.isoformat() if self.config.available_until else None
+        }
+
+        return {
+            "title": self.title,
+            "description": self.description,
+            "instructions": self.instructions,
+            "course_id": self.course_id,
+            "module_id": self.module_id,
+            "lesson_id": self.lesson_id,
+            "questions": questions_dict,
+            "question_pool": self.question_pool,
+            "config": config_dict,
+            "status": self.status.value if isinstance(self.status, QuizStatus) else self.status,
+            "total_points": self.total_points,
+            "estimated_duration": self.estimated_duration,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "published_at": self.published_at.isoformat() if self.published_at else None,
+            "created_by": self.created_by,
+            "total_attempts": self.total_attempts,
+            "average_score": self.average_score,
+            "completion_rate": self.completion_rate
+        }
 
 
 @dataclass

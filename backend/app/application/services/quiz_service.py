@@ -200,6 +200,10 @@ class QuizService:
         
         return self._quiz_to_response(quiz)
 
+    async def get_quiz_by_id(self, quiz_id: str, user_id: Optional[str] = None) -> QuizResponse:
+        """Alias para get_by_id - obtener quiz por ID."""
+        return await self.get_by_id(quiz_id, user_id)
+
     async def update_quiz(self, quiz_id: str, quiz_data: QuizUpdate, user_id: str) -> QuizResponse:
         """Actualizar quiz existente."""
         quiz = await self.quiz_repository.get_by_id(quiz_id)

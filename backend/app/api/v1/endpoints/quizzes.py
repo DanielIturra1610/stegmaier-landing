@@ -142,10 +142,11 @@ async def get_quiz(
             raise HTTPException(status_code=403, detail="No autorizado para ver este quiz")
 
         return quiz
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logging.error(f"Error getting quiz {quiz_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
 
 
 @router.put("/{quiz_id}", response_model=QuizResponse)
