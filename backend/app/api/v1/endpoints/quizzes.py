@@ -135,15 +135,24 @@ async def get_quiz(
 
         quiz = await quiz_service.get_quiz_by_id(quiz_id, current_user.id)
 
-        # Verificar permisos para quiz no publicado
-        if quiz.status != "published" and current_user.role == "student":
-            logging.warning(f"❌ [GET /quizzes/{quiz_id}] Student {current_user.id} tried to access unpublished quiz")
-            raise HTTPException(status_code=403, detail="Quiz no disponible")
+        # ✅ CORREGIDO: Verificar permisos basados en rol
+        if current_user.role == "student":
+            # Para estudiantes: verificar que esté publicado Y disponible
+            if quiz.status != "published":
+                logging.warning(f"❌ [GET /quizzes/{quiz_id}] Student {current_user.id} tried to access unpublished quiz")
+                raise HTTPException(status_code=403, detail="Quiz no disponible")
 
-        # Si es instructor, verificar que sea el creador
-        if current_user.role == "instructor" and quiz.created_by != current_user.id:
-            logging.warning(f"❌ [GET /quizzes/{quiz_id}] Instructor {current_user.id} tried to access quiz not owned by them")
-            raise HTTPException(status_code=403, detail="No autorizado para ver este quiz")
+            if not quiz.is_available:  # Usar el campo is_available del response
+                logging.warning(f"❌ [GET /quizzes/{quiz_id}] Student {current_user.id} tried to access unavailable quiz")
+                raise HTTPException(status_code=403, detail="Quiz no disponible actualmente")
+
+        elif current_user.role == "instructor":
+            # Para instructores: solo pueden ver sus propios quizzes
+            if quiz.created_by != current_user.id:
+                logging.warning(f"❌ [GET /quizzes/{quiz_id}] Instructor {current_user.id} tried to access quiz not owned by them")
+                raise HTTPException(status_code=403, detail="No autorizado para ver este quiz")
+
+        # Los admins pueden ver cualquier quiz sin restricciones
 
         logging.info(f"✅ [GET /quizzes/{quiz_id}] Quiz retrieved successfully for user {current_user.id}")
         return quiz
@@ -201,6 +210,48 @@ async def update_quiz(
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
+@router.put("/{quiz_id}/publish", response_model=QuizResponse)
+async def publish_quiz(
+    quiz_id: str,
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service),
+):
+    """
+    Publicar quiz existente.
+
+    - Solo el creador del quiz puede publicarlo
+    - Los admins pueden publicar cualquier quiz
+    """
+    try:
+        logging.info(f"🔍 [PUT /quizzes/{quiz_id}/publish] Publishing quiz for user {current_user.id}")
+
+        # Los estudiantes no pueden publicar quizzes
+        if current_user.role == "student":
+            logging.warning(f"❌ [PUT /quizzes/{quiz_id}/publish] Student {current_user.id} tried to publish quiz")
+            raise HTTPException(status_code=403, detail="No autorizado para publicar quizzes")
+
+        # Crear datos de actualización para publicar
+        from ...application.dtos.quiz_dto import QuizUpdate, QuizStatusEnum
+        update_data = QuizUpdate(status=QuizStatusEnum.PUBLISHED)
+
+        published_quiz = await quiz_service.update_quiz(quiz_id, update_data, current_user.id)
+
+        logging.info(f"✅ [PUT /quizzes/{quiz_id}/publish] Quiz published successfully for user {current_user.id}")
+        return published_quiz
+    except HTTPException as he:
+        # Re-raise HTTP exceptions as-is
+        raise he
+    except ValidationError as e:
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}/publish] Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
+    except Exception as e:
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}/publish] Unexpected error: {str(e)}")
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}/publish] Error type: {type(e)}")
+        import traceback
+        logging.error(f"❌ [PUT /quizzes/{quiz_id}/publish] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+
 @router.delete("/{quiz_id}")
 async def delete_quiz(
     quiz_id: str,
@@ -229,6 +280,42 @@ async def delete_quiz(
         raise HTTPException(status_code=403, detail=str(e))
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/", response_model=List[QuizListResponse])
+async def get_all_quizzes(
+    published_only: bool = Query(True, description="Solo mostrar quizzes publicados"),
+    course_id: Optional[str] = Query(None, description="Filtrar por curso específico"),
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service),
+):
+    """
+    Obtener todos los quizzes.
+
+    - Los estudiantes solo ven quizzes publicados
+    - Los instructores pueden ver todos sus quizzes
+    - Los admins pueden ver todos los quizzes
+    - Opcionalmente filtrar por curso
+    """
+    try:
+        logging.info(f"🔍 [GET /quizzes/] Getting quizzes for user {current_user.id}")
+
+        # Para estudiantes, solo mostrar publicados
+        if current_user.role == "student":
+            published_only = True
+
+        if course_id:
+            # Si se especifica un curso, usar el endpoint de curso
+            quizzes = await quiz_service.get_quizzes_by_course(course_id, published_only)
+        else:
+            # ✅ Obtener todos los quizzes basado en el rol del usuario
+            quizzes = await quiz_service.get_all_quizzes(published_only, current_user.id, current_user.role)
+
+        logging.info(f"✅ [GET /quizzes/] Retrieved {len(quizzes)} quizzes for user {current_user.id}")
+        return quizzes
+    except Exception as e:
+        logging.error(f"❌ [GET /quizzes/] Error getting quizzes: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener quizzes: {str(e)}")
 
 
 @router.get("/course/{course_id}", response_model=List[QuizListResponse])
@@ -404,7 +491,37 @@ async def get_quiz_attempt(
         raise HTTPException(status_code=403, detail=str(e))
 
 
-# Endpoints para estudiantes
+# Endpoints para gestión de lecciones
+@router.get("/lesson/{lesson_id}/quizzes", response_model=List[QuizListResponse])
+async def get_quizzes_by_lesson(
+    lesson_id: str,
+    published_only: bool = Query(False, description="Solo mostrar quizzes publicados"),
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service),
+):
+    """
+    Obtener TODOS los quizzes asociados a una lección específica.
+
+    - Los administradores e instructores pueden ver todos los quizzes
+    - Los estudiantes solo ven quizzes publicados y disponibles
+    """
+    try:
+        logging.info(f"🔍 [GET /lesson/{lesson_id}/quizzes] Getting quizzes for lesson")
+
+        # Para estudiantes, solo mostrar publicados
+        if current_user.role == "student":
+            published_only = True
+
+        quizzes = await quiz_service.get_quizzes_by_lesson(lesson_id, published_only)
+
+        logging.info(f"✅ [GET /lesson/{lesson_id}/quizzes] Retrieved {len(quizzes)} quizzes")
+        return quizzes
+    except Exception as e:
+        logging.error(f"❌ [GET /lesson/{lesson_id}/quizzes] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al buscar quizzes: {str(e)}")
+
+
+# Endpoints para estudiantes (mantener compatibilidad)
 @router.get("/lesson/{lesson_id}/quiz", response_model=Optional[QuizResponse])
 async def get_quiz_by_lesson(
     lesson_id: str,
@@ -417,18 +534,21 @@ async def get_quiz_by_lesson(
     - Devuelve el primer quiz publicado asociado a la lección.
     """
     try:
-        quizzes = await quiz_service.get_quizzes_by_lesson(lesson_id)
-        
-        # Filtrar por estado publicado y devolver el primero
+        quizzes = await quiz_service.get_quizzes_by_lesson(lesson_id, published_only=True)
+
+        # Devolver el primer quiz disponible
         for quiz in quizzes:
-            if quiz.status == "published":
-                # Verificar permisos
-                if current_user.role == "student" and not quiz.is_available_now():
-                    continue
-                return quiz
-        
+            # Verificar permisos basados en rol
+            if current_user.role == "student" and not quiz.is_available:
+                continue
+
+            # Para mantener compatibilidad, convertir QuizListResponse a QuizResponse
+            full_quiz = await quiz_service.get_by_id(quiz.id)
+            return full_quiz
+
         return None
     except Exception as e:
+        logging.error(f"❌ [GET /lesson/{lesson_id}/quiz] Error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al buscar quiz: {str(e)}")
 
 

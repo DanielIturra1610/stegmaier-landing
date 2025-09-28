@@ -139,15 +139,23 @@ class Quiz:
         """Verifica si el quiz está disponible actualmente."""
         now = datetime.utcnow()
 
+        # ✅ Si no está publicado, no está disponible
         if self.status != QuizStatus.PUBLISHED:
             return False
 
+        # ✅ Si no hay configuración, asumir que está disponible (por defecto)
+        if not self.config:
+            return True
+
+        # ✅ Verificar fecha de inicio (solo si está configurada)
         if self.config.available_from and now < self.config.available_from:
             return False
 
+        # ✅ Verificar fecha de fin (solo si está configurada)
         if self.config.available_until and now > self.config.available_until:
             return False
 
+        # ✅ Si pasó todas las validaciones, está disponible
         return True
 
     def to_dict(self) -> dict:

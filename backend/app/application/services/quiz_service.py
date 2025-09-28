@@ -205,10 +205,10 @@ class QuizService:
                 from ...domain.entities.quiz import QuizConfiguration
                 quiz.config = QuizConfiguration()
 
-            # Verificar disponibilidad para estudiantes
-            if user_id and not quiz.is_available_now():
-                logging.warning(f"❌ [QuizService.get_by_id] Quiz {quiz_id} not available for user {user_id}")
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Quiz no disponible actualmente")
+            # ✅ CORREGIDO: Verificar disponibilidad solo para estudiantes, no para admins/instructores
+            # Los admins e instructores deben poder ver cualquier quiz para gestión
+            # Solo restringir a estudiantes por fechas de disponibilidad
+            # Nota: Aquí no tenemos acceso al rol del usuario, se debe verificar en el endpoint
 
             logging.info(f"✅ [QuizService.get_by_id] Quiz {quiz_id} retrieved successfully")
             return self._quiz_to_response(quiz)
@@ -321,10 +321,60 @@ class QuizService:
         
         return await self.quiz_repository.delete_quiz(quiz_id)
 
+    async def get_all_quizzes(self, published_only: bool = True, user_id: Optional[str] = None, user_role: str = "student") -> List[QuizListResponse]:
+        """Obtener todos los quizzes basado en el rol del usuario."""
+        try:
+            logging.info(f"🔍 [QuizService.get_all_quizzes] Getting all quizzes for user {user_id} with role {user_role}")
+
+            # Obtener quizzes basado en el rol
+            if user_role == "admin":
+                # Admins pueden ver todos los quizzes
+                quizzes = await self.quiz_repository.get_published(None) if published_only else []
+                # TODO: Implementar método para obtener todos los quizzes
+                quizzes = []
+            elif user_role == "instructor" and user_id:
+                # Instructores pueden ver sus propios quizzes
+                quizzes = await self.quiz_repository.get_by_instructor(user_id)
+            else:
+                # Estudiantes solo ven quizzes publicados
+                quizzes = await self.quiz_repository.get_published(None)
+
+            response_list = []
+            for quiz in quizzes:
+                response_list.append(QuizListResponse(
+                    id=quiz.id,
+                    title=quiz.title,
+                    description=quiz.description,
+                    course_id=quiz.course_id,
+                    module_id=quiz.module_id,
+                    lesson_id=quiz.lesson_id,
+                    status=quiz.status,
+                    total_points=quiz.total_points,
+                    estimated_duration=quiz.estimated_duration,
+                    total_attempts=quiz.total_attempts,
+                    average_score=quiz.average_score,
+                    completion_rate=quiz.completion_rate,
+                    created_at=quiz.created_at,
+                    published_at=quiz.published_at,
+                    created_by=quiz.created_by,
+                    is_available=quiz.is_available_now()
+                ))
+
+            logging.info(f"✅ [QuizService.get_all_quizzes] Retrieved {len(response_list)} quizzes")
+            return response_list
+
+        except Exception as e:
+            logging.error(f"❌ [QuizService.get_all_quizzes] Error: {str(e)}")
+            raise
+
     async def get_quizzes_by_course(self, course_id: str, published_only: bool = True) -> List[QuizListResponse]:
         """Obtener quizzes por curso."""
-        quizzes = await self.quiz_repository.get_quizzes_by_course(course_id, published_only)
-        
+        quizzes = await self.quiz_repository.get_by_course_id(course_id)  # ✅ Usar método correcto
+
+        # Filtrar por estado si es necesario
+        if published_only:
+            quizzes = [q for q in quizzes if q.status == QuizStatus.PUBLISHED]
+
         response_list = []
         for quiz in quizzes:
             response_list.append(QuizListResponse(
@@ -345,8 +395,47 @@ class QuizService:
                 created_by=quiz.created_by,
                 is_available=quiz.is_available_now()
             ))
-        
+
         return response_list
+
+    async def get_quizzes_by_lesson(self, lesson_id: str, published_only: bool = True) -> List[QuizListResponse]:
+        """Obtener quizzes por lección."""
+        try:
+            logging.info(f"🔍 [QuizService.get_quizzes_by_lesson] Getting quizzes for lesson {lesson_id}")
+
+            quizzes = await self.quiz_repository.get_by_lesson_id(lesson_id)
+
+            # Filtrar por estado si es necesario
+            if published_only:
+                quizzes = [q for q in quizzes if q.status == QuizStatus.PUBLISHED]
+
+            response_list = []
+            for quiz in quizzes:
+                response_list.append(QuizListResponse(
+                    id=quiz.id,
+                    title=quiz.title,
+                    description=quiz.description,
+                    course_id=quiz.course_id,
+                    module_id=quiz.module_id,
+                    lesson_id=quiz.lesson_id,
+                    status=quiz.status,
+                    total_points=quiz.total_points,
+                    estimated_duration=quiz.estimated_duration,
+                    total_attempts=quiz.total_attempts,
+                    average_score=quiz.average_score,
+                    completion_rate=quiz.completion_rate,
+                    created_at=quiz.created_at,
+                    published_at=quiz.published_at,
+                    created_by=quiz.created_by,
+                    is_available=quiz.is_available_now()
+                ))
+
+            logging.info(f"✅ [QuizService.get_quizzes_by_lesson] Retrieved {len(response_list)} quizzes for lesson {lesson_id}")
+            return response_list
+
+        except Exception as e:
+            logging.error(f"❌ [QuizService.get_quizzes_by_lesson] Error for lesson {lesson_id}: {str(e)}")
+            raise
 
     # CRUD de Preguntas
     async def create_question(self, question_data: QuestionCreate, creator_id: str) -> QuestionResponse:

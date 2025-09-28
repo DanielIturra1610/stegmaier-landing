@@ -300,6 +300,22 @@ class QuizService {
     }
   }
 
+  async getQuizzesByLessonId(lessonId: string, publishedOnly: boolean = false): Promise<QuizListItem[]> {
+    try {
+      console.log(`📚 [quizService] Getting quizzes for lesson: ${lessonId}`);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/lesson/${lessonId}/quizzes?published_only=${publishedOnly}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [quizService] Retrieved quizzes for lesson:', response.data.length);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error fetching quizzes for lesson:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to fetch quizzes for lesson');
+    }
+  }
+
   // Utility methods
   calculateScore(answers: StudentAnswer[], questions: Question[]): number {
     let correctAnswers = 0;
