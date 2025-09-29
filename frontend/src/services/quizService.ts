@@ -442,6 +442,62 @@ class QuizService {
     };
     return labels[status as keyof typeof labels] || status;
   }
+
+  // Question Management Methods
+  async createQuestion(questionData: any): Promise<Question> {
+    try {
+      console.log('📝 [quizService] Creating question:', questionData.title || questionData.text);
+
+      const response = await axios.post(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/questions`),
+        questionData,
+        { headers: getAuthHeaders() }
+      );
+
+      console.log('✅ [quizService] Question created:', response.data);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error creating question:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to create question');
+    }
+  }
+
+  async updateQuestion(questionId: string, questionData: any): Promise<Question> {
+    try {
+      console.log('📝 [quizService] Updating question:', questionId);
+
+      const response = await axios.put(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/questions/${questionId}`),
+        questionData,
+        { headers: getAuthHeaders() }
+      );
+
+      console.log('✅ [quizService] Question updated:', response.data);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error updating question:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to update question');
+    }
+  }
+
+  async deleteQuestion(questionId: string): Promise<void> {
+    try {
+      console.log('🗑️ [quizService] Deleting question:', questionId);
+
+      await axios.delete(
+        buildApiUrl(`${API_ENDPOINTS.QUIZZES}/questions/${questionId}`),
+        { headers: getAuthHeaders() }
+      );
+
+      console.log('✅ [quizService] Question deleted successfully');
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [quizService] Error deleting question:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Failed to delete question');
+    }
+  }
 }
 
 // Export singleton instance

@@ -57,6 +57,7 @@ const AdminQuizForm: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Partial<Question>>({
     type: QuestionType.MULTIPLE_CHOICE,
     text: '',
+    content: '',
     options: [
       { id: '1', text: '', is_correct: false, order: 0 },
       { id: '2', text: '', is_correct: false, order: 1 },
@@ -138,7 +139,8 @@ const AdminQuizForm: React.FC = () => {
   };
 
   const addOrUpdateQuestion = () => {
-    if (!currentQuestion.text?.trim()) {
+    const questionText = currentQuestion.text?.trim() || currentQuestion.content?.trim();
+    if (!questionText) {
       alert('El texto de la pregunta es requerido');
       return;
     }
@@ -209,6 +211,7 @@ const AdminQuizForm: React.FC = () => {
     setCurrentQuestion({
       type: QuestionType.MULTIPLE_CHOICE,
       text: '',
+      content: '',
       options: [
         { id: '1', text: '', is_correct: false, order: 0 },
         { id: '2', text: '', is_correct: false, order: 1 },
@@ -238,28 +241,84 @@ const AdminQuizForm: React.FC = () => {
 
       setLoading(true);
 
+      // 1. First, create or update questions and get their IDs
+      console.log('📝 [AdminQuizForm] Creating/updating questions...');
+      const questionIds: string[] = [];
+
+      for (const question of questions) {
+        try {
+          // Convert frontend Question format to backend QuestionCreate format
+          const questionData = {
+            type: question.type,
+            title: question.text?.substring(0, 50) || 'Pregunta', // Backend expects title field
+            content: question.text || '', // Backend expects content field instead of text
+            explanation: question.explanation || '',
+            points: question.points || 1,
+            time_limit: question.time_limit,
+            options: question.options || [],
+            correct_answers: question.correct_answers || [],
+            case_sensitive: question.case_sensitive || false,
+            pairs: question.pairs || [],
+            tags: question.tags || [],
+            difficulty: question.difficulty || 'medium'
+          };
+
+          let createdQuestion;
+          if (question.id && isEditing) {
+            // Update existing question
+            createdQuestion = await quizService.updateQuestion(question.id, questionData);
+          } else {
+            // Create new question
+            createdQuestion = await quizService.createQuestion(questionData);
+          }
+
+          questionIds.push(createdQuestion.id);
+          console.log(`✅ [AdminQuizForm] Question processed: ${createdQuestion.id}`);
+        } catch (error) {
+          console.error('❌ [AdminQuizForm] Error processing question:', error);
+          throw new Error(`Error al procesar pregunta: ${question.text?.substring(0, 30) || 'Sin título'}`);
+        }
+      }
+
+      console.log(`📝 [AdminQuizForm] All questions processed. Question IDs: ${questionIds.join(', ')}`);
+
+      // 2. Now create or update the quiz with question IDs
       const quizData: QuizCreate = {
         ...formData,
-        questions: questions,
+        questions: questionIds, // Send only question IDs
         question_pool: [],
         config: {
           shuffle_questions: formData.shuffle_questions || false,
           shuffle_answers: false,
+          show_results_immediately: formData.show_results || true,
           show_correct_answers: formData.show_results || true,
           allow_review: formData.allow_review || true,
-          time_limit_enabled: !!formData.time_limit_minutes,
-          proctoring_enabled: false,
-          require_webcam: false,
-          prevent_copy_paste: false,
-          randomize_order: false
+          allow_retakes: true,
+          max_attempts: formData.max_attempts,
+          passing_score: formData.passing_score,
+          time_limit: formData.time_limit_minutes,
+          available_from: null,
+          available_until: null,
+          require_proctor: false,
+          randomize_from_pool: false,
+          questions_per_attempt: null
         },
-        estimated_duration: formData.time_limit_minutes || 30,
-        status: status
+        estimated_duration: formData.time_limit_minutes || 30
       };
 
       if (isEditing && quizId) {
-        await quizService.updateQuiz(quizId, { status: status });
+        // For editing, use QuizUpdate which includes questions
+        const updateData = {
+          ...formData,
+          questions: questionIds, // Include question IDs in update
+          question_pool: [],
+          config: quizData.config,
+          estimated_duration: quizData.estimated_duration,
+          status: status
+        };
+        await quizService.updateQuiz(quizId, updateData);
       } else {
+        // For creation
         const newQuiz = await quizService.createQuiz(quizData);
         // Si se quiere publicar directamente, actualizar el estado
         if (status === QuizStatus.PUBLISHED) {
@@ -267,10 +326,11 @@ const AdminQuizForm: React.FC = () => {
         }
       }
 
+      console.log('✅ [AdminQuizForm] Quiz saved successfully');
       navigate('/platform/admin/quizzes');
     } catch (error) {
-      console.error('Error saving quiz:', error);
-      alert('Error al guardar el quiz');
+      console.error('❌ [AdminQuizForm] Error saving quiz:', error);
+      alert(`Error al guardar el quiz: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }
@@ -498,8 +558,12 @@ const AdminQuizForm: React.FC = () => {
                   Pregunta *
                 </label>
                 <textarea
-                  value={currentQuestion.text}
-                  onChange={(e) => handleQuestionChange('text', e.target.value)}
+                  value={currentQuestion.text || currentQuestion.content || ''}
+                  onChange={(e) => {
+                    // Update both text and content to maintain compatibility
+                    handleQuestionChange('text', e.target.value);
+                    handleQuestionChange('content', e.target.value);
+                  }}
                   placeholder="Escribe tu pregunta aquí..."
                   rows={3}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -724,7 +788,7 @@ const AdminQuizForm: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-gray-900 font-medium">
-                      {index + 1}. {question.text}
+                      {index + 1}. {question.text || question.content}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2 ml-4">
