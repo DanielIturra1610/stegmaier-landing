@@ -503,6 +503,10 @@ class QuizService:
 
             response_list = []
             for quiz in quizzes:
+                # ✅ CORREGIDO: Incluir conteo de preguntas
+                question_count = len(quiz.questions) if quiz.questions else 0
+                logging.info(f"🔍 [QuizService.get_quizzes_by_lesson] Quiz {quiz.id} has {question_count} questions")
+
                 response_list.append(QuizListResponse(
                     id=quiz.id,
                     title=quiz.title,
@@ -513,6 +517,7 @@ class QuizService:
                     status=quiz.status,
                     total_points=quiz.total_points,
                     estimated_duration=quiz.estimated_duration,
+                    question_count=question_count,  # ✅ AÑADIDO: Conteo de preguntas
                     total_attempts=quiz.total_attempts,
                     average_score=quiz.average_score,
                     completion_rate=quiz.completion_rate,

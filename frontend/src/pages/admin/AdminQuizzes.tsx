@@ -263,7 +263,7 @@ const AdminQuizzes: React.FC = () => {
                         {getStatusBadge(quiz.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {quiz.questions?.length || 0} preguntas
+                        {quiz.question_count || 0} preguntas
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {quizService.formatTimeLimit(quiz.time_limit_minutes)}
@@ -333,7 +333,7 @@ const AdminQuizzes: React.FC = () => {
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-600">
-              {filteredQuizzes.reduce((total, quiz) => total + (quiz.questions?.length || 0), 0)}
+              {filteredQuizzes.reduce((total, quiz) => total + (quiz.question_count || 0), 0)}
             </div>
             <div className="text-sm text-gray-600">Total Preguntas</div>
           </div>
