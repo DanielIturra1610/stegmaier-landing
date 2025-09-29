@@ -309,7 +309,9 @@ const AdminQuizForm: React.FC = () => {
       if (isEditing && quizId) {
         // For editing, use QuizUpdate which includes questions
         const updateData = {
-          ...formData,
+          title: formData.title,
+          description: formData.description,
+          instructions: formData.instructions,
           questions: questionIds, // Include question IDs in update
           question_pool: [],
           config: quizData.config,
@@ -322,7 +324,10 @@ const AdminQuizForm: React.FC = () => {
         const newQuiz = await quizService.createQuiz(quizData);
         // Si se quiere publicar directamente, actualizar el estado
         if (status === QuizStatus.PUBLISHED) {
-          await quizService.updateQuiz(newQuiz.id, { status: QuizStatus.PUBLISHED });
+          await quizService.updateQuiz(newQuiz.id, {
+            status: QuizStatus.PUBLISHED,
+            questions: questionIds
+          });
         }
       }
 
