@@ -277,6 +277,30 @@ class QuizService:
                 quiz.config = new_config
             if quiz_data.estimated_duration is not None:
                 quiz.estimated_duration = quiz_data.estimated_duration
+
+            # ✅ AÑADIDO: Manejar actualización de preguntas
+            if quiz_data.questions is not None:
+                logging.info(f"🔍 [QuizService.update_quiz] Processing questions: {len(quiz_data.questions)} provided")
+                if quiz_data.questions:
+                    questions = []
+                    for question_id in quiz_data.questions:
+                        question = await self.quiz_repository.get_question_by_id(question_id)
+                        if question:
+                            questions.append(question)
+                        else:
+                            logging.warning(f"⚠️ [QuizService.update_quiz] Question {question_id} not found")
+                    quiz.questions = questions
+                    logging.info(f"✅ [QuizService.update_quiz] Updated quiz with {len(questions)} questions")
+                else:
+                    quiz.questions = []
+                    logging.info(f"✅ [QuizService.update_quiz] Cleared all questions from quiz")
+
+            # ✅ AÑADIDO: Manejar actualización de question_pool
+            if quiz_data.question_pool is not None:
+                logging.info(f"🔍 [QuizService.update_quiz] Processing question pool: {len(quiz_data.question_pool)} provided")
+                quiz.question_pool = quiz_data.question_pool
+                logging.info(f"✅ [QuizService.update_quiz] Updated question pool with {len(quiz_data.question_pool)} questions")
+
             if quiz_data.status is not None:
                 quiz.status = quiz_data.status
                 if quiz_data.status == QuizStatus.PUBLISHED:
@@ -400,6 +424,10 @@ class QuizService:
 
             response_list = []
             for quiz in quizzes:
+                # ✅ CORREGIDO: Incluir conteo de preguntas
+                question_count = len(quiz.questions) if quiz.questions else 0
+                logging.info(f"🔍 [QuizService.get_all_quizzes] Quiz {quiz.id} has {question_count} questions")
+
                 response_list.append(QuizListResponse(
                     id=quiz.id,
                     title=quiz.title,
@@ -410,6 +438,7 @@ class QuizService:
                     status=quiz.status,
                     total_points=quiz.total_points,
                     estimated_duration=quiz.estimated_duration,
+                    question_count=question_count,  # ✅ AÑADIDO: Conteo de preguntas
                     total_attempts=quiz.total_attempts,
                     average_score=quiz.average_score,
                     completion_rate=quiz.completion_rate,
@@ -436,6 +465,9 @@ class QuizService:
 
         response_list = []
         for quiz in quizzes:
+            # ✅ CORREGIDO: Incluir conteo de preguntas
+            question_count = len(quiz.questions) if quiz.questions else 0
+
             response_list.append(QuizListResponse(
                 id=quiz.id,
                 title=quiz.title,
@@ -446,6 +478,7 @@ class QuizService:
                 status=quiz.status,
                 total_points=quiz.total_points,
                 estimated_duration=quiz.estimated_duration,
+                question_count=question_count,  # ✅ AÑADIDO: Conteo de preguntas
                 total_attempts=quiz.total_attempts,
                 average_score=quiz.average_score,
                 completion_rate=quiz.completion_rate,

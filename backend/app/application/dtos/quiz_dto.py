@@ -185,6 +185,7 @@ class QuizListResponse(BaseModel):
     status: QuizStatusEnum
     total_points: float
     estimated_duration: int
+    question_count: int = 0  # ✅ AÑADIDO: Conteo de preguntas
     total_attempts: int
     average_score: float
     completion_rate: float
