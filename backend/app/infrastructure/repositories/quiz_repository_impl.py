@@ -78,6 +78,28 @@ class MongoDBQuizRepository(QuizRepository):
             # ✅ Si no hay config o es None, usar configuración por defecto
             quiz_dict["config"] = QuizConfiguration()
 
+        # ✅ Convertir preguntas de dict a objetos Question
+        if "questions" in quiz_dict and quiz_dict["questions"]:
+            print(f"[DEBUG] Converting {len(quiz_dict['questions'])} questions from dict to objects")
+            question_objects = []
+            for i, question_dict in enumerate(quiz_dict["questions"]):
+                print(f"[DEBUG] Question {i}: type={type(question_dict)}, is_dict={isinstance(question_dict, dict)}")
+                if isinstance(question_dict, dict):
+                    print(f"[DEBUG] Question {i} keys: {list(question_dict.keys())}")
+                    # Convertir diccionario a objeto Question
+                    question = self._dict_to_question(question_dict)
+                    if question:
+                        print(f"[DEBUG] Question {i} converted successfully: {question.id}")
+                        question_objects.append(question)
+                    else:
+                        print(f"[DEBUG] Question {i} conversion failed")
+                else:
+                    print(f"[DEBUG] Question {i} already an object, keeping as-is")
+                    # Si ya es un objeto Question, mantenerlo
+                    question_objects.append(question_dict)
+            quiz_dict["questions"] = question_objects
+            print(f"[DEBUG] Final questions count: {len(question_objects)}")
+
         # Crear objeto Quiz usando from_dict si existe, sino usar constructor
         try:
             return Quiz(**quiz_dict)

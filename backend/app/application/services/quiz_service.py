@@ -960,10 +960,44 @@ class QuizService:
             is_available=quiz.is_available_now()
         )
 
-    def _question_to_response(self, question: Question) -> QuestionResponse:
+    def _question_to_response(self, question) -> QuestionResponse:
         """Convertir entidad Question a DTO de respuesta."""
-        return QuestionResponse(
-            id=question.id,
+        print(f"[DEBUG] _question_to_response: question type={type(question)}, is_dict={isinstance(question, dict)}")
+
+        # ✅ Manejar tanto objetos Question como diccionarios temporalmente
+        if isinstance(question, dict):
+            print(f"[DEBUG] _question_to_response: question is dict with keys: {list(question.keys())}")
+            print(f"[DEBUG] _question_to_response: Converting dict to QuestionResponse")
+            return QuestionResponse(
+                id=question.get("id", ""),
+                type=question.get("type", "multiple_choice"),
+                title=question.get("title", ""),
+                content=question.get("content", ""),
+                explanation=question.get("explanation"),
+                points=question.get("points", 1.0),
+                time_limit=question.get("time_limit"),
+                options=[
+                    {
+                        "id": opt.get("id", "") if isinstance(opt, dict) else opt.id,
+                        "text": opt.get("text", "") if isinstance(opt, dict) else opt.text,
+                        "is_correct": opt.get("is_correct", False) if isinstance(opt, dict) else opt.is_correct,
+                        "explanation": opt.get("explanation") if isinstance(opt, dict) else opt.explanation,
+                        "order": opt.get("order", 0) if isinstance(opt, dict) else opt.order
+                    } for opt in question.get("options", [])
+                ],
+                correct_answers=question.get("correct_answers", []),
+                case_sensitive=question.get("case_sensitive", False),
+                pairs=question.get("pairs", []),
+                tags=question.get("tags", []),
+                difficulty=question.get("difficulty", "medium"),
+                created_at=question.get("created_at"),
+                updated_at=question.get("updated_at"),
+                created_by=question.get("created_by")
+            )
+        else:
+            # Objeto Question normal
+            return QuestionResponse(
+                id=question.id,
             type=question.type,
             title=question.title,
             content=question.content,
@@ -985,10 +1019,10 @@ class QuizService:
             pairs=question.pairs,
             tags=question.tags,
             difficulty=question.difficulty,
-            created_at=question.created_at,
-            updated_at=question.updated_at,
-            created_by=question.created_by
-        )
+                created_at=question.created_at,
+                updated_at=question.updated_at,
+                created_by=question.created_by
+            )
 
     def _attempt_to_response(self, attempt: QuizAttempt) -> QuizAttemptResponse:
         """Convertir entidad QuizAttempt a DTO de respuesta."""
