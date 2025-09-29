@@ -294,14 +294,14 @@ const AdminQuizForm: React.FC = () => {
           show_correct_answers: formData.show_results ?? true,
           allow_review: formData.allow_review ?? true,
           allow_retakes: true,
-          max_attempts: formData.max_attempts,
-          passing_score: formData.passing_score,
-          time_limit: formData.time_limit_minutes,
-          available_from: undefined,
-          available_until: undefined,
+          max_attempts: formData.max_attempts && formData.max_attempts >= 1 && formData.max_attempts <= 10 ? formData.max_attempts : null,
+          passing_score: Number(formData.passing_score) || 70.0,
+          time_limit: formData.time_limit_minutes && formData.time_limit_minutes >= 1 && formData.time_limit_minutes <= 600 ? formData.time_limit_minutes : null,
+          available_from: null,
+          available_until: null,
           require_proctor: false,
           randomize_from_pool: false,
-          questions_per_attempt: undefined
+          questions_per_attempt: null
         },
         estimated_duration: formData.time_limit_minutes || 30
       };
