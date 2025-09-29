@@ -305,21 +305,54 @@ class QuizService:
             logging.error(f"❌ [QuizService.update_quiz] Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno del servidor: {str(e)}")
 
-    async def delete_quiz(self, quiz_id: str, user_id: str) -> bool:
+    async def delete_quiz(self, quiz_id: str, user_id: str, user_role: Optional[str] = None) -> bool:
         """Eliminar quiz."""
-        quiz = await self.quiz_repository.get_by_id(quiz_id)
-        if not quiz:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
-        
-        if quiz.created_by != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para eliminar este quiz")
-        
-        # Verificar si hay intentos
-        attempts = await self.quiz_repository.get_attempts_by_quiz(quiz_id)
-        if attempts:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede eliminar un quiz con intentos registrados")
-        
-        return await self.quiz_repository.delete_quiz(quiz_id)
+        try:
+            logging.info(f"🗑️ [QuizService.delete_quiz] Deleting quiz {quiz_id} for user {user_id}")
+
+            quiz = await self.quiz_repository.get_by_id(quiz_id)
+            if not quiz:
+                logging.warning(f"❌ [QuizService.delete_quiz] Quiz {quiz_id} not found")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Quiz con ID {quiz_id} no encontrado")
+
+            # ✅ CORREGIDO: Permitir a admins eliminar cualquier quiz
+            # Obtener rol del usuario si no se proporciona
+            if not user_role:
+                # Por compatibilidad, asumir que solo el creador puede eliminar
+                # En el futuro, se puede pasar el rol desde el endpoint
+                is_admin = False
+            else:
+                # Manejar tanto string como enum para user_role
+                role_str = str(user_role).lower() if hasattr(user_role, 'value') else str(user_role).lower()
+                role_str = role_str.replace('userrole.', '')
+                is_admin = role_str == "admin"
+
+            # Verificar permisos
+            if not is_admin and quiz.created_by != user_id:
+                logging.warning(f"❌ [QuizService.delete_quiz] User {user_id} not authorized to delete quiz {quiz_id}")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para eliminar este quiz")
+
+            # Verificar si hay intentos
+            attempts = await self.quiz_repository.get_attempts_by_quiz(quiz_id)
+            if attempts:
+                logging.warning(f"❌ [QuizService.delete_quiz] Quiz {quiz_id} has {len(attempts)} attempts, cannot delete")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede eliminar un quiz con intentos registrados")
+
+            # Eliminar quiz
+            success = await self.quiz_repository.delete_quiz(quiz_id)
+            if success:
+                logging.info(f"✅ [QuizService.delete_quiz] Quiz {quiz_id} deleted successfully")
+            else:
+                logging.error(f"❌ [QuizService.delete_quiz] Failed to delete quiz {quiz_id}")
+
+            return success
+
+        except HTTPException as he:
+            # Re-raise HTTP exceptions
+            raise he
+        except Exception as e:
+            logging.error(f"❌ [QuizService.delete_quiz] Unexpected error for quiz {quiz_id}: {str(e)}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error interno del servidor: {str(e)}")
 
     async def get_all_quizzes(self, published_only: bool = True, user_id: Optional[str] = None, user_role: str = "student") -> List[QuizListResponse]:
         """Obtener todos los quizzes basado en el rol del usuario."""

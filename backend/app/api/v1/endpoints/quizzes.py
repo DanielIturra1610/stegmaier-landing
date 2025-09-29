@@ -266,20 +266,28 @@ async def delete_quiz(
     - No se puede eliminar un quiz con intentos registrados
     """
     try:
+        logging.info(f"🗑️ [DELETE /quizzes/{quiz_id}] Deleting quiz for user {current_user.id}")
+
         if current_user.role == "student":
+            logging.warning(f"❌ [DELETE /quizzes/{quiz_id}] Student {current_user.id} tried to delete quiz")
             raise HTTPException(status_code=403, detail="No autorizado para eliminar quizzes")
 
-        success = await quiz_service.delete_quiz(quiz_id, current_user.id)
+        success = await quiz_service.delete_quiz(quiz_id, current_user.id, current_user.role)
         if success:
+            logging.info(f"✅ [DELETE /quizzes/{quiz_id}] Quiz deleted successfully")
             return {"message": "Quiz eliminado exitosamente"}
         else:
+            logging.error(f"❌ [DELETE /quizzes/{quiz_id}] Failed to delete quiz")
             raise HTTPException(status_code=400, detail="Error al eliminar quiz")
-    except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except UnauthorizedError as e:
-        raise HTTPException(status_code=403, detail=str(e))
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as he:
+        # Re-raise HTTP exceptions as-is
+        raise he
+    except Exception as e:
+        logging.error(f"❌ [DELETE /quizzes/{quiz_id}] Unexpected error: {str(e)}")
+        logging.error(f"❌ [DELETE /quizzes/{quiz_id}] Error type: {type(e)}")
+        import traceback
+        logging.error(f"❌ [DELETE /quizzes/{quiz_id}] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 
 @router.get("/", response_model=List[QuizListResponse])

@@ -376,6 +376,15 @@ class MongoDBQuizRepository(QuizRepository):
         except:
             return 0
 
+    async def delete_quiz(self, quiz_id: str) -> bool:
+        """Elimina un quiz por su ID."""
+        try:
+            result = await self.quiz_collection.delete_one({"_id": ObjectId(quiz_id)})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Error deleting quiz {quiz_id}: {e}")
+            return False
+
     # ✅ Métodos de conversión para Question
     def _dict_to_question(self, question_dict: dict) -> Optional[Question]:
         """Convierte un diccionario de MongoDB a una entidad Question."""
