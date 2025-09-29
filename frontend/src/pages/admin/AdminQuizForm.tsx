@@ -290,18 +290,18 @@ const AdminQuizForm: React.FC = () => {
         config: {
           shuffle_questions: formData.shuffle_questions || false,
           shuffle_answers: false,
-          show_results_immediately: formData.show_results || true,
-          show_correct_answers: formData.show_results || true,
-          allow_review: formData.allow_review || true,
+          show_results_immediately: formData.show_results ?? true,
+          show_correct_answers: formData.show_results ?? true,
+          allow_review: formData.allow_review ?? true,
           allow_retakes: true,
           max_attempts: formData.max_attempts,
           passing_score: formData.passing_score,
           time_limit: formData.time_limit_minutes,
-          available_from: null,
-          available_until: null,
+          available_from: undefined,
+          available_until: undefined,
           require_proctor: false,
           randomize_from_pool: false,
-          questions_per_attempt: null
+          questions_per_attempt: undefined
         },
         estimated_duration: formData.time_limit_minutes || 30
       };

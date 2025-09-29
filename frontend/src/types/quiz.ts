@@ -61,22 +61,17 @@ export interface Question {
 export interface QuizConfiguration {
   shuffle_questions: boolean;
   shuffle_answers: boolean;
-  show_results_immediately?: boolean;
+  show_results_immediately: boolean;
   show_correct_answers: boolean;
-  allow_retakes?: boolean;
   allow_review: boolean;
+  allow_retakes: boolean;
   max_attempts?: number;
-  passing_score?: number;
+  passing_score: number;
   time_limit?: number;
-  time_limit_enabled: boolean;
   available_from?: string;
   available_until?: string;
-  require_proctor?: boolean;
-  proctoring_enabled: boolean;
-  require_webcam: boolean;
-  prevent_copy_paste: boolean;
-  randomize_from_pool?: boolean;
-  randomize_order: boolean;
+  require_proctor: boolean;
+  randomize_from_pool: boolean;
   questions_per_attempt?: number;
 }
 
@@ -173,7 +168,7 @@ export interface QuizCreate {
   module_id?: string;
   lesson_id?: string;
   instructions?: string;
-  questions?: Question[];
+  questions?: string[]; // IDs de preguntas
   question_pool?: string[];
   config?: QuizConfiguration;
   estimated_duration?: number;
