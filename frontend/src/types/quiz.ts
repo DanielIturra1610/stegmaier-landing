@@ -124,6 +124,7 @@ export interface QuizListItem {
   created_at: string;
   // Propiedades adicionales necesarias para AdminQuizzes
   questions?: Question[];
+  question_count?: number;
   time_limit_minutes?: number;
   published_at?: string;
   created_by: string;
