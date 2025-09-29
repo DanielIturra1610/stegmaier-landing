@@ -80,25 +80,17 @@ class MongoDBQuizRepository(QuizRepository):
 
         # ✅ Convertir preguntas de dict a objetos Question
         if "questions" in quiz_dict and quiz_dict["questions"]:
-            print(f"[DEBUG] Converting {len(quiz_dict['questions'])} questions from dict to objects")
             question_objects = []
-            for i, question_dict in enumerate(quiz_dict["questions"]):
-                print(f"[DEBUG] Question {i}: type={type(question_dict)}, is_dict={isinstance(question_dict, dict)}")
+            for question_dict in quiz_dict["questions"]:
                 if isinstance(question_dict, dict):
-                    print(f"[DEBUG] Question {i} keys: {list(question_dict.keys())}")
                     # Convertir diccionario a objeto Question
                     question = self._dict_to_question(question_dict)
                     if question:
-                        print(f"[DEBUG] Question {i} converted successfully: {question.id}")
                         question_objects.append(question)
-                    else:
-                        print(f"[DEBUG] Question {i} conversion failed")
                 else:
-                    print(f"[DEBUG] Question {i} already an object, keeping as-is")
                     # Si ya es un objeto Question, mantenerlo
                     question_objects.append(question_dict)
             quiz_dict["questions"] = question_objects
-            print(f"[DEBUG] Final questions count: {len(question_objects)}")
 
         # Crear objeto Quiz usando from_dict si existe, sino usar constructor
         try:
@@ -200,16 +192,24 @@ class MongoDBQuizRepository(QuizRepository):
         try:
             # Agregar timestamp de actualización
             quiz_data["updated_at"] = datetime.utcnow().isoformat()
-            
+
+            # Log question count for debugging
+            if "questions" in quiz_data:
+                print(f"[INFO] Updating quiz {quiz_id} with {len(quiz_data['questions'])} questions")
+
             result = await self.quiz_collection.update_one(
                 {"_id": ObjectId(quiz_id)},
                 {"$set": quiz_data}
             )
-            
+
             if result.modified_count > 0:
-                return await self.get_by_id(quiz_id)
+                updated_quiz = await self.get_by_id(quiz_id)
+                if updated_quiz:
+                    print(f"[INFO] Quiz {quiz_id} updated successfully, final question count: {len(updated_quiz.questions) if updated_quiz.questions else 0}")
+                return updated_quiz
             return None
-        except:
+        except Exception as e:
+            print(f"[ERROR] Update failed: {e}")
             return None
 
     async def delete(self, quiz_id: str) -> bool:
@@ -269,7 +269,8 @@ class MongoDBQuizRepository(QuizRepository):
                 if quiz:
                     quizzes.append(quiz)
             return quizzes
-        except:
+        except Exception as e:
+            print(f"[ERROR] get_by_instructor failed: {e}")
             return []
 
     async def search(self, query: str, filters: dict = None) -> List[Quiz]:
