@@ -560,8 +560,7 @@ const Contact: FC = () => {
           <span className="font-semibold text-accent-300">
             consulta gratuita
           </span>{' '}
-          y descubre cómo podemos ayudarte a certificar tu empresa en tiempo
-          récord.
+          y descubre cómo podemos ayudarte a llegar al siguiente nivel en tiempo récords.
         </p>
       </motion.div>
 

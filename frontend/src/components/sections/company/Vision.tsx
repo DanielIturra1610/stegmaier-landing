@@ -129,11 +129,11 @@ const Vision: FC = () => {
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-6">Nuestra aspiración</h3>
             
             <p className="text-white/80 text-lg mb-6 leading-relaxed">
-              En Stegmaier Consulting aspiramos a transformar la forma en que las empresas implementan y obtienen valor de las normas ISO, llevando la excelencia operativa a un nuevo nivel.
+              En Stegmaier Consulting aspiramos a transformar la forma en que nuestros clientes implementan y obtienen valor en cada gestión, llevando la excelencia operativa a un nuevo nivel.
             </p>
             
             <p className="text-white/80 text-lg mb-6 leading-relaxed">
-              Visualizamos un futuro donde la certificación ISO no sea solo un requisito, sino una <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500 font-semibold">herramienta estratégica</span> que impulse la innovación y el crecimiento sostenible.
+              Visualizamos un futuro donde ser socios estratégicos en consultoría de alto nivel sea una <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-accent-300 to-accent-500 font-semibold">herramienta estratégica</span> que impulse la innovación y el crecimiento sostenible.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">

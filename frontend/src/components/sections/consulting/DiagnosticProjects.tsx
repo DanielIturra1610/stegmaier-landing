@@ -9,7 +9,7 @@ const DiagnosticProjects: React.FC = () => {
       icon: "🔍",
       title: "Diagnóstico",
       description: "Realizamos un levantamiento de la situación actual identificando fortalezas, debilidades y su potencial impacto con el fin de proponer la estrategia más adecuada para la mejora continua de la organización.",
-      features: ["Análisis FODA", "Evaluación de procesos", "Identificación de oportunidades"],
+      features: ["Análisis FODA, PESTEL u otro", "Evaluación de procesos", "Identificación de oportunidades"],
       color: "from-blue-500 to-cyan-500"
     },
     {

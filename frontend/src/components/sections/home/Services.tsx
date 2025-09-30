@@ -51,7 +51,7 @@ const StatsSection = () => (
     {[
       { number: "500+", label: "Empresas certificadas", icon: "🏢" },
       { number: "15+", label: "Años de experiencia", icon: "📅" },
-      { number: "98%", label: "Tasa de éxito", icon: "✅" },
+      { number: "100%", label: "Tasa de éxito", icon: "✅" },
       { number: "6", label: "Meses promedio", icon: "⏱️" }
     ].map((stat, index) => (
       <motion.div
@@ -106,9 +106,9 @@ const services: Service[] = [
   {
     id: 5,
     title: 'Gestión de Riesgos',
-    desc: 'Metodología ISO 31000 para identificar, evaluar y controlar riesgos operacionales y estratégicos.',
+    desc: 'Implementación de metodologías para identificar, evaluar y controlar riesgos operacionales y estratégicos',
     icon: L.AlertTriangle,
-    benefits: ['Matriz de riesgos', 'Planes de contingencia', 'Indicadores de control'],
+    benefits: ['Riesgos organizacional', 'Riesgo laboral de seguridad y salud', 'Riesgos de desastres y emergencias'],
     timeframe: '3-4 meses'
   },
   {
@@ -332,7 +332,7 @@ const Services: FC = () => {
           
           <div className="relative z-10">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
-              Impulsa tu negocio con certificación ISO de excelencia
+              Impulsa tu negocio con Stegmaier Partner Consulting
             </h3>
             <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
               Obtén una cotización personalizada y comienza tu proceso de certificación hoy mismo.

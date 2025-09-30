@@ -293,8 +293,8 @@ const Testimonials: FC = () => {
           </h2>
           
           <p className="mt-6 mx-auto max-w-3xl text-lg md:text-xl text-white/80 leading-relaxed">
-            Descubre cómo hemos ayudado a empresas de diferentes industrias a alcanzar 
-            la <span className="font-semibold text-accent-300">excelencia operacional</span> a través de certificaciones ISO.
+            Descubre como hemos ayudado a nuestros clientes en diferentes industrias a través de nuestra gestión, acompañándolos hacia la 
+            <span className="font-semibold text-accent-300">excelencia operacional.</span>
           </p>
         </motion.div>
 

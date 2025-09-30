@@ -99,7 +99,7 @@ const Hero: FC = () => {
             </span>
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-200">
-              para certificación ISO
+              para certificación ISO, gestión de capacitaciones y asesoría integral
             </span>
           </motion.h1>
 
@@ -261,9 +261,10 @@ const Hero: FC = () => {
             {/* Value propositions */}
             <div className="space-y-4 mb-8">
               {[
-                "Acompañamiento integral de durante todo el proceso",
+                "Acompañamiento integral durante todo el proceso",
                 "Garantía de certificación en primera auditoría externa",
-                "Soporte post-implementación"
+                "Soporte post-implementación",
+                "Gestión de capacitaciones"
               ].map((text, index) => (
                 <motion.div
                   key={index}
@@ -290,7 +291,7 @@ const Hero: FC = () => {
                 className="w-full text-primary-800 hover:bg-gray-100 font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <a href="/cotizar" className="w-full h-full flex items-center justify-center">
-                  Comenzar mi certificación
+                  Ir a plataforma de cursos
                 </a>
               </Button>
             </motion.div>

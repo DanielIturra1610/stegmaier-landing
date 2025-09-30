@@ -28,7 +28,7 @@ const Mission: FC = () => {
     {
       id: 1,
       title: "Excelencia en Consultoría",
-      description: "Ofrecer servicios de consultoría ISO del más alto nivel, con profesionales expertos y metodologías probadas.",
+      description: "Ofrecer servicios de asesoría técnica integral del más alto nivel, con profesionales expertos y metodologías comprobadas.",
       icon: "⭐",
       color: "from-accent-400 to-accent-600"
     },

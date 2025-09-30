@@ -151,7 +151,7 @@ const Process: FC = () => {
                 <span className="text-2xl">🛡️</span>
               </motion.div>
               <h3 className="text-white text-xl font-bold mb-2">Garantía de Certificación</h3>
-              <p className="text-white/70">100% de tasa de éxito en primera auditoría</p>
+              <p className="text-white/70">100% tasa de éxito en cada proyecto</p>
             </div>
           </div>
         </div>

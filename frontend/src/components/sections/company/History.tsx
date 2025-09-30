@@ -15,7 +15,7 @@ const historyEvents = [
     id: 2,
     year: '2010',
     title: 'Expansión Regional',
-    description: 'Comenzamos a expandir nuestros servicios a otros países de Latinoamérica, abriendo oficinas en Chile y Colombia.',
+    description: 'Comenzamos a expandir nuestros servicios en todo el país para próximamente abrirnos al mundo.',
     icon: '🌎',
   },
   {
@@ -29,21 +29,21 @@ const historyEvents = [
     id: 4,
     year: '2015',
     title: 'Premio a la Excelencia',
-    description: 'Reconocidos con el premio a la excelencia en consultoría empresarial por la Cámara de Comercio.',
+    description: 'Reconocidos con el premio a la excelencia en consultoría empresarial en norma ISO por entidad certificadora en Argentina.',
     icon: '🏆',
   },
   {
     id: 5,
     year: '2018',
     title: '10 Años de Trayectoria',
-    description: 'Celebramos una década de éxitos con más de 300 empresas certificadas y un equipo de 50 consultores especializados.',
+    description: 'Celebramos una década de éxitos con más de 300 empresas certificadas y un equipo de consultores especializados en crecimiento.',
     icon: '🎂',
   },
   {
     id: 6,
     year: '2020',
     title: 'Transformación Digital',
-    description: 'Lanzamiento de nuestra plataforma digital para gestión de proyectos de certificación remota.',
+    description: 'Lanzamiento de nuestra plataforma digital para gestión de proyectos de gestión remota.',
     icon: '💻',
   },
   {
@@ -57,7 +57,7 @@ const historyEvents = [
     id: 8,
     year: 'Hoy',
     title: 'Líderes del Sector',
-    description: 'Más de 500 empresas certificadas y presencia en 7 países de Latinoamérica.',
+    description: 'Más de 500 empresas certificadas y presencia en todo el país.',
     icon: '📊',
   },
 ];
