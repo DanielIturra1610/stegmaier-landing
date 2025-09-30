@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import stegmaierLogo from '../../assets/images/Stegmaierlogoblanco.png';
 
 /**
  * Footer para el layout principal del sitio
@@ -43,9 +44,9 @@ const Footer: React.FC = () => {
           <div className="grid gap-12 md:grid-cols-3 mb-8">
             <section>
               <div className="flex items-center mb-6">
-                <img 
-                  src="../../assets/images/Stegmaierlogoblanco.png" 
-                  alt="Stegmaier Logo" 
+                <img
+                  src={stegmaierLogo}
+                  alt="Stegmaier Logo"
                   className="h-10"
                 />
               </div>

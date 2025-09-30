@@ -119,6 +119,14 @@ const services: Service[] = [
     benefits: ['Monitoreo 24/7', 'Reportes mensuales', 'Soporte remoto'],
     timeframe: 'Permanente'
   },
+  {
+    id: 7,
+    title: 'Plataforma Automatizada de Investigación de Sucesos',
+    desc: 'Solución tecnológica integral para la gestión de investigación de incidentes y proyectos personalizados.',
+    icon: L.Search,
+    benefits: ['Metodología de árbol de causas', 'Gestión de planes de acción', 'Análisis predictivo', 'Dashboard personalizado'],
+    timeframe: 'Personalizado'
+  },
 ]
 
 // Calculate variant based on index
@@ -129,7 +137,7 @@ const getVariant = (index: number): 'primary' | 'accent' | 'gold' => {
 
 const Services: FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'iso' | 'legal' | 'training'>('all')
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'iso' | 'legal' | 'training' | 'technology'>('all')
 
   // Filter services based on category
   const filteredServices = (Array.isArray(services) ? services : []).filter(service => {
@@ -137,6 +145,7 @@ const Services: FC = () => {
     if (selectedCategory === 'iso') return [1, 2, 5].includes(service.id)
     if (selectedCategory === 'legal') return [4].includes(service.id)
     if (selectedCategory === 'training') return [3, 6].includes(service.id)
+    if (selectedCategory === 'technology') return [7].includes(service.id)
     return true
   })
 
@@ -144,7 +153,8 @@ const Services: FC = () => {
     { id: 'all', label: 'Todos los servicios', count: services.length },
     { id: 'iso', label: 'Certificaciones ISO', count: 3 },
     { id: 'legal', label: 'Cumplimiento Legal', count: 1 },
-    { id: 'training', label: 'Capacitación', count: 2 }
+    { id: 'training', label: 'Capacitación', count: 2 },
+    { id: 'technology', label: 'Tecnología', count: 1 }
   ]
 
   // Enhanced animations

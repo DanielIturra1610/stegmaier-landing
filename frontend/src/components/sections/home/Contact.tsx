@@ -609,6 +609,10 @@ const Contact: FC = () => {
                   href="tel:+56987501114"
                   variant="primary"
                 />
+                <div className="flex items-center text-sm text-primary-600 font-semibold bg-primary-50 px-3 py-2 rounded-full">
+                    <Clock className="w-4 h-4 mr-2" />
+                    Disponibles 24/7, todos los días
+                </div>
               </motion.div>
 
               <motion.div variants={itemAnimation}>
@@ -654,11 +658,6 @@ const Contact: FC = () => {
                     <p className="text-sm text-gray-500 mb-3">
                       Atendemos presencial y remoto en todo Chile
                     </p>
-
-                    <div className="flex items-center text-sm text-primary-600 font-semibold bg-primary-50 px-3 py-2 rounded-full">
-                      <Clock className="w-4 h-4 mr-2" />
-                      Disponibles 24/7, todos los días
-                    </div>
                   </div>
                 </div>
               </motion.div>
