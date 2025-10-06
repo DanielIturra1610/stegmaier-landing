@@ -32,7 +32,7 @@ const teamMembers = [
   {
     id: 3,
     name: 'ROCIO CARRASCO',
-    role: 'Técnico nivel medio en construcción',
+    role: 'Ingeniero en prevención de riesgos',
     bio: 'Técnico nivel medio en construcción. Técnico en prevención de riesgos. Ingeniero en prevención de riesgos.',
     image: imageRocio,
     linkedin: 'https://linkedin.com',
