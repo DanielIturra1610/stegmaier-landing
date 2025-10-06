@@ -3,6 +3,12 @@ import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import SectionConnector from '../../ui/SectionConnector';
 
+// Importar imágenes correctamente
+import imageFernando from '../../../assets/images/fotos-steg-equipo2.jpg';
+import imageCecilia from '../../../assets/images/fotos-steg-equipo1.jpg';
+import imageRocio from '../../../assets/images/fotos-steg-equipo3.jpg';
+import imageLucas from '../../../assets/images/fotos-steg-equipo4.jpg';
+
 // Datos del equipo
 const teamMembers = [
   {
@@ -10,7 +16,7 @@ const teamMembers = [
     name: 'FERNANDO ALBERTO STEGMAIER BRAVO',
     role: 'Gerente General',
     bio: 'Ingeniero Ejecución Mecánico Automotriz. Auditor Líder/Interno ISO 9001:2015, ISO 14001:2015, ISO 45001:2018 Certificado por IQNET Academy. Certificado en Interpretación de Sistemas de gestión integrados ISO 9001:2015, ISO 14001:2015, ISO 45001:2018. Certificado en Gestión de No Conformidades por IRAM Chile. Certificado en Metodología de Calidad 5S por IRAM Chile. Certificado en Interpretación y Aplicación de Sistemas de gestión de riesgos ISO 31000:2018 por IRAM Chile.',
-    image: '/src/assets/images/fotos-steg-equipo2.jpg',
+    image: imageFernando,
     linkedin: 'https://linkedin.com',
     department: 'dirección',
   },
@@ -19,9 +25,27 @@ const teamMembers = [
     name: 'CECILIA BEATRIZ STEGMAIER ÁLVAREZ',
     role: 'Gerente de Operaciones',
     bio: 'Ingeniero en Prevención de Riesgos Laborales y Ambientales con licenciatura. Técnico en Prevención de Riesgos Laborales. Auditor Líder/Interno ISO 9001:2015, ISO 14001:2015, ISO 45001:2018 Certificado por IQNET Academy, IRAM Chile. Certificado en Interpretación de Sistemas de gestión integrados ISO 9001:2015, ISO 14001:2015, ISO 45001:2018 por IRAM Chile. Certificado en Gestión de NoConformidades por IRAM Chile. Certificado en Metodología de Calidad 5S por IRAM Chile. Certificado en Interpretación y Aplicación de Sistemas de gestión de riesgos ISO 31000:2018 por IRAM Chile.',
-    image: '/src/assets/images/fotos-steg-equipo1.jpg',
+    image: imageCecilia,
     linkedin: 'https://linkedin.com',
     department: 'dirección',
+  },
+  {
+    id: 3,
+    name: 'ROCIO CARRASCO',
+    role: 'Técnico nivel medio en construcción',
+    bio: 'Técnico nivel medio en construcción. Técnico en prevención de riesgos. Ingeniero en prevención de riesgos.',
+    image: imageRocio,
+    linkedin: 'https://linkedin.com',
+    department: 'equipo',
+  },
+  {
+    id: 4,
+    name: 'LUCAS FABIAN FIGUEROA SOTO',
+    role: 'Ingeniero en Sonido',
+    bio: 'Ingeniero en Sonido especializado en sistemas audiovisuales y producción técnica.',
+    image: imageLucas,
+    linkedin: 'https://linkedin.com',
+    department: 'equipo',
   },
 ];
 
@@ -139,7 +163,7 @@ const Team: FC = () => {
         </motion.header>
         
         {/* Grid de miembros del equipo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {teamMembers.map((member, index) => (
             <TeamMemberCard 
               key={member.id}
