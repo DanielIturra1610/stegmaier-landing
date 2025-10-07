@@ -55,14 +55,26 @@ import QuizAnalyticsPage from '../pages/admin/QuizAnalyticsPage';
 import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
 import { useAuth } from '../contexts/AuthContext';
 
-// Componente para redirección condicional
+// Componente para redirección condicional con validación robusta
 const AdminRedirect: React.FC = () => {
   const { user } = useAuth();
 
-  if (user?.role === 'admin' || user?.role === 'instructor') {
+  // Logging para debugging (TEMPORAL - remover después de resolver)
+  console.log('🔍 [AdminRedirect] Evaluando redirección:', {
+    userId: user?.id,
+    userRole: user?.role,
+    userEmail: user?.email,
+    isAuthenticated: !!user
+  });
+
+  // Validación explícita: solo admin e instructor van a courses
+  if (user && (user.role === 'admin' || user.role === 'instructor')) {
+    console.log('➡️ [AdminRedirect] Admin/Instructor detectado → Redirigiendo a /platform/courses');
     return <Navigate to="/platform/courses" replace />;
   }
 
+  // Todos los demás usuarios (incluidos estudiantes) van a Mi Progreso
+  console.log('➡️ [AdminRedirect] Usuario regular detectado → Mostrando MyProgressPage');
   return <MyProgressPage />;
 };
 
@@ -99,8 +111,18 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       >
-        {/* Redirección condicional para admins */}
+        {/* Dashboard principal - redirige según rol */}
         <Route index element={<AdminRedirect />} />
+        
+        {/* Ruta directa y explícita para Mi Progreso (estudiantes) */}
+        <Route 
+          path="my-progress" 
+          element={
+            <ProtectedRoute allowedRoles={['student', 'instructor', 'admin']}>
+              <MyProgressPage />
+            </ProtectedRoute>
+          } 
+        />
         
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/list" element={<CoursesListPage />} />
@@ -148,9 +170,8 @@ const AppRoutes: React.FC = () => {
         {/* Certificados */}
         <Route path="certificates" element={<CertificatesPage />} />
         
-        {/* Progreso */}
+        {/* Progreso - mantener solo ProgressPage para compatibilidad */}
         <Route path="progress" element={<ProgressPage />} />
-        <Route path="my-progress" element={<MyProgressPage />} />
         
         {/* Soporte */}
         <Route path="support" element={<SupportPage />} />

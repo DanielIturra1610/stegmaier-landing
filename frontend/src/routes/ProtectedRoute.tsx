@@ -45,7 +45,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Verificar roles si se especifican
   if (allowedRoles && allowedRoles.length > 0) {
+    // Logging para debugging (TEMPORAL - remover después de resolver)
+    console.log('🔒 [ProtectedRoute] Verificando roles:', {
+      userRole: user?.role,
+      allowedRoles,
+      isAllowed: user && allowedRoles.includes(user?.role || ''),
+      pathname: location.pathname
+    });
+    
     if (!user || !allowedRoles.includes(user?.role || '')) {
+      console.warn('⛔ [ProtectedRoute] Acceso denegado - rol no autorizado');
       return <Navigate to="/" state={{ from: location.pathname }} replace />;
     }
   }

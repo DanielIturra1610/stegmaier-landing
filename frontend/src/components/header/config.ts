@@ -187,6 +187,76 @@ export const headerRouteConfig: Record<string, HeaderConfig> = {
     showNotifications: true
   },
 
+  '/platform/admin/quizzes': {
+    variant: 'admin',
+    title: 'Gestión de Quizzes',
+    breadcrumbs: [
+      { label: 'Plataforma', to: '/platform' },
+      { label: 'Administración', to: '/platform/admin' },
+      { label: 'Quizzes' }
+    ],
+    tabs: [
+      { label: 'Todos', to: '#todos', ariaControls: 'todos-panel' },
+      { label: 'Publicados', to: '#publicados', ariaControls: 'publicados-panel' },
+      { label: 'Borradores', to: '#borradores', ariaControls: 'borradores-panel' }
+    ],
+    theme: 'brand',
+    requires: ['auth', 'admin'],
+    showNotifications: true
+  },
+
+  '/platform/admin/quizzes/new': {
+    variant: 'admin',
+    title: 'Crear Nuevo Quiz',
+    breadcrumbs: [
+      { label: 'Plataforma', to: '/platform' },
+      { label: 'Administración', to: '/platform/admin' },
+      { label: 'Quizzes', to: '/platform/admin/quizzes' },
+      { label: 'Nuevo' }
+    ],
+    theme: 'brand',
+    requires: ['auth', 'admin'],
+    showNotifications: false
+  },
+
+  '/platform/admin/quizzes/:quizId/edit': {
+    variant: 'admin',
+    title: (data) => data?.quizTitle ? `Editar: ${data.quizTitle}` : 'Editar Quiz',
+    breadcrumbs: [
+      { label: 'Plataforma', to: '/platform' },
+      { label: 'Administración', to: '/platform/admin' },
+      { label: 'Quizzes', to: '/platform/admin/quizzes' },
+      { label: 'Editar' }
+    ],
+    tabs: [
+      { label: 'General', to: '#general', ariaControls: 'general-panel' },
+      { label: 'Preguntas', to: '#preguntas', ariaControls: 'preguntas-panel' },
+      { label: 'Configuración', to: '#configuracion', ariaControls: 'configuracion-panel' }
+    ],
+    theme: 'brand',
+    requires: ['auth', 'admin'],
+    showNotifications: false
+  },
+
+  '/platform/admin/quizzes/:quizId/analytics': {
+    variant: 'admin',
+    title: (data) => data?.quizTitle ? `Analytics: ${data.quizTitle}` : 'Analytics del Quiz',
+    breadcrumbs: [
+      { label: 'Plataforma', to: '/platform' },
+      { label: 'Administración', to: '/platform/admin' },
+      { label: 'Quizzes', to: '/platform/admin/quizzes' },
+      { label: 'Analytics' }
+    ],
+    tabs: [
+      { label: 'Resumen', to: '#resumen', ariaControls: 'resumen-panel' },
+      { label: 'Estadísticas', to: '#estadisticas', ariaControls: 'estadisticas-panel' },
+      { label: 'Participantes', to: '#participantes', ariaControls: 'participantes-panel' }
+    ],
+    theme: 'brand',
+    requires: ['auth', 'admin'],
+    showNotifications: true
+  },
+
   // === PROFILE & SETTINGS ===
   '/platform/profile': {
     variant: 'standard',

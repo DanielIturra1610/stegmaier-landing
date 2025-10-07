@@ -102,25 +102,12 @@ const AdminQuizzes: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate('/platform/courses')}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Volver a Gestión de Cursos"
-          >
-            <ArrowLeftIcon className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Quizzes</h1>
-            <p className="text-gray-600">Administra los quizzes de evaluación</p>
-          </div>
-        </div>
+    <div className="space-y-6 pb-10">
+      {/* Action Bar - Ahora sin header, el PlatformLayout lo maneja */}
+      <div className="flex justify-end">
         <button
           onClick={() => navigate('/platform/admin/quizzes/new')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
         >
           <PlusIcon className="h-5 w-5" />
           <span>Nuevo Quiz</span>

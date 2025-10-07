@@ -350,53 +350,22 @@ const AdminQuizForm: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/platform/admin/quizzes')}
-              className="p-2 text-blue-100 hover:text-white hover:bg-blue-500/20 rounded-lg transition-colors"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold">
-                {isEditing ? 'Editar Quiz' : 'Nuevo Quiz'}
-              </h1>
-              <p className="text-blue-100">
-                {isEditing ? 'Modifica los detalles del quiz' : 'Crea un nuevo quiz de evaluación'}
-              </p>
-              {/* Context Information */}
-              {(moduleTitle || lessonTitle) && (
-                <div className="mt-3 p-3 bg-blue-500/20 rounded-lg border border-blue-400/30">
-                  <div className="text-sm text-blue-100">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">📁 Módulo:</span>
-                      <span>{moduleTitle || 'Sin especificar'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="font-medium">📖 Lección:</span>
-                      <span>{lessonTitle || 'Sin especificar'}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
+    <div className="max-w-4xl mx-auto space-y-6 pb-10">
+      {/* Context Information - Solo si viene desde lección/módulo */}
+      {(moduleTitle || lessonTitle) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="text-sm text-gray-700">
+            <div className="flex items-center space-x-2">
+              <span className="font-medium text-blue-700">📁 Módulo:</span>
+              <span>{moduleTitle || 'Sin especificar'}</span>
             </div>
-          </div>
-          <div className="hidden sm:block">
-            <div className="bg-blue-500/20 rounded-lg p-4 backdrop-blur-sm">
-              <div className="text-sm text-blue-100">
-                Stegmaier Platform
-              </div>
-              <div className="text-xs text-blue-200">
-                Sistema de Evaluación
-              </div>
+            <div className="flex items-center space-x-2 mt-1">
+              <span className="font-medium text-blue-700">📖 Lección:</span>
+              <span>{lessonTitle || 'Sin especificar'}</span>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quiz Details Form */}
       <div className="bg-white rounded-lg shadow p-6">

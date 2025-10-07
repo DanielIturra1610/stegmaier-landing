@@ -94,6 +94,15 @@ const CircularProgress: React.FC<{ percentage: number; size?: number; strokeWidt
 
 const MyProgressPage: React.FC = () => {
   const { user } = useAuth();
+  
+  // Logging para debugging (TEMPORAL - remover después de resolver)
+  console.log('📊 [MyProgressPage] Componente renderizando:', {
+    userId: user?.id,
+    userRole: user?.role,
+    userEmail: user?.email,
+    timestamp: new Date().toISOString()
+  });
+  
   const { summary, loading: progressLoading, error: progressError, reload } = useUserProgressSummary();
   const { syncing, hasPendingUpdates, syncPendingProgress } = useOfflineSync();
   
