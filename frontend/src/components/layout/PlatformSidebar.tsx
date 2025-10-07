@@ -273,8 +273,8 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
       <motion.div 
         className={`
           fixed inset-y-0 left-0 z-30 bg-primary-800 transform transition-transform duration-300 ease-in-out 
-          lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen overflow-hidden flex flex-col
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:relative lg:translate-x-0 lg:h-screen overflow-hidden flex flex-col
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         variants={sidebarVariants}
         animate={isCollapsed ? "collapsed" : "expanded"}

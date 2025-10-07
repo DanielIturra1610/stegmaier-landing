@@ -146,7 +146,15 @@ class ModuleService:
         for module in modules:
             module_data = await self.get_module_with_lessons(module.id)
             if module_data:
-                course_structure["modules"].append(module_data)
+                # ✅ FIX: Aplanar estructura para coincidir con ModuleWithLessons
+                module_dict = module_data["module"].dict()
+                module_with_lessons = {
+                    **module_dict,
+                    "lessons": [lesson.dict() for lesson in module_data["lessons"]],
+                    "lessons_count": module_data["lessons_count"],
+                    "total_duration": module_data["total_duration"]
+                }
+                course_structure["modules"].append(module_with_lessons)
                 course_structure["total_lessons"] += module_data["lessons_count"]
                 course_structure["total_duration"] += module_data["total_duration"]
         
