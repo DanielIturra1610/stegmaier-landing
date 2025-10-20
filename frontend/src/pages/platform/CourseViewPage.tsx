@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import AdvancedVideoPlayer from '../../components/video/AdvancedVideoPlayer';
+import VideoPlayer from '../../components/video/VideoPlayer';
 import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import moduleService from '../../services/moduleService';
@@ -726,8 +726,8 @@ const CourseViewPage: React.FC = () => {
               onComplete={handleLessonComplete}
             />
           ) : currentLesson?.lesson_type === 'video' && currentLesson.video_url && currentLesson.video_id ? (
-            <div className="max-w-4xl mx-auto">
-              <AdvancedVideoPlayer
+            <div className="w-full max-w-7xl mx-auto">
+              <VideoPlayer
                 videoUrl={currentLesson.video_url}
                 lessonId={currentLesson?.id || ''}
                 videoId={currentLesson?.video_id || currentLesson?.id || ''}
@@ -777,7 +777,7 @@ const CourseViewPage: React.FC = () => {
             </div>
           ) : (
             // Lección de texto
-            <div className="max-w-4xl mx-auto">
+            <div className="w-full max-w-7xl mx-auto">
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
                 <div 

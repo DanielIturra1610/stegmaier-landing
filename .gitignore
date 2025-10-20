@@ -38,6 +38,7 @@ Thumbs.db
 
 # Otros
 CLAUDE.md
+*.md
 
 frontend/dist/
 frontend/build/
