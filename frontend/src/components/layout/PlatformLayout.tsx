@@ -176,17 +176,10 @@ const PlatformLayout: React.FC = () => {
           className="flex-1 overflow-auto p-4 md:p-6"
           data-onboarding="dashboard-main"
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto min-h-screen">
             <Outlet />
           </div>
         </main>
-        
-        {/* Footer simple para la plataforma */}
-        <footer className="bg-white border-t border-gray-200 py-3">
-          <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Stegmaier. Todos los derechos reservados.
-          </div>
-        </footer>
       </div>
     </div>
   );

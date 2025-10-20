@@ -116,6 +116,31 @@ class LessonResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
+    # ✅ Campos adicionales para compatibilidad con frontend
+    video_url: Optional[str] = None  # Alias de content_url para videos
+    video_id: Optional[str] = None   # ID extraído de la URL del video
+    lesson_type: Optional[str] = None  # Alias de content_type para compatibilidad
+    
+    @classmethod
+    def from_lesson(cls, lesson):
+        """Crear LessonResponse desde Lesson con campos computados"""
+        data = lesson.dict()
+        
+        # Mapear content_type a lesson_type para compatibilidad
+        data['lesson_type'] = str(lesson.content_type.value) if hasattr(lesson.content_type, 'value') else str(lesson.content_type)
+        
+        # Si es video, extraer video_id y setear video_url
+        if lesson.content_type in ['video', 'VIDEO']:
+            data['video_url'] = lesson.content_url
+            
+            # Extraer video_id de la URL: /api/v1/media/videos/{video_id}/stream
+            if lesson.content_url:
+                parts = lesson.content_url.split('/')
+                if 'videos' in parts and len(parts) > parts.index('videos') + 1:
+                    data['video_id'] = parts[parts.index('videos') + 1]
+        
+        return cls(**data)
+    
     class Config:
         schema_extra = {
             "example": {

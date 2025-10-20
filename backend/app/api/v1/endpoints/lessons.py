@@ -68,7 +68,8 @@ async def get_course_lessons(
     if lessons and len(lessons) > 0:
         print(f"📝 [API] First lesson in response: {lessons[0].title if hasattr(lessons[0], 'title') else 'N/A'}")
     
-    return lessons
+    # ✅ Convertir a LessonResponse con campos de compatibilidad
+    return [LessonResponse.from_lesson(lesson) for lesson in lessons]
 
 
 @router.get("/{lesson_id}", response_model=LessonResponse, summary="Obtener lección por ID")

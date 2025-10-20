@@ -156,8 +156,10 @@ async def get_course_by_id(
         
         # Convertir las lecciones a diccionarios para el response
         course_dict = course.dict() if hasattr(course, 'dict') else course.__dict__
-        course_dict['lessons'] = [
-            {
+        course_dict['lessons'] = []
+        
+        for lesson in lessons:
+            lesson_dict = {
                 'id': str(lesson.id),
                 'title': lesson.title,
                 'order': lesson.order,
@@ -169,9 +171,22 @@ async def get_course_by_id(
                 'course_id': str(lesson.course_id),
                 'created_at': lesson.created_at,
                 'updated_at': lesson.updated_at,
-                'attachments': lesson.attachments
-            } for lesson in lessons
-        ]
+                'attachments': lesson.attachments,
+                # ✅ Agregar campos de compatibilidad con frontend
+                'lesson_type': str(lesson.content_type.value) if hasattr(lesson.content_type, 'value') else str(lesson.content_type)
+            }
+            
+            # ✅ Si es video, agregar video_url y video_id
+            if lesson.content_type in ['video', 'VIDEO'] and lesson.content_url:
+                lesson_dict['video_url'] = lesson.content_url
+                # Extraer video_id de la URL: /api/v1/media/videos/{video_id}/stream
+                parts = lesson.content_url.split('/')
+                if 'videos' in parts:
+                    video_index = parts.index('videos')
+                    if len(parts) > video_index + 1:
+                        lesson_dict['video_id'] = parts[video_index + 1]
+            
+            course_dict['lessons'].append(lesson_dict)
         
         print(f"📋 [API] Returning course with {len(course_dict['lessons'])} lessons")
         return CourseResponse(**course_dict)
