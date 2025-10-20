@@ -1,0 +1,58 @@
+FROM node:20.11-alpine3.19 AS build
+
+WORKDIR /app
+
+# Instalar dependencias primero (mejor caching)
+COPY package*.json ./
+RUN npm install
+
+# Copiar archivos de configuración
+COPY tsconfig.json tsconfig.node.json ./
+COPY vite.config.ts postcss.config.js tailwind.config.js ./
+COPY components.json ./
+
+# Copiar código fuente
+COPY index.html ./
+COPY src ./src
+COPY public ./public
+
+# Build para producción
+RUN npm run build
+
+# Stage final con Nginx
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Create nginx template
+COPY <<EOF /etc/nginx/conf.d/default.conf.template
+server {
+    listen \${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+
+# Create startup script that handles dynamic port
+COPY <<EOF /docker-entrypoint.sh
+#!/bin/sh
+export PORT=\${PORT:-80}
+echo "Starting nginx on port \$PORT"
+envsubst '\$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+exec nginx -g "daemon off;"
+EOF
+
+RUN chmod +x /docker-entrypoint.sh
+
+CMD ["/docker-entrypoint.sh"]

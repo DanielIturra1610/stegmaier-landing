@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Felicitaciones por completar {{ course_title }}!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6; 
+            color: #333; 
+            background-color: #f8fafc;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header { 
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white; 
+            padding: 40px 30px; 
+            text-align: center; 
+        }
+        .celebration {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .header h1 { 
+            font-size: 26px; 
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .content { 
+            padding: 40px 30px; 
+        }
+        .achievement-card {
+            background: linear-gradient(135deg, #fef3cd 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .achievement-card .trophy {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+        .achievement-card h2 {
+            color: #92400e;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .course-info {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        .course-info h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .info-value {
+            color: #6b7280;
+        }
+        .cta-button { 
+            display: inline-block;
+            background: #059669;
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.2s;
+        }
+        .cta-button:hover {
+            background: #047857;
+        }
+        .cta-button.secondary {
+            background: #6b7280;
+        }
+        .cta-button.secondary:hover {
+            background: #4b5563;
+        }
+        .next-steps {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .next-steps h3 {
+            color: #1e40af;
+            margin-bottom: 15px;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .footer { 
+            background: #f8fafc;
+            padding: 30px; 
+            text-align: center; 
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer p { 
+            font-size: 14px; 
+            color: #6b7280; 
+            margin-bottom: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #059669;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="celebration">🎉</div>
+            <h1>¡Felicitaciones, {{ user_name }}!</h1>
+            <p>Has completado exitosamente tu curso</p>
+        </div>
+        
+        <div class="content">
+            <div class="achievement-card">
+                <div class="trophy">🏆</div>
+                <h2>¡Curso Completado!</h2>
+                <p style="color: #92400e; font-size: 16px;">
+                    Has demostrado tu compromiso con la excelencia profesional
+                </p>
+            </div>
+
+            <div class="course-info">
+                <h3>📋 Detalles del Curso Completado</h3>
+                <div class="info-item">
+                    <span class="info-label">Curso:</span>
+                    <span class="info-value">{{ course_title }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de completación:</span>
+                    <span class="info-value">{{ completion_date }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Estado:</span>
+                    <span class="info-value" style="color: #059669; font-weight: 600;">✅ Completado</span>
+                </div>
+            </div>
+
+            {% if certificate_url %}
+            <div style="text-align: center; margin: 30px 0; padding: 25px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                <h3 style="color: #166534; margin-bottom: 15px;">🎓 Tu Certificado está Listo</h3>
+                <p style="color: #16a34a; margin-bottom: 20px;">
+                    Descarga tu certificado oficial y compártelo en tu perfil profesional
+                </p>
+                <a href="{{ certificate_url }}" class="cta-button">
+                    Descargar Certificado
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="next-steps">
+                <h3>🚀 Próximos Pasos Recomendados</h3>
+                
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Actualiza tu perfil profesional</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">
+                            Agrega este logro a LinkedIn, CV y redes profesionales
+                        </span>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Explora cursos relacionados</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">
+                            Continúa tu desarrollo con cursos complementarios
+                        </span>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Aplica lo aprendido</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">
+                            Implementa los conocimientos en tu trabajo diario
+                        </span>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <strong>Comparte tu experiencia</strong><br>
+                        <span style="color: #6b7280; font-size: 14px;">
+                            Deja una reseña para ayudar a otros estudiantes
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+                <p style="margin-bottom: 20px; font-size: 16px; color: #374151;">
+                    ¿Listo para continuar tu desarrollo profesional?
+                </p>
+                <a href="{{ course_url }}" class="cta-button secondary">
+                    Ver Curso Completado
+                </a>
+                <a href="{{ certificates_url }}" class="cta-button">
+                    Ver Mis Certificados
+                </a>
+            </div>
+
+            <div style="background: #f3f4f6; padding: 25px; border-radius: 8px; margin: 30px 0;">
+                <h4 style="color: #374151; margin-bottom: 15px; text-align: center;">💪 Tu Progreso Importa</h4>
+                <p style="color: #6b7280; text-align: center; margin-bottom: 15px;">
+                    Cada curso completado te acerca más a tus objetivos profesionales
+                </p>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Curso Completado</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Progreso</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">⭐</div>
+                        <div class="stat-label">Logro Desbloqueado</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><strong>{{ platform_name }}</strong></p>
+            <p>Felicitaciones por tu dedicación al aprendizaje continuo</p>
+            
+            <p style="margin: 20px 0; font-size: 14px;">
+                ¿Te gustó el curso? 
+                <a href="{{ course_url }}#reviews" style="color: #059669;">Deja una reseña</a>
+            </p>
+            
+            <p style="font-size: 12px; margin-top: 20px;">
+                © {{ year }} Stegmaier LMS. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

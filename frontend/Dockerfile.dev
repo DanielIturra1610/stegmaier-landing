@@ -1,0 +1,17 @@
+FROM node:20.11-alpine3.19
+
+WORKDIR /app
+
+# Copiamos package.json y package-lock.json para instalar dependencias
+COPY package.json package-lock.json ./
+
+# Las dependencias se instalarán al iniciar el contenedor
+
+# Los archivos de código fuente se montarán como volúmenes
+# para permitir el hot-reloading
+
+# Puerto para desarrollo
+EXPOSE 5173
+
+# Comando para instalar dependencias y luego iniciar el servidor de desarrollo
+CMD ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]

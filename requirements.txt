@@ -1,0 +1,32 @@
+fastapi==0.95.0
+uvicorn==0.21.1
+motor==3.1.2
+pydantic==1.10.7
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+email-validator==2.0.0
+pymongo==4.3.3
+python-dotenv==1.0.0
+
+# Security Enhancements
+redis==4.6.0
+python-magic==0.4.27
+Pillow==10.0.1
+cryptography==41.0.7
+
+# Monitoring and Observability
+sentry-sdk[fastapi]==1.32.0
+prometheus-client==0.17.1
+structlog==23.1.0
+python-json-logger==2.0.7
+
+# HTTP and Networking
+httpx==0.24.1
+aiofiles==23.2.1
+
+# System monitoring
+psutil==5.9.5
+
+# Rate limiting and security
+hiredis==2.2.3

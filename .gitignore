@@ -1,5 +1,7 @@
 # Dependencias
 /node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.js
 
@@ -14,6 +16,7 @@
 .env.test.local
 .env.production.local
 .env.docker
+.env.example
 
 # Logs
 npm-debug.log*
@@ -32,3 +35,10 @@ yarn-error.log*
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Otros
+CLAUDE.md
+*.md
+
+frontend/dist/
+frontend/build/
