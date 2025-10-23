@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 // import { FirstDayExperience, User as OnboardingUser, shouldShowOnboarding, trackMissionEvent } from '../onboarding';
 import { User as AuthUser } from '../../types/auth';
@@ -15,9 +15,16 @@ import PlatformSidebar from './PlatformSidebar';
 const PlatformLayout: React.FC = () => {
   // Estado para la interfaz principal
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // Obtener datos del usuario actual del contexto de autenticación
   const { user } = useAuth();
+
+  // Obtener la ruta actual para aplicar estilos condicionales
+  const location = useLocation();
+
+  // Detectar si estamos en la página de visualización de curso
+  const isCourseViewPage = location.pathname.match(/\/platform\/courses\/[^/]+$/);
+  const isFullWidthPage = isCourseViewPage;
   
   // TEMPORALMENTE DESHABILITADO: Usar el hook de experiencia para acceder al sistema híbrido de XP
   /*
@@ -172,13 +179,17 @@ const PlatformLayout: React.FC = () => {
         />
         
         {/* Contenido dinámico */}
-        <main 
-          className="flex-1 overflow-auto p-4 md:p-6"
+        <main
+          className={`flex-1 overflow-auto ${isFullWidthPage ? '' : 'p-4 md:p-6'}`}
           data-onboarding="dashboard-main"
         >
-          <div className="max-w-7xl mx-auto min-h-screen">
+          {isFullWidthPage ? (
             <Outlet />
-          </div>
+          ) : (
+            <div className="max-w-7xl mx-auto min-h-screen">
+              <Outlet />
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -20,21 +20,30 @@ interface Lesson {
   id: string;
   title: string;
   content: string;
+  videoUrl?: string;
+  videoId?: string;
+  lessonType: 'video' | 'text' | 'assignment';
+  orderIndex: number;
+  estimatedDuration: number;
+  // Legacy snake_case aliases for backward compatibility
   video_url?: string;
   video_id?: string;
-  lesson_type: 'video' | 'text' | 'assignment';
-  order_index: number;
-  estimated_duration: number;
+  lesson_type?: 'video' | 'text' | 'assignment';
+  content_type?: 'video' | 'text' | 'assignment';
 }
 
 interface Course {
   id: string;
   title: string;
   description: string;
-  instructor_name: string;
+  instructorName: string;
   lessons: Lesson[];
-  total_lessons: number;
-  estimated_duration: number;
+  totalLessons: number;
+  estimatedDuration: number;
+  // Legacy snake_case aliases
+  instructor_name?: string;
+  total_lessons?: number;
+  estimated_duration?: number;
 }
 
 const CourseViewPage: React.FC = () => {
@@ -139,10 +148,14 @@ const CourseViewPage: React.FC = () => {
 
       if (courseData.lessons && courseData.lessons.length > 0) {
         for (const lesson of courseData.lessons) {
-          // Verificar tanto lesson_type como content_type para compatibilidad
-          if ((lesson.lesson_type === 'video' || lesson.content_type === 'video') && lesson.video_id) {
+          // Verificar tanto lessonType/lesson_type como contentType/content_type para compatibilidad
+          const lessonType = lesson.lessonType || lesson.lesson_type;
+          const contentType = lesson.content_type;
+          const videoId = lesson.videoId || lesson.video_id;
+
+          if ((lessonType === 'video' || contentType === 'video') && videoId) {
           try {
-            const progress = await progressService.getVideoProgress(lesson.id, lesson.video_id || lesson.id);
+            const progress = await progressService.getVideoProgress(lesson.id, videoId || lesson.id);
             if (progress) {
               progressData[lesson.id] = progress;
               if (progress.is_completed) {
@@ -357,8 +370,8 @@ const CourseViewPage: React.FC = () => {
               Este curso está siendo preparado por nuestro equipo. Las lecciones estarán disponibles muy pronto.
             </p>
             <div className="text-sm text-gray-500">
-              <p><strong>Instructor:</strong> {course.instructor_name}</p>
-              <p><strong>Estado:</strong> {course.total_lessons > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
+              <p><strong>Instructor:</strong> {course.instructorName || course.instructor_name}</p>
+              <p><strong>Estado:</strong> {(course.totalLessons || course.total_lessons || 0) > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
             </div>
           </div>
           <div className="flex gap-3 justify-center">
@@ -393,9 +406,9 @@ const CourseViewPage: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-xl font-bold text-gray-900">{course.title}</h1>
-              
+
               <div className="text-sm text-gray-500">
-                {course.instructor_name}
+                {course.instructorName || course.instructor_name}
               </div>
             </div>
             
@@ -579,36 +592,45 @@ const CourseViewPage: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       {/* Icono de tipo de lección */}
-                      {lesson.lesson_type === 'video' ? (
-                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
-                        </svg>
-                      ) : lesson.lesson_type === 'assignment' ? (
-                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      )}
-                      
+                      {(() => {
+                        const lessonType = lesson.lessonType || lesson.lesson_type;
+                        if (lessonType === 'video') {
+                          return (
+                            <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
+                            </svg>
+                          );
+                        } else if (lessonType === 'assignment') {
+                          return (
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                          );
+                        } else {
+                          return (
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          );
+                        }
+                      })()}
+
                       <span className="text-xs text-gray-500">Lección {index + 1}</span>
                     </div>
                     
                     <h3 className={`font-medium ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
                       {lesson.title}
                     </h3>
-                    
+
                     <p className="text-xs text-gray-600 mt-1">
-                      {formatDuration(lesson.estimated_duration)}
+                      {formatDuration(lesson.estimatedDuration || 0)}
                     </p>
-                    
+
                     {/* Progreso de video */}
-                    {lesson.lesson_type === 'video' && progress && (
+                    {((lesson.lessonType || lesson.lesson_type) === 'video') && progress && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 rounded-full h-1">
-                          <div 
+                          <div
                             className="bg-blue-600 h-1 rounded-full"
                             style={{ width: `${progress.watch_percentage}%` }}
                           />
@@ -686,7 +708,7 @@ const CourseViewPage: React.FC = () => {
             </div>
 
             <div className="text-sm text-gray-500">
-              {course?.instructor_name}
+              {course?.instructorName || course?.instructor_name}
             </div>
           </div>
         </div>
@@ -718,24 +740,32 @@ const CourseViewPage: React.FC = () => {
 
         {/* Contenido de la lección */}
         <div className="flex-1 p-6">
-          {currentLesson?.lesson_type === 'assignment' ? (
-            <AssignmentLessonRenderer
-              lesson={currentLesson}
-              courseId={courseId}
-              enrollmentId={enrollmentId || undefined}
-              onComplete={handleLessonComplete}
-            />
-          ) : currentLesson?.lesson_type === 'video' && currentLesson.video_url && currentLesson.video_id ? (
-            <div className="w-full max-w-7xl mx-auto">
-              <VideoPlayer
-                videoUrl={currentLesson.video_url}
-                lessonId={currentLesson?.id || ''}
-                videoId={currentLesson?.video_id || currentLesson?.id || ''}
-                title={currentLesson.title}
-                onProgressUpdate={(progress) => handleProgressUpdate(currentLesson.id, progress)}
-                onLessonComplete={handleLessonComplete}
-                className="w-full"
-              />
+          {(() => {
+            const lessonType = currentLesson?.lessonType || currentLesson?.lesson_type;
+            const videoUrl = currentLesson?.videoUrl || currentLesson?.video_url;
+            const videoId = currentLesson?.videoId || currentLesson?.video_id;
+
+            if (lessonType === 'assignment') {
+              return (
+                <AssignmentLessonRenderer
+                  lesson={currentLesson as any}
+                  courseId={courseId}
+                  enrollmentId={enrollmentId || undefined}
+                  onComplete={handleLessonComplete}
+                />
+              );
+            } else if (lessonType === 'video' && videoUrl && videoId) {
+              return (
+                <div className="w-full max-w-7xl mx-auto">
+                  <VideoPlayer
+                    videoUrl={videoUrl}
+                    lessonId={currentLesson?.id || ''}
+                    videoId={videoId || currentLesson?.id || ''}
+                    title={currentLesson.title}
+                    onProgressUpdate={(progress) => handleProgressUpdate(currentLesson.id, progress)}
+                    onLessonComplete={handleLessonComplete}
+                    className="w-full"
+                  />
               
               {/* Contenido adicional de la lección */}
               {currentLesson.content && (
@@ -775,15 +805,17 @@ const CourseViewPage: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : (
-            // Lección de texto
-            <div className="w-full max-w-7xl mx-auto">
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
-                />
+              );
+            } else {
+              // Lección de texto
+              return (
+                <div className="w-full max-w-7xl mx-auto">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
+                    <div
+                      className="prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
+                    />
                 
                 {/* Quizzes de la lección */}
                 {lessonQuizzes[currentLesson?.id || ''] && lessonQuizzes[currentLesson?.id || ''].length > 0 && (
@@ -829,9 +861,11 @@ const CourseViewPage: React.FC = () => {
                     {completedLessons.has(currentLesson?.id || '') ? 'Lección Completada ✓' : 'Marcar como Completada'}
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
+                  </div>
+                </div>
+              );
+            }
+          })()}
         </div>
       </div>
     </div>

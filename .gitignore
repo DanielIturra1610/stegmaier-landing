@@ -42,3 +42,10 @@ CLAUDE.md
 
 frontend/dist/
 frontend/build/
+frontend/LOGGING_GUIDE.txt
+frontend/build-check.log
+frontend/build-output.log
+frontend/build-output.txt
+frontend/coverage/
+frontend/final-build.txt
+frontend/replace-console-logs.js    
