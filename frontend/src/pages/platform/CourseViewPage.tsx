@@ -401,7 +401,7 @@ const CourseViewPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar de lecciones */}
-      <div className={`bg-white shadow-lg transition-all duration-300 ${showSidebar ? 'w-80' : 'w-0 overflow-hidden'}`}>
+      <div className={`bg-white shadow-lg transition-all duration-300 ${showSidebar ? 'w-96' : 'w-0 overflow-hidden'}`}>
         <div className="p-4">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
@@ -475,12 +475,17 @@ const CourseViewPage: React.FC = () => {
                           <BookOpenIcon className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 break-words">{module.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
+                          <h3
+                            className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
+                            title={module.title}
+                          >
+                            {module.title}
+                          </h3>
+                          <div className="flex items-center gap-3 text-xs text-gray-500 mt-1.5 flex-wrap">
                             <span>{module.lessons.length} lecciones</span>
                             {module.estimated_duration > 0 && (
                               <div className="flex items-center gap-1">
-                                <ClockIcon className="w-4 h-4" />
+                                <ClockIcon className="w-3.5 h-3.5" />
                                 <span>{moduleService.formatDuration(module.estimated_duration)}</span>
                               </div>
                             )}
@@ -538,13 +543,18 @@ const CourseViewPage: React.FC = () => {
                                     <span className="text-xs text-gray-500">Lección {lessonIndex + 1}</span>
                                   </div>
 
-                                  <h4 className={`font-medium break-words ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
+                                  <h4
+                                    className={`text-sm font-medium leading-snug line-clamp-2 ${isActive ? 'text-blue-900' : 'text-gray-900'}`}
+                                    title={lesson.title}
+                                  >
                                     {lesson.title}
                                   </h4>
 
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Lección {lessonIndex + 1}
-                                  </p>
+                                  {lesson.duration > 0 && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {moduleService.formatDuration(lesson.duration)}
+                                    </p>
+                                  )}
                                 </div>
 
                                 <div className="flex items-center gap-2 ml-4">
