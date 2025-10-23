@@ -29,6 +29,7 @@ export interface NotificationAction {
 }
 
 export interface NotificationMetadata {
+  // Snake_case versions (from backend)
   course_id?: string;
   course_name?: string;
   lesson_id?: string;
@@ -36,8 +37,20 @@ export interface NotificationMetadata {
   quiz_id?: string;
   quiz_name?: string;
   certificate_id?: string;
+  assignment_id?: string;
   progress_percentage?: number;
   achievement_type?: string;
+  // CamelCase versions (transformed by axios)
+  courseId?: string;
+  courseName?: string;
+  lessonId?: string;
+  lessonName?: string;
+  quizId?: string;
+  quizName?: string;
+  certificateId?: string;
+  assignmentId?: string;
+  progressPercentage?: number;
+  achievementType?: string;
   [key: string]: any;
 }
 

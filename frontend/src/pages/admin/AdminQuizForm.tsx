@@ -303,7 +303,7 @@ const AdminQuizForm: React.FC = () => {
           randomize_from_pool: false,
           questions_per_attempt: null
         },
-        estimated_duration: formData.time_limit_minutes || 30
+        estimatedDuration: formData.time_limit_minutes || 30
       };
 
       if (isEditing && quizId) {

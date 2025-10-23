@@ -214,10 +214,10 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
               {/* Metadata */}
               <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>{formatTimestamp(notification.created_at)}</span>
-                {notification.metadata?.course_name && (
+                {notification.metadata?.courseName && (
                   <span className="flex items-center space-x-1">
                     <BookOpen className="w-3 h-3" />
-                    <span>{notification.metadata.course_name}</span>
+                    <span>{notification.metadata.courseName}</span>
                   </span>
                 )}
               </div>

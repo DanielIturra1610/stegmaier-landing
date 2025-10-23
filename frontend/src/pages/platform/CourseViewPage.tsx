@@ -61,8 +61,8 @@ const CourseViewPage: React.FC = () => {
   const [courseProgress, setCourseProgress] = useState(0);
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
 
-  // Estados del sidebar
-  const [showSidebar, setShowSidebar] = useState(true);
+  // Estados del sidebar - Iniciar oculto para experiencia inmersiva de video
+  const [showSidebar, setShowSidebar] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [useModularView, setUseModularView] = useState(false);
@@ -665,50 +665,64 @@ const CourseViewPage: React.FC = () => {
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
-        {/* Controls superiores */}
-        <div className="flex items-center justify-between mb-4 p-4">
-          {/* Botón toggle sidebar */}
-          <button
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50"
-          >
-            {showSidebar ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            )}
-          </button>
-
-          {/* Toggle vista modular */}
-          {courseStructure && courseStructure.modules.length > 0 && (
-            <button
-              onClick={() => setUseModularView(!useModularView)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                useModularView 
-                  ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {useModularView ? 'Vista Lista' : 'Vista Módulos'}
-            </button>
-          )}
-        </div>
-        {/* Header */}
+        {/* Header unificado con controles */}
         <div className="bg-white shadow-sm border-b p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-lg">{currentLesson?.title || 'Selecciona una lección'}</h2>
-              <p className="text-sm text-gray-500">
-                Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
-              </p>
+          <div className="flex items-center justify-between gap-4">
+            {/* Controles izquierda: Toggle sidebar + Info lección */}
+            <div className="flex items-center gap-3">
+              {/* Botón toggle sidebar */}
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors"
+                title={showSidebar ? 'Ocultar índice' : 'Mostrar índice'}
+              >
+                {showSidebar ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Información de la lección */}
+              <div className="flex flex-col">
+                <h2 className="font-semibold text-base">{currentLesson?.title || 'Selecciona una lección'}</h2>
+                <p className="text-xs text-gray-500">
+                  Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
+                </p>
+              </div>
             </div>
 
-            <div className="text-sm text-gray-500">
-              {course?.instructorName || course?.instructor_name}
+            {/* Controles derecha: Vista modular + Volver */}
+            <div className="flex items-center gap-2">
+              {/* Toggle vista modular */}
+              {courseStructure && courseStructure.modules.length > 0 && (
+                <button
+                  onClick={() => setUseModularView(!useModularView)}
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                    useModularView
+                      ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {useModularView ? 'Vista Lista' : 'Vista Módulos'}
+                </button>
+              )}
+
+              {/* Botón Volver a Explorar Cursos */}
+              <button
+                onClick={() => navigate('/platform/courses')}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                title="Volver a explorar cursos"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline">Explorar Cursos</span>
+              </button>
             </div>
           </div>
         </div>
@@ -720,21 +734,14 @@ const CourseViewPage: React.FC = () => {
             disabled={currentLessonIndex === 0}
             className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Anterior
+            ← Lección Anterior
           </button>
           <button
             onClick={() => handleLessonSelect(Math.min((course?.lessons?.length || 0) - 1, currentLessonIndex + 1))}
             disabled={currentLessonIndex === (course?.lessons?.length || 0) - 1}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Siguiente
-          </button>
-
-          <button
-            onClick={() => navigate('/platform/courses')}
-            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Salir del Curso
+            Siguiente Lección →
           </button>
         </div>
 

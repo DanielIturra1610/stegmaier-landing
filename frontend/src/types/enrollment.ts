@@ -62,7 +62,7 @@ export interface EnrollmentProgressResponse {
   certificate_issued: boolean;
   certificate_url?: string;
   user_role: string; // Rol del usuario en el curso
-  // Campos adicionales para UI
+  // Campos adicionales para UI (snake_case from backend)
   enrolled_at?: string;
   completion_date?: string;
   expected_completion_date?: string;
@@ -72,6 +72,16 @@ export interface EnrollmentProgressResponse {
   total_lessons_count?: number;
   total_lessons?: number; // Alias para total_lessons_count
   last_activity?: string;
+  // CamelCase versions (transformed by axios)
+  enrolledAt?: string;
+  completionDate?: string;
+  expectedCompletionDate?: string;
+  timeSpentMinutes?: number;
+  timeSpent?: number;
+  completedLessonsCount?: number;
+  totalLessonsCount?: number;
+  totalLessons?: number;
+  lastActivity?: string;
 }
 
 // Curso con información de inscripción

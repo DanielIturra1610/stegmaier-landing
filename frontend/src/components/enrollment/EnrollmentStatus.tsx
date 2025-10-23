@@ -106,9 +106,9 @@ const EnrollmentStatusComponent: React.FC<EnrollmentStatusProps> = ({
               style={{ width: `${progress}%` }}
             ></div>
           </div>
-          {enrollment.completed_lessons_count !== undefined && enrollment.total_lessons_count !== undefined && (
+          {enrollment.completedLessonsCount !== undefined && (enrollment.totalLessonsCount !== undefined || enrollment.totalLessons !== undefined) && (
             <div className="text-xs text-gray-500 mt-1">
-              {enrollment.completed_lessons_count} de {enrollment.total_lessons_count} lecciones completadas
+              {enrollment.completedLessonsCount} de {enrollment.totalLessons || enrollment.totalLessonsCount || 0} lecciones completadas
             </div>
           )}
         </div>
@@ -116,10 +116,10 @@ const EnrollmentStatusComponent: React.FC<EnrollmentStatusProps> = ({
 
       {/* Información adicional */}
       <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-        {enrollment.last_activity && (
+        {enrollment.lastActivity && (
           <div>
             <span className="text-gray-500">Última actividad:</span>
-            <div className="font-medium">{formatDate(enrollment.last_activity)}</div>
+            <div className="font-medium">{formatDate(enrollment.lastActivity)}</div>
           </div>
         )}
         {enrollment.expected_completion_date && (
@@ -128,13 +128,13 @@ const EnrollmentStatusComponent: React.FC<EnrollmentStatusProps> = ({
             <div className="font-medium">{formatDate(enrollment.expected_completion_date)}</div>
           </div>
         )}
-        {enrollment.time_spent_minutes !== undefined && (
+        {enrollment.timeSpentMinutes !== undefined && (
           <div>
             <span className="text-gray-500">Tiempo invertido:</span>
             <div className="font-medium">
-              {enrollment.time_spent_minutes > 60 
-                ? `${Math.floor(enrollment.time_spent_minutes / 60)}h ${enrollment.time_spent_minutes % 60}m`
-                : `${enrollment.time_spent_minutes}m`
+              {enrollment.timeSpentMinutes > 60
+                ? `${Math.floor(enrollment.timeSpentMinutes / 60)}h ${enrollment.timeSpentMinutes % 60}m`
+                : `${enrollment.timeSpentMinutes}m`
               }
             </div>
           </div>
