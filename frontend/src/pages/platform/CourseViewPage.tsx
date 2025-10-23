@@ -465,16 +465,18 @@ const CourseViewPage: React.FC = () => {
                       }`}
                       onClick={() => toggleModuleExpansion(module.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? (
-                          <ChevronDownIcon className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <ChevronRightIcon className="w-5 h-5 text-gray-500" />
-                        )}
-                        <BookOpenIcon className="w-5 h-5 text-blue-600" />
-                        <div>
-                          <h3 className="font-medium text-gray-900">{module.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex gap-3 items-start flex-shrink-0 mt-0.5">
+                          {isExpanded ? (
+                            <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+                          ) : (
+                            <ChevronRightIcon className="w-5 h-5 text-gray-500" />
+                          )}
+                          <BookOpenIcon className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 break-words">{module.title}</h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
                             <span>{module.lessons.length} lecciones</span>
                             {module.estimated_duration > 0 && (
                               <div className="flex items-center gap-1">
@@ -520,26 +522,26 @@ const CourseViewPage: React.FC = () => {
                               }`}
                               onClick={() => handleModularLessonSelect(moduleIndex, lessonIndex)}
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     {/* Icono de tipo de lección */}
                                     {lesson.content_type === 'video' ? (
-                                      <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
                                       </svg>
                                     ) : (
-                                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                       </svg>
                                     )}
                                     <span className="text-xs text-gray-500">Lección {lessonIndex + 1}</span>
                                   </div>
-                                  
-                                  <h4 className={`font-medium ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
+
+                                  <h4 className={`font-medium break-words ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
                                     {lesson.title}
                                   </h4>
-                                  
+
                                   <p className="text-xs text-gray-500 mt-1">
                                     Lección {lessonIndex + 1}
                                   </p>

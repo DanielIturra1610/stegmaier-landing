@@ -165,13 +165,15 @@ const PlatformLayout: React.FC = () => {
         </>
       )}
       */}
-      {/* Sidebar para navegación de la plataforma */}
-      <PlatformSidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
-        data-onboarding="platform-sidebar"
-      />
-      
+      {/* Sidebar para navegación de la plataforma - Oculto en páginas de curso */}
+      {!isCourseViewPage && (
+        <PlatformSidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          data-onboarding="platform-sidebar"
+        />
+      )}
+
       {/* Contenido principal */}
       <div className="flex flex-col flex-1">
         {/* Header contextual */}
