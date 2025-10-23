@@ -14,7 +14,7 @@ from ....domain.entities.user import User
 from ....application.services.media_service import MediaService
 from ....application.services.lesson_service import LessonService
 from ....dependencies import get_lesson_service, get_media_service
-from ...deps import get_current_instructor_user, get_current_admin_user, get_current_instructor_user_from_query_token
+from ...deps import get_current_instructor_user, get_current_admin_user, get_current_instructor_user_from_query_token, get_current_user_from_query_token
 
 router = APIRouter()
 
@@ -124,12 +124,13 @@ async def get_video_info(
 @router.get("/videos/{video_id}/stream", summary="Servir video para streaming")
 async def stream_video(
     video_id: str,
-    current_user: User = Depends(get_current_instructor_user_from_query_token),
+    current_user: User = Depends(get_current_user_from_query_token),
     media_service: MediaService = Depends(get_media_service)
 ):
     """
     Sirve el archivo de video para reproducción.
     Requiere token JWT como query parameter para compatibilidad con elemento <video> HTML.
+    Accesible para todos los usuarios autenticados (estudiantes, instructores, admins).
     """
     video_info = await media_service.get_video_info(video_id)
     

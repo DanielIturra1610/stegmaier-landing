@@ -22,8 +22,9 @@ const PlatformLayout: React.FC = () => {
   // Obtener la ruta actual para aplicar estilos condicionales
   const location = useLocation();
 
-  // Detectar si estamos en la página de visualización de curso
-  const isCourseViewPage = location.pathname.match(/\/platform\/courses\/[^/]+$/);
+  // Detectar si estamos en la página de visualización de curso (cualquier ruta que contenga /courses/ seguida de un ID)
+  const isCourseViewPage = location.pathname.includes('/platform/courses/') &&
+                           location.pathname.split('/').length >= 4; // /platform/courses/{id} o más
   const isFullWidthPage = isCourseViewPage;
   
   // TEMPORALMENTE DESHABILITADO: Usar el hook de experiencia para acceder al sistema híbrido de XP
