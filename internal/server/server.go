@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -15,11 +17,12 @@ import (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app *fiber.App
+	app    *fiber.App
+	config *config.Config
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
-func New() *Server {
+func New(cfg *config.Config) *Server {
 	// Configuración de Fiber
 	app := fiber.New(fiber.Config{
 		AppName:               "Stegmaier Learning Platform API",
@@ -38,7 +41,8 @@ func New() *Server {
 
 	// Crear instancia del servidor
 	server := &Server{
-		app: app,
+		app:    app,
+		config: cfg,
 	}
 
 	// Setup de middlewares
@@ -67,7 +71,7 @@ func (s *Server) setupMiddlewares() {
 
 	// CORS middleware
 	s.app.Use(cors.New(cors.Config{
-		AllowOrigins:     getAllowedOrigins(),
+		AllowOrigins:     strings.Join(s.config.Server.CORSOrigins, ","),
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Tenant-ID",
 		AllowCredentials: true,
@@ -129,9 +133,9 @@ func (s *Server) healthCheckHandler(c *fiber.Ctx) error {
 	})
 }
 
-// Start inicia el servidor en el puerto especificado
-func (s *Server) Start(port string) error {
-	addr := fmt.Sprintf(":%s", port)
+// Start inicia el servidor en el puerto configurado
+func (s *Server) Start() error {
+	addr := fmt.Sprintf(":%s", s.config.Server.Port)
 	log.Printf("🚀 Starting server on http://localhost%s", addr)
 	log.Printf("📊 Health check available at http://localhost%s/health", addr)
 	log.Printf("📚 API endpoints at http://localhost%s/api/v1", addr)
@@ -148,17 +152,6 @@ func (s *Server) Shutdown() error {
 // GetApp retorna la instancia de Fiber (útil para testing)
 func (s *Server) GetApp() *fiber.App {
 	return s.app
-}
-
-// getAllowedOrigins retorna los orígenes permitidos para CORS
-func getAllowedOrigins() string {
-	// Por defecto, permitir localhost en desarrollo
-	origins := os.Getenv("CORS_ALLOWED_ORIGINS")
-	if origins == "" {
-		// Defaults para desarrollo
-		origins = "http://localhost:3000,http://localhost:5173,http://localhost:8000"
-	}
-	return origins
 }
 
 // customErrorHandler maneja errores personalizados
