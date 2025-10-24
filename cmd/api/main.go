@@ -10,6 +10,7 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/server"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 )
 
 func main() {
@@ -23,8 +24,16 @@ func main() {
 	log.Printf("📍 Environment: %s", cfg.Server.Environment)
 	log.Printf("🔧 Port: %s", cfg.Server.Port)
 
-	// Crear servidor con configuración
-	srv := server.New(cfg)
+	// Inicializar Database Manager
+	log.Println("📦 Initializing database connections...")
+	if err := database.InitializeManager(cfg); err != nil {
+		log.Fatalf("❌ Failed to initialize database manager: %v", err)
+	}
+	dbManager := database.GetInstance()
+	log.Println("✅ Database manager initialized")
+
+	// Crear servidor con configuración y database manager
+	srv := server.New(cfg, dbManager)
 
 	// Channel para señales de sistema
 	quit := make(chan os.Signal, 1)
@@ -47,7 +56,13 @@ func main() {
 
 	// Shutdown gracefully
 	if err := srv.Shutdown(); err != nil {
-		log.Printf("❌ Error during shutdown: %v", err)
+		log.Printf("❌ Error during server shutdown: %v", err)
+	}
+
+	// Close database connections
+	log.Println("🔒 Closing database connections...")
+	if err := dbManager.CloseAll(); err != nil {
+		log.Printf("❌ Error closing database connections: %v", err)
 	}
 
 	// Esperar que el contexto termine o expire

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -17,12 +19,13 @@ import (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app    *fiber.App
-	config *config.Config
+	app       *fiber.App
+	config    *config.Config
+	dbManager *database.Manager
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
-func New(cfg *config.Config) *Server {
+func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Configuración de Fiber
 	app := fiber.New(fiber.Config{
 		AppName:               "Stegmaier Learning Platform API",
@@ -41,8 +44,9 @@ func New(cfg *config.Config) *Server {
 
 	// Crear instancia del servidor
 	server := &Server{
-		app:    app,
-		config: cfg,
+		app:       app,
+		config:    cfg,
+		dbManager: dbManager,
 	}
 
 	// Setup de middlewares
@@ -98,17 +102,10 @@ func (s *Server) setupMiddlewares() {
 
 // setupRoutes configura todas las rutas de la API
 func (s *Server) setupRoutes() {
-	// API version group
-	api := s.app.Group("/api")
-	v1 := api.Group("/v1")
-
-	// Health check endpoint
+	// Health check endpoint (no tenant required)
 	s.app.Get("/health", s.healthCheckHandler)
 
-	// API health check
-	v1.Get("/health", s.healthCheckHandler)
-
-	// Root endpoint
+	// Root endpoint (no tenant required)
 	s.app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": "Stegmaier Learning Platform API",
@@ -116,6 +113,18 @@ func (s *Server) setupRoutes() {
 			"status":  "online",
 		})
 	})
+
+	// API version group
+	api := s.app.Group("/api")
+
+	// Apply tenant middleware to all API routes
+	// This will extract tenant_id and inject it into context
+	api.Use(middleware.TenantMiddleware(s.dbManager))
+
+	v1 := api.Group("/v1")
+
+	// API health check (with tenant context)
+	v1.Get("/health", s.tenantHealthCheckHandler)
 
 	// TODO: Aquí se registrarán los controllers de cada módulo
 	// Ejemplo:
@@ -130,6 +139,39 @@ func (s *Server) healthCheckHandler(c *fiber.Ctx) error {
 		"timestamp": time.Now().Format(time.RFC3339),
 		"service":   "stegmaier-api",
 		"version":   "1.0.0",
+	})
+}
+
+// tenantHealthCheckHandler maneja el health check con contexto de tenant
+func (s *Server) tenantHealthCheckHandler(c *fiber.Ctx) error {
+	// Get tenant info from context
+	tenantID := c.Locals(middleware.TenantIDKey)
+	tenantSlug := c.Locals(middleware.TenantSlugKey)
+	tenantName := c.Locals(middleware.TenantNameKey)
+
+	// Check database health
+	dbHealthy := true
+	if err := s.dbManager.HealthCheck(); err != nil {
+		dbHealthy = false
+	}
+
+	// Get cache stats
+	cacheStats := middleware.GetCacheStats()
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":    "healthy",
+		"timestamp": time.Now().Format(time.RFC3339),
+		"service":   "stegmaier-api",
+		"version":   "1.0.0",
+		"tenant": fiber.Map{
+			"id":   tenantID,
+			"slug": tenantSlug,
+			"name": tenantName,
+		},
+		"database": fiber.Map{
+			"healthy": dbHealthy,
+		},
+		"cache": cacheStats,
 	})
 }
 
