@@ -9,6 +9,7 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/controllers"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/adapters"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
@@ -36,6 +37,8 @@ type Server struct {
 	dbManager        *database.Manager
 	authController   *controllers.AuthController
 	userController   *controllers.UserManagementController
+	tokenService     tokens.TokenService
+	authRepo         ports.AuthRepository
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -104,6 +107,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		dbManager:      dbManager,
 		authController: authController,
 		userController: userController,
+		tokenService:   tokenService,
+		authRepo:       authRepo,
 	}
 
 	// Setup de middlewares
@@ -184,68 +189,64 @@ func (s *Server) setupRoutes() {
 	v1.Get("/health", s.tenantHealthCheckHandler)
 
 	// ============================================================
-	// Authentication Routes (Public - No auth middleware required)
+	// Authentication Routes
 	// ============================================================
 	auth := v1.Group("/auth")
+
+	// Public Routes (No authentication required)
+	auth.Post("/register", s.authController.Register)
+	auth.Post("/login", s.authController.Login)
+	auth.Post("/verify-email", s.authController.VerifyEmail)
+	auth.Post("/resend-verification", s.authController.ResendVerification)
+	auth.Post("/forgot-password", s.authController.ForgotPassword)
+	auth.Post("/reset-password", s.authController.ResetPassword)
+	auth.Post("/refresh", s.authController.RefreshToken)
+
+	// Protected Routes (Authentication required)
+	authProtected := auth.Group("")
+	authProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
 	{
-		// Registration & Login
-		auth.Post("/register", s.authController.Register)
-		auth.Post("/login", s.authController.Login)
-
-		// Email Verification
-		auth.Post("/verify-email", s.authController.VerifyEmail)
-		auth.Post("/resend-verification", s.authController.ResendVerification)
-
-		// Password Reset Flow
-		auth.Post("/forgot-password", s.authController.ForgotPassword)
-		auth.Post("/reset-password", s.authController.ResetPassword)
-
-		// Token Refresh (No auth middleware, just valid refresh token)
-		auth.Post("/refresh", s.authController.RefreshToken)
-
-		// Protected Auth Routes (TODO: Add auth middleware)
-		// auth.Use(middleware.AuthMiddleware(tokenService))
-		auth.Post("/logout", s.authController.Logout)
-		auth.Post("/change-password", s.authController.ChangePassword)
-		auth.Get("/me", s.authController.GetCurrentUser)
-		auth.Put("/profile", s.authController.UpdateProfile)
-		auth.Post("/revoke-sessions", s.authController.RevokeAllSessions)
+		authProtected.Post("/logout", s.authController.Logout)
+		authProtected.Post("/change-password", s.authController.ChangePassword)
+		authProtected.Get("/me", s.authController.GetCurrentUser)
+		authProtected.Put("/profile", s.authController.UpdateProfile)
+		authProtected.Post("/revoke-sessions", s.authController.RevokeAllSessions)
 	}
 
 	// ============================================================
-	// Admin Routes (Protected - Auth + RBAC middleware required)
+	// Admin Routes (Protected - Authentication required)
 	// ============================================================
 	admin := v1.Group("/admin")
-	// admin.Use(middleware.AuthMiddleware(tokenService))
+	admin.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	// TODO: Add RBAC middleware to restrict to admin/superadmin roles
 	// admin.Use(middleware.RBACMiddleware("admin", "superadmin"))
+
+	// User Management
+	users := admin.Group("/users")
 	{
-		// User Management
-		users := admin.Group("/users")
-		{
-			// CRUD Operations
-			users.Post("/", s.userController.CreateUser)
-			users.Get("/", s.userController.ListUsers)
-			users.Get("/:id", s.userController.GetUserByID)
-			users.Put("/:id", s.userController.UpdateUser)
-			users.Delete("/:id", s.userController.DeleteUser)
+		// CRUD Operations
+		users.Post("/", s.userController.CreateUser)
+		users.Get("/", s.userController.ListUsers)
+		users.Get("/:id", s.userController.GetUserByID)
+		users.Put("/:id", s.userController.UpdateUser)
+		users.Delete("/:id", s.userController.DeleteUser)
 
-			// User Actions
-			users.Post("/:id/verify", s.userController.VerifyUserByAdmin)
-			users.Post("/:id/unverify", s.userController.UnverifyUser)
-			users.Post("/:id/reset-password", s.userController.ResetUserPassword)
-			users.Post("/:id/force-password-change", s.userController.ForcePasswordChange)
+		// User Actions
+		users.Post("/:id/verify", s.userController.VerifyUserByAdmin)
+		users.Post("/:id/unverify", s.userController.UnverifyUser)
+		users.Post("/:id/reset-password", s.userController.ResetUserPassword)
+		users.Post("/:id/force-password-change", s.userController.ForcePasswordChange)
 
-			// Queries by Role
-			users.Get("/role/:role", s.userController.GetUsersByRole)
-			users.Get("/role/:role/count", s.userController.CountUsersByRole)
-		}
+		// Queries by Role
+		users.Get("/role/:role", s.userController.GetUsersByRole)
+		users.Get("/role/:role/count", s.userController.CountUsersByRole)
+	}
 
-		// Tenant Management
-		tenants := admin.Group("/tenants")
-		{
-			tenants.Get("/:tenantId/users", s.userController.GetUsersByTenant)
-			tenants.Get("/:tenantId/users/count", s.userController.CountUsersByTenant)
-		}
+	// Tenant Management
+	tenants := admin.Group("/tenants")
+	{
+		tenants.Get("/:tenantId/users", s.userController.GetUsersByTenant)
+		tenants.Get("/:tenantId/users/count", s.userController.CountUsersByTenant)
 	}
 }
 
