@@ -7,9 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DanielIturra1610/stegmaier-landing/internal/controllers"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/adapters"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/hasher"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/tokens"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -17,11 +22,20 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
+const (
+	// Token expiration durations
+	verificationTokenExpiry   = 24 * time.Hour  // 24 hours for email verification
+	passwordResetTokenExpiry  = 1 * time.Hour   // 1 hour for password reset
+	bcryptCost               = 12               // Bcrypt cost factor
+)
+
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app       *fiber.App
-	config    *config.Config
-	dbManager *database.Manager
+	app              *fiber.App
+	config           *config.Config
+	dbManager        *database.Manager
+	authController   *controllers.AuthController
+	userController   *controllers.UserManagementController
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -42,11 +56,54 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		ErrorHandler: customErrorHandler,
 	})
 
+	// Initialize dependency injection for auth module
+	log.Println("🔧 Initializing authentication module...")
+
+	// 1. Initialize shared utilities
+	passwordHasher := hasher.NewBcryptHasher(bcryptCost)
+	tokenService := tokens.NewJWTService(
+		cfg.JWT.Secret,
+		cfg.JWT.Expiration,
+		"stegmaier-lms",
+	)
+
+	// 2. Initialize repositories (using Control DB from dbManager)
+	controlDB := dbManager.GetControlDB()
+	authRepo := adapters.NewPostgreSQLAuthRepository(controlDB)
+	userRepo := adapters.NewPostgreSQLUserRepository(controlDB)
+
+	// 3. Initialize services
+	authService := services.NewAuthService(
+		authRepo,
+		passwordHasher,
+		tokenService,
+		services.AuthServiceConfig{
+			AccessTokenExpiry:  cfg.JWT.Expiration,
+			RefreshTokenExpiry: cfg.JWT.RefreshExpiration,
+			VerifyTokenExpiry:  verificationTokenExpiry,
+			ResetTokenExpiry:   passwordResetTokenExpiry,
+		},
+	)
+
+	userManagementService := services.NewUserManagementService(
+		authRepo,
+		userRepo,
+		passwordHasher,
+	)
+
+	// 4. Initialize controllers
+	authController := controllers.NewAuthController(authService)
+	userController := controllers.NewUserManagementController(userManagementService)
+
+	log.Println("✅ Authentication module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
-		app:       app,
-		config:    cfg,
-		dbManager: dbManager,
+		app:            app,
+		config:         cfg,
+		dbManager:      dbManager,
+		authController: authController,
+		userController: userController,
 	}
 
 	// Setup de middlewares
@@ -126,10 +183,70 @@ func (s *Server) setupRoutes() {
 	// API health check (with tenant context)
 	v1.Get("/health", s.tenantHealthCheckHandler)
 
-	// TODO: Aquí se registrarán los controllers de cada módulo
-	// Ejemplo:
-	// auth := v1.Group("/auth")
-	// authController.RegisterRoutes(auth)
+	// ============================================================
+	// Authentication Routes (Public - No auth middleware required)
+	// ============================================================
+	auth := v1.Group("/auth")
+	{
+		// Registration & Login
+		auth.Post("/register", s.authController.Register)
+		auth.Post("/login", s.authController.Login)
+
+		// Email Verification
+		auth.Post("/verify-email", s.authController.VerifyEmail)
+		auth.Post("/resend-verification", s.authController.ResendVerification)
+
+		// Password Reset Flow
+		auth.Post("/forgot-password", s.authController.ForgotPassword)
+		auth.Post("/reset-password", s.authController.ResetPassword)
+
+		// Token Refresh (No auth middleware, just valid refresh token)
+		auth.Post("/refresh", s.authController.RefreshToken)
+
+		// Protected Auth Routes (TODO: Add auth middleware)
+		// auth.Use(middleware.AuthMiddleware(tokenService))
+		auth.Post("/logout", s.authController.Logout)
+		auth.Post("/change-password", s.authController.ChangePassword)
+		auth.Get("/me", s.authController.GetCurrentUser)
+		auth.Put("/profile", s.authController.UpdateProfile)
+		auth.Post("/revoke-sessions", s.authController.RevokeAllSessions)
+	}
+
+	// ============================================================
+	// Admin Routes (Protected - Auth + RBAC middleware required)
+	// ============================================================
+	admin := v1.Group("/admin")
+	// admin.Use(middleware.AuthMiddleware(tokenService))
+	// admin.Use(middleware.RBACMiddleware("admin", "superadmin"))
+	{
+		// User Management
+		users := admin.Group("/users")
+		{
+			// CRUD Operations
+			users.Post("/", s.userController.CreateUser)
+			users.Get("/", s.userController.ListUsers)
+			users.Get("/:id", s.userController.GetUserByID)
+			users.Put("/:id", s.userController.UpdateUser)
+			users.Delete("/:id", s.userController.DeleteUser)
+
+			// User Actions
+			users.Post("/:id/verify", s.userController.VerifyUserByAdmin)
+			users.Post("/:id/unverify", s.userController.UnverifyUser)
+			users.Post("/:id/reset-password", s.userController.ResetUserPassword)
+			users.Post("/:id/force-password-change", s.userController.ForcePasswordChange)
+
+			// Queries by Role
+			users.Get("/role/:role", s.userController.GetUsersByRole)
+			users.Get("/role/:role/count", s.userController.CountUsersByRole)
+		}
+
+		// Tenant Management
+		tenants := admin.Group("/tenants")
+		{
+			tenants.Get("/:tenantId/users", s.userController.GetUsersByTenant)
+			tenants.Get("/:tenantId/users/count", s.userController.CountUsersByTenant)
+		}
+	}
 }
 
 // healthCheckHandler maneja el health check endpoint
