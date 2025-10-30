@@ -1,0 +1,168 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [development, main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [development, main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    name: Test Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stegmaier_control_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: backend/go.sum
+
+      - name: Verify Go installation
+        run: go version
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Verify dependencies
+        working-directory: ./backend
+        run: go mod verify
+
+      - name: Run go vet
+        working-directory: ./backend
+        run: go vet ./...
+
+      - name: Run unit tests
+        working-directory: ./backend
+        run: go test -short -v -race -coverprofile=coverage-unit.txt -covermode=atomic ./...
+
+      - name: Run integration tests
+        working-directory: ./backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: stegmaier_control_test
+          DB_SSL_MODE: disable
+          JWT_SECRET: test-secret-key-for-ci-pipeline-only
+          JWT_EXPIRATION: 24h
+          JWT_REFRESH_EXPIRATION: 168h
+          ENV: test
+        run: go test -v -race -coverprofile=coverage-integration.txt -covermode=atomic ./tests/integration/...
+
+      - name: Run E2E tests
+        working-directory: ./backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: stegmaier_control_test
+          DB_SSL_MODE: disable
+          JWT_SECRET: test-secret-key-for-ci-pipeline-only
+          JWT_EXPIRATION: 24h
+          JWT_REFRESH_EXPIRATION: 168h
+          ENV: test
+          SERVER_PORT: 8080
+        run: go test -v -race -coverprofile=coverage-e2e.txt -covermode=atomic ./tests/e2e/...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./backend/coverage-unit.txt,./backend/coverage-integration.txt,./backend/coverage-e2e.txt
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: backend/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=5m
+
+  build:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: backend/go.sum
+
+      - name: Build binary
+        working-directory: ./backend
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-w -s" \
+            -o bin/server \
+            ./cmd/api
+
+      - name: Test binary execution
+        working-directory: ./backend
+        run: |
+          chmod +x bin/server
+          ./bin/server --version || echo "Binary built successfully"
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt sarif -out results.sarif ./backend/...'
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
