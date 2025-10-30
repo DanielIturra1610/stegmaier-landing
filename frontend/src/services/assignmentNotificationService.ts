@@ -360,7 +360,7 @@ class AssignmentNotificationService {
           new Notification(data.title, {
             body: data.message,
             icon: '/favicon.ico',
-            tag: `assignment-${data.metadata?.assignment_id}`
+            tag: `assignment-${data.metadata?.assignmentId}`
           });
         });
       }

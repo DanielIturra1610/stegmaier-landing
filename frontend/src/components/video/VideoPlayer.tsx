@@ -34,6 +34,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const progressSaveRef = useRef<NodeJS.Timeout | null>(null);
   const lessonStartedRef = useRef<boolean>(false);
 
+  // Agregar token JWT como query parameter para autenticación
+  const getAuthenticatedVideoUrl = (url: string): string => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.warn('⚠️ [VideoPlayer] No auth token found');
+      return url;
+    }
+
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}token=${token}`;
+  };
+
+  const authenticatedVideoUrl = getAuthenticatedVideoUrl(videoUrl);
+
   // Estados del reproductor
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -339,7 +353,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <video
         ref={videoRef}
         className="w-full aspect-video"
-        src={videoUrl}
+        src={authenticatedVideoUrl}
         autoPlay={autoPlay}
         playsInline
         onClick={togglePlayPause}

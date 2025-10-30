@@ -39,6 +39,41 @@ Thumbs.db
 # Otros
 CLAUDE.md
 *.md
+!README*.md
+!BACKLOG*.md
 
 frontend/dist/
 frontend/build/
+frontend/LOGGING_GUIDE.txt
+frontend/build-check.log
+frontend/build-output.log
+frontend/build-output.txt
+frontend/coverage/
+frontend/final-build.txt
+frontend/replace-console-logs.js
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.work
+go.work.sum
+/bin/
+*.db
+*.sqlite
+*.sqlite3
+tmp/
+temp/
+*.tmp
+
+# Backend Python (legacy, can be removed after migration)
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+backend/venv/
+backend/.venv/

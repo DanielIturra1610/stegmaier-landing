@@ -270,10 +270,10 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
       </AnimatePresence>
       
       {/* Sidebar principal con animación de ancho */}
-      <motion.div 
+      <motion.div
         className={`
-          fixed inset-y-0 left-0 z-30 bg-primary-800 transform transition-transform duration-300 ease-in-out 
-          lg:relative lg:translate-x-0 lg:h-screen overflow-hidden flex flex-col
+          fixed inset-y-0 left-0 z-30 bg-primary-800 transform transition-transform duration-300 ease-in-out
+          lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen overflow-hidden flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         variants={sidebarVariants}

@@ -20,21 +20,30 @@ interface Lesson {
   id: string;
   title: string;
   content: string;
+  videoUrl?: string;
+  videoId?: string;
+  lessonType: 'video' | 'text' | 'assignment';
+  orderIndex: number;
+  estimatedDuration: number;
+  // Legacy snake_case aliases for backward compatibility
   video_url?: string;
   video_id?: string;
-  lesson_type: 'video' | 'text' | 'assignment';
-  order_index: number;
-  estimated_duration: number;
+  lesson_type?: 'video' | 'text' | 'assignment';
+  content_type?: 'video' | 'text' | 'assignment';
 }
 
 interface Course {
   id: string;
   title: string;
   description: string;
-  instructor_name: string;
+  instructorName: string;
   lessons: Lesson[];
-  total_lessons: number;
-  estimated_duration: number;
+  totalLessons: number;
+  estimatedDuration: number;
+  // Legacy snake_case aliases
+  instructor_name?: string;
+  total_lessons?: number;
+  estimated_duration?: number;
 }
 
 const CourseViewPage: React.FC = () => {
@@ -52,8 +61,8 @@ const CourseViewPage: React.FC = () => {
   const [courseProgress, setCourseProgress] = useState(0);
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
 
-  // Estados del sidebar
-  const [showSidebar, setShowSidebar] = useState(true);
+  // Estados del sidebar - Iniciar oculto para experiencia inmersiva de video
+  const [showSidebar, setShowSidebar] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [useModularView, setUseModularView] = useState(false);
@@ -139,10 +148,14 @@ const CourseViewPage: React.FC = () => {
 
       if (courseData.lessons && courseData.lessons.length > 0) {
         for (const lesson of courseData.lessons) {
-          // Verificar tanto lesson_type como content_type para compatibilidad
-          if ((lesson.lesson_type === 'video' || lesson.content_type === 'video') && lesson.video_id) {
+          // Verificar tanto lessonType/lesson_type como contentType/content_type para compatibilidad
+          const lessonType = lesson.lessonType || lesson.lesson_type;
+          const contentType = lesson.content_type;
+          const videoId = lesson.videoId || lesson.video_id;
+
+          if ((lessonType === 'video' || contentType === 'video') && videoId) {
           try {
-            const progress = await progressService.getVideoProgress(lesson.id, lesson.video_id || lesson.id);
+            const progress = await progressService.getVideoProgress(lesson.id, videoId || lesson.id);
             if (progress) {
               progressData[lesson.id] = progress;
               if (progress.is_completed) {
@@ -357,8 +370,8 @@ const CourseViewPage: React.FC = () => {
               Este curso está siendo preparado por nuestro equipo. Las lecciones estarán disponibles muy pronto.
             </p>
             <div className="text-sm text-gray-500">
-              <p><strong>Instructor:</strong> {course.instructor_name}</p>
-              <p><strong>Estado:</strong> {course.total_lessons > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
+              <p><strong>Instructor:</strong> {course.instructorName || course.instructor_name}</p>
+              <p><strong>Estado:</strong> {(course.totalLessons || course.total_lessons || 0) > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
             </div>
           </div>
           <div className="flex gap-3 justify-center">
@@ -388,14 +401,14 @@ const CourseViewPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar de lecciones */}
-      <div className={`bg-white shadow-lg transition-all duration-300 ${showSidebar ? 'w-80' : 'w-0 overflow-hidden'}`}>
+      <div className={`bg-white shadow-lg transition-all duration-300 ${showSidebar ? 'w-96' : 'w-0 overflow-hidden'}`}>
         <div className="p-4">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <h1 className="text-xl font-bold text-gray-900">{course.title}</h1>
-              
+
               <div className="text-sm text-gray-500">
-                {course.instructor_name}
+                {course.instructorName || course.instructor_name}
               </div>
             </div>
             
@@ -452,20 +465,27 @@ const CourseViewPage: React.FC = () => {
                       }`}
                       onClick={() => toggleModuleExpansion(module.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        {isExpanded ? (
-                          <ChevronDownIcon className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <ChevronRightIcon className="w-5 h-5 text-gray-500" />
-                        )}
-                        <BookOpenIcon className="w-5 h-5 text-blue-600" />
-                        <div>
-                          <h3 className="font-medium text-gray-900">{module.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex gap-3 items-start flex-shrink-0 mt-0.5">
+                          {isExpanded ? (
+                            <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+                          ) : (
+                            <ChevronRightIcon className="w-5 h-5 text-gray-500" />
+                          )}
+                          <BookOpenIcon className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2"
+                            title={module.title}
+                          >
+                            {module.title}
+                          </h3>
+                          <div className="flex items-center gap-3 text-xs text-gray-500 mt-1.5 flex-wrap">
                             <span>{module.lessons.length} lecciones</span>
                             {module.estimated_duration > 0 && (
                               <div className="flex items-center gap-1">
-                                <ClockIcon className="w-4 h-4" />
+                                <ClockIcon className="w-3.5 h-3.5" />
                                 <span>{moduleService.formatDuration(module.estimated_duration)}</span>
                               </div>
                             )}
@@ -507,29 +527,34 @@ const CourseViewPage: React.FC = () => {
                               }`}
                               onClick={() => handleModularLessonSelect(moduleIndex, lessonIndex)}
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
                                     {/* Icono de tipo de lección */}
                                     {lesson.content_type === 'video' ? (
-                                      <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
                                       </svg>
                                     ) : (
-                                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-4 h-4 text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                       </svg>
                                     )}
                                     <span className="text-xs text-gray-500">Lección {lessonIndex + 1}</span>
                                   </div>
-                                  
-                                  <h4 className={`font-medium ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
+
+                                  <h4
+                                    className={`text-sm font-medium leading-snug line-clamp-2 ${isActive ? 'text-blue-900' : 'text-gray-900'}`}
+                                    title={lesson.title}
+                                  >
                                     {lesson.title}
                                   </h4>
-                                  
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Lección {lessonIndex + 1}
-                                  </p>
+
+                                  {lesson.duration > 0 && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {moduleService.formatDuration(lesson.duration)}
+                                    </p>
+                                  )}
                                 </div>
 
                                 <div className="flex items-center gap-2 ml-4">
@@ -579,36 +604,45 @@ const CourseViewPage: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       {/* Icono de tipo de lección */}
-                      {lesson.lesson_type === 'video' ? (
-                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
-                        </svg>
-                      ) : lesson.lesson_type === 'assignment' ? (
-                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      )}
-                      
+                      {(() => {
+                        const lessonType = lesson.lessonType || lesson.lesson_type;
+                        if (lessonType === 'video') {
+                          return (
+                            <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
+                            </svg>
+                          );
+                        } else if (lessonType === 'assignment') {
+                          return (
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                          );
+                        } else {
+                          return (
+                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          );
+                        }
+                      })()}
+
                       <span className="text-xs text-gray-500">Lección {index + 1}</span>
                     </div>
                     
                     <h3 className={`font-medium ${isActive ? 'text-blue-900' : 'text-gray-900'}`}>
                       {lesson.title}
                     </h3>
-                    
+
                     <p className="text-xs text-gray-600 mt-1">
-                      {formatDuration(lesson.estimated_duration)}
+                      {formatDuration(lesson.estimatedDuration || 0)}
                     </p>
-                    
+
                     {/* Progreso de video */}
-                    {lesson.lesson_type === 'video' && progress && (
+                    {((lesson.lessonType || lesson.lesson_type) === 'video') && progress && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 rounded-full h-1">
-                          <div 
+                          <div
                             className="bg-blue-600 h-1 rounded-full"
                             style={{ width: `${progress.watch_percentage}%` }}
                           />
@@ -643,50 +677,64 @@ const CourseViewPage: React.FC = () => {
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
-        {/* Controls superiores */}
-        <div className="flex items-center justify-between mb-4 p-4">
-          {/* Botón toggle sidebar */}
-          <button
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50"
-          >
-            {showSidebar ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            )}
-          </button>
-
-          {/* Toggle vista modular */}
-          {courseStructure && courseStructure.modules.length > 0 && (
-            <button
-              onClick={() => setUseModularView(!useModularView)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                useModularView 
-                  ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {useModularView ? 'Vista Lista' : 'Vista Módulos'}
-            </button>
-          )}
-        </div>
-        {/* Header */}
+        {/* Header unificado con controles */}
         <div className="bg-white shadow-sm border-b p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-lg">{currentLesson?.title || 'Selecciona una lección'}</h2>
-              <p className="text-sm text-gray-500">
-                Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
-              </p>
+          <div className="flex items-center justify-between gap-4">
+            {/* Controles izquierda: Toggle sidebar + Info lección */}
+            <div className="flex items-center gap-3">
+              {/* Botón toggle sidebar */}
+              <button
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors"
+                title={showSidebar ? 'Ocultar índice' : 'Mostrar índice'}
+              >
+                {showSidebar ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Información de la lección */}
+              <div className="flex flex-col">
+                <h2 className="font-semibold text-base">{currentLesson?.title || 'Selecciona una lección'}</h2>
+                <p className="text-xs text-gray-500">
+                  Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
+                </p>
+              </div>
             </div>
 
-            <div className="text-sm text-gray-500">
-              {course?.instructor_name}
+            {/* Controles derecha: Vista modular + Volver */}
+            <div className="flex items-center gap-2">
+              {/* Toggle vista modular */}
+              {courseStructure && courseStructure.modules.length > 0 && (
+                <button
+                  onClick={() => setUseModularView(!useModularView)}
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                    useModularView
+                      ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {useModularView ? 'Vista Lista' : 'Vista Módulos'}
+                </button>
+              )}
+
+              {/* Botón Volver a Explorar Cursos */}
+              <button
+                onClick={() => navigate('/platform/courses')}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                title="Volver a explorar cursos"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span className="hidden sm:inline">Explorar Cursos</span>
+              </button>
             </div>
           </div>
         </div>
@@ -698,44 +746,45 @@ const CourseViewPage: React.FC = () => {
             disabled={currentLessonIndex === 0}
             className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Anterior
+            ← Lección Anterior
           </button>
           <button
             onClick={() => handleLessonSelect(Math.min((course?.lessons?.length || 0) - 1, currentLessonIndex + 1))}
             disabled={currentLessonIndex === (course?.lessons?.length || 0) - 1}
             className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Siguiente
-          </button>
-
-          <button
-            onClick={() => navigate('/platform/courses')}
-            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Salir del Curso
+            Siguiente Lección →
           </button>
         </div>
 
         {/* Contenido de la lección */}
         <div className="flex-1 p-6">
-          {currentLesson?.lesson_type === 'assignment' ? (
-            <AssignmentLessonRenderer
-              lesson={currentLesson}
-              courseId={courseId}
-              enrollmentId={enrollmentId || undefined}
-              onComplete={handleLessonComplete}
-            />
-          ) : currentLesson?.lesson_type === 'video' && currentLesson.video_url && currentLesson.video_id ? (
-            <div className="w-full max-w-7xl mx-auto">
-              <VideoPlayer
-                videoUrl={currentLesson.video_url}
-                lessonId={currentLesson?.id || ''}
-                videoId={currentLesson?.video_id || currentLesson?.id || ''}
-                title={currentLesson.title}
-                onProgressUpdate={(progress) => handleProgressUpdate(currentLesson.id, progress)}
-                onLessonComplete={handleLessonComplete}
-                className="w-full"
-              />
+          {(() => {
+            const lessonType = currentLesson?.lessonType || currentLesson?.lesson_type;
+            const videoUrl = currentLesson?.videoUrl || currentLesson?.video_url;
+            const videoId = currentLesson?.videoId || currentLesson?.video_id;
+
+            if (lessonType === 'assignment') {
+              return (
+                <AssignmentLessonRenderer
+                  lesson={currentLesson as any}
+                  courseId={courseId}
+                  enrollmentId={enrollmentId || undefined}
+                  onComplete={handleLessonComplete}
+                />
+              );
+            } else if (lessonType === 'video' && videoUrl && videoId) {
+              return (
+                <div className="w-full max-w-7xl mx-auto">
+                  <VideoPlayer
+                    videoUrl={videoUrl}
+                    lessonId={currentLesson?.id || ''}
+                    videoId={videoId || currentLesson?.id || ''}
+                    title={currentLesson.title}
+                    onProgressUpdate={(progress) => handleProgressUpdate(currentLesson.id, progress)}
+                    onLessonComplete={handleLessonComplete}
+                    className="w-full"
+                  />
               
               {/* Contenido adicional de la lección */}
               {currentLesson.content && (
@@ -775,15 +824,17 @@ const CourseViewPage: React.FC = () => {
                 </div>
               )}
             </div>
-          ) : (
-            // Lección de texto
-            <div className="w-full max-w-7xl mx-auto">
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
-                />
+              );
+            } else {
+              // Lección de texto
+              return (
+                <div className="w-full max-w-7xl mx-auto">
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
+                    <div
+                      className="prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
+                    />
                 
                 {/* Quizzes de la lección */}
                 {lessonQuizzes[currentLesson?.id || ''] && lessonQuizzes[currentLesson?.id || ''].length > 0 && (
@@ -829,9 +880,11 @@ const CourseViewPage: React.FC = () => {
                     {completedLessons.has(currentLesson?.id || '') ? 'Lección Completada ✓' : 'Marcar como Completada'}
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
+                  </div>
+                </div>
+              );
+            }
+          })()}
         </div>
       </div>
     </div>

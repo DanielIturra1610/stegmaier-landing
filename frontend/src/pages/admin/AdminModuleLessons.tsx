@@ -142,7 +142,7 @@ const AdminModuleLessons: React.FC = () => {
             randomize_from_pool: false,
             questions_per_attempt: undefined,
         },
-        estimated_duration: 10,
+        estimatedDuration: 10,
         status: QuizStatus.DRAFT,
       };
 

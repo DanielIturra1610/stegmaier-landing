@@ -173,6 +173,7 @@ export interface QuizCreate {
   question_pool?: string[];
   config?: QuizConfiguration;
   estimated_duration?: number;
+  estimatedDuration?: number; // CamelCase version (transformed by axios)
   status?: QuizStatus;
   time_limit_minutes?: number;
   max_attempts?: number;
