@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
+	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
+	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -34,82 +35,102 @@ func ErrorResponse(c *fiber.Ctx, statusCode int, message string) error {
 func MapDomainError(err error) (int, string) {
 	switch err {
 	// User errors
-	case ports.ErrUserNotFound:
+	case authPorts.ErrUserNotFound:
 		return fiber.StatusNotFound, "User not found"
-	case ports.ErrEmailAlreadyExists:
+	case authPorts.ErrEmailAlreadyExists:
 		return fiber.StatusConflict, "Email already exists"
-	case ports.ErrUserAlreadyExists:
+	case authPorts.ErrUserAlreadyExists:
 		return fiber.StatusConflict, "User already exists"
 
 	// Authentication errors
-	case ports.ErrInvalidCredentials:
+	case authPorts.ErrInvalidCredentials:
 		return fiber.StatusUnauthorized, "Invalid email or password"
-	case ports.ErrAccountNotVerified:
+	case authPorts.ErrAccountNotVerified:
 		return fiber.StatusForbidden, "Account not verified. Please check your email"
-	case ports.ErrAccountLocked:
+	case authPorts.ErrAccountLocked:
 		return fiber.StatusForbidden, "Account is locked. Please contact support"
-	case ports.ErrAccountDisabled:
+	case authPorts.ErrAccountDisabled:
 		return fiber.StatusForbidden, "Account is disabled"
 
 	// Token errors
-	case ports.ErrInvalidToken:
+	case authPorts.ErrInvalidToken:
 		return fiber.StatusUnauthorized, "Invalid or malformed token"
-	case ports.ErrTokenExpired:
+	case authPorts.ErrTokenExpired:
 		return fiber.StatusUnauthorized, "Token has expired"
-	case ports.ErrTokenRevoked:
+	case authPorts.ErrTokenRevoked:
 		return fiber.StatusUnauthorized, "Token has been revoked"
-	case ports.ErrTokenNotFound:
+	case authPorts.ErrTokenNotFound:
 		return fiber.StatusNotFound, "Token not found"
-	case ports.ErrRefreshTokenInvalid:
+	case authPorts.ErrRefreshTokenInvalid:
 		return fiber.StatusUnauthorized, "Invalid refresh token"
 
 	// Email verification errors
-	case ports.ErrVerificationTokenInvalid:
+	case authPorts.ErrVerificationTokenInvalid:
 		return fiber.StatusBadRequest, "Invalid verification token"
-	case ports.ErrVerificationTokenExpired:
+	case authPorts.ErrVerificationTokenExpired:
 		return fiber.StatusBadRequest, "Verification token has expired"
-	case ports.ErrAlreadyVerified:
+	case authPorts.ErrAlreadyVerified:
 		return fiber.StatusBadRequest, "Email already verified"
 
 	// Password errors
-	case ports.ErrPasswordTooWeak:
+	case authPorts.ErrPasswordTooWeak:
 		return fiber.StatusBadRequest, "Password doesn't meet security requirements"
-	case ports.ErrPasswordTooLong:
+	case authPorts.ErrPasswordTooLong:
 		return fiber.StatusBadRequest, "Password exceeds maximum length"
-	case ports.ErrPasswordSameAsOld:
+	case authPorts.ErrPasswordSameAsOld:
 		return fiber.StatusBadRequest, "New password must be different from old password"
-	case ports.ErrCurrentPasswordIncorrect:
+	case authPorts.ErrCurrentPasswordIncorrect:
 		return fiber.StatusBadRequest, "Current password is incorrect"
-	case ports.ErrPasswordResetTokenInvalid:
+	case authPorts.ErrPasswordResetTokenInvalid:
 		return fiber.StatusBadRequest, "Invalid password reset token"
-	case ports.ErrPasswordResetTokenExpired:
+	case authPorts.ErrPasswordResetTokenExpired:
 		return fiber.StatusBadRequest, "Password reset token has expired"
-	case ports.ErrPasswordResetTokenUsed:
+	case authPorts.ErrPasswordResetTokenUsed:
 		return fiber.StatusBadRequest, "Password reset token has already been used"
 
 	// Authorization errors
-	case ports.ErrUnauthorized:
+	case authPorts.ErrUnauthorized:
 		return fiber.StatusUnauthorized, "Unauthorized access"
-	case ports.ErrForbidden:
+	case authPorts.ErrForbidden:
 		return fiber.StatusForbidden, "Forbidden: insufficient permissions"
-	case ports.ErrInvalidRole:
+	case authPorts.ErrInvalidRole:
 		return fiber.StatusBadRequest, "Invalid user role"
 
 	// Validation errors
-	case ports.ErrInvalidEmail:
+	case authPorts.ErrInvalidEmail:
 		return fiber.StatusBadRequest, "Invalid email format"
-	case ports.ErrInvalidInput:
+	case authPorts.ErrInvalidInput:
 		return fiber.StatusBadRequest, "Invalid input data"
-	case ports.ErrMissingRequiredField:
+	case authPorts.ErrMissingRequiredField:
 		return fiber.StatusBadRequest, "Missing required field"
 
 	// Tenant errors
-	case ports.ErrTenantNotFound:
+	case authPorts.ErrTenantNotFound:
 		return fiber.StatusNotFound, "Tenant not found"
-	case ports.ErrTenantInactive:
+	case authPorts.ErrTenantInactive:
 		return fiber.StatusForbidden, "Tenant is inactive"
-	case ports.ErrTenantMismatch:
+	case authPorts.ErrTenantMismatch:
 		return fiber.StatusForbidden, "User does not belong to this tenant"
+
+	// Profile errors
+	case profilePorts.ErrProfileNotFound:
+		return fiber.StatusNotFound, "Profile not found"
+	case profilePorts.ErrInvalidInput:
+		return fiber.StatusBadRequest, "Invalid input data"
+	case profilePorts.ErrInvalidPassword:
+		return fiber.StatusBadRequest, "Invalid password"
+	case profilePorts.ErrUnauthorized:
+		return fiber.StatusUnauthorized, "Unauthorized access"
+	case profilePorts.ErrUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update profile"
+	case profilePorts.ErrInvalidFileFormat:
+		return fiber.StatusBadRequest, "Invalid file format. Only JPEG, PNG, and WebP are allowed"
+	case profilePorts.ErrFileTooLarge:
+		return fiber.StatusBadRequest, "File size exceeds maximum allowed (5MB)"
+	case profilePorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload file"
+	case profilePorts.ErrFileDeleteFailed:
+		return fiber.StatusInternalServerError, "Failed to delete file"
 
 	// Default
 	default:

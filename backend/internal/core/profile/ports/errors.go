@@ -25,6 +25,15 @@ var (
 	// ErrInvalidProfileData is returned when profile data is invalid
 	ErrInvalidProfileData = errors.New("invalid profile data")
 
+	// ErrInvalidInput is returned when input validation fails
+	ErrInvalidInput = errors.New("invalid input")
+
+	// ErrUpdateFailed is returned when an update operation fails
+	ErrUpdateFailed = errors.New("update operation failed")
+
+	// ErrInvalidPassword is returned when password validation fails
+	ErrInvalidPassword = errors.New("invalid password")
+
 	// ErrUnauthorized is returned when user is not authorized for an action
 	ErrUnauthorized = errors.New("unauthorized access")
 
