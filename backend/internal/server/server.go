@@ -11,6 +11,8 @@ import (
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/adapters"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
+	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
+	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
@@ -34,13 +36,14 @@ const (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app              *fiber.App
-	config           *config.Config
-	dbManager        *database.Manager
-	authController   *controllers.AuthController
-	userController   *controllers.UserManagementController
-	tokenService     tokens.TokenService
-	authRepo         ports.AuthRepository
+	app               *fiber.App
+	config            *config.Config
+	dbManager         *database.Manager
+	authController    *controllers.AuthController
+	userController    *controllers.UserManagementController
+	profileController *controllers.ProfileController
+	tokenService      tokens.TokenService
+	authRepo          ports.AuthRepository
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -75,6 +78,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// 2. Initialize repositories (using Control DB from dbManager)
 	controlDB := dbManager.GetControlDB()
 	authRepo := adapters.NewPostgreSQLAuthRepository(controlDB)
+	authUserRepo := adapters.NewPostgreSQLUserRepository(controlDB) // For profile service
 	userRepo := useradapters.NewPostgreSQLUserRepository(controlDB)
 
 	// 3. Initialize services
@@ -102,15 +106,45 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Authentication module initialized")
 
+	// Initialize dependency injection for profile module
+	log.Println("🔧 Initializing profile module...")
+
+	// 1. Initialize profile repository
+	profileRepo := profileadapters.NewPostgreSQLProfileRepository(controlDB)
+
+	// 2. Initialize file storage service
+	// TODO: Move these to configuration
+	uploadsPath := "./uploads"
+	uploadsURL := fmt.Sprintf("http://localhost:%s/uploads", cfg.Server.Port)
+	fileStorage, err := profileadapters.NewLocalFileStorage(uploadsPath, uploadsURL)
+	if err != nil {
+		log.Fatalf("❌ Failed to initialize file storage: %v", err)
+	}
+
+	// 3. Initialize profile service
+	profileService := profileservices.NewProfileService(
+		profileRepo,
+		authRepo,     // Provides GetUserByID (AuthRepository)
+		authUserRepo, // Provides ChangePassword (UserRepository)
+		fileStorage,
+		passwordHasher,
+	)
+
+	// 4. Initialize profile controller
+	profileController := controllers.NewProfileController(profileService)
+
+	log.Println("✅ Profile module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
-		app:            app,
-		config:         cfg,
-		dbManager:      dbManager,
-		authController: authController,
-		userController: userController,
-		tokenService:   tokenService,
-		authRepo:       authRepo,
+		app:               app,
+		config:            cfg,
+		dbManager:         dbManager,
+		authController:    authController,
+		userController:    userController,
+		profileController: profileController,
+		tokenService:      tokenService,
+		authRepo:          authRepo,
 	}
 
 	// Setup de middlewares
@@ -178,6 +212,9 @@ func (s *Server) setupRoutes() {
 		})
 	})
 
+	// Serve static files (uploaded avatars, etc.)
+	s.app.Static("/uploads", "./uploads")
+
 	// API version group
 	api := s.app.Group("/api")
 
@@ -216,6 +253,20 @@ func (s *Server) setupRoutes() {
 	}
 
 	// ============================================================
+	// Profile Routes (Protected - Authentication required)
+	// ============================================================
+	profile := v1.Group("/profile")
+	profile.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		profile.Get("/me", s.profileController.GetMyProfile)
+		profile.Put("/me", s.profileController.UpdateMyProfile)
+		profile.Post("/change-password", s.profileController.ChangePassword)
+		profile.Post("/avatar", s.profileController.UploadAvatar)
+		profile.Delete("/avatar", s.profileController.DeleteAvatar)
+		profile.Put("/preferences", s.profileController.UpdatePreferences)
+	}
+
+	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)
 	// ============================================================
 	admin := v1.Group("/admin")
@@ -241,6 +292,13 @@ func (s *Server) setupRoutes() {
 		// Queries by Role
 		users.Get("/role/:role", s.userController.GetUsersByRole)
 		users.Get("/role/:role/count", s.userController.CountUsersByRole)
+	}
+
+	// Profile Management (Admin only)
+	profiles := admin.Group("/profiles")
+	{
+		profiles.Get("/:id", s.profileController.GetProfile)
+		profiles.Put("/:id", s.profileController.UpdateProfile)
 	}
 
 	// ============================================================

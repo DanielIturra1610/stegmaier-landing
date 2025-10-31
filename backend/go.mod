@@ -13,6 +13,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.43.0
+	golang.org/x/image v0.32.0
 )
 
 require (
