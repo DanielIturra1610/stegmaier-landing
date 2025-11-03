@@ -13,6 +13,8 @@ import (
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
 	courseadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/adapters"
 	courseservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/services"
+	lessonadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/adapters"
+	lessonservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/services"
 	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
 	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
@@ -46,6 +48,7 @@ type Server struct {
 	profileController  *controllers.ProfileController
 	courseController   *controllers.CourseController
 	categoryController *controllers.CategoryController
+	lessonController   *controllers.LessonController
 	tokenService       tokens.TokenService
 	authRepo           ports.AuthRepository
 }
@@ -160,6 +163,20 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Courses module initialized")
 
+	// Initialize dependency injection for lessons module
+	log.Println("🔧 Initializing lessons module...")
+
+	// 1. Initialize lesson repository
+	lessonRepo := lessonadapters.NewPostgreSQLLessonRepository(tenantDB)
+
+	// 2. Initialize lesson service
+	lessonService := lessonservices.NewLessonService(lessonRepo)
+
+	// 3. Initialize lesson controller
+	lessonController := controllers.NewLessonController(lessonService)
+
+	log.Println("✅ Lessons module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
 		app:                app,
@@ -170,6 +187,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		profileController:  profileController,
 		courseController:   courseController,
 		categoryController: categoryController,
+		lessonController:   lessonController,
 		tokenService:       tokenService,
 		authRepo:           authRepo,
 	}
@@ -351,6 +369,39 @@ func (s *Server) setupRoutes() {
 		categoriesProtected.Post("/:id/activate", s.categoryController.ActivateCategory)
 		categoriesProtected.Post("/:id/deactivate", s.categoryController.DeactivateCategory)
 	}
+
+	// ============================================================
+	// Lesson Routes
+	// ============================================================
+	lessons := v1.Group("/lessons")
+
+	// Public lesson routes (read-only, no auth required for free lessons)
+	{
+		lessons.Get("/:id", s.lessonController.GetLesson)
+	}
+
+	// Protected lesson routes (authentication required)
+	lessonsProtected := lessons.Group("")
+	lessonsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Student actions
+		lessonsProtected.Post("/:id/complete", s.lessonController.MarkLessonComplete)
+		lessonsProtected.Get("/:id/completion", s.lessonController.GetLessonCompletion)
+
+		// Instructor/Admin actions (TODO: Add instructor/admin middleware)
+		lessonsProtected.Put("/:id", s.lessonController.UpdateLesson)
+		lessonsProtected.Delete("/:id", s.lessonController.DeleteLesson)
+	}
+
+	// Course-specific lesson routes (nested under courses)
+	// Public: Get lessons for a course
+	courses.Get("/:courseId/lessons", s.lessonController.GetLessonsByCourse)
+
+	// Protected: Course lesson routes
+	coursesProtected.Get("/:courseId/lessons/progress", s.lessonController.GetLessonsWithProgress)
+	coursesProtected.Get("/:courseId/progress", s.lessonController.GetCourseProgress)
+	coursesProtected.Post("/:courseId/lessons", s.lessonController.CreateLesson)
+	coursesProtected.Post("/:courseId/lessons/reorder", s.lessonController.ReorderLessons)
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)

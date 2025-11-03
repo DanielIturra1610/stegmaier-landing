@@ -3,6 +3,7 @@ package controllers
 import (
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
+	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	"github.com/gofiber/fiber/v2"
 )
@@ -202,6 +203,58 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusForbidden, "Not the course owner"
 	case coursePorts.ErrInsufficientPermissions:
 		return fiber.StatusForbidden, "Insufficient permissions"
+
+	// Lesson errors
+	case lessonPorts.ErrLessonNotFound:
+		return fiber.StatusNotFound, "Lesson not found"
+	case lessonPorts.ErrLessonCompletionNotFound:
+		return fiber.StatusNotFound, "Lesson completion not found"
+	case lessonPorts.ErrInvalidLessonData:
+		return fiber.StatusBadRequest, "Invalid lesson data"
+	case lessonPorts.ErrInvalidContentType:
+		return fiber.StatusBadRequest, "Invalid content type"
+	case lessonPorts.ErrQuizIDRequired:
+		return fiber.StatusBadRequest, "Quiz ID required for quiz lessons"
+	case lessonPorts.ErrContentRequired:
+		return fiber.StatusBadRequest, "Content or content URL required"
+	case lessonPorts.ErrInvalidOrderIndex:
+		return fiber.StatusBadRequest, "Invalid order index"
+	case lessonPorts.ErrInvalidCompletionPercent:
+		return fiber.StatusBadRequest, "Invalid completion percent"
+	case lessonPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent"
+	case lessonPorts.ErrLessonDeleted:
+		return fiber.StatusGone, "Lesson has been deleted"
+	case lessonPorts.ErrLessonNotPublished:
+		return fiber.StatusForbidden, "Lesson is not published"
+	case lessonPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case lessonPorts.ErrQuizNotFound:
+		return fiber.StatusNotFound, "Quiz not found"
+	case lessonPorts.ErrLessonNotEnrollable:
+		return fiber.StatusForbidden, "Lesson cannot be accessed"
+	case lessonPorts.ErrNotEnrolledInCourse:
+		return fiber.StatusForbidden, "Not enrolled in course"
+	case lessonPorts.ErrLessonNotFree:
+		return fiber.StatusForbidden, "Lesson requires enrollment"
+	case lessonPorts.ErrNotLessonOwner:
+		return fiber.StatusForbidden, "Not the lesson owner"
+	case lessonPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
+	case lessonPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to lesson"
+	case lessonPorts.ErrLessonUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update lesson"
+	case lessonPorts.ErrCompletionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update lesson completion"
+	case lessonPorts.ErrReorderFailed:
+		return fiber.StatusInternalServerError, "Failed to reorder lessons"
+	case lessonPorts.ErrLessonCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create lesson"
+	case lessonPorts.ErrCompletionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create lesson completion"
+	case lessonPorts.ErrLessonDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete lesson"
 
 	// Default
 	default:
