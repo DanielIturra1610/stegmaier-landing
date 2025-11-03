@@ -743,25 +743,650 @@ Migrar el backend actual de FastAPI (Python) a Golang con Fiber V2, implementand
 ---
 
 ## FASE 5: Módulos Adicionales (Lessons, Modules, etc.)
-**Duración**: 80-100 horas (2-2.5 semanas)
+**Duración**: 120-140 horas (3-3.5 semanas)
 
-### Issue #23-30: Implementar módulos restantes
-Repetir patrón de Issues #18-22 para cada módulo:
+### Issue #26: Lessons Module - Domain & Ports
+**Estimación**: 6 horas
+**Prioridad**: ALTA
+**Dependencias**: Issues #21-25 (Courses Module completo)
 
-- **Issue #23**: Lessons Module (12 horas)
-- **Issue #24**: Modules Module (12 horas)
-- **Issue #25**: Enrollments Module (15 horas) - Lógica compleja
-- **Issue #26**: Progress Module (15 horas) - Analytics
-- **Issue #27**: Quizzes Module (18 horas) - Lógica de evaluación
-- **Issue #28**: Certificates Module (10 horas)
-- **Issue #29**: Notifications Module (10 horas)
-- **Issue #30**: Media/Upload Module (12 horas) - S3 integration
+**Tareas**:
+- [ ] Crear `internal/core/lessons/domain/entities.go`:
+  ```go
+  type Lesson struct {
+    ID           uuid.UUID
+    TenantID     uuid.UUID
+    CourseID     uuid.UUID
+    ModuleID     *uuid.UUID  // Optional - puede estar en un módulo o directamente en curso
+    Title        string
+    Description  string
+    ContentType  string      // video, text, pdf, quiz, assignment
+    ContentURL   *string     // URL del contenido (video, PDF, etc.)
+    ContentText  *string     // Contenido de texto (Markdown/HTML)
+    Duration     int         // Duración en minutos
+    Order        int         // Orden dentro del módulo/curso
+    IsFree       bool        // Lección gratuita (preview)
+    IsPublished  bool
+    HasQuiz      bool        // Indica si tiene quiz asociado
+    QuizID       *uuid.UUID  // ID del quiz asociado (si existe)
+    CreatedAt    time.Time
+    UpdatedAt    time.Time
+  }
 
-**Criterios Generales**:
+  type LessonCompletion struct {
+    ID          uuid.UUID
+    LessonID    uuid.UUID
+    UserID      uuid.UUID
+    TenantID    uuid.UUID
+    CompletedAt *time.Time
+    TimeSpent   int         // Tiempo gastado en minutos
+    Progress    int         // Porcentaje de progreso (0-100)
+  }
+  ```
+
+- [ ] Crear `internal/core/lessons/domain/dtos.go`:
+  ```go
+  type CreateLessonRequest struct {
+    CourseID    uuid.UUID  `json:"courseId" validate:"required"`
+    ModuleID    *uuid.UUID `json:"moduleId"`
+    Title       string     `json:"title" validate:"required,min=3,max=255"`
+    Description string     `json:"description" validate:"required,min=10"`
+    ContentType string     `json:"contentType" validate:"required,oneof=video text pdf quiz assignment"`
+    ContentURL  *string    `json:"contentUrl"`
+    ContentText *string    `json:"contentText"`
+    Duration    int        `json:"duration" validate:"min=0"`
+    Order       int        `json:"order" validate:"min=0"`
+    IsFree      bool       `json:"isFree"`
+  }
+
+  type UpdateLessonRequest struct {
+    Title       *string    `json:"title" validate:"omitempty,min=3,max=255"`
+    Description *string    `json:"description" validate:"omitempty,min=10"`
+    ContentURL  *string    `json:"contentUrl"`
+    ContentText *string    `json:"contentText"`
+    Duration    *int       `json:"duration" validate:"omitempty,min=0"`
+    Order       *int       `json:"order" validate:"omitempty,min=0"`
+    IsFree      *bool      `json:"isFree"`
+  }
+
+  type LessonResponse struct {
+    ID          uuid.UUID  `json:"id"`
+    CourseID    uuid.UUID  `json:"courseId"`
+    ModuleID    *uuid.UUID `json:"moduleId"`
+    Title       string     `json:"title"`
+    Description string     `json:"description"`
+    ContentType string     `json:"contentType"`
+    ContentURL  *string    `json:"contentUrl"`
+    Duration    int        `json:"duration"`
+    Order       int        `json:"order"`
+    IsFree      bool       `json:"isFree"`
+    IsPublished bool       `json:"isPublished"`
+    HasQuiz     bool       `json:"hasQuiz"`
+    CreatedAt   time.Time  `json:"createdAt"`
+    UpdatedAt   time.Time  `json:"updatedAt"`
+  }
+
+  type LessonDetailResponse struct {
+    *LessonResponse
+    ContentText *string    `json:"contentText"` // Solo para usuarios autorizados
+    Quiz        *QuizResponse `json:"quiz"`     // Si tiene quiz asociado
+  }
+
+  type MarkLessonCompleteRequest struct {
+    TimeSpent int `json:"timeSpent" validate:"min=0"`
+  }
+  ```
+
+- [ ] Crear `internal/core/lessons/ports/lessons.go`:
+  ```go
+  type LessonRepository interface {
+    CreateLesson(ctx context.Context, lesson *domain.Lesson) error
+    GetLesson(ctx context.Context, lessonID, tenantID uuid.UUID) (*domain.Lesson, error)
+    ListLessonsByCourse(ctx context.Context, courseID, tenantID uuid.UUID) ([]*domain.Lesson, error)
+    ListLessonsByModule(ctx context.Context, moduleID, tenantID uuid.UUID) ([]*domain.Lesson, error)
+    UpdateLesson(ctx context.Context, lesson *domain.Lesson) error
+    DeleteLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    PublishLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    UnpublishLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    ReorderLessons(ctx context.Context, courseID, tenantID uuid.UUID, lessonOrders map[uuid.UUID]int) error
+
+    // Completion tracking
+    MarkLessonComplete(ctx context.Context, lessonID, userID, tenantID uuid.UUID, timeSpent int) error
+    GetLessonCompletion(ctx context.Context, lessonID, userID, tenantID uuid.UUID) (*domain.LessonCompletion, error)
+    GetUserCompletedLessons(ctx context.Context, courseID, userID, tenantID uuid.UUID) ([]*domain.LessonCompletion, error)
+  }
+
+  type LessonService interface {
+    CreateLesson(ctx context.Context, tenantID uuid.UUID, req *domain.CreateLessonRequest) (*domain.LessonResponse, error)
+    GetLesson(ctx context.Context, lessonID, tenantID uuid.UUID) (*domain.LessonDetailResponse, error)
+    ListLessonsByCourse(ctx context.Context, courseID, tenantID uuid.UUID) ([]*domain.LessonResponse, error)
+    ListLessonsByModule(ctx context.Context, moduleID, tenantID uuid.UUID) ([]*domain.LessonResponse, error)
+    UpdateLesson(ctx context.Context, lessonID, tenantID uuid.UUID, req *domain.UpdateLessonRequest) (*domain.LessonResponse, error)
+    DeleteLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    PublishLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    UnpublishLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
+    ReorderLessons(ctx context.Context, courseID, tenantID uuid.UUID, lessonOrders map[uuid.UUID]int) error
+
+    // Student actions
+    MarkLessonComplete(ctx context.Context, lessonID, userID, tenantID uuid.UUID, req *domain.MarkLessonCompleteRequest) error
+    GetLessonProgress(ctx context.Context, lessonID, userID, tenantID uuid.UUID) (*domain.LessonCompletion, error)
+  }
+  ```
+
+**Criterios de Aceptación**:
+- Entities con todas las propiedades necesarias
+- DTOs con validaciones completas
+- Interfaces repository y service bien definidas
+- Soporte para múltiples tipos de contenido
+- Tracking de completitud integrado
+
+---
+
+### Issue #27: Lessons Module - Service & Repository
+**Estimación**: 12 horas
+**Prioridad**: ALTA
+**Dependencias**: Issue #26
+
+**Tareas**:
+- [ ] Implementar `internal/core/lessons/services/lesson.go`
+- [ ] Implementar `internal/core/lessons/adapters/postgresql.go`
+- [ ] Migraciones de base de datos para tabla `lessons` y `lesson_completions`
+- [ ] Validación de permisos (solo instructor del curso puede crear/editar)
+- [ ] Lógica de reordenamiento de lecciones
+- [ ] Tests unitarios > 85%
+
+**Criterios de Aceptación**:
+- Service implementa toda la lógica de negocio
+- Repository con queries optimizadas
+- Tests de integración completos
+
+---
+
+### Issue #28: Lessons Module - HTTP Handlers
+**Estimación**: 8 horas
+**Prioridad**: ALTA
+**Dependencias**: Issue #27
+
+**Tareas**:
+- [ ] Crear `internal/controllers/lessons.go`
+- [ ] Endpoints:
+  - `POST /api/v1/courses/:courseId/lessons` - Create lesson
+  - `GET /api/v1/courses/:courseId/lessons` - List course lessons
+  - `GET /api/v1/lessons/:id` - Get lesson detail
+  - `PUT /api/v1/lessons/:id` - Update lesson
+  - `DELETE /api/v1/lessons/:id` - Delete lesson
+  - `POST /api/v1/lessons/:id/publish` - Publish lesson
+  - `POST /api/v1/lessons/:id/unpublish` - Unpublish lesson
+  - `POST /api/v1/lessons/:id/complete` - Mark as complete (student)
+  - `PUT /api/v1/courses/:courseId/lessons/reorder` - Reorder lessons
+- [ ] Tests E2E completos
+
+**Criterios de Aceptación**:
+- Todos los endpoints funcionando
+- RBAC implementado correctamente
+- Tests E2E > 80%
+
+---
+
+### Issue #29: Quizzes Module - Domain & Ports (ROBUSTO)
+**Estimación**: 10 horas
+**Prioridad**: ALTA
+**Dependencias**: Issue #26 (Lessons Domain)
+
+**Descripción**:
+Sistema completo de quizzes/evaluaciones que puede asociarse a lecciones individuales. Los instructores pueden crear quizzes con múltiples tipos de preguntas, y el sistema califica automáticamente y lleva tracking de intentos.
+
+**Tareas**:
+- [ ] Crear `internal/core/quizzes/domain/entities.go`:
+  ```go
+  type Quiz struct {
+    ID              uuid.UUID
+    TenantID        uuid.UUID
+    LessonID        *uuid.UUID  // Puede estar asociado a una lección específica
+    CourseID        uuid.UUID   // Siempre asociado a un curso
+    Title           string
+    Description     string
+    PassingScore    int         // Porcentaje mínimo para aprobar (0-100)
+    TimeLimit       *int        // Límite de tiempo en minutos (null = sin límite)
+    MaxAttempts     *int        // Máximo de intentos (null = ilimitado)
+    ShuffleQuestions bool       // Randomizar orden de preguntas
+    ShowResults     bool        // Mostrar resultados al finalizar
+    IsPublished     bool
+    CreatedAt       time.Time
+    UpdatedAt       time.Time
+  }
+
+  type Question struct {
+    ID          uuid.UUID
+    QuizID      uuid.UUID
+    TenantID    uuid.UUID
+    Type        string      // multiple_choice, true_false, short_answer, essay
+    Question    string      // Texto de la pregunta (puede ser Markdown)
+    Points      int         // Puntos que vale la pregunta
+    Order       int         // Orden en el quiz
+    IsRequired  bool
+    Explanation *string     // Explicación de la respuesta correcta
+    CreatedAt   time.Time
+  }
+
+  type QuestionOption struct {
+    ID         uuid.UUID
+    QuestionID uuid.UUID
+    TenantID   uuid.UUID
+    OptionText string
+    IsCorrect  bool
+    Order      int
+  }
+
+  type QuizAttempt struct {
+    ID          uuid.UUID
+    QuizID      uuid.UUID
+    UserID      uuid.UUID
+    TenantID    uuid.UUID
+    StartedAt   time.Time
+    CompletedAt *time.Time
+    Score       *int        // Porcentaje obtenido (0-100)
+    IsPassed    *bool       // Si pasó el quiz
+    TimeSpent   *int        // Tiempo usado en minutos
+    AttemptNumber int       // Número de intento (1, 2, 3...)
+  }
+
+  type QuizAnswer struct {
+    ID              uuid.UUID
+    AttemptID       uuid.UUID
+    QuestionID      uuid.UUID
+    TenantID        uuid.UUID
+    SelectedOptions []uuid.UUID // Para multiple choice
+    TextAnswer      *string     // Para short_answer/essay
+    IsCorrect       *bool       // Auto-graded para MC/TF
+    PointsEarned    *int
+    InstructorFeedback *string  // Para essay questions
+    GradedAt        *time.Time
+  }
+  ```
+
+- [ ] Crear `internal/core/quizzes/domain/dtos.go`:
+  ```go
+  type CreateQuizRequest struct {
+    LessonID         *uuid.UUID `json:"lessonId"`
+    CourseID         uuid.UUID  `json:"courseId" validate:"required"`
+    Title            string     `json:"title" validate:"required,min=3,max=255"`
+    Description      string     `json:"description"`
+    PassingScore     int        `json:"passingScore" validate:"min=0,max=100"`
+    TimeLimit        *int       `json:"timeLimit" validate:"omitempty,min=1"`
+    MaxAttempts      *int       `json:"maxAttempts" validate:"omitempty,min=1"`
+    ShuffleQuestions bool       `json:"shuffleQuestions"`
+    ShowResults      bool       `json:"showResults"`
+  }
+
+  type CreateQuestionRequest struct {
+    Type        string                      `json:"type" validate:"required,oneof=multiple_choice true_false short_answer essay"`
+    Question    string                      `json:"question" validate:"required,min=5"`
+    Points      int                         `json:"points" validate:"required,min=1"`
+    Order       int                         `json:"order" validate:"min=0"`
+    IsRequired  bool                        `json:"isRequired"`
+    Explanation *string                     `json:"explanation"`
+    Options     []CreateQuestionOptionRequest `json:"options"` // Para MC/TF
+  }
+
+  type CreateQuestionOptionRequest struct {
+    OptionText string `json:"optionText" validate:"required,min=1"`
+    IsCorrect  bool   `json:"isCorrect"`
+    Order      int    `json:"order" validate:"min=0"`
+  }
+
+  type StartQuizAttemptRequest struct {
+    QuizID uuid.UUID `json:"quizId" validate:"required"`
+  }
+
+  type SubmitQuizAttemptRequest struct {
+    Answers []SubmitQuizAnswerRequest `json:"answers" validate:"required,dive"`
+  }
+
+  type SubmitQuizAnswerRequest struct {
+    QuestionID      uuid.UUID   `json:"questionId" validate:"required"`
+    SelectedOptions []uuid.UUID `json:"selectedOptions"`
+    TextAnswer      *string     `json:"textAnswer"`
+  }
+
+  type QuizResponse struct {
+    ID               uuid.UUID  `json:"id"`
+    LessonID         *uuid.UUID `json:"lessonId"`
+    CourseID         uuid.UUID  `json:"courseId"`
+    Title            string     `json:"title"`
+    Description      string     `json:"description"`
+    PassingScore     int        `json:"passingScore"`
+    TimeLimit        *int       `json:"timeLimit"`
+    MaxAttempts      *int       `json:"maxAttempts"`
+    ShuffleQuestions bool       `json:"shuffleQuestions"`
+    ShowResults      bool       `json:"showResults"`
+    IsPublished      bool       `json:"isPublished"`
+    QuestionCount    int        `json:"questionCount"`
+    TotalPoints      int        `json:"totalPoints"`
+    CreatedAt        time.Time  `json:"createdAt"`
+  }
+
+  type QuizDetailResponse struct {
+    *QuizResponse
+    Questions []QuestionResponse `json:"questions"`
+  }
+
+  type QuestionResponse struct {
+    ID          uuid.UUID              `json:"id"`
+    Type        string                 `json:"type"`
+    Question    string                 `json:"question"`
+    Points      int                    `json:"points"`
+    Order       int                    `json:"order"`
+    IsRequired  bool                   `json:"isRequired"`
+    Explanation *string                `json:"explanation"` // Solo después de responder
+    Options     []QuestionOptionResponse `json:"options"`
+  }
+
+  type QuestionOptionResponse struct {
+    ID         uuid.UUID `json:"id"`
+    OptionText string    `json:"optionText"`
+    Order      int       `json:"order"`
+    // IsCorrect no se envía al estudiante hasta después de enviar
+  }
+
+  type QuizAttemptResponse struct {
+    ID            uuid.UUID  `json:"id"`
+    QuizID        uuid.UUID  `json:"quizId"`
+    QuizTitle     string     `json:"quizTitle"`
+    StartedAt     time.Time  `json:"startedAt"`
+    CompletedAt   *time.Time `json:"completedAt"`
+    Score         *int       `json:"score"`
+    IsPassed      *bool      `json:"isPassed"`
+    TimeSpent     *int       `json:"timeSpent"`
+    AttemptNumber int        `json:"attemptNumber"`
+  }
+
+  type QuizResultResponse struct {
+    Attempt       QuizAttemptResponse    `json:"attempt"`
+    Answers       []QuizAnswerResponse   `json:"answers"`
+    TotalQuestions int                   `json:"totalQuestions"`
+    CorrectAnswers int                   `json:"correctAnswers"`
+    TotalPoints    int                   `json:"totalPoints"`
+    PointsEarned   int                   `json:"pointsEarned"`
+  }
+
+  type QuizAnswerResponse struct {
+    QuestionID         uuid.UUID   `json:"questionId"`
+    QuestionText       string      `json:"questionText"`
+    QuestionType       string      `json:"questionType"`
+    SelectedOptions    []uuid.UUID `json:"selectedOptions"`
+    TextAnswer         *string     `json:"textAnswer"`
+    IsCorrect          *bool       `json:"isCorrect"`
+    PointsEarned       *int        `json:"pointsEarned"`
+    CorrectOptions     []uuid.UUID `json:"correctOptions"`     // Mostrar después
+    Explanation        *string     `json:"explanation"`
+    InstructorFeedback *string     `json:"instructorFeedback"`
+  }
+  ```
+
+- [ ] Crear `internal/core/quizzes/ports/quizzes.go`:
+  ```go
+  type QuizRepository interface {
+    // Quiz CRUD
+    CreateQuiz(ctx context.Context, quiz *domain.Quiz) error
+    GetQuiz(ctx context.Context, quizID, tenantID uuid.UUID) (*domain.Quiz, error)
+    GetQuizByLesson(ctx context.Context, lessonID, tenantID uuid.UUID) (*domain.Quiz, error)
+    ListQuizzesByCourse(ctx context.Context, courseID, tenantID uuid.UUID) ([]*domain.Quiz, error)
+    UpdateQuiz(ctx context.Context, quiz *domain.Quiz) error
+    DeleteQuiz(ctx context.Context, quizID, tenantID uuid.UUID) error
+    PublishQuiz(ctx context.Context, quizID, tenantID uuid.UUID) error
+    UnpublishQuiz(ctx context.Context, quizID, tenantID uuid.UUID) error
+
+    // Questions
+    CreateQuestion(ctx context.Context, question *domain.Question) error
+    CreateQuestionOptions(ctx context.Context, options []*domain.QuestionOption) error
+    GetQuestionsByQuiz(ctx context.Context, quizID, tenantID uuid.UUID) ([]*domain.Question, error)
+    GetQuestionOptions(ctx context.Context, questionID, tenantID uuid.UUID) ([]*domain.QuestionOption, error)
+    UpdateQuestion(ctx context.Context, question *domain.Question) error
+    DeleteQuestion(ctx context.Context, questionID, tenantID uuid.UUID) error
+
+    // Attempts
+    CreateAttempt(ctx context.Context, attempt *domain.QuizAttempt) error
+    GetAttempt(ctx context.Context, attemptID, tenantID uuid.UUID) (*domain.QuizAttempt, error)
+    GetUserAttempts(ctx context.Context, quizID, userID, tenantID uuid.UUID) ([]*domain.QuizAttempt, error)
+    CompleteAttempt(ctx context.Context, attemptID, tenantID uuid.UUID, score int, isPassed bool, timeSpent int) error
+
+    // Answers
+    CreateAnswer(ctx context.Context, answer *domain.QuizAnswer) error
+    GetAttemptAnswers(ctx context.Context, attemptID, tenantID uuid.UUID) ([]*domain.QuizAnswer, error)
+    GradeAnswer(ctx context.Context, answerID, tenantID uuid.UUID, isCorrect bool, pointsEarned int) error
+    AddInstructorFeedback(ctx context.Context, answerID, tenantID uuid.UUID, feedback string) error
+  }
+
+  type QuizService interface {
+    // Quiz management (instructor)
+    CreateQuiz(ctx context.Context, tenantID uuid.UUID, req *domain.CreateQuizRequest) (*domain.QuizResponse, error)
+    GetQuiz(ctx context.Context, quizID, tenantID uuid.UUID) (*domain.QuizDetailResponse, error)
+    GetQuizByLesson(ctx context.Context, lessonID, tenantID uuid.UUID) (*domain.QuizDetailResponse, error)
+    ListQuizzesByCourse(ctx context.Context, courseID, tenantID uuid.UUID) ([]*domain.QuizResponse, error)
+    UpdateQuiz(ctx context.Context, quizID, tenantID uuid.UUID, req *domain.UpdateQuizRequest) (*domain.QuizResponse, error)
+    DeleteQuiz(ctx context.Context, quizID, tenantID uuid.UUID) error
+    PublishQuiz(ctx context.Context, quizID, tenantID uuid.UUID) error
+
+    // Questions management (instructor)
+    AddQuestion(ctx context.Context, quizID, tenantID uuid.UUID, req *domain.CreateQuestionRequest) (*domain.QuestionResponse, error)
+    UpdateQuestion(ctx context.Context, questionID, tenantID uuid.UUID, req *domain.UpdateQuestionRequest) (*domain.QuestionResponse, error)
+    DeleteQuestion(ctx context.Context, questionID, tenantID uuid.UUID) error
+
+    // Student quiz taking
+    StartQuizAttempt(ctx context.Context, quizID, userID, tenantID uuid.UUID) (*domain.QuizAttemptResponse, error)
+    SubmitQuizAttempt(ctx context.Context, attemptID, tenantID uuid.UUID, req *domain.SubmitQuizAttemptRequest) (*domain.QuizResultResponse, error)
+    GetQuizResults(ctx context.Context, attemptID, userID, tenantID uuid.UUID) (*domain.QuizResultResponse, error)
+    GetUserQuizAttempts(ctx context.Context, quizID, userID, tenantID uuid.UUID) ([]*domain.QuizAttemptResponse, error)
+
+    // Instructor grading (for essay questions)
+    GradeEssayAnswer(ctx context.Context, answerID, tenantID uuid.UUID, pointsEarned int, feedback string) error
+  }
+  ```
+
+**Criterios de Aceptación**:
+- Sistema completo de quizzes con múltiples tipos de preguntas
+- Auto-grading para multiple choice y true/false
+- Manual grading para essay questions
+- Tracking completo de intentos
+- Validación de límites de intentos y tiempo
+- Soporte para quizzes asociados a lecciones
+
+---
+
+### Issue #30: Quizzes Module - Service & Repository
+**Estimación**: 16 horas
+**Prioridad**: ALTA
+**Dependencias**: Issue #29
+
+**Tareas**:
+- [ ] Implementar `internal/core/quizzes/services/quiz.go`:
+  - Lógica de auto-grading para MC/TF
+  - Cálculo de scores
+  - Validación de intentos permitidos
+  - Validación de tiempo límite
+  - Randomización de preguntas/opciones
+
+- [ ] Implementar `internal/core/quizzes/adapters/postgresql.go`:
+  - Queries optimizadas para quizzes
+  - Transacciones para submit de quiz completo
+  - Índices apropiados
+
+- [ ] Crear migraciones para tablas:
+  ```sql
+  CREATE TABLE quizzes (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    lesson_id UUID,
+    course_id UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    passing_score INTEGER DEFAULT 70,
+    time_limit INTEGER,
+    max_attempts INTEGER,
+    shuffle_questions BOOLEAN DEFAULT false,
+    show_results BOOLEAN DEFAULT true,
+    is_published BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE questions (
+    id UUID PRIMARY KEY,
+    quiz_id UUID NOT NULL,
+    tenant_id UUID NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    question TEXT NOT NULL,
+    points INTEGER DEFAULT 1,
+    order_num INTEGER NOT NULL,
+    is_required BOOLEAN DEFAULT true,
+    explanation TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE question_options (
+    id UUID PRIMARY KEY,
+    question_id UUID NOT NULL,
+    tenant_id UUID NOT NULL,
+    option_text TEXT NOT NULL,
+    is_correct BOOLEAN DEFAULT false,
+    order_num INTEGER NOT NULL,
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE quiz_attempts (
+    id UUID PRIMARY KEY,
+    quiz_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    tenant_id UUID NOT NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
+    score INTEGER,
+    is_passed BOOLEAN,
+    time_spent INTEGER,
+    attempt_number INTEGER NOT NULL,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE quiz_answers (
+    id UUID PRIMARY KEY,
+    attempt_id UUID NOT NULL,
+    question_id UUID NOT NULL,
+    tenant_id UUID NOT NULL,
+    selected_options UUID[],
+    text_answer TEXT,
+    is_correct BOOLEAN,
+    points_earned INTEGER,
+    instructor_feedback TEXT,
+    graded_at TIMESTAMP,
+    FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX idx_quizzes_lesson ON quizzes(lesson_id, tenant_id);
+  CREATE INDEX idx_quizzes_course ON quizzes(course_id, tenant_id);
+  CREATE INDEX idx_questions_quiz ON questions(quiz_id);
+  CREATE INDEX idx_quiz_attempts_user ON quiz_attempts(quiz_id, user_id);
+  ```
+
+- [ ] Tests unitarios > 90% (lógica de grading es crítica)
+- [ ] Tests de integración para transacciones
+
+**Criterios de Aceptación**:
+- Auto-grading funciona correctamente
+- Validaciones de límites implementadas
+- Transacciones para operaciones complejas
+- Tests exhaustivos de grading logic
+
+---
+
+### Issue #31: Quizzes Module - HTTP Handlers
+**Estimación**: 10 horas
+**Prioridad**: ALTA
+**Dependencias**: Issue #30
+
+**Tareas**:
+- [ ] Crear `internal/controllers/quizzes.go`
+- [ ] Endpoints instructor:
+  - `POST /api/v1/lessons/:lessonId/quizzes` - Create quiz for lesson
+  - `POST /api/v1/courses/:courseId/quizzes` - Create standalone quiz
+  - `GET /api/v1/quizzes/:id` - Get quiz detail
+  - `PUT /api/v1/quizzes/:id` - Update quiz
+  - `DELETE /api/v1/quizzes/:id` - Delete quiz
+  - `POST /api/v1/quizzes/:id/publish` - Publish quiz
+  - `POST /api/v1/quizzes/:id/questions` - Add question
+  - `PUT /api/v1/questions/:id` - Update question
+  - `DELETE /api/v1/questions/:id` - Delete question
+  - `POST /api/v1/answers/:id/grade` - Grade essay answer
+
+- [ ] Endpoints student:
+  - `GET /api/v1/quizzes/:id/attempt` - Get quiz to take
+  - `POST /api/v1/quizzes/:id/start` - Start quiz attempt
+  - `POST /api/v1/attempts/:id/submit` - Submit quiz answers
+  - `GET /api/v1/attempts/:id/results` - Get attempt results
+  - `GET /api/v1/quizzes/:id/attempts` - Get user attempts
+
+- [ ] RBAC: Solo instructor del curso puede crear/editar quizzes
+- [ ] Tests E2E completos
+
+**Criterios de Aceptación**:
+- Todos los endpoints funcionando
+- Validaciones de permisos correctas
+- Tests E2E > 85%
+
+---
+
+### Issue #32: Modules Module (Course Sections)
+**Estimación**: 12 horas
+**Prioridad**: MEDIA
+**Dependencias**: Issues #27-28 (Lessons completo)
+
+**Descripción**: Agrupación de lecciones en módulos/secciones dentro de un curso
+
+---
+
+### Issue #33: Enrollments Module
+**Estimación**: 15 horas
+**Prioridad**: ALTA
+**Dependencias**: Issues #27-28
+
+---
+
+### Issue #34: Progress Module
+**Estimación**: 15 horas
+**Prioridad**: ALTA
+**Dependencias**: Issues #27-28, #33
+
+---
+
+### Issue #35: Certificates Module
+**Estimación**: 10 horas
+**Prioridad**: MEDIA
+**Dependencias**: Issue #34
+
+---
+
+### Issue #36: Notifications Module
+**Estimación**: 10 horas
+**Prioridad**: MEDIA
+
+---
+
+### Issue #37: Media/Upload Module
+**Estimación**: 12 horas
+**Prioridad**: ALTA
+
+---
+
+**Criterios Generales para todos los módulos**:
 - Seguir arquitectura hexagonal
 - Multi-tenancy en todos los módulos
 - Tests > 80% cobertura
 - Documentación completa
+- Error handling robusto
 
 ---
 
