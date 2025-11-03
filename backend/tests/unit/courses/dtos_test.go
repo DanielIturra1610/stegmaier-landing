@@ -318,7 +318,7 @@ func TestUpdateCourseRequest_ApplyToCourse(t *testing.T) {
 		Price:       float64Ptr(99.99),
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	err := req.ApplyToCourse(course)
 	require.NoError(t, err)
 
@@ -622,7 +622,7 @@ func TestUpdateCourseCategoryRequest_ApplyToCategory(t *testing.T) {
 		IsActive:     boolPtr(false),
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	err := req.ApplyToCategory(category)
 	require.NoError(t, err)
 
