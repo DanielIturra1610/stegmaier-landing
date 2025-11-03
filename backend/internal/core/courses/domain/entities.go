@@ -82,7 +82,7 @@ type CourseCategory struct {
 
 // NewCourse creates a new course with default values
 func NewCourse(tenantID, instructorID uuid.UUID, title, slug, description string, level CourseLevel) *Course {
-	now := time.Now()
+	now := time.Now().UTC()
 	return &Course{
 		ID:               uuid.New(),
 		TenantID:         tenantID,
@@ -108,7 +108,7 @@ func NewCourse(tenantID, instructorID uuid.UUID, title, slug, description string
 
 // NewCourseCategory creates a new course category
 func NewCourseCategory(tenantID uuid.UUID, name, slug string) *CourseCategory {
-	now := time.Now()
+	now := time.Now().UTC()
 	return &CourseCategory{
 		ID:           uuid.New(),
 		TenantID:     tenantID,
@@ -124,12 +124,12 @@ func NewCourseCategory(tenantID uuid.UUID, name, slug string) *CourseCategory {
 
 // UpdateTimestamp updates the UpdatedAt field to current time
 func (c *Course) UpdateTimestamp() {
-	c.UpdatedAt = time.Now()
+	c.UpdatedAt = time.Now().UTC()
 }
 
 // Publish marks the course as published
 func (c *Course) Publish() {
-	now := time.Now()
+	now := time.Now().UTC()
 	c.Status = CourseStatusPublished
 	c.IsPublished = true
 	c.PublishedAt = &now
@@ -152,7 +152,7 @@ func (c *Course) Archive() {
 
 // SoftDelete soft deletes the course
 func (c *Course) SoftDelete() {
-	now := time.Now()
+	now := time.Now().UTC()
 	c.Status = CourseStatusDeleted
 	c.IsPublished = false
 	c.DeletedAt = &now
@@ -218,7 +218,7 @@ func ValidateLevel(level CourseLevel) bool {
 
 // UpdateCategoryTimestamp updates the UpdatedAt field to current time
 func (c *CourseCategory) UpdateTimestamp() {
-	c.UpdatedAt = time.Now()
+	c.UpdatedAt = time.Now().UTC()
 }
 
 // IncrementCourseCount increments the course count
