@@ -2,6 +2,7 @@ package controllers
 
 import (
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
+	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	"github.com/gofiber/fiber/v2"
 )
@@ -131,6 +132,76 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusInternalServerError, "Failed to upload file"
 	case profilePorts.ErrFileDeleteFailed:
 		return fiber.StatusInternalServerError, "Failed to delete file"
+
+	// Course errors
+	case coursePorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case coursePorts.ErrCourseAlreadyExists:
+		return fiber.StatusConflict, "Course already exists"
+	case coursePorts.ErrCourseSlugExists:
+		return fiber.StatusConflict, "Course slug already in use"
+	case coursePorts.ErrCourseDeleted:
+		return fiber.StatusGone, "Course has been deleted"
+	case coursePorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case coursePorts.ErrCourseArchived:
+		return fiber.StatusForbidden, "Course is archived"
+	case coursePorts.ErrInvalidCourseData:
+		return fiber.StatusBadRequest, "Invalid course data"
+	case coursePorts.ErrCourseNotEnrollable:
+		return fiber.StatusForbidden, "Course cannot be enrolled"
+	case coursePorts.ErrCourseUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update course"
+	case coursePorts.ErrInvalidInstructor:
+		return fiber.StatusBadRequest, "Invalid instructor"
+	case coursePorts.ErrInvalidCategory:
+		return fiber.StatusBadRequest, "Invalid category"
+
+	// Category errors
+	case coursePorts.ErrCategoryNotFound:
+		return fiber.StatusNotFound, "Category not found"
+	case coursePorts.ErrCategoryAlreadyExists:
+		return fiber.StatusConflict, "Category already exists"
+	case coursePorts.ErrCategorySlugExists:
+		return fiber.StatusConflict, "Category slug already in use"
+	case coursePorts.ErrCategoryHasCourses:
+		return fiber.StatusConflict, "Category has associated courses"
+	case coursePorts.ErrCategoryInactive:
+		return fiber.StatusForbidden, "Category is inactive"
+	case coursePorts.ErrInvalidParentCategory:
+		return fiber.StatusBadRequest, "Invalid parent category"
+	case coursePorts.ErrCircularCategoryReference:
+		return fiber.StatusBadRequest, "Circular category reference detected"
+	case coursePorts.ErrInvalidCategoryData:
+		return fiber.StatusBadRequest, "Invalid category data"
+
+	// Enrollment errors
+	case coursePorts.ErrAlreadyEnrolled:
+		return fiber.StatusConflict, "Already enrolled in this course"
+	case coursePorts.ErrNotEnrolled:
+		return fiber.StatusBadRequest, "Not enrolled in this course"
+	case coursePorts.ErrEnrollmentFailed:
+		return fiber.StatusInternalServerError, "Failed to enroll in course"
+	case coursePorts.ErrUnenrollmentFailed:
+		return fiber.StatusInternalServerError, "Failed to unenroll from course"
+	case coursePorts.ErrEnrollmentLimitReached:
+		return fiber.StatusForbidden, "Course enrollment limit reached"
+
+	// Rating errors
+	case coursePorts.ErrInvalidRating:
+		return fiber.StatusBadRequest, "Invalid rating value"
+	case coursePorts.ErrRatingFailed:
+		return fiber.StatusInternalServerError, "Failed to rate course"
+	case coursePorts.ErrCannotRateOwnCourse:
+		return fiber.StatusForbidden, "Cannot rate your own course"
+	case coursePorts.ErrMustBeEnrolledToRate:
+		return fiber.StatusForbidden, "Must be enrolled to rate course"
+
+	// Course authorization errors
+	case coursePorts.ErrNotCourseOwner:
+		return fiber.StatusForbidden, "Not the course owner"
+	case coursePorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
 
 	// Default
 	default:

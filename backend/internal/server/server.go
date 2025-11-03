@@ -11,6 +11,8 @@ import (
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/adapters"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
+	courseadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/adapters"
+	courseservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/services"
 	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
 	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
@@ -36,14 +38,16 @@ const (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app               *fiber.App
-	config            *config.Config
-	dbManager         *database.Manager
-	authController    *controllers.AuthController
-	userController    *controllers.UserManagementController
-	profileController *controllers.ProfileController
-	tokenService      tokens.TokenService
-	authRepo          ports.AuthRepository
+	app                *fiber.App
+	config             *config.Config
+	dbManager          *database.Manager
+	authController     *controllers.AuthController
+	userController     *controllers.UserManagementController
+	profileController  *controllers.ProfileController
+	courseController   *controllers.CourseController
+	categoryController *controllers.CategoryController
+	tokenService       tokens.TokenService
+	authRepo           ports.AuthRepository
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -135,16 +139,39 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Profile module initialized")
 
+	// Initialize dependency injection for courses module
+	log.Println("🔧 Initializing courses module...")
+
+	// 1. Get tenant database connection
+	// Note: For now we use control DB, but in production you'd want to get tenant DB dynamically
+	tenantDB := dbManager.GetControlDB()
+
+	// 2. Initialize course repositories
+	courseRepo := courseadapters.NewPostgreSQLCourseRepository(tenantDB)
+	categoryRepo := courseadapters.NewPostgreSQLCourseCategoryRepository(tenantDB)
+
+	// 3. Initialize course services
+	courseService := courseservices.NewCourseService(courseRepo, categoryRepo)
+	categoryService := courseservices.NewCourseCategoryService(categoryRepo)
+
+	// 4. Initialize course controllers
+	courseController := controllers.NewCourseController(courseService)
+	categoryController := controllers.NewCategoryController(categoryService)
+
+	log.Println("✅ Courses module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
-		app:               app,
-		config:            cfg,
-		dbManager:         dbManager,
-		authController:    authController,
-		userController:    userController,
-		profileController: profileController,
-		tokenService:      tokenService,
-		authRepo:          authRepo,
+		app:                app,
+		config:             cfg,
+		dbManager:          dbManager,
+		authController:     authController,
+		userController:     userController,
+		profileController:  profileController,
+		courseController:   courseController,
+		categoryController: categoryController,
+		tokenService:       tokenService,
+		authRepo:           authRepo,
 	}
 
 	// Setup de middlewares
@@ -264,6 +291,65 @@ func (s *Server) setupRoutes() {
 		profile.Post("/avatar", s.profileController.UploadAvatar)
 		profile.Delete("/avatar", s.profileController.DeleteAvatar)
 		profile.Put("/preferences", s.profileController.UpdatePreferences)
+	}
+
+	// ============================================================
+	// Course Routes
+	// ============================================================
+	courses := v1.Group("/courses")
+
+	// Public course routes (read-only, no auth required)
+	{
+		courses.Get("/published", s.courseController.GetPublishedCourses)
+		courses.Get("/slug/:slug", s.courseController.GetCourseBySlug)
+		courses.Get("/instructor/:instructorId", s.courseController.GetCoursesByInstructor)
+		courses.Get("/category/:categoryId", s.courseController.GetCoursesByCategory)
+		courses.Get("/:id", s.courseController.GetCourse)
+		courses.Get("/", s.courseController.ListCourses)
+	}
+
+	// Protected course routes (authentication required)
+	coursesProtected := courses.Group("")
+	coursesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Student actions
+		coursesProtected.Post("/:id/enroll", s.courseController.EnrollCourse)
+		coursesProtected.Post("/:id/unenroll", s.courseController.UnenrollCourse)
+		coursesProtected.Post("/:id/rate", s.courseController.RateCourse)
+
+		// Instructor/Admin actions (TODO: Add instructor/admin middleware)
+		coursesProtected.Post("/", s.courseController.CreateCourse)
+		coursesProtected.Put("/:id", s.courseController.UpdateCourse)
+		coursesProtected.Delete("/:id", s.courseController.DeleteCourse)
+		coursesProtected.Post("/:id/publish", s.courseController.PublishCourse)
+		coursesProtected.Post("/:id/unpublish", s.courseController.UnpublishCourse)
+		coursesProtected.Post("/:id/archive", s.courseController.ArchiveCourse)
+	}
+
+	// ============================================================
+	// Category Routes
+	// ============================================================
+	categories := v1.Group("/categories")
+
+	// Public category routes (read-only, no auth required)
+	{
+		categories.Get("/active", s.categoryController.ListActiveCategories)
+		categories.Get("/slug/:slug", s.categoryController.GetCategoryBySlug)
+		categories.Get("/:id/subcategories", s.categoryController.GetSubcategories)
+		categories.Get("/:id", s.categoryController.GetCategory)
+		categories.Get("/", s.categoryController.ListCategories)
+	}
+
+	// Protected category routes (admin only)
+	categoriesProtected := categories.Group("")
+	categoriesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	categoriesProtected.Use(middleware.RequireAdmin())
+	{
+		categoriesProtected.Post("/", s.categoryController.CreateCategory)
+		categoriesProtected.Put("/:id", s.categoryController.UpdateCategory)
+		categoriesProtected.Delete("/:id", s.categoryController.DeleteCategory)
+		categoriesProtected.Post("/:id/activate", s.categoryController.ActivateCategory)
+		categoriesProtected.Post("/:id/deactivate", s.categoryController.DeactivateCategory)
 	}
 
 	// ============================================================
