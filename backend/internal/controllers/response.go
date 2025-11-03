@@ -5,6 +5,7 @@ import (
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
+	quizPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/ports"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -255,6 +256,154 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusInternalServerError, "Failed to create lesson completion"
 	case lessonPorts.ErrLessonDeletionFailed:
 		return fiber.StatusInternalServerError, "Failed to delete lesson"
+
+	// Quiz errors
+	case quizPorts.ErrQuizNotFound:
+		return fiber.StatusNotFound, "Quiz not found"
+	case quizPorts.ErrQuizAlreadyExists:
+		return fiber.StatusConflict, "Quiz already exists"
+	case quizPorts.ErrQuizDeleted:
+		return fiber.StatusGone, "Quiz has been deleted"
+	case quizPorts.ErrQuizNotPublished:
+		return fiber.StatusForbidden, "Quiz is not published"
+	case quizPorts.ErrInvalidQuizData:
+		return fiber.StatusBadRequest, "Invalid quiz data"
+	case quizPorts.ErrQuizCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create quiz"
+	case quizPorts.ErrQuizUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update quiz"
+	case quizPorts.ErrQuizDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete quiz"
+	case quizPorts.ErrQuizNotEnrollable:
+		return fiber.StatusForbidden, "Quiz cannot be accessed"
+
+	// Question errors
+	case quizPorts.ErrQuestionNotFound:
+		return fiber.StatusNotFound, "Question not found"
+	case quizPorts.ErrQuestionAlreadyExists:
+		return fiber.StatusConflict, "Question already exists"
+	case quizPorts.ErrInvalidQuestionData:
+		return fiber.StatusBadRequest, "Invalid question data"
+	case quizPorts.ErrInvalidQuestionType:
+		return fiber.StatusBadRequest, "Invalid question type"
+	case quizPorts.ErrInvalidQuestionPoints:
+		return fiber.StatusBadRequest, "Invalid question points"
+	case quizPorts.ErrQuestionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create question"
+	case quizPorts.ErrQuestionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update question"
+	case quizPorts.ErrQuestionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete question"
+	case quizPorts.ErrReorderFailed:
+		return fiber.StatusInternalServerError, "Failed to reorder questions"
+
+	// Question option errors
+	case quizPorts.ErrOptionNotFound:
+		return fiber.StatusNotFound, "Question option not found"
+	case quizPorts.ErrInvalidOptionData:
+		return fiber.StatusBadRequest, "Invalid option data"
+	case quizPorts.ErrOptionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create option"
+	case quizPorts.ErrOptionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update option"
+	case quizPorts.ErrOptionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete option"
+	case quizPorts.ErrNoCorrectOption:
+		return fiber.StatusBadRequest, "At least one correct option required"
+	case quizPorts.ErrInvalidOptionCount:
+		return fiber.StatusBadRequest, "Invalid number of options"
+
+	// Quiz attempt errors
+	case quizPorts.ErrAttemptNotFound:
+		return fiber.StatusNotFound, "Quiz attempt not found"
+	case quizPorts.ErrAttemptAlreadyExists:
+		return fiber.StatusConflict, "Quiz attempt already exists"
+	case quizPorts.ErrAttemptCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create quiz attempt"
+	case quizPorts.ErrAttemptUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update quiz attempt"
+	case quizPorts.ErrAttemptAlreadyComplete:
+		return fiber.StatusBadRequest, "Quiz attempt already completed"
+	case quizPorts.ErrMaxAttemptsReached:
+		return fiber.StatusForbidden, "Maximum attempts reached for this quiz"
+	case quizPorts.ErrTimeLimitExceeded:
+		return fiber.StatusForbidden, "Time limit exceeded for this quiz"
+	case quizPorts.ErrInvalidAttemptNumber:
+		return fiber.StatusBadRequest, "Invalid attempt number"
+	case quizPorts.ErrAttemptNotComplete:
+		return fiber.StatusBadRequest, "Quiz attempt not yet completed"
+
+	// Quiz answer errors
+	case quizPorts.ErrAnswerNotFound:
+		return fiber.StatusNotFound, "Quiz answer not found"
+	case quizPorts.ErrAnswerAlreadyExists:
+		return fiber.StatusConflict, "Answer already exists for this question"
+	case quizPorts.ErrInvalidAnswerData:
+		return fiber.StatusBadRequest, "Invalid answer data"
+	case quizPorts.ErrAnswerCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create answer"
+	case quizPorts.ErrAnswerUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update answer"
+	case quizPorts.ErrAnswerRequired:
+		return fiber.StatusBadRequest, "Answer required for this question"
+
+	// Validation errors
+	case quizPorts.ErrInvalidPassingScore:
+		return fiber.StatusBadRequest, "Invalid passing score (must be 0-100)"
+	case quizPorts.ErrInvalidTimeLimit:
+		return fiber.StatusBadRequest, "Invalid time limit"
+	case quizPorts.ErrInvalidMaxAttempts:
+		return fiber.StatusBadRequest, "Invalid max attempts"
+	case quizPorts.ErrInvalidScore:
+		return fiber.StatusBadRequest, "Invalid score (must be 0-100)"
+	case quizPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent"
+	case quizPorts.ErrInvalidOrderIndex:
+		return fiber.StatusBadRequest, "Invalid order index"
+	case quizPorts.ErrInvalidPointsAwarded:
+		return fiber.StatusBadRequest, "Invalid points awarded"
+	case quizPorts.ErrInvalidSubmission:
+		return fiber.StatusBadRequest, "Invalid quiz submission"
+	case quizPorts.ErrMissingRequiredAnswer:
+		return fiber.StatusBadRequest, "Missing answer for required question"
+	case quizPorts.ErrInvalidAnswerFormat:
+		return fiber.StatusBadRequest, "Invalid answer format for question type"
+
+	// Grading errors
+	case quizPorts.ErrAlreadyGraded:
+		return fiber.StatusBadRequest, "Question already graded"
+	case quizPorts.ErrNotGradedYet:
+		return fiber.StatusBadRequest, "Question not graded yet"
+	case quizPorts.ErrCannotGradeAutoGraded:
+		return fiber.StatusBadRequest, "Cannot manually grade auto-graded question"
+	case quizPorts.ErrRequiresManualGrading:
+		return fiber.StatusBadRequest, "Question requires manual grading"
+	case quizPorts.ErrGradingFailed:
+		return fiber.StatusInternalServerError, "Failed to grade question"
+	case quizPorts.ErrPendingGrading:
+		return fiber.StatusBadRequest, "Quiz has questions pending grading"
+
+	// Quiz authorization errors
+	case quizPorts.ErrNotQuizOwner:
+		return fiber.StatusForbidden, "Not the quiz owner"
+	case quizPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
+	case quizPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to quiz"
+	case quizPorts.ErrNotEnrolledInCourse:
+		return fiber.StatusForbidden, "Not enrolled in course"
+
+	// Quiz business logic errors
+	case quizPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case quizPorts.ErrLessonNotFound:
+		return fiber.StatusNotFound, "Lesson not found"
+	case quizPorts.ErrQuizNotStarted:
+		return fiber.StatusBadRequest, "Quiz attempt not started"
+	case quizPorts.ErrInvalidAttemptFlow:
+		return fiber.StatusBadRequest, "Invalid quiz attempt flow"
+	case quizPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve quiz statistics"
 
 	// Default
 	default:

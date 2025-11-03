@@ -17,6 +17,8 @@ import (
 	lessonservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/services"
 	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
 	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
+	quizadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/adapters"
+	quizservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
@@ -49,6 +51,7 @@ type Server struct {
 	courseController   *controllers.CourseController
 	categoryController *controllers.CategoryController
 	lessonController   *controllers.LessonController
+	quizController     *controllers.QuizController
 	tokenService       tokens.TokenService
 	authRepo           ports.AuthRepository
 }
@@ -177,6 +180,20 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Lessons module initialized")
 
+	// Initialize dependency injection for quizzes module
+	log.Println("🔧 Initializing quizzes module...")
+
+	// 1. Initialize quiz repository
+	quizRepo := quizadapters.NewPostgreSQLQuizRepository(tenantDB)
+
+	// 2. Initialize quiz service
+	quizService := quizservices.NewQuizService(quizRepo)
+
+	// 3. Initialize quiz controller
+	quizController := controllers.NewQuizController(quizService)
+
+	log.Println("✅ Quizzes module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
 		app:                app,
@@ -188,6 +205,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		courseController:   courseController,
 		categoryController: categoryController,
 		lessonController:   lessonController,
+		quizController:     quizController,
 		tokenService:       tokenService,
 		authRepo:           authRepo,
 	}
@@ -402,6 +420,49 @@ func (s *Server) setupRoutes() {
 	coursesProtected.Get("/:courseId/progress", s.lessonController.GetCourseProgress)
 	coursesProtected.Post("/:courseId/lessons", s.lessonController.CreateLesson)
 	coursesProtected.Post("/:courseId/lessons/reorder", s.lessonController.ReorderLessons)
+
+	// ============================================================
+	// Quiz Routes
+	// ============================================================
+	quizzes := v1.Group("/quizzes")
+
+	// Public quiz routes (read-only, no authentication required)
+	{
+		quizzes.Get("/:id", s.quizController.GetQuiz)
+	}
+
+	// Protected quiz routes (authentication required)
+	quizzesProtected := quizzes.Group("")
+	quizzesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Student actions
+		quizzesProtected.Post("/:quizId/attempts", s.quizController.StartQuizAttempt)
+		quizzesProtected.Post("/attempts/:attemptId/submit", s.quizController.SubmitQuizAttempt)
+		quizzesProtected.Get("/attempts/:attemptId", s.quizController.GetAttemptDetails)
+		quizzesProtected.Get("/:quizId/my-attempts", s.quizController.GetMyAttempts)
+
+		// Instructor/Admin actions (TODO: Add instructor/admin middleware)
+		quizzesProtected.Put("/:id", s.quizController.UpdateQuiz)
+		quizzesProtected.Delete("/:id", s.quizController.DeleteQuiz)
+		quizzesProtected.Post("/:quizId/questions", s.quizController.CreateQuestion)
+		quizzesProtected.Put("/questions/:id", s.quizController.UpdateQuestion)
+		quizzesProtected.Delete("/questions/:id", s.quizController.DeleteQuestion)
+		quizzesProtected.Post("/:quizId/questions/reorder", s.quizController.ReorderQuestions)
+		quizzesProtected.Post("/answers/:answerId/grade", s.quizController.GradeEssayQuestion)
+		quizzesProtected.Get("/:quizId/statistics", s.quizController.GetQuizStatistics)
+		quizzesProtected.Get("/:quizId/attempts", s.quizController.GetQuizAttempts)
+	}
+
+	// Course-specific quiz routes (nested under courses)
+	// Public: Get quizzes for a course
+	courses.Get("/:courseId/quizzes", s.quizController.GetQuizzesByCourse)
+
+	// Protected: Course quiz routes
+	coursesProtected.Post("/:courseId/quizzes", s.quizController.CreateQuiz)
+
+	// Lesson-specific quiz routes (nested under lessons)
+	// Public: Get quiz for a lesson
+	lessons.Get("/:lessonId/quiz", s.quizController.GetQuizByLesson)
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)
