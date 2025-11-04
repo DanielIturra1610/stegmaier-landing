@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	assignmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/ports"
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	certificatePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/ports"
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
@@ -723,6 +724,122 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusNotFound, "Progress not found"
 	case certificatePorts.ErrUserNotFound:
 		return fiber.StatusNotFound, "User not found"
+
+	// Assignment errors
+	case assignmentPorts.ErrAssignmentNotFound:
+		return fiber.StatusNotFound, "Assignment not found"
+	case assignmentPorts.ErrAssignmentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create assignment"
+	case assignmentPorts.ErrAssignmentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update assignment"
+	case assignmentPorts.ErrAssignmentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete assignment"
+
+	// Submission errors
+	case assignmentPorts.ErrSubmissionNotFound:
+		return fiber.StatusNotFound, "Submission not found"
+	case assignmentPorts.ErrSubmissionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create submission"
+	case assignmentPorts.ErrSubmissionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update submission"
+	case assignmentPorts.ErrSubmissionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete submission"
+
+	// File errors
+	case assignmentPorts.ErrFileNotFound:
+		return fiber.StatusNotFound, "File not found"
+	case assignmentPorts.ErrFileCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create file record"
+	case assignmentPorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload file"
+	case assignmentPorts.ErrFileDownloadFailed:
+		return fiber.StatusInternalServerError, "Failed to download file"
+	case assignmentPorts.ErrFileDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete file"
+	case assignmentPorts.ErrInvalidFileType:
+		return fiber.StatusBadRequest, "Invalid file type"
+	case assignmentPorts.ErrFileTooLarge:
+		return fiber.StatusBadRequest, "File exceeds maximum allowed size"
+	case assignmentPorts.ErrFileTypeNotAllowed:
+		return fiber.StatusBadRequest, "File type not allowed for this assignment"
+
+	// Rubric errors
+	case assignmentPorts.ErrRubricNotFound:
+		return fiber.StatusNotFound, "Rubric not found"
+	case assignmentPorts.ErrRubricCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create rubric"
+	case assignmentPorts.ErrRubricUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update rubric"
+	case assignmentPorts.ErrRubricDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete rubric"
+
+	// Grade errors
+	case assignmentPorts.ErrGradeNotFound:
+		return fiber.StatusNotFound, "Grade not found"
+	case assignmentPorts.ErrGradeCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create grade"
+	case assignmentPorts.ErrGradeUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update grade"
+	case assignmentPorts.ErrGradeDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete grade"
+
+	// Comment errors
+	case assignmentPorts.ErrCommentNotFound:
+		return fiber.StatusNotFound, "Comment not found"
+	case assignmentPorts.ErrCommentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create comment"
+	case assignmentPorts.ErrCommentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update comment"
+	case assignmentPorts.ErrCommentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete comment"
+
+	// Peer review errors
+	case assignmentPorts.ErrPeerReviewNotFound:
+		return fiber.StatusNotFound, "Peer review not found"
+	case assignmentPorts.ErrPeerReviewCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create peer review"
+	case assignmentPorts.ErrPeerReviewUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update peer review"
+	case assignmentPorts.ErrPeerReviewDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete peer review"
+
+	// Assignment permission errors
+	case assignmentPorts.ErrUnauthorized:
+		return fiber.StatusUnauthorized, "Unauthorized access"
+	case assignmentPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case assignmentPorts.ErrNotAssignmentOwner:
+		return fiber.StatusForbidden, "User is not the assignment owner"
+	case assignmentPorts.ErrNotSubmissionOwner:
+		return fiber.StatusForbidden, "User is not the submission owner"
+
+	// Assignment validation errors
+	case assignmentPorts.ErrInvalidRequest:
+		return fiber.StatusBadRequest, "Invalid request data"
+	case assignmentPorts.ErrInvalidTenantID:
+		return fiber.StatusBadRequest, "Invalid tenant ID"
+	case assignmentPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case assignmentPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case assignmentPorts.ErrMissingParameter:
+		return fiber.StatusBadRequest, "Missing required parameter"
+
+	// Assignment storage errors
+	case assignmentPorts.ErrStorageFailed:
+		return fiber.StatusInternalServerError, "Storage operation failed"
+	case assignmentPorts.ErrStorageUnavailable:
+		return fiber.StatusServiceUnavailable, "Storage service unavailable"
+
+	// Assignment database errors
+	case assignmentPorts.ErrDatabaseError:
+		return fiber.StatusInternalServerError, "Database error occurred"
+	case assignmentPorts.ErrTransactionFailed:
+		return fiber.StatusInternalServerError, "Database transaction failed"
+	case assignmentPorts.ErrRecordNotFound:
+		return fiber.StatusNotFound, "Record not found"
+	case assignmentPorts.ErrDuplicateRecord:
+		return fiber.StatusConflict, "Duplicate record"
 
 	// Default
 	default:

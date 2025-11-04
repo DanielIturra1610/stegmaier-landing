@@ -102,6 +102,7 @@ var (
 
 // Validation errors
 var (
+	ErrInvalidRequest      = errors.New("invalid request")
 	ErrInvalidTenantID     = errors.New("invalid tenant ID")
 	ErrInvalidUserID       = errors.New("invalid user ID")
 	ErrInvalidStudentID    = errors.New("invalid student ID")

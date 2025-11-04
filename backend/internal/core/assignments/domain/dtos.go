@@ -256,3 +256,195 @@ type RubricListResponse struct {
 	PageSize   int              `json:"page_size"`
 	TotalPages int              `json:"total_pages"`
 }
+
+// ============================================================================
+// Validate methods for request DTOs
+// ============================================================================
+
+// Validate validates CreateAssignmentRequest
+func (r *CreateAssignmentRequest) Validate() error {
+	if r.Title == "" {
+		return ErrInvalidRequest
+	}
+	if len(r.Title) < 3 || len(r.Title) > 200 {
+		return ErrInvalidRequest
+	}
+	if r.Description == "" {
+		return ErrInvalidRequest
+	}
+	if r.Instructions == "" {
+		return ErrInvalidRequest
+	}
+	if !ValidateAssignmentType(r.Type) {
+		return ErrInvalidRequest
+	}
+	if r.CourseID == uuid.Nil {
+		return ErrInvalidRequest
+	}
+	if r.MaxPoints != 0 && r.MaxPoints < 0 {
+		return ErrInvalidRequest
+	}
+	if r.PassingScore < 0 {
+		return ErrInvalidRequest
+	}
+	if r.MaxPoints != 0 && r.PassingScore > r.MaxPoints {
+		return ErrInvalidRequest
+	}
+	return nil
+}
+
+// Validate validates UpdateAssignmentRequest
+func (r *UpdateAssignmentRequest) Validate() error {
+	if r.Title != nil && (len(*r.Title) < 3 || len(*r.Title) > 200) {
+		return ErrInvalidRequest
+	}
+	if r.MaxPoints != nil && *r.MaxPoints < 0 {
+		return ErrInvalidRequest
+	}
+	if r.PassingScore != nil && *r.PassingScore < 0 {
+		return ErrInvalidRequest
+	}
+	return nil
+}
+
+// Validate validates CreateSubmissionRequest
+func (r *CreateSubmissionRequest) Validate() error {
+	if r.AssignmentID == uuid.Nil {
+		return ErrInvalidRequest
+	}
+	return nil
+}
+
+// Validate validates UpdateSubmissionRequest
+func (r *UpdateSubmissionRequest) Validate() error {
+	// No strict validation needed for updates
+	return nil
+}
+
+// Validate validates GradeSubmissionRequest
+func (r *GradeSubmissionRequest) Validate() error {
+	if len(r.Grades) == 0 {
+		return ErrInvalidRequest
+	}
+	for _, grade := range r.Grades {
+		if grade.PointsEarned < 0 {
+			return ErrInvalidRequest
+		}
+		if grade.PointsPossible <= 0 {
+			return ErrInvalidRequest
+		}
+		if grade.PointsEarned > grade.PointsPossible {
+			return ErrInvalidRequest
+		}
+	}
+	return nil
+}
+
+// Validate validates BulkGradeRequest
+func (r *BulkGradeRequest) Validate() error {
+	if len(r.SubmissionIDs) == 0 {
+		return ErrInvalidRequest
+	}
+	if len(r.Grades) == 0 {
+		return ErrInvalidRequest
+	}
+	for _, grade := range r.Grades {
+		if grade.PointsEarned < 0 {
+			return ErrInvalidRequest
+		}
+		if grade.PointsPossible <= 0 {
+			return ErrInvalidRequest
+		}
+		if grade.PointsEarned > grade.PointsPossible {
+			return ErrInvalidRequest
+		}
+	}
+	return nil
+}
+
+// Validate validates CreateCommentRequest
+func (r *CreateCommentRequest) Validate() error {
+	if r.Content == "" {
+		return ErrInvalidRequest
+	}
+	if len(r.Content) > 5000 {
+		return ErrInvalidRequest
+	}
+	return nil
+}
+
+// Validate validates CreateRubricRequest
+func (r *CreateRubricRequest) Validate() error {
+	if r.Name == "" {
+		return ErrInvalidRequest
+	}
+	if len(r.Criteria) == 0 {
+		return ErrInvalidRequest
+	}
+	for _, criterion := range r.Criteria {
+		if criterion.Name == "" {
+			return ErrInvalidRequest
+		}
+		if criterion.MaxPoints <= 0 {
+			return ErrInvalidRequest
+		}
+		if criterion.Weight < 0 || criterion.Weight > 1 {
+			return ErrInvalidRequest
+		}
+		if len(criterion.Levels) == 0 {
+			return ErrInvalidRequest
+		}
+		for _, level := range criterion.Levels {
+			if level.Name == "" || level.Description == "" {
+				return ErrInvalidRequest
+			}
+			if level.Points < 0 {
+				return ErrInvalidRequest
+			}
+		}
+	}
+	return nil
+}
+
+// Validate validates UpdateRubricRequest
+func (r *UpdateRubricRequest) Validate() error {
+	if r.Name != nil && *r.Name == "" {
+		return ErrInvalidRequest
+	}
+	if r.Criteria != nil {
+		for _, criterion := range r.Criteria {
+			if criterion.Name == "" {
+				return ErrInvalidRequest
+			}
+			if criterion.MaxPoints <= 0 {
+				return ErrInvalidRequest
+			}
+			if criterion.Weight < 0 || criterion.Weight > 1 {
+				return ErrInvalidRequest
+			}
+		}
+	}
+	return nil
+}
+
+// Validate validates CreatePeerReviewRequest
+func (r *CreatePeerReviewRequest) Validate() error {
+	if r.SubmissionID == uuid.Nil {
+		return ErrInvalidRequest
+	}
+	if r.ReviewerID == uuid.Nil {
+		return ErrInvalidRequest
+	}
+	return nil
+}
+
+// Validate validates SubmitPeerReviewRequest
+func (r *SubmitPeerReviewRequest) Validate() error {
+	if r.Feedback == "" {
+		return ErrInvalidRequest
+	}
+	if len(r.Scores) == 0 {
+		return ErrInvalidRequest
+	}
+	return nil
+}
