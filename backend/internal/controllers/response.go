@@ -6,6 +6,7 @@ import (
 	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
+	progressPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
 	quizPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/ports"
 	"github.com/gofiber/fiber/v2"
 )
@@ -493,6 +494,98 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusInternalServerError, "Failed to retrieve enrollment statistics"
 	case enrollmentPorts.ErrNoEnrollments:
 		return fiber.StatusNotFound, "No enrollments found"
+
+	// Progress errors
+	case progressPorts.ErrProgressNotFound:
+		return fiber.StatusNotFound, "Course progress not found"
+	case progressPorts.ErrProgressAlreadyExists:
+		return fiber.StatusConflict, "Course progress already exists"
+	case progressPorts.ErrProgressCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create course progress"
+	case progressPorts.ErrProgressUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update course progress"
+	case progressPorts.ErrProgressDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete course progress"
+	case progressPorts.ErrInvalidProgressData:
+		return fiber.StatusBadRequest, "Invalid course progress data"
+	case progressPorts.ErrInvalidProgressStatus:
+		return fiber.StatusBadRequest, "Invalid progress status"
+	case progressPorts.ErrProgressAlreadyCompleted:
+		return fiber.StatusBadRequest, "Course progress is already completed"
+	case progressPorts.ErrProgressNotStarted:
+		return fiber.StatusBadRequest, "Course progress has not been started"
+	case progressPorts.ErrCannotCompleteProgress:
+		return fiber.StatusBadRequest, "Cannot complete progress: requirements not met"
+
+	// Progress snapshot errors
+	case progressPorts.ErrSnapshotNotFound:
+		return fiber.StatusNotFound, "Progress snapshot not found"
+	case progressPorts.ErrSnapshotCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create progress snapshot"
+	case progressPorts.ErrSnapshotDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete progress snapshot"
+	case progressPorts.ErrInvalidSnapshotData:
+		return fiber.StatusBadRequest, "Invalid progress snapshot data"
+	case progressPorts.ErrInvalidMilestoneType:
+		return fiber.StatusBadRequest, "Invalid milestone type"
+
+	// Progress tracking errors
+	case progressPorts.ErrInvalidCompletionData:
+		return fiber.StatusBadRequest, "Invalid completion data"
+	case progressPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent value"
+	case progressPorts.ErrInvalidProgressPercentage:
+		return fiber.StatusBadRequest, "Invalid progress percentage (must be 0-100)"
+	case progressPorts.ErrLessonNotCompleted:
+		return fiber.StatusBadRequest, "Lesson is not completed"
+	case progressPorts.ErrQuizNotCompleted:
+		return fiber.StatusBadRequest, "Quiz is not completed"
+	case progressPorts.ErrProgressCalculationFailed:
+		return fiber.StatusInternalServerError, "Failed to calculate progress"
+
+	// Progress permission errors
+	case progressPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to progress"
+	case progressPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case progressPorts.ErrNotEnrolled:
+		return fiber.StatusForbidden, "User is not enrolled in this course"
+
+	// Progress validation errors
+	case progressPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case progressPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case progressPorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case progressPorts.ErrInvalidLessonID:
+		return fiber.StatusBadRequest, "Invalid lesson ID"
+	case progressPorts.ErrInvalidQuizID:
+		return fiber.StatusBadRequest, "Invalid quiz ID"
+	case progressPorts.ErrInvalidDateRange:
+		return fiber.StatusBadRequest, "Invalid date range"
+	case progressPorts.ErrInvalidPageParameters:
+		return fiber.StatusBadRequest, "Invalid page parameters"
+
+	// Progress statistics errors
+	case progressPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve progress statistics"
+	case progressPorts.ErrNoProgressData:
+		return fiber.StatusNotFound, "No progress data found"
+	case progressPorts.ErrInsufficientData:
+		return fiber.StatusBadRequest, "Insufficient data for statistics"
+
+	// Progress course/enrollment errors
+	case progressPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case progressPorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case progressPorts.ErrEnrollmentNotActive:
+		return fiber.StatusForbidden, "Enrollment is not active"
+	case progressPorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case progressPorts.ErrCourseHasNoContent:
+		return fiber.StatusBadRequest, "Course has no content"
 
 	// Default
 	default:
