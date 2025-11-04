@@ -3,6 +3,7 @@ package controllers
 import (
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
+	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	quizPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/ports"
@@ -404,6 +405,94 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusBadRequest, "Invalid quiz attempt flow"
 	case quizPorts.ErrStatisticsFailed:
 		return fiber.StatusInternalServerError, "Failed to retrieve quiz statistics"
+
+	// Enrollment errors
+	case enrollmentPorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case enrollmentPorts.ErrEnrollmentAlreadyExists:
+		return fiber.StatusConflict, "Enrollment already exists"
+	case enrollmentPorts.ErrEnrollmentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create enrollment"
+	case enrollmentPorts.ErrEnrollmentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update enrollment"
+	case enrollmentPorts.ErrEnrollmentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete enrollment"
+	case enrollmentPorts.ErrInvalidEnrollmentData:
+		return fiber.StatusBadRequest, "Invalid enrollment data"
+	case enrollmentPorts.ErrInvalidEnrollmentStatus:
+		return fiber.StatusBadRequest, "Invalid enrollment status"
+
+	// Enrollment request errors
+	case enrollmentPorts.ErrEnrollmentRequestNotFound:
+		return fiber.StatusNotFound, "Enrollment request not found"
+	case enrollmentPorts.ErrEnrollmentRequestAlreadyExists:
+		return fiber.StatusConflict, "Enrollment request already exists"
+	case enrollmentPorts.ErrEnrollmentRequestCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create enrollment request"
+	case enrollmentPorts.ErrEnrollmentRequestUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update enrollment request"
+	case enrollmentPorts.ErrEnrollmentRequestAlreadyReviewed:
+		return fiber.StatusBadRequest, "Enrollment request already reviewed"
+	case enrollmentPorts.ErrInvalidEnrollmentRequestStatus:
+		return fiber.StatusBadRequest, "Invalid enrollment request status"
+
+	// Enrollment business logic errors
+	case enrollmentPorts.ErrAlreadyEnrolled:
+		return fiber.StatusConflict, "User is already enrolled in this course"
+	case enrollmentPorts.ErrEnrollmentExpired:
+		return fiber.StatusForbidden, "Enrollment has expired"
+	case enrollmentPorts.ErrEnrollmentNotActive:
+		return fiber.StatusForbidden, "Enrollment is not active"
+	case enrollmentPorts.ErrEnrollmentAlreadyCompleted:
+		return fiber.StatusBadRequest, "Enrollment is already completed"
+	case enrollmentPorts.ErrEnrollmentCancelled:
+		return fiber.StatusForbidden, "Enrollment is cancelled"
+	case enrollmentPorts.ErrCannotAccessCourse:
+		return fiber.StatusForbidden, "Cannot access course with current enrollment status"
+	case enrollmentPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case enrollmentPorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case enrollmentPorts.ErrCourseNotEnrollable:
+		return fiber.StatusForbidden, "Course is not available for enrollment"
+	case enrollmentPorts.ErrRequiresApproval:
+		return fiber.StatusForbidden, "Course requires approval for enrollment"
+
+	// Enrollment permission errors
+	case enrollmentPorts.ErrNotEnrolled:
+		return fiber.StatusForbidden, "User is not enrolled in this course"
+	case enrollmentPorts.ErrNotCourseInstructor:
+		return fiber.StatusForbidden, "User is not the instructor of this course"
+	case enrollmentPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to enrollment"
+	case enrollmentPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+
+	// Enrollment validation errors
+	case enrollmentPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case enrollmentPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case enrollmentPorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case enrollmentPorts.ErrInvalidRequestID:
+		return fiber.StatusBadRequest, "Invalid enrollment request ID"
+	case enrollmentPorts.ErrInvalidProgress:
+		return fiber.StatusBadRequest, "Invalid progress percentage (must be 0-100)"
+	case enrollmentPorts.ErrInvalidExpirationDate:
+		return fiber.StatusBadRequest, "Invalid expiration date"
+	case enrollmentPorts.ErrExpirationDateInPast:
+		return fiber.StatusBadRequest, "Expiration date must be in the future"
+	case enrollmentPorts.ErrMissingRejectionReason:
+		return fiber.StatusBadRequest, "Rejection reason is required"
+	case enrollmentPorts.ErrInvalidRejectionReason:
+		return fiber.StatusBadRequest, "Rejection reason must be at least 5 characters"
+
+	// Enrollment statistics errors
+	case enrollmentPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve enrollment statistics"
+	case enrollmentPorts.ErrNoEnrollments:
+		return fiber.StatusNotFound, "No enrollments found"
 
 	// Default
 	default:
