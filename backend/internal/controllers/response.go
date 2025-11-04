@@ -2,6 +2,7 @@ package controllers
 
 import (
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
+	certificatePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/ports"
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
 	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
@@ -586,6 +587,142 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusForbidden, "Course is not published"
 	case progressPorts.ErrCourseHasNoContent:
 		return fiber.StatusBadRequest, "Course has no content"
+
+	// Certificate errors
+	case certificatePorts.ErrCertificateNotFound:
+		return fiber.StatusNotFound, "Certificate not found"
+	case certificatePorts.ErrCertificateAlreadyExists:
+		return fiber.StatusConflict, "Certificate already exists for this user and course"
+	case certificatePorts.ErrCertificateCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create certificate"
+	case certificatePorts.ErrCertificateUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update certificate"
+	case certificatePorts.ErrCertificateDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete certificate"
+	case certificatePorts.ErrInvalidCertificateData:
+		return fiber.StatusBadRequest, "Invalid certificate data"
+	case certificatePorts.ErrInvalidCertificateStatus:
+		return fiber.StatusBadRequest, "Invalid certificate status"
+	case certificatePorts.ErrCertificateAlreadyRevoked:
+		return fiber.StatusBadRequest, "Certificate is already revoked"
+	case certificatePorts.ErrCertificateExpired:
+		return fiber.StatusBadRequest, "Certificate has expired"
+	case certificatePorts.ErrCannotRevokeCertificate:
+		return fiber.StatusBadRequest, "Cannot revoke certificate"
+
+	// Certificate verification errors
+	case certificatePorts.ErrVerificationFailed:
+		return fiber.StatusBadRequest, "Certificate verification failed"
+	case certificatePorts.ErrInvalidVerificationCode:
+		return fiber.StatusBadRequest, "Invalid verification code"
+	case certificatePorts.ErrInvalidCertificateNumber:
+		return fiber.StatusBadRequest, "Invalid certificate number"
+	case certificatePorts.ErrCertificateNotValid:
+		return fiber.StatusBadRequest, "Certificate is not valid"
+
+	// Certificate template errors
+	case certificatePorts.ErrTemplateNotFound:
+		return fiber.StatusNotFound, "Certificate template not found"
+	case certificatePorts.ErrTemplateAlreadyExists:
+		return fiber.StatusConflict, "Certificate template already exists"
+	case certificatePorts.ErrTemplateCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create certificate template"
+	case certificatePorts.ErrTemplateUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update certificate template"
+	case certificatePorts.ErrTemplateDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete certificate template"
+	case certificatePorts.ErrInvalidTemplateData:
+		return fiber.StatusBadRequest, "Invalid certificate template data"
+	case certificatePorts.ErrTemplateNotActive:
+		return fiber.StatusBadRequest, "Certificate template is not active"
+	case certificatePorts.ErrCannotDeleteDefaultTemplate:
+		return fiber.StatusBadRequest, "Cannot delete default template"
+	case certificatePorts.ErrNoDefaultTemplate:
+		return fiber.StatusNotFound, "No default certificate template found"
+
+	// Certificate generation errors
+	case certificatePorts.ErrGenerationFailed:
+		return fiber.StatusInternalServerError, "Failed to generate certificate"
+	case certificatePorts.ErrPDFGenerationFailed:
+		return fiber.StatusInternalServerError, "Failed to generate PDF certificate"
+	case certificatePorts.ErrInvalidFormat:
+		return fiber.StatusBadRequest, "Invalid certificate format"
+	case certificatePorts.ErrTemplateLoadFailed:
+		return fiber.StatusInternalServerError, "Failed to load certificate template"
+	case certificatePorts.ErrTemplateRenderFailed:
+		return fiber.StatusInternalServerError, "Failed to render certificate template"
+
+	// Certificate business logic errors
+	case certificatePorts.ErrCourseNotCompleted:
+		return fiber.StatusBadRequest, "Course is not completed"
+	case certificatePorts.ErrEnrollmentNotCompleted:
+		return fiber.StatusBadRequest, "Enrollment is not completed"
+	case certificatePorts.ErrProgressNotCompleted:
+		return fiber.StatusBadRequest, "Progress is not completed"
+	case certificatePorts.ErrAlreadyCertified:
+		return fiber.StatusConflict, "User already has a certificate for this course"
+	case certificatePorts.ErrInsufficientGrade:
+		return fiber.StatusBadRequest, "Insufficient grade for certification"
+	case certificatePorts.ErrCertificationRequirementsNotMet:
+		return fiber.StatusBadRequest, "Certification requirements not met"
+
+	// Certificate permission errors
+	case certificatePorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to certificate"
+	case certificatePorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case certificatePorts.ErrNotCertificateOwner:
+		return fiber.StatusForbidden, "User is not the certificate owner"
+
+	// Certificate validation errors
+	case certificatePorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case certificatePorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case certificatePorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case certificatePorts.ErrInvalidProgressID:
+		return fiber.StatusBadRequest, "Invalid progress ID"
+	case certificatePorts.ErrInvalidTemplateID:
+		return fiber.StatusBadRequest, "Invalid template ID"
+	case certificatePorts.ErrInvalidGrade:
+		return fiber.StatusBadRequest, "Invalid grade (must be 0-100)"
+	case certificatePorts.ErrInvalidDateRange:
+		return fiber.StatusBadRequest, "Invalid date range"
+	case certificatePorts.ErrInvalidPageParameters:
+		return fiber.StatusBadRequest, "Invalid page parameters"
+	case certificatePorts.ErrMissingRevocationReason:
+		return fiber.StatusBadRequest, "Revocation reason is required"
+	case certificatePorts.ErrInvalidRevocationReason:
+		return fiber.StatusBadRequest, "Revocation reason must be at least 10 characters"
+
+	// Certificate statistics errors
+	case certificatePorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve certificate statistics"
+	case certificatePorts.ErrNoCertificates:
+		return fiber.StatusNotFound, "No certificates found"
+	case certificatePorts.ErrInsufficientData:
+		return fiber.StatusBadRequest, "Insufficient data for statistics"
+
+	// Certificate storage errors
+	case certificatePorts.ErrStorageFailed:
+		return fiber.StatusInternalServerError, "Certificate storage operation failed"
+	case certificatePorts.ErrFileNotFound:
+		return fiber.StatusNotFound, "Certificate file not found"
+	case certificatePorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload certificate file"
+	case certificatePorts.ErrFileDownloadFailed:
+		return fiber.StatusInternalServerError, "Failed to download certificate file"
+
+	// Certificate course/enrollment/progress errors
+	case certificatePorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case certificatePorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case certificatePorts.ErrProgressNotFound:
+		return fiber.StatusNotFound, "Progress not found"
+	case certificatePorts.ErrUserNotFound:
+		return fiber.StatusNotFound, "User not found"
 
 	// Default
 	default:
