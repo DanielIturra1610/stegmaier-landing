@@ -19,6 +19,8 @@ import (
 	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
 	quizadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/adapters"
 	quizservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/services"
+	assignmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/adapters"
+	assignmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
@@ -42,18 +44,19 @@ const (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app                *fiber.App
-	config             *config.Config
-	dbManager          *database.Manager
-	authController     *controllers.AuthController
-	userController     *controllers.UserManagementController
-	profileController  *controllers.ProfileController
-	courseController   *controllers.CourseController
-	categoryController *controllers.CategoryController
-	lessonController   *controllers.LessonController
-	quizController     *controllers.QuizController
-	tokenService       tokens.TokenService
-	authRepo           ports.AuthRepository
+	app                  *fiber.App
+	config               *config.Config
+	dbManager            *database.Manager
+	authController       *controllers.AuthController
+	userController       *controllers.UserManagementController
+	profileController    *controllers.ProfileController
+	courseController     *controllers.CourseController
+	categoryController   *controllers.CategoryController
+	lessonController     *controllers.LessonController
+	quizController       *controllers.QuizController
+	assignmentController *controllers.AssignmentController
+	tokenService         tokens.TokenService
+	authRepo             ports.AuthRepository
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -194,20 +197,44 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Quizzes module initialized")
 
+	// Initialize dependency injection for assignments module
+	log.Println("🔧 Initializing assignments module...")
+
+	// 1. Initialize assignment repository
+	assignmentRepo := assignmentadapters.NewPostgreSQLAssignmentRepository(tenantDB)
+
+	// 2. Initialize file storage for assignments
+	assignmentFileStorage, err := assignmentadapters.NewLocalFileStorage(
+		"./uploads/assignments",
+		cfg.Server.BaseURL+"/uploads/assignments",
+	)
+	if err != nil {
+		log.Fatalf("❌ Failed to initialize assignment file storage: %v", err)
+	}
+
+	// 3. Initialize assignment service
+	assignmentService := assignmentservices.NewAssignmentService(assignmentRepo, assignmentFileStorage)
+
+	// 4. Initialize assignment controller
+	assignmentController := controllers.NewAssignmentController(assignmentService)
+
+	log.Println("✅ Assignments module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
-		app:                app,
-		config:             cfg,
-		dbManager:          dbManager,
-		authController:     authController,
-		userController:     userController,
-		profileController:  profileController,
-		courseController:   courseController,
-		categoryController: categoryController,
-		lessonController:   lessonController,
-		quizController:     quizController,
-		tokenService:       tokenService,
-		authRepo:           authRepo,
+		app:                  app,
+		config:               cfg,
+		dbManager:            dbManager,
+		authController:       authController,
+		userController:       userController,
+		profileController:    profileController,
+		courseController:     courseController,
+		categoryController:   categoryController,
+		lessonController:     lessonController,
+		quizController:       quizController,
+		assignmentController: assignmentController,
+		tokenService:         tokenService,
+		authRepo:             authRepo,
 	}
 
 	// Setup de middlewares
@@ -463,6 +490,108 @@ func (s *Server) setupRoutes() {
 	// Lesson-specific quiz routes (nested under lessons)
 	// Public: Get quiz for a lesson
 	lessons.Get("/:lessonId/quiz", s.quizController.GetQuizByLesson)
+
+	// ============================================================
+	// Assignment Routes
+	// ============================================================
+	assignments := v1.Group("/assignments")
+
+	// Public assignment routes (read-only, no auth required)
+	{
+		assignments.Get("/:id", s.assignmentController.GetAssignment)
+	}
+
+	// Protected assignment routes (authentication required)
+	assignmentsProtected := assignments.Group("")
+	assignmentsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Student actions - View assignments
+		assignmentsProtected.Get("/my", s.assignmentController.GetMyAssignments)
+
+		// Student actions - Submissions
+		assignmentsProtected.Get("/:assignmentId/my-submission", s.assignmentController.GetMySubmission)
+		assignmentsProtected.Get("/my-submissions", s.assignmentController.GetMySubmissions)
+		assignmentsProtected.Post("/:assignmentId/submissions", s.assignmentController.CreateSubmission)
+		assignmentsProtected.Put("/submissions/:submissionId", s.assignmentController.UpdateSubmission)
+		assignmentsProtected.Post("/submissions/:submissionId/submit", s.assignmentController.SubmitAssignment)
+
+		// Student actions - File uploads for submissions
+		assignmentsProtected.Post("/submissions/:submissionId/files", s.assignmentController.UploadSubmissionFile)
+		assignmentsProtected.Delete("/submissions/:submissionId/files/:fileId", s.assignmentController.DeleteSubmissionFile)
+
+		// Student actions - Comments
+		assignmentsProtected.Post("/submissions/:submissionId/comments", s.assignmentController.AddComment)
+		assignmentsProtected.Get("/submissions/:submissionId/comments", s.assignmentController.GetSubmissionComments)
+		assignmentsProtected.Put("/comments/:commentId", s.assignmentController.UpdateComment)
+		assignmentsProtected.Delete("/comments/:commentId", s.assignmentController.DeleteComment)
+
+		// Student actions - Peer reviews
+		assignmentsProtected.Get("/peer-reviews/my", s.assignmentController.GetMyPeerReviews)
+		assignmentsProtected.Post("/peer-reviews/:reviewId/submit", s.assignmentController.SubmitPeerReview)
+		assignmentsProtected.Get("/submissions/:submissionId/peer-reviews", s.assignmentController.GetSubmissionPeerReviews)
+
+		// Instructor/Admin actions - Assignment CRUD
+		assignmentsProtected.Post("/", s.assignmentController.CreateAssignment)
+		assignmentsProtected.Put("/:id", s.assignmentController.UpdateAssignment)
+		assignmentsProtected.Delete("/:id", s.assignmentController.DeleteAssignment)
+		assignmentsProtected.Post("/:id/publish", s.assignmentController.PublishAssignment)
+		assignmentsProtected.Post("/:id/unpublish", s.assignmentController.UnpublishAssignment)
+
+		// Instructor/Admin actions - File uploads for assignments
+		assignmentsProtected.Post("/:assignmentId/files", s.assignmentController.UploadAssignmentFile)
+		assignmentsProtected.Delete("/:assignmentId/files/:fileId", s.assignmentController.DeleteAssignmentFile)
+
+		// Instructor/Admin actions - Grading
+		assignmentsProtected.Get("/submissions/:submissionId", s.assignmentController.GetSubmission)
+		assignmentsProtected.Get("/:assignmentId/submissions", s.assignmentController.GetAssignmentSubmissions)
+		assignmentsProtected.Get("/students/:studentId/submissions", s.assignmentController.GetStudentSubmissions)
+		assignmentsProtected.Post("/submissions/:submissionId/grade", s.assignmentController.GradeSubmission)
+		assignmentsProtected.Post("/bulk-grade", s.assignmentController.BulkGrade)
+		assignmentsProtected.Post("/submissions/:submissionId/return", s.assignmentController.ReturnSubmission)
+		assignmentsProtected.Delete("/submissions/:submissionId", s.assignmentController.DeleteSubmission)
+
+		// Instructor/Admin actions - Peer review management
+		assignmentsProtected.Post("/peer-reviews", s.assignmentController.AssignPeerReview)
+		assignmentsProtected.Delete("/peer-reviews/:reviewId", s.assignmentController.DeletePeerReview)
+
+		// Instructor/Admin actions - Statistics
+		assignmentsProtected.Get("/:assignmentId/statistics", s.assignmentController.GetAssignmentStatistics)
+		assignmentsProtected.Get("/students/:studentId/progress", s.assignmentController.GetStudentProgress)
+		assignmentsProtected.Get("/courses/:courseId/statistics", s.assignmentController.GetCourseStatistics)
+
+		// File operations
+		assignmentsProtected.Get("/files/:fileId", s.assignmentController.GetFile)
+		assignmentsProtected.Get("/files/:fileId/download", s.assignmentController.DownloadFile)
+	}
+
+	// ============================================================
+	// Rubric Routes (separate from assignments for reusability)
+	// ============================================================
+	rubrics := v1.Group("/rubrics")
+
+	// Protected rubric routes (authentication required)
+	rubricsProtected := rubrics.Group("")
+	rubricsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Instructor/Admin actions - Rubric management
+		rubricsProtected.Post("/", s.assignmentController.CreateRubric)
+		rubricsProtected.Get("/:id", s.assignmentController.GetRubric)
+		rubricsProtected.Get("/", s.assignmentController.GetTenantRubrics)
+		rubricsProtected.Get("/templates", s.assignmentController.GetRubricTemplates)
+		rubricsProtected.Put("/:id", s.assignmentController.UpdateRubric)
+		rubricsProtected.Delete("/:id", s.assignmentController.DeleteRubric)
+
+		// Attach/detach rubrics to assignments
+		rubricsProtected.Post("/:rubricId/attach/:assignmentId", s.assignmentController.AttachRubricToAssignment)
+		rubricsProtected.Delete("/:rubricId/detach/:assignmentId", s.assignmentController.DetachRubricFromAssignment)
+	}
+
+	// Course-specific assignment routes (nested under courses)
+	// Public: Get assignments for a course
+	courses.Get("/:courseId/assignments", s.assignmentController.GetCourseAssignments)
+
+	// Protected: Course assignment routes
+	coursesProtected.Post("/:courseId/assignments", s.assignmentController.CreateAssignment)
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)
