@@ -21,6 +21,8 @@ import (
 	quizservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/services"
 	assignmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/adapters"
 	assignmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/services"
+	notificationadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/adapters"
+	notificationservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
@@ -44,19 +46,20 @@ const (
 
 // Server representa el servidor Fiber con toda su configuración
 type Server struct {
-	app                  *fiber.App
-	config               *config.Config
-	dbManager            *database.Manager
-	authController       *controllers.AuthController
-	userController       *controllers.UserManagementController
-	profileController    *controllers.ProfileController
-	courseController     *controllers.CourseController
-	categoryController   *controllers.CategoryController
-	lessonController     *controllers.LessonController
-	quizController       *controllers.QuizController
-	assignmentController *controllers.AssignmentController
-	tokenService         tokens.TokenService
-	authRepo             ports.AuthRepository
+	app                    *fiber.App
+	config                 *config.Config
+	dbManager              *database.Manager
+	authController         *controllers.AuthController
+	userController         *controllers.UserManagementController
+	profileController      *controllers.ProfileController
+	courseController       *controllers.CourseController
+	categoryController     *controllers.CategoryController
+	lessonController       *controllers.LessonController
+	quizController         *controllers.QuizController
+	assignmentController   *controllers.AssignmentController
+	notificationController *controllers.NotificationController
+	tokenService           tokens.TokenService
+	authRepo               ports.AuthRepository
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -220,21 +223,36 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Assignments module initialized")
 
+	// Initialize dependency injection for notifications module
+	log.Println("🔧 Initializing notifications module...")
+
+	// 1. Initialize notification repository
+	notificationRepo := notificationadapters.NewPostgreSQLNotificationRepository(tenantDB)
+
+	// 2. Initialize notification service
+	notificationService := notificationservices.NewNotificationService(notificationRepo)
+
+	// 3. Initialize notification controller
+	notificationController := controllers.NewNotificationController(notificationService)
+
+	log.Println("✅ Notifications module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
-		app:                  app,
-		config:               cfg,
-		dbManager:            dbManager,
-		authController:       authController,
-		userController:       userController,
-		profileController:    profileController,
-		courseController:     courseController,
-		categoryController:   categoryController,
-		lessonController:     lessonController,
-		quizController:       quizController,
-		assignmentController: assignmentController,
-		tokenService:         tokenService,
-		authRepo:             authRepo,
+		app:                    app,
+		config:                 cfg,
+		dbManager:              dbManager,
+		authController:         authController,
+		userController:         userController,
+		profileController:      profileController,
+		courseController:       courseController,
+		categoryController:     categoryController,
+		lessonController:       lessonController,
+		quizController:         quizController,
+		assignmentController:   assignmentController,
+		notificationController: notificationController,
+		tokenService:           tokenService,
+		authRepo:               authRepo,
 	}
 
 	// Setup de middlewares
@@ -592,6 +610,52 @@ func (s *Server) setupRoutes() {
 
 	// Protected: Course assignment routes
 	coursesProtected.Post("/:courseId/assignments", s.assignmentController.CreateAssignment)
+
+	// ============================================================
+	// Notification Routes
+	// ============================================================
+	notifications := v1.Group("/notifications")
+
+	// All notification routes are protected (authentication required)
+	notificationsProtected := notifications.Group("")
+	notificationsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Basic CRUD operations for notifications
+		notificationsProtected.Post("/", s.notificationController.CreateNotification)
+		notificationsProtected.Get("/:id", s.notificationController.GetNotification)
+		notificationsProtected.Get("/", s.notificationController.GetUserNotifications)
+		notificationsProtected.Patch("/:id/status", s.notificationController.UpdateNotificationStatus)
+		notificationsProtected.Delete("/:id", s.notificationController.DeleteNotification)
+
+		// Convenience methods for status updates
+		notificationsProtected.Post("/:id/read", s.notificationController.MarkAsRead)
+		notificationsProtected.Post("/:id/unread", s.notificationController.MarkAsUnread)
+		notificationsProtected.Post("/:id/archive", s.notificationController.ArchiveNotification)
+
+		// Bulk operations
+		notificationsProtected.Post("/bulk", s.notificationController.CreateBulkNotifications)
+		notificationsProtected.Post("/mark-all-read", s.notificationController.MarkAllAsRead)
+		notificationsProtected.Delete("/read", s.notificationController.DeleteAllRead)
+
+		// Queries
+		notificationsProtected.Get("/unread/count", s.notificationController.GetUnreadCount)
+
+		// Specific notification type endpoints
+		notificationsProtected.Post("/course-completion", s.notificationController.SendCourseCompletionNotification)
+		notificationsProtected.Post("/progress", s.notificationController.SendProgressNotification)
+		notificationsProtected.Post("/enrollment", s.notificationController.SendEnrollmentNotification)
+		notificationsProtected.Post("/quiz-completion", s.notificationController.SendQuizCompletionNotification)
+		notificationsProtected.Post("/announcement", s.notificationController.SendAnnouncement)
+
+		// Notification preferences
+		notificationsProtected.Get("/preferences", s.notificationController.GetUserPreferences)
+		notificationsProtected.Put("/preferences", s.notificationController.UpdateUserPreferences)
+
+		// Push subscriptions
+		notificationsProtected.Post("/push-subscriptions", s.notificationController.CreatePushSubscription)
+		notificationsProtected.Get("/push-subscriptions", s.notificationController.GetUserPushSubscriptions)
+		notificationsProtected.Delete("/push-subscriptions/:id", s.notificationController.DeletePushSubscription)
+	}
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)

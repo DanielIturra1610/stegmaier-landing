@@ -7,6 +7,7 @@ import (
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
 	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
+	notificationPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	progressPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
 	quizPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/ports"
@@ -840,6 +841,32 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusNotFound, "Record not found"
 	case assignmentPorts.ErrDuplicateRecord:
 		return fiber.StatusConflict, "Duplicate record"
+
+	// Notification errors
+	case notificationPorts.ErrNotificationNotFound:
+		return fiber.StatusNotFound, "Notification not found"
+	case notificationPorts.ErrUnauthorizedAccess:
+		return fiber.StatusForbidden, "Unauthorized access to notification"
+	case notificationPorts.ErrInvalidTitle:
+		return fiber.StatusBadRequest, "Invalid notification title"
+	case notificationPorts.ErrInvalidMessage:
+		return fiber.StatusBadRequest, "Invalid notification message"
+	case notificationPorts.ErrInvalidStatus:
+		return fiber.StatusBadRequest, "Invalid notification status"
+	case notificationPorts.ErrNoRecipients:
+		return fiber.StatusBadRequest, "No recipients specified"
+	case notificationPorts.ErrPreferencesNotFound:
+		return fiber.StatusNotFound, "Notification preferences not found"
+	case notificationPorts.ErrSubscriptionNotFound:
+		return fiber.StatusNotFound, "Push subscription not found"
+	case notificationPorts.ErrSubscriptionAlreadyExists:
+		return fiber.StatusConflict, "Push subscription already exists"
+	case notificationPorts.ErrInvalidDigestFrequency:
+		return fiber.StatusBadRequest, "Invalid digest frequency"
+	case notificationPorts.ErrInvalidQuietHours:
+		return fiber.StatusBadRequest, "Invalid quiet hours format"
+	case notificationPorts.ErrNotificationExpired:
+		return fiber.StatusGone, "Notification has expired"
 
 	// Default
 	default:
