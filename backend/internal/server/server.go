@@ -23,6 +23,8 @@ import (
 	assignmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/services"
 	notificationadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/adapters"
 	notificationservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/services"
+	mediaadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/adapters"
+	mediaservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
@@ -58,6 +60,7 @@ type Server struct {
 	quizController         *controllers.QuizController
 	assignmentController   *controllers.AssignmentController
 	notificationController *controllers.NotificationController
+	mediaController        *controllers.MediaController
 	tokenService           tokens.TokenService
 	authRepo               ports.AuthRepository
 }
@@ -237,6 +240,34 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Notifications module initialized")
 
+	// Initialize dependency injection for media module
+	log.Println("🔧 Initializing media module...")
+
+	// 1. Initialize MinIO storage service
+	storageService, err := mediaadapters.NewMinioStorageService(
+		cfg.Storage.Endpoint,
+		cfg.Storage.AccessKey,
+		cfg.Storage.SecretKey,
+		cfg.Storage.Region,
+		cfg.Storage.BucketPrefix,
+		cfg.Storage.UseSSL,
+	)
+	if err != nil {
+		log.Printf("⚠️  Warning: Failed to initialize storage service: %v", err)
+		// Continue without storage - will fail on upload attempts
+	}
+
+	// 2. Initialize media repository
+	mediaRepo := mediaadapters.NewPostgreSQLMediaRepository(tenantDB)
+
+	// 3. Initialize media service
+	mediaService := mediaservices.NewMediaService(mediaRepo, storageService)
+
+	// 4. Initialize media controller
+	mediaController := controllers.NewMediaController(mediaService)
+
+	log.Println("✅ Media module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
 		app:                    app,
@@ -251,6 +282,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		quizController:         quizController,
 		assignmentController:   assignmentController,
 		notificationController: notificationController,
+		mediaController:        mediaController,
 		tokenService:           tokenService,
 		authRepo:               authRepo,
 	}
@@ -655,6 +687,39 @@ func (s *Server) setupRoutes() {
 		notificationsProtected.Post("/push-subscriptions", s.notificationController.CreatePushSubscription)
 		notificationsProtected.Get("/push-subscriptions", s.notificationController.GetUserPushSubscriptions)
 		notificationsProtected.Delete("/push-subscriptions/:id", s.notificationController.DeletePushSubscription)
+	}
+
+	// ============================================================
+	// Media Routes
+	// ============================================================
+	media := v1.Group("/media")
+
+	// All media routes are protected (authentication required)
+	mediaProtected := media.Group("")
+	mediaProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Upload operations
+		mediaProtected.Post("/upload", s.mediaController.UploadMedia)
+		mediaProtected.Post("/upload/multiple", s.mediaController.UploadMultiple)
+
+		// CRUD operations
+		mediaProtected.Get("/:id", s.mediaController.GetMedia)
+		mediaProtected.Get("/my", s.mediaController.GetMyMedia)
+		mediaProtected.Get("/user/:userId", s.mediaController.GetUserMedia)
+		mediaProtected.Get("/", s.mediaController.ListMedia)
+		mediaProtected.Patch("/:id", s.mediaController.UpdateMedia)
+		mediaProtected.Delete("/:id", s.mediaController.DeleteMedia)
+
+		// Download operations
+		mediaProtected.Get("/:id/download-url", s.mediaController.GetDownloadURL)
+		mediaProtected.Get("/:id/download", s.mediaController.DownloadMedia)
+
+		// Query operations
+		mediaProtected.Get("/search", s.mediaController.SearchMedia)
+		mediaProtected.Get("/context/:context/:contextId", s.mediaController.GetMediaByContext)
+
+		// Statistics
+		mediaProtected.Get("/stats", s.mediaController.GetStorageStats)
 	}
 
 	// ============================================================

@@ -7,6 +7,7 @@ import (
 	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
 	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
 	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/core/media/domain"
 	notificationPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/ports"
 	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
 	progressPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
@@ -867,6 +868,26 @@ func MapDomainError(err error) (int, string) {
 		return fiber.StatusBadRequest, "Invalid quiet hours format"
 	case notificationPorts.ErrNotificationExpired:
 		return fiber.StatusGone, "Notification has expired"
+
+	// Media errors
+	case domain.ErrMediaNotFound:
+		return fiber.StatusNotFound, "Media not found"
+	case domain.ErrUnauthorizedAccess:
+		return fiber.StatusForbidden, "Unauthorized access to media"
+	case domain.ErrInvalidFileName:
+		return fiber.StatusBadRequest, "Invalid file name"
+	case domain.ErrInvalidFileSize:
+		return fiber.StatusBadRequest, "Invalid file size"
+	case domain.ErrFileTooLarge:
+		return fiber.StatusRequestEntityTooLarge, "File size exceeds maximum allowed"
+	case domain.ErrInvalidMimeType:
+		return fiber.StatusBadRequest, "Invalid or unsupported mime type"
+	case domain.ErrUploadFailed:
+		return fiber.StatusInternalServerError, "File upload failed"
+	case domain.ErrStorageNotConfigured:
+		return fiber.StatusServiceUnavailable, "Storage service not configured"
+	case domain.ErrInsufficientStorage:
+		return fiber.StatusInsufficientStorage, "Insufficient storage space"
 
 	// Default
 	default:
