@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Award, Activity, Clock, WifiOff } from 'lucide-react';
+import { Award, Activity, Clock, WifiOff, TrendingUp, BookOpen, GraduationCap, Target } from 'lucide-react';
 import UserProgressSummary from '../../components/progress/UserProgressSummary';
 import { useUserProgressSummary, useOfflineSync } from '../../hooks/useProgress';
 import { useUserExperience } from '../../hooks/useUserExperience';
 import ExperienceBar from '../../components/experience/ExperienceBar';
 import { StreakTracker } from '../../components/streak';
 import analyticsService from '../../services/analyticsService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 
 interface UserStats {
   period: {
@@ -299,19 +304,13 @@ const MyProgressPage: React.FC = () => {
     <div className="space-y-6 pb-10">
         {/* Offline alert */}
         {hasPendingUpdates && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center space-x-2">
-              <WifiOff className="w-5 h-5 text-yellow-600" />
-              <div>
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Tienes datos sin sincronizar
-                </h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Algunos de tus progresos se guardaron offline. Haz clic en "Sincronizar datos" para subirlos.
-                </p>
-              </div>
-            </div>
-          </div>
+          <Alert variant="default" className="border-yellow-200 bg-yellow-50">
+            <WifiOff className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">Tienes datos sin sincronizar</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              Algunos de tus progresos se guardaron offline. Haz clic en "Sincronizar datos" para subirlos.
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Welcome Section */}
@@ -361,101 +360,199 @@ const MyProgressPage: React.FC = () => {
           />
         </div>
 
-        {/* Progress Overview */}
+        {/* Progress Overview - Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Courses Enrolled */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cursos Inscritos</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.learning?.coursesEnrolled || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Total de cursos disponibles
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Courses In Progress */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">En Progreso</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{stats?.learning?.coursesInProgress || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cursos activos ahora
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Courses Completed */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completados</CardTitle>
+              <Award className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats?.learning?.coursesCompleted || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cursos finalizados exitosamente
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total Study Time */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Tiempo Total</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">
+                {formatTime(stats?.learning?.totalWatchTimeSeconds || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Horas de estudio acumuladas
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Detailed Progress Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Completion Rate */}
-          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
-              <Award className="w-5 h-5 text-green-600" />
-              <h3 className="text-lg font-semibold">Tasa de Finalización</h3>
-            </div>
-            <CircularProgress
-              percentage={(() => {
-                console.log('🔍 [MyProgressPage] stats:', stats);
-                console.log('🔍 [MyProgressPage] completionRate:', stats?.learning?.completionRate);
-                return stats?.learning?.completionRate ?? 0;
-              })()}
-              color="#10B981"
-            />
-            <div className="mt-4">
-              <p className="text-sm text-gray-600">
-                {stats?.learning?.coursesCompleted || 0} de {stats?.learning?.coursesEnrolled || 0} cursos completados
-              </p>
-            </div>
-          </div>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-green-600" />
+                Tasa de Finalización
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <CircularProgress
+                percentage={(() => {
+                  console.log('🔍 [MyProgressPage] stats:', stats);
+                  console.log('🔍 [MyProgressPage] completionRate:', stats?.learning?.completionRate);
+                  return stats?.learning?.completionRate ?? 0;
+                })()}
+                color="#10B981"
+              />
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">
+                  {stats?.learning?.coursesCompleted || 0} de {stats?.learning?.coursesEnrolled || 0} cursos completados
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Activity Score */}
-          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
-              <Activity className="w-5 h-5 text-amber-500" />
-              <h3 className="text-lg font-semibold">Puntuación de Actividad</h3>
-            </div>
-            <CircularProgress
-              percentage={stats?.engagement?.activityScore || 0}
-              color="#F59E0B"
-            />
-            <div className="mt-4">
-              <p className={`text-sm font-medium ${getActivityScoreColor(stats?.engagement?.activityScore || 0)}`}>
-                {(stats?.engagement?.activityScore || 0) >= 80 ? 'Muy Activo' :
-                 (stats?.engagement?.activityScore || 0) >= 60 ? 'Activo' :
-                 (stats?.engagement?.activityScore || 0) >= 40 ? 'Moderado' : 'Poco Activo'}
-              </p>
-            </div>
-          </div>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-amber-500" />
+                Puntuación de Actividad
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <CircularProgress
+                percentage={stats?.engagement?.activityScore || 0}
+                color="#F59E0B"
+              />
+              <div className="mt-4">
+                <Badge
+                  variant={(stats?.engagement?.activityScore || 0) >= 60 ? "default" : "secondary"}
+                  className={`${getActivityScoreColor(stats?.engagement?.activityScore || 0)}`}
+                >
+                  {(stats?.engagement?.activityScore || 0) >= 80 ? 'Muy Activo' :
+                   (stats?.engagement?.activityScore || 0) >= 60 ? 'Activo' :
+                   (stats?.engagement?.activityScore || 0) >= 40 ? 'Moderado' : 'Poco Activo'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Watch Time */}
-          <div className="bg-white/95 backdrop-blur p-6 rounded-xl shadow-lg ring-1 ring-black/5 text-center transform transition duration-200 hover:-translate-y-0.5 hover:shadow-xl">
-            <div className="flex items-center justify-center gap-2 mb-4 text-gray-900">
-              <Clock className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold">Tiempo de Estudio</h3>
-            </div>
-            <div className="text-4xl font-bold text-blue-600 mb-2">
-              {formatTime(stats?.learning?.totalWatchTimeSeconds || 0)}
-            </div>
-            <p className="text-sm text-gray-600">
-              Tiempo total invertido
-            </p>
-            <div className="mt-2 text-xs text-gray-500">
-              Promedio por sesión: {formatTime(stats?.learning?.averageSessionDuration || 0)}
-            </div>
-          </div>
+          {/* Watch Time Details */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-blue-600" />
+                Tiempo de Estudio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">
+                {formatTime(stats?.learning?.totalWatchTimeSeconds || 0)}
+              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Tiempo total invertido
+              </p>
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground">
+                  Promedio por sesión: <span className="font-medium text-foreground">{formatTime(stats?.learning?.averageSessionDuration || 0)}</span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Original Progress Summary Component */}
         <UserProgressSummary />
 
-        {/* Footer Info */}
-        <div className="mt-12 bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            Consejos para mejorar tu progreso
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Consistencia</h4>
-              <p>
-                Dedica al menos 15-30 minutos diarios al estudio para mantener el momentum.
-              </p>
+        {/* Tips Section */}
+        <Card className="mt-12">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" />
+              Consejos para mejorar tu progreso
+            </CardTitle>
+            <CardDescription>
+              Aprende de manera más efectiva con estas recomendaciones
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <div className="h-2 w-2 bg-primary rounded-full" />
+                  Consistencia
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Dedica al menos 15-30 minutos diarios al estudio para mantener el momentum.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <div className="h-2 w-2 bg-primary rounded-full" />
+                  Práctica
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Aplica lo aprendido en proyectos reales para reforzar los conceptos.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <div className="h-2 w-2 bg-primary rounded-full" />
+                  Notas
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Toma notas durante los videos para mejorar la retención del conocimiento.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <div className="h-2 w-2 bg-primary rounded-full" />
+                  Certificados
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Completa los cursos para obtener certificados que validen tu aprendizaje.
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Práctica</h4>
-              <p>
-                Aplica lo aprendido en proyectos reales para reforzar los conceptos.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Notas</h4>
-              <p>
-                Toma notas durante los videos para mejorar la retención del conocimiento.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Certificados</h4>
-              <p>
-                Completa los cursos para obtener certificados que validen tu aprendizaje.
-              </p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
     </div>
   );
 };

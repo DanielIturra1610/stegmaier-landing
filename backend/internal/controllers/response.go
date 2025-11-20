@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"log"
+
 	assignmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/ports"
 	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	certificatePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/ports"
@@ -897,6 +899,8 @@ func MapDomainError(err error) (int, string) {
 
 // HandleError processes an error and sends appropriate response
 func HandleError(c *fiber.Ctx, err error) error {
+	// Temporarily log the actual error for debugging
+	log.Printf("❌ HandleError called with error: %v\n", err)
 	statusCode, message := MapDomainError(err)
 	return ErrorResponse(c, statusCode, message)
 }

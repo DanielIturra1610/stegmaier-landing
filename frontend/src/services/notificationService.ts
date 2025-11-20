@@ -98,7 +98,7 @@ class NotificationService {
   async getUnreadCount(): Promise<number> {
     try {
       console.log('🔍 [notificationService] Fetching unread count');
-      const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread-count`), { headers: getAuthHeaders() });
+      const response = await axios.get(buildApiUrl(`${this.baseUrl}/unread/count`), { headers: getAuthHeaders() });
       const count = response.data?.unread_count || 0;
       console.log('✅ [notificationService] Unread count:', count);
       return count;

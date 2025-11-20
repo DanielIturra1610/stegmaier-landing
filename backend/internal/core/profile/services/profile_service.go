@@ -10,6 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// Helper function to safely get string value from *string
+func stringPtrValue(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}
+
 // ProfileServiceImpl implements the ProfileService interface
 type ProfileServiceImpl struct {
 	profileRepo  ports.ProfileRepository
@@ -92,8 +100,8 @@ func (s *ProfileServiceImpl) ChangePassword(ctx context.Context, userID, tenantI
 		return ports.NewProfileError("ChangePassword", ports.ErrProfileNotFound, "user not found")
 	}
 
-	// Verify tenant isolation
-	if user.TenantID != tenantID.String() {
+	// Verify tenant isolation (skip check if user has no tenant yet)
+	if user.TenantID != nil && stringPtrValue(user.TenantID) != tenantID.String() {
 		return ports.NewProfileError("ChangePassword", ports.ErrUnauthorized, "tenant mismatch")
 	}
 

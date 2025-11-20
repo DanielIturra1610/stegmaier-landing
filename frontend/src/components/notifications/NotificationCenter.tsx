@@ -4,9 +4,22 @@
  * Siguiendo principios del EncoderGroup para desarrollo responsivo y escalable
  */
 import React, { useState, useEffect } from 'react';
-import { Bell, Filter, Check, RefreshCw, X } from 'lucide-react';
+import { Bell, Filter, Check, RefreshCw, X, Settings } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { NotificationList } from './NotificationList';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -55,7 +68,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
   const handleLoadMore = () => {
     if (hasMore && !loading) {
-      const nextPage = Math.floor(notifications.length / 20) + 1;
+      const nextPage = Math.floor((notifications?.length || 0) / 20) + 1;
       loadNotifications(nextPage, filterStatus === 'all' ? undefined : filterStatus);
     }
   };
@@ -76,152 +89,126 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     loadNotifications(1, filterStatus === 'all' ? undefined : filterStatus);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-2xl max-h-[85vh] bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 overflow-hidden">
-          
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Centro de Notificaciones
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {unreadCount > 0 && `${unreadCount} notificaciones no leídas`}
-              </p>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0">
+        <DialogHeader className="p-6 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bell className="w-6 h-6 text-primary" />
+              <div>
+                <DialogTitle className="text-xl">Centro de Notificaciones</DialogTitle>
+                <DialogDescription>
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="mt-1">
+                      {unreadCount} no leídas
+                    </Badge>
+                  )}
+                </DialogDescription>
+              </div>
             </div>
-          </div>
-            
-          <div className="flex items-center space-x-2">
-            <button
+
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleRefresh}
               disabled={loading}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
               title="Actualizar"
             >
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              title="Cerrar"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
-        </div>
+        </DialogHeader>
 
-          {/* Tabs */}
-      <div className="flex bg-gray-50 dark:bg-gray-900 p-1">
-        <button
-          onClick={() => setActiveTab('notifications')}
-          className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
-            activeTab === 'notifications'
-              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-          }`}
-        >
-          Notificaciones
-        </button>
-        <button
-          onClick={() => setActiveTab('preferences')}
-          className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
-            activeTab === 'preferences'
-              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-          }`}
-        >
-          Preferencias
-        </button>
-      </div>
+        <Separator />
 
-          {activeTab === 'notifications' && (
-        <div>
-          {/* Filtros y controles */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={(e) => handleFilterChange(e.target.value as FilterStatus)}
-                className="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8"
-              >
-                <option value="all">Todas</option>
-                <option value="unread">No leídas</option>
-                <option value="read">Leídas</option>
-                <option value="archived">Archivadas</option>
-              </select>
-              <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-400" />
+        <Tabs defaultValue="notifications" className="flex-1 overflow-hidden" onValueChange={(value) => setActiveTab(value as 'notifications' | 'preferences')}>
+          <TabsList className="w-full grid grid-cols-2 rounded-none border-b">
+            <TabsTrigger value="notifications" className="rounded-none">
+              <Bell className="w-4 h-4 mr-2" />
+              Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="rounded-none">
+              <Settings className="w-4 h-4 mr-2" />
+              Preferencias
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="notifications" className="mt-0 flex flex-col h-[calc(85vh-12rem)] overflow-hidden">
+            {/* Filtros y controles */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <Select value={filterStatus} onValueChange={(value) => handleFilterChange(value as FilterStatus)}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filtrar notificaciones" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="unread">No leídas</SelectItem>
+                  <SelectItem value="read">Leídas</SelectItem>
+                  <SelectItem value="archived">Archivadas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMarkAllAsRead}
+                  className="text-primary hover:text-primary/90"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Marcar todas como leídas
+                </Button>
+              )}
             </div>
 
-                {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
-              >
-                <Check className="w-4 h-4" />
-                <span>Marcar todas como leídas</span>
-              </button>
-            )}
-          </div>
+            {/* Lista de notificaciones */}
+            <div className="flex-1 overflow-y-auto">
+              {error && (
+                <Alert variant="destructive" className="m-4">
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>{error}</span>
+                    <Button variant="ghost" size="icon" onClick={clearError}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
 
-          {/* Lista de notificaciones */}
-          <div className="flex-1 overflow-hidden">
-            {error && (
-              <div className="p-4 m-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                  <button
-                    onClick={clearError}
-                    className="text-red-400 hover:text-red-600 dark:hover:text-red-300"
-                  >
-                    ×
-                  </button>
-                </div>
+              <NotificationList
+                notifications={notifications}
+                loading={loading}
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+              />
+            </div>
+
+            {/* Footer */}
+            <Separator />
+            <div className="flex items-center justify-between p-4 bg-muted/50">
+              <p className="text-xs text-muted-foreground">
+                {notifications?.length || 0} notificaciones mostradas
+              </p>
+              <Button variant="outline" size="sm" onClick={onClose}>
+                Cerrar
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preferences" className="mt-0 p-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Configuración de Notificaciones</h3>
+                <p className="text-sm text-muted-foreground">
+                  Las preferencias de notificación se configurarán próximamente.
+                </p>
               </div>
-            )}
-
-            <NotificationList
-              notifications={notifications}
-              loading={loading}
-              hasMore={hasMore}
-              onLoadMore={handleLoadMore}
-            />
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'preferences' && (
-        <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Configuración de Notificaciones
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Las preferencias de notificación se configurarán próximamente.
-          </p>
-        </div>
-      )}
-
-        {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {notifications.length} notificaciones mostradas
-          </p>
-          
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 };
 

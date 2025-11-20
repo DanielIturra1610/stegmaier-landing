@@ -128,8 +128,8 @@ const CertificateDownload: React.FC<CertificateDownloadProps> = ({
 
       try {
         // Intentar obtener certificados del usuario
-        const certificates = await certificateService.getUserCertificates();
-        const existingCert = certificates.find(c => c.enrollmentId === enrollmentId);
+        const response = await certificateService.getMyCertificates();
+        const existingCert = response.certificates.find(c => c.enrollmentId === enrollmentId);
         
         if (existingCert) {
           setCertificate(existingCert);

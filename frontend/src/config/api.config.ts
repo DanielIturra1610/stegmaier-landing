@@ -25,7 +25,7 @@ export const API_CONFIG = {
   BASE_URL: (() => {
     const envUrl = (import.meta as any).env.VITE_API_BASE_URL;
     const isProductionEnv = isProduction();
-    
+
     // En producción, usar variable de entorno o construir automáticamente
     if (isProductionEnv) {
       // Si hay URL de entorno, usarla
@@ -34,7 +34,7 @@ export const API_CONFIG = {
         logger.info('[API Config] Using environment API URL', secureUrl);
         return secureUrl;
       }
-      
+
       // Construir URL basada en el hostname actual
       if (typeof window !== 'undefined') {
         const protocol = window.location.protocol;
@@ -43,13 +43,14 @@ export const API_CONFIG = {
         logger.info('[API Config] Constructed API URL from hostname', constructedUrl);
         return constructedUrl;
       }
-      
+
       // Fallback para SSR
       return '/api/v1';
     }
-    
-    // En desarrollo, usar variable de entorno o proxy local
-    return envUrl || 'http://localhost:8000/api/v1';
+
+    // En desarrollo, usar URL relativa para aprovechar el proxy de Vite
+    // El proxy en vite.config.ts redirige /api/* a http://localhost:8000
+    return envUrl || '/api/v1';
   })(),
   
   // Timeout para requests
@@ -68,7 +69,7 @@ export const API_ENDPOINTS = {
   USERS: '/users',
   // Courses
   COURSES: '/courses',
-  COURSES_AVAILABLE: '/courses/available',
+  COURSES_AVAILABLE: '/courses', // Same as COURSES - backend returns all available courses
   COURSES_STUDENT: '/courses/student',
   // Lessons
   LESSONS: '/lessons',
@@ -89,10 +90,14 @@ export const API_ENDPOINTS = {
   
   // Admin
   ADMIN: '/admin',
-  
+
+  // SuperAdmin & Tenants
+  SUPERADMIN: '/superadmin',
+  TENANTS: '/superadmin/tenants',
+
   // Notifications
   NOTIFICATIONS: '/notifications',
-  
+
   // Push subscriptions
   PUSH_SUBSCRIPTIONS: '/push-subscriptions'
 } as const;
@@ -121,30 +126,41 @@ export function buildApiUrl(endpoint: string): string {
 
 /**
  * Obtiene headers de autenticación con validación de token
+ * Incluye X-Tenant-ID si está disponible para multi-tenancy
  */
 export function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem('auth_token');
+  const tenantId = localStorage.getItem('current_tenant_id');
 
-  // Validar que el token existe y no esté vacío
-  if (!token || token.trim() === '' || token === 'null' || token === 'undefined') {
+  const headers: Record<string, string> = {
+    ...API_CONFIG.DEFAULT_HEADERS
+  };
+
+  // Agregar token de autenticación si existe
+  if (token && token.trim() !== '' && token !== 'null' && token !== 'undefined') {
+    headers['Authorization'] = `Bearer ${token}`;
+
+    // Log para debugging en desarrollo
+    if (!isProduction()) {
+      logger.debug('[API Config] Using auth token:', token.substring(0, 20) + '...');
+    }
+  } else {
     logger.warn('[API Config] No valid auth token found, user may need to login again');
     // Limpiar token corrupto
     localStorage.removeItem('auth_token');
-
-    return {
-      ...API_CONFIG.DEFAULT_HEADERS
-    };
   }
 
-  // Log para debugging en desarrollo
-  if (!isProduction()) {
-    logger.debug('[API Config] Using auth token:', token.substring(0, 20) + '...');
+  // Agregar X-Tenant-ID si existe (para multi-tenancy)
+  if (tenantId && tenantId.trim() !== '' && tenantId !== 'null' && tenantId !== 'undefined') {
+    headers['X-Tenant-ID'] = tenantId;
+
+    // Log para debugging en desarrollo
+    if (!isProduction()) {
+      logger.debug('[API Config] Using tenant ID:', tenantId);
+    }
   }
 
-  return {
-    ...API_CONFIG.DEFAULT_HEADERS,
-    Authorization: `Bearer ${token}`
-  };
+  return headers;
 }
 
 /**

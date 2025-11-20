@@ -28,7 +28,7 @@ type AuthResponse struct {
 // UserDTO represents a user without sensitive information
 type UserDTO struct {
 	ID         string    `json:"id"`
-	TenantID   string    `json:"tenant_id"`
+	TenantID   *string   `json:"tenant_id,omitempty"` // Nullable - user might not have a tenant yet
 	Email      string    `json:"email"`
 	FullName   string    `json:"full_name"`
 	Role       string    `json:"role"`
@@ -45,7 +45,7 @@ func ToUserDTO(user *User) *UserDTO {
 
 	return &UserDTO{
 		ID:         user.ID,
-		TenantID:   user.TenantID,
+		TenantID:   user.TenantID, // Correctly pass *string pointer
 		Email:      user.Email,
 		FullName:   user.FullName,
 		Role:       user.Role,

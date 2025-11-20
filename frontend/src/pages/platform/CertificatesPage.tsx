@@ -31,8 +31,8 @@ const CertificatesPage: React.FC = () => {
       setError(null);
 
       // Cargar certificados ya emitidos
-      const userCertificates = await certificateService.getUserCertificates();
-      setCertificates(userCertificates);
+      const response = await certificateService.getMyCertificates();
+      setCertificates(response.certificates);
 
       // Cargar enrollments para verificar cursos elegibles
       const userEnrollments = await enrollmentService.getUserEnrolledCourses();

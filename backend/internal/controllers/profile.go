@@ -31,7 +31,7 @@ func (ctrl *ProfileController) GetMyProfile(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context (set by tenant middleware)
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -55,7 +55,7 @@ func (ctrl *ProfileController) UpdateMyProfile(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -84,7 +84,7 @@ func (ctrl *ProfileController) ChangePassword(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -113,7 +113,7 @@ func (ctrl *ProfileController) UploadAvatar(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -165,7 +165,7 @@ func (ctrl *ProfileController) DeleteAvatar(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -189,7 +189,7 @@ func (ctrl *ProfileController) UpdatePreferences(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -222,7 +222,7 @@ func (ctrl *ProfileController) GetProfile(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -246,7 +246,7 @@ func (ctrl *ProfileController) UpdateProfile(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}

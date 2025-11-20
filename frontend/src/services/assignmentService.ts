@@ -205,6 +205,7 @@ class AssignmentService {
     assignmentId: string,
     file: File,
     description?: string,
+    isTemplate: boolean = false,
     onProgress?: (progress: FileUploadProgress) => void
   ): Promise<AssignmentFile> {
     try {
@@ -213,8 +214,9 @@ class AssignmentService {
       if (description) {
         formData.append('description', description);
       }
+      formData.append('is_template', isTemplate.toString());
 
-      console.log('📎 [assignmentService] Uploading assignment file for:', assignmentId);
+      console.log('📎 [assignmentService] Uploading assignment file for:', assignmentId, 'isTemplate:', isTemplate);
       const response = await axios.post(
         buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files`),
         formData,
@@ -233,11 +235,11 @@ class AssignmentService {
         }
       );
 
-      console.log(' [assignmentService] Assignment file uploaded successfully');
+      console.log('✅ [assignmentService] Assignment file uploaded successfully');
       return response.data;
     } catch (error) {
       const apiError = error as APIError;
-      console.error(' [assignmentService] Error uploading assignment file:', apiError);
+      console.error('❌ [assignmentService] Error uploading assignment file:', apiError);
       throw new Error(apiError.response?.data?.detail || 'Error al subir archivo');
     }
   }
@@ -656,6 +658,69 @@ class AssignmentService {
     if (percentage >= 55) return 'C-';
     if (percentage >= 50) return 'D';
     return 'F';
+  }
+
+  /**
+   * Obtener la rúbrica de un assignment
+   */
+  async getAssignmentRubric(assignmentId: string): Promise<Rubric> {
+    console.log('🔍 [assignmentService] Getting rubric for assignment:', assignmentId);
+
+    try {
+      const response = await axios.get(`${API_CONFIG.ASSIGNMENTS_URL}/${assignmentId}/rubric`);
+      console.log('✅ [assignmentService] Rubric retrieved successfully');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [assignmentService] Error getting rubric:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener la rúbrica');
+    }
+  }
+
+  /**
+   * Crear una rúbrica para un assignment
+   */
+  async createAssignmentRubric(assignmentId: string, rubric: Partial<Rubric>): Promise<Rubric> {
+    console.log('🔍 [assignmentService] Creating rubric for assignment:', assignmentId);
+
+    try {
+      const response = await axios.post(`${API_CONFIG.ASSIGNMENTS_URL}/${assignmentId}/rubric`, rubric);
+      console.log('✅ [assignmentService] Rubric created successfully');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [assignmentService] Error creating rubric:', error);
+      throw new Error(error.response?.data?.message || 'Error al crear la rúbrica');
+    }
+  }
+
+  /**
+   * Actualizar una rúbrica de un assignment
+   */
+  async updateAssignmentRubric(assignmentId: string, rubricId: string, rubric: Partial<Rubric>): Promise<Rubric> {
+    console.log('🔍 [assignmentService] Updating rubric:', rubricId, 'for assignment:', assignmentId);
+
+    try {
+      const response = await axios.put(`${API_CONFIG.ASSIGNMENTS_URL}/${assignmentId}/rubric/${rubricId}`, rubric);
+      console.log('✅ [assignmentService] Rubric updated successfully');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [assignmentService] Error updating rubric:', error);
+      throw new Error(error.response?.data?.message || 'Error al actualizar la rúbrica');
+    }
+  }
+
+  /**
+   * Eliminar una rúbrica de un assignment
+   */
+  async deleteAssignmentRubric(assignmentId: string, rubricId: string): Promise<void> {
+    console.log('🔍 [assignmentService] Deleting rubric:', rubricId, 'from assignment:', assignmentId);
+
+    try {
+      await axios.delete(`${API_CONFIG.ASSIGNMENTS_URL}/${assignmentId}/rubric/${rubricId}`);
+      console.log('✅ [assignmentService] Rubric deleted successfully');
+    } catch (error: any) {
+      console.error('❌ [assignmentService] Error deleting rubric:', error);
+      throw new Error(error.response?.data?.message || 'Error al eliminar la rúbrica');
+    }
   }
 }
 

@@ -1,9 +1,13 @@
 /**
  * Componente para mostrar estados de error
+ * Refactored with shadcn/ui components
  */
 import React from 'react';
-import { AlertTriangle, RefreshCw, ArrowLeft, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, ArrowLeft, Home, XCircle, WifiOff, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ErrorStateProps {
   error: string;
@@ -28,17 +32,21 @@ const ErrorState: React.FC<ErrorStateProps> = ({
   const getErrorInfo = () => {
     if (error.toLowerCase().includes('404') || error.toLowerCase().includes('no encontrado')) {
       return {
-        title: title || 'Curso no encontrado',
-        description: description || 'El curso que buscas no existe o ha sido eliminado.',
-        icon: <AlertTriangle className="w-16 h-16 text-gray-400" />
+        title: title || 'Recurso no encontrado',
+        description: description || 'El recurso que buscas no existe o ha sido eliminado.',
+        icon: XCircle,
+        iconColor: 'text-muted-foreground',
+        variant: '404' as const
       };
     }
 
     if (error.toLowerCase().includes('403') || error.toLowerCase().includes('permiso')) {
       return {
         title: title || 'Acceso restringido',
-        description: description || 'No tienes permisos para ver este curso.',
-        icon: <AlertTriangle className="w-16 h-16 text-orange-400" />
+        description: description || 'No tienes permisos para acceder a este recurso.',
+        icon: ShieldAlert,
+        iconColor: 'text-orange-500',
+        variant: '403' as const
       };
     }
 
@@ -46,114 +54,135 @@ const ErrorState: React.FC<ErrorStateProps> = ({
       return {
         title: title || 'Error de conexión',
         description: description || 'Verifica tu conexión a internet e inténtalo de nuevo.',
-        icon: <AlertTriangle className="w-16 h-16 text-red-400" />
+        icon: WifiOff,
+        iconColor: 'text-destructive',
+        variant: 'network' as const
       };
     }
 
     return {
       title: title || 'Error inesperado',
       description: description || 'Ha ocurrido un error. Por favor, inténtalo de nuevo.',
-      icon: <AlertTriangle className="w-16 h-16 text-red-400" />
+      icon: AlertTriangle,
+      iconColor: 'text-destructive',
+      variant: 'generic' as const
     };
   };
 
   const errorInfo = getErrorInfo();
+  const Icon = errorInfo.icon;
 
   return (
-    <div className="max-w-md mx-auto text-center py-12 px-4">
-      {/* Icono */}
-      <div className="flex justify-center mb-6">
-        {errorInfo.icon}
-      </div>
+    <Card className="max-w-2xl mx-auto border-dashed">
+      <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center space-y-6">
+        {/* Icono */}
+        <div className={`p-4 bg-muted rounded-full ${errorInfo.iconColor}`}>
+          <Icon className="w-12 h-12" />
+        </div>
 
-      {/* Título */}
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">
-        {errorInfo.title}
-      </h2>
+        {/* Título */}
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">
+            {errorInfo.title}
+          </h2>
 
-      {/* Descripción */}
-      <p className="text-gray-600 mb-2">
-        {errorInfo.description}
-      </p>
+          {/* Descripción */}
+          <p className="text-muted-foreground">
+            {errorInfo.description}
+          </p>
+        </div>
 
-      {/* Mensaje de error técnico */}
-      <p className="text-sm text-gray-400 mb-8">
-        Error: {error}
-      </p>
+        {/* Mensaje de error técnico */}
+        <Alert variant="destructive" className="max-w-md">
+          <AlertDescription className="text-sm font-mono">
+            {error}
+          </AlertDescription>
+        </Alert>
 
-      {/* Botones de acción */}
-      <div className="space-y-3">
-        {/* Botón de reintentar */}
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-          >
-            <RefreshCw className="w-5 h-5 mr-2" />
-            Reintentar
-          </button>
+        {/* Botones de acción */}
+        <div className="w-full max-w-md space-y-3">
+          {/* Botón de reintentar */}
+          {onRetry && (
+            <Button
+              onClick={onRetry}
+              className="w-full"
+              size="lg"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reintentar
+            </Button>
+          )}
+
+          <div className="flex gap-3">
+            {/* Botón de volver */}
+            {showBackButton && (
+              <Button
+                onClick={() => navigate(-1)}
+                variant="outline"
+                className="flex-1"
+                size="lg"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+            )}
+
+            {/* Botón de inicio */}
+            {showHomeButton && (
+              <Button
+                onClick={() => navigate('/platform')}
+                variant="outline"
+                className="flex-1"
+                size="lg"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Inicio
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Enlaces adicionales para errores específicos */}
+        {errorInfo.variant === '404' && (
+          <Alert className="max-w-md">
+            <AlertDescription>
+              <p className="text-sm font-semibold mb-2">¿No encuentras lo que buscas?</p>
+              <Button
+                onClick={() => navigate('/platform/courses')}
+                variant="link"
+                className="p-0 h-auto text-primary"
+              >
+                Ver todos los cursos disponibles
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
 
-        <div className="flex space-x-3">
-          {/* Botón de volver */}
-          {showBackButton && (
-            <button
-              onClick={() => navigate(-1)}
-              className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Volver
-            </button>
-          )}
-
-          {/* Botón de inicio */}
-          {showHomeButton && (
-            <button
-              onClick={() => navigate('/platform')}
-              className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200"
-            >
-              <Home className="w-5 h-5 mr-2" />
-              Inicio
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Enlaces adicionales para errores específicos */}
-      {error.toLowerCase().includes('404') && (
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">¿No encuentras lo que buscas?</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => navigate('/platform/courses')}
-              className="block w-full text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Ver todos los cursos disponibles
-            </button>
-          </div>
-        </div>
-      )}
-
-      {error.toLowerCase().includes('403') && (
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">¿Necesitas acceso?</p>
-          <div className="space-y-2">
-            <button
-              onClick={() => navigate('/login')}
-              className="block w-full text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Iniciar sesión
-            </button>
-            <button
-              onClick={() => navigate('/platform/courses')}
-              className="block w-full text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Ver cursos públicos
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        {errorInfo.variant === '403' && (
+          <Alert className="max-w-md">
+            <AlertDescription className="space-y-2">
+              <p className="text-sm font-semibold">¿Necesitas acceso?</p>
+              <div className="flex flex-col gap-1">
+                <Button
+                  onClick={() => navigate('/login')}
+                  variant="link"
+                  className="p-0 h-auto text-primary justify-start"
+                >
+                  Iniciar sesión
+                </Button>
+                <Button
+                  onClick={() => navigate('/platform/courses')}
+                  variant="link"
+                  className="p-0 h-auto text-primary justify-start"
+                >
+                  Ver cursos públicos
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

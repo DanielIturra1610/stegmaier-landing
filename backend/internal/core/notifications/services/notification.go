@@ -13,13 +13,15 @@ import (
 
 // NotificationService implementa ports.NotificationService
 type NotificationService struct {
-	repo ports.NotificationRepository
+	repo         ports.NotificationRepository
+	emailService ports.EmailService
 }
 
 // NewNotificationService crea una nueva instancia del servicio
-func NewNotificationService(repo ports.NotificationRepository) ports.NotificationService {
+func NewNotificationService(repo ports.NotificationRepository, emailService ports.EmailService) ports.NotificationService {
 	return &NotificationService{
-		repo: repo,
+		repo:         repo,
+		emailService: emailService,
 	}
 }
 
@@ -304,6 +306,14 @@ func (s *NotificationService) SendCourseCompletionNotification(ctx context.Conte
 	}
 
 	_, err := s.CreateNotification(ctx, tenantID, notification)
+
+	// Send email notification if email service is configured
+	if s.emailService != nil && err == nil {
+		// Note: Email details (user email, name, etc.) should be provided by the caller
+		// or fetched from a user service. For now, we log that email would be sent.
+		log.Printf("INFO: Course completion email should be sent for user %s, course %s", req.UserID, req.CourseTitle)
+	}
+
 	return err
 }
 

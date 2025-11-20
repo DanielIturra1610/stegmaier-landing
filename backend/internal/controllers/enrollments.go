@@ -42,7 +42,7 @@ func (ctrl *EnrollmentController) EnrollInCourse(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -76,7 +76,7 @@ func (ctrl *EnrollmentController) GetMyEnrollments(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -122,7 +122,7 @@ func (ctrl *EnrollmentController) GetMyEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -152,7 +152,7 @@ func (ctrl *EnrollmentController) CancelMyEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -190,7 +190,7 @@ func (ctrl *EnrollmentController) CheckCourseAccess(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -222,7 +222,7 @@ func (ctrl *EnrollmentController) UpdateMyProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -259,7 +259,7 @@ func (ctrl *EnrollmentController) RecordCourseAccess(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -292,7 +292,7 @@ func (ctrl *EnrollmentController) RequestEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -325,7 +325,7 @@ func (ctrl *EnrollmentController) GetMyEnrollmentRequests(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -371,7 +371,7 @@ func (ctrl *EnrollmentController) CancelEnrollmentRequest(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -398,7 +398,7 @@ func (ctrl *EnrollmentController) GetEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -416,7 +416,7 @@ func (ctrl *EnrollmentController) GetEnrollment(c *fiber.Ctx) error {
 // GET /api/v1/enrollments
 func (ctrl *EnrollmentController) ListEnrollments(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -489,7 +489,7 @@ func (ctrl *EnrollmentController) GetCourseEnrollments(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -529,7 +529,7 @@ func (ctrl *EnrollmentController) UpdateEnrollmentProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -560,7 +560,7 @@ func (ctrl *EnrollmentController) CompleteEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -591,7 +591,7 @@ func (ctrl *EnrollmentController) CancelEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -622,7 +622,7 @@ func (ctrl *EnrollmentController) ExtendEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -653,7 +653,7 @@ func (ctrl *EnrollmentController) DeleteEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -680,7 +680,7 @@ func (ctrl *EnrollmentController) GetEnrollmentRequest(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -698,7 +698,7 @@ func (ctrl *EnrollmentController) GetEnrollmentRequest(c *fiber.Ctx) error {
 // GET /api/v1/enrollment-requests
 func (ctrl *EnrollmentController) ListEnrollmentRequests(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -765,7 +765,7 @@ func (ctrl *EnrollmentController) GetPendingEnrollmentRequests(c *fiber.Ctx) err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -811,7 +811,7 @@ func (ctrl *EnrollmentController) ApproveEnrollmentRequest(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -841,7 +841,7 @@ func (ctrl *EnrollmentController) RejectEnrollmentRequest(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -884,7 +884,7 @@ func (ctrl *EnrollmentController) GetCourseEnrollmentStats(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -902,7 +902,7 @@ func (ctrl *EnrollmentController) GetCourseEnrollmentStats(c *fiber.Ctx) error {
 // POST /api/v1/enrollments/process-expired
 func (ctrl *EnrollmentController) ProcessExpiredEnrollments(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}

@@ -42,7 +42,7 @@ func (ctrl *ProgressController) GetMyProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -66,7 +66,7 @@ func (ctrl *ProgressController) GetMyProgressList(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -113,7 +113,7 @@ func (ctrl *ProgressController) GetMyProgressSummary(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -143,7 +143,7 @@ func (ctrl *ProgressController) UpdateMyProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -184,7 +184,7 @@ func (ctrl *ProgressController) RecordActivity(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -225,7 +225,7 @@ func (ctrl *ProgressController) GetMyProgressHistory(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -301,7 +301,7 @@ func (ctrl *ProgressController) GetCourseProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -331,7 +331,7 @@ func (ctrl *ProgressController) GetProgressByUser(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -355,7 +355,7 @@ func (ctrl *ProgressController) ListCourseProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -402,7 +402,7 @@ func (ctrl *ProgressController) MarkProgressAsCompleted(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -433,7 +433,7 @@ func (ctrl *ProgressController) ResetProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -457,7 +457,7 @@ func (ctrl *ProgressController) DeleteProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -485,7 +485,7 @@ func (ctrl *ProgressController) GetCourseStatistics(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -535,7 +535,7 @@ func (ctrl *ProgressController) GetProgressAnalytics(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -582,7 +582,7 @@ func (ctrl *ProgressController) CreateMilestoneSnapshot(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -625,7 +625,7 @@ func (ctrl *ProgressController) GetProgressSnapshots(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -658,7 +658,7 @@ func (ctrl *ProgressController) GetProgressSnapshots(c *fiber.Ctx) error {
 // POST /api/v1/progress/initialize
 func (ctrl *ProgressController) InitializeProgress(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -705,7 +705,7 @@ func (ctrl *ProgressController) RecalculateProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -729,7 +729,7 @@ func (ctrl *ProgressController) SyncProgressFromEnrollment(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}

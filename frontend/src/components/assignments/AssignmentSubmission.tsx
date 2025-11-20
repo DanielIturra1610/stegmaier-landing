@@ -4,15 +4,21 @@
  */
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
-  DocumentTextIcon,
-  CloudArrowUpIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  PaperAirplaneIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline';
+  FileText,
+  Upload,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Info,
+  Send,
+  RotateCw
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { assignmentService } from '../../services/assignmentService';
 import { FileUploader } from './FileUploader';
 import {
@@ -210,8 +216,8 @@ export const AssignmentSubmissionComponent: React.FC<AssignmentSubmissionProps> 
   if (isLoading && !submission) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Cargando assignment...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Cargando assignment...</span>
       </div>
     );
   }
@@ -219,239 +225,247 @@ export const AssignmentSubmissionComponent: React.FC<AssignmentSubmissionProps> 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Assignment Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
-            <p className="mt-2 text-gray-600">{assignment.description}</p>
-          </div>
-          
-          <div className="flex items-center space-x-4 text-sm">
-            {remainingTime && (
-              <div className={`flex items-center px-3 py-1 rounded-full ${
-                isOverdue ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                <ClockIcon className="h-4 w-4 mr-1" />
-                {remainingTime}
-              </div>
-            )}
-            
-            {submission && (
-              <div className={`flex items-center px-3 py-1 rounded-full ${
-                assignmentService.getStatusColor(submission.status)
-              }`}>
-                {assignmentService.getStatusLabel(submission.status)}
-              </div>
-            )}
-          </div>
-        </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
+              <p className="mt-2 text-muted-foreground">{assignment.description}</p>
+            </div>
 
-        {/* Assignment Details */}
-        {assignment.instructions && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h3 className="flex items-center text-sm font-medium text-blue-900 mb-2">
-              <InformationCircleIcon className="h-4 w-4 mr-1" />
-              Instrucciones
-            </h3>
-            <div className="text-sm text-blue-800 whitespace-pre-wrap">
-              {assignment.instructions}
+            <div className="flex items-center space-x-2">
+              {remainingTime && (
+                <Badge variant={isOverdue ? "destructive" : "secondary"} className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {remainingTime}
+                </Badge>
+              )}
+
+              {submission && (
+                <Badge variant="outline" className={assignmentService.getStatusColor(submission.status)}>
+                  {assignmentService.getStatusLabel(submission.status)}
+                </Badge>
+              )}
             </div>
           </div>
-        )}
 
-        {/* Assignment Requirements */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="font-medium">Puntos máximos:</span>
-            <span className="ml-2">{assignment.max_points}</span>
+          {/* Assignment Details */}
+          {assignment.instructions && (
+            <Alert className="mt-4 border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-900">Instrucciones</AlertTitle>
+              <AlertDescription className="text-blue-800 whitespace-pre-wrap">
+                {assignment.instructions}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Assignment Requirements */}
+          <Separator className="my-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+            <div>
+              <span className="font-medium text-gray-900">Puntos máximos:</span>
+              <span className="ml-2">{assignment.max_points}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-900">Archivos máximos:</span>
+              <span className="ml-2">{assignment.max_files}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-900">Tamaño máximo:</span>
+              <span className="ml-2">{assignmentService.formatFileSize(assignment.max_file_size)}</span>
+            </div>
           </div>
-          <div>
-            <span className="font-medium">Archivos máximos:</span>
-            <span className="ml-2">{assignment.max_files}</span>
-          </div>
-          <div>
-            <span className="font-medium">Tamaño máximo:</span>
-            <span className="ml-2">{assignmentService.formatFileSize(assignment.max_file_size)}</span>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Submission Status Warning */}
       {isSubmitted && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-5 w-5 text-green-500" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">Assignment Enviado</h3>
-              <p className="text-sm text-green-700 mt-1">
-                Tu assignment ha sido enviado exitosamente. Ya no puedes realizar cambios.
-                {submission?.submitted_at && (
-                  <span className="block mt-1">
-                    Enviado el: {new Date(submission.submitted_at).toLocaleString()}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <AlertTitle className="text-green-800">Assignment Enviado</AlertTitle>
+          <AlertDescription className="text-green-700">
+            Tu assignment ha sido enviado exitosamente. Ya no puedes realizar cambios.
+            {submission?.submitted_at && (
+              <span className="block mt-1">
+                Enviado el: {new Date(submission.submitted_at).toLocaleString()}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
       )}
 
       {isOverdue && !isSubmitted && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Assignment Vencido</h3>
-              <p className="text-sm text-red-700 mt-1">
-                La fecha límite ha pasado. Las entregas tardías pueden tener penalización.
-                {assignment.late_penalty_per_day > 0 && (
-                  <span className="block mt-1">
-                    Penalización: {(assignment.late_penalty_per_day * 100).toFixed(0)}% por día
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle>Assignment Vencido</AlertTitle>
+          <AlertDescription>
+            La fecha límite ha pasado. Las entregas tardías pueden tener penalización.
+            {assignment.late_penalty_per_day > 0 && (
+              <span className="block mt-1">
+                Penalización: {(assignment.late_penalty_per_day * 100).toFixed(0)}% por día
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Text Editor Section */}
       {!isSubmitted && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <DocumentTextIcon className="h-5 w-5 mr-2" />
-              Respuesta de Texto
-            </h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              {hasUnsavedChanges && (
-                <span className="text-yellow-600">● Cambios sin guardar</span>
-              )}
-              {isSaving && (
-                <span className="text-blue-600">Guardando...</span>
-              )}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                Respuesta de Texto
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                {hasUnsavedChanges && (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    ● Cambios sin guardar
+                  </Badge>
+                )}
+                {isSaving && (
+                  <Badge variant="outline" className="text-blue-600 border-blue-600">
+                    Guardando...
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <textarea
-            value={textContent}
-            onChange={handleTextChange}
-            placeholder="Escribe tu respuesta aquí..."
-            className="w-full h-64 p-4 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={isSubmitted}
-          />
-          
-          <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
-            <span>{textContent.length} caracteres</span>
-            <button
-              onClick={handleSave}
-              disabled={!hasUnsavedChanges || isSaving}
-              className="px-3 py-1 text-blue-600 hover:text-blue-700 disabled:text-gray-400"
-            >
-              {isSaving ? 'Guardando...' : 'Guardar borrador'}
-            </button>
-          </div>
-        </div>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            <Textarea
+              value={textContent}
+              onChange={handleTextChange}
+              placeholder="Escribe tu respuesta aquí..."
+              className="min-h-[16rem] resize-y"
+              disabled={isSubmitted}
+            />
+
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{textContent.length} caracteres</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSave}
+                disabled={!hasUnsavedChanges || isSaving}
+              >
+                {isSaving ? 'Guardando...' : 'Guardar borrador'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* File Upload Section */}
       {!isSubmitted && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center mb-4">
-            <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-            Archivos Adjuntos
-          </h3>
-          
-          <FileUploader
-            ref={fileUploaderRef}
-            onFilesUploaded={handleFilesUploaded}
-            onUploadError={handleUploadError}
-            maxFiles={assignment.max_files}
-            maxFileSize={assignment.max_file_size}
-            allowedTypes={assignment.allowed_file_types}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Upload className="h-5 w-5 mr-2" />
+              Archivos Adjuntos
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <FileUploader
+              ref={fileUploaderRef}
+              onFilesUploaded={handleFilesUploaded}
+              onUploadError={handleUploadError}
+              maxFiles={assignment.max_files}
+              maxFileSize={assignment.max_file_size}
+              allowedTypes={assignment.allowed_file_types}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Archivos Enviados ({uploadedFiles.length})
-          </h3>
-          
-          <div className="space-y-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Archivos Enviados ({uploadedFiles.length})
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
             {uploadedFiles.map((file) => (
               <div
                 key={file.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
               >
                 <div className="flex items-center space-x-3">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                  <FileText className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{file.original_filename}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {assignmentService.formatFileSize(file.file_size)}
                       {file.description && ` • ${file.description}`}
                     </p>
                   </div>
                 </div>
-                
+
                 {!isSubmitted && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => removeFile(file.id)}
-                    className="text-red-600 hover:text-red-700 text-sm"
+                    className="text-red-600 hover:text-red-700"
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Action Buttons */}
       {!isSubmitted && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {assignment.allow_multiple_submissions 
-                ? 'Puedes enviar múltiples veces hasta la fecha límite'
-                : 'Solo puedes enviar una vez'
-              }
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                {assignment.allow_multiple_submissions
+                  ? 'Puedes enviar múltiples veces hasta la fecha límite'
+                  : 'Solo puedes enviar una vez'
+                }
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleSave}
+                  disabled={!hasUnsavedChanges || isSaving}
+                >
+                  <RotateCw className="h-4 w-4 mr-2" />
+                  Guardar Borrador
+                </Button>
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!canSubmit || isLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar Assignment
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges || isSaving}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                <ArrowPathIcon className="h-4 w-4 mr-2 inline" />
-                Guardar Borrador
-              </button>
-              
-              <button
-                onClick={handleSubmit}
-                disabled={!canSubmit || isLoading}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <PaperAirplaneIcon className="h-4 w-4 mr-2 inline" />
-                    Enviar Assignment
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

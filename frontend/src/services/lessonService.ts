@@ -139,6 +139,31 @@ class LessonService {
       throw new Error(errorData.detail || 'Error reordering lessons');
     }
   }
+
+  /**
+   * Marcar una lección como completada
+   */
+  async markComplete(lessonId: string): Promise<void> {
+    console.log('✅ [LessonService] Marking lesson as complete:', lessonId);
+
+    try {
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.LESSONS}/${lessonId}/complete`), {
+        method: 'POST',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ [LessonService] Error marking lesson complete:', errorData);
+        throw new Error(errorData.detail || 'Error al marcar lección como completada');
+      }
+
+      console.log('✅ [LessonService] Lesson marked as complete successfully');
+    } catch (error) {
+      console.error('💥 [LessonService] Exception marking lesson complete:', error);
+      throw error;
+    }
+  }
 }
 
 export const lessonService = new LessonService();

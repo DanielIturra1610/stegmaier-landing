@@ -10,9 +10,8 @@ import (
 // UserProfile represents a user's profile information
 type UserProfile struct {
 	UserID      uuid.UUID
-	TenantID    uuid.UUID
-	FirstName   string
-	LastName    string
+	TenantID    *uuid.UUID // Can be NULL for users not yet assigned to a tenant
+	FullName    *string    // Optional - can be set after registration
 	AvatarURL   *string
 	Bio         *string
 	PhoneNumber *string
@@ -71,8 +70,7 @@ const (
 
 // Validation errors
 var (
-	ErrInvalidFirstName   = errors.New("first name must be between 2 and 100 characters")
-	ErrInvalidLastName    = errors.New("last name must be between 2 and 100 characters")
+	ErrInvalidFullName    = errors.New("full name must be between 2 and 255 characters")
 	ErrInvalidBio         = errors.New("bio must not exceed 500 characters")
 	ErrInvalidPhone       = errors.New("phone number must not exceed 20 characters")
 	ErrInvalidTheme       = errors.New("theme must be 'light', 'dark', or 'system'")
@@ -85,18 +83,12 @@ var (
 	ErrImageTooLarge      = errors.New("image size must not exceed 5MB")
 )
 
-// ValidateFirstName validates the first name
-func ValidateFirstName(firstName string) error {
-	if len(firstName) < MinNameLength || len(firstName) > MaxNameLength {
-		return ErrInvalidFirstName
-	}
-	return nil
-}
-
-// ValidateLastName validates the last name
-func ValidateLastName(lastName string) error {
-	if len(lastName) < MinNameLength || len(lastName) > MaxNameLength {
-		return ErrInvalidLastName
+// ValidateFullName validates the full name
+func ValidateFullName(fullName *string) error {
+	if fullName != nil {
+		if len(*fullName) < MinNameLength || len(*fullName) > 255 {
+			return ErrInvalidFullName
+		}
 	}
 	return nil
 }
@@ -166,13 +158,8 @@ func (p *UserProfile) Validate() error {
 	if p.UserID == uuid.Nil {
 		return errors.New("user ID is required")
 	}
-	if p.TenantID == uuid.Nil {
-		return errors.New("tenant ID is required")
-	}
-	if err := ValidateFirstName(p.FirstName); err != nil {
-		return err
-	}
-	if err := ValidateLastName(p.LastName); err != nil {
+	// TenantID can be NULL for users not yet assigned to a tenant
+	if err := ValidateFullName(p.FullName); err != nil {
 		return err
 	}
 	if err := ValidateBio(p.Bio); err != nil {
@@ -191,16 +178,15 @@ func (p *UserProfile) Validate() error {
 }
 
 // NewUserProfile creates a new UserProfile with default values
-func NewUserProfile(userID, tenantID uuid.UUID, firstName, lastName string) *UserProfile {
+func NewUserProfile(userID uuid.UUID, tenantID *uuid.UUID, fullName *string) *UserProfile {
 	now := time.Now()
 	return &UserProfile{
-		UserID:    userID,
-		TenantID:  tenantID,
-		FirstName: firstName,
-		LastName:  lastName,
-		Timezone:  "UTC",
-		Language:  LanguageEnglish,
-		Theme:     ThemeLight,
+		UserID:   userID,
+		TenantID: tenantID,
+		FullName: fullName,
+		Timezone: "UTC",
+		Language: LanguageEnglish,
+		Theme:    ThemeLight,
 		Preferences: ProfilePreferences{
 			EmailNotifications:   true,
 			PushNotifications:    true,
@@ -215,9 +201,12 @@ func NewUserProfile(userID, tenantID uuid.UUID, firstName, lastName string) *Use
 	}
 }
 
-// GetFullName returns the user's full name
+// GetFullName returns the user's full name or empty string if not set
 func (p *UserProfile) GetFullName() string {
-	return p.FirstName + " " + p.LastName
+	if p.FullName != nil {
+		return *p.FullName
+	}
+	return ""
 }
 
 // HasAvatar returns whether the user has an avatar

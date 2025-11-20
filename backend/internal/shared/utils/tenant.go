@@ -6,6 +6,7 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -30,6 +31,22 @@ func GetTenantID(c *fiber.Ctx) string {
 	}
 
 	return ""
+}
+
+// GetTenantUUID extracts and parses the tenant ID from Fiber context as UUID
+// Returns uuid.Nil and error if not found or invalid
+func GetTenantUUID(c *fiber.Ctx) (uuid.UUID, error) {
+	tenantIDStr := GetTenantID(c)
+	if tenantIDStr == "" {
+		return uuid.Nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid tenant ID format: %w", err)
+	}
+
+	return tenantID, nil
 }
 
 // GetTenantSlug extracts the tenant slug from Fiber context

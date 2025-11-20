@@ -73,7 +73,10 @@ func AuthMiddleware(tokenService tokens.TokenService, authRepo ports.AuthReposit
 		c.Locals(UserIDKey, user.ID)
 		c.Locals(UserEmailKey, user.Email)
 		c.Locals(UserRoleKey, user.Role)
-		c.Locals(TenantIDKey, user.TenantID) // Also inject tenant from user
+		// Only inject tenant_id if user has one (it's a pointer that can be nil)
+		if user.TenantID != nil {
+			c.Locals(TenantIDKey, *user.TenantID) // Dereference the pointer
+		}
 		c.Locals(JWTClaimsKey, claims)
 
 		log.Printf("✅ Authenticated user: %s (%s) - Role: %s", user.Email, user.ID, user.Role)
@@ -118,7 +121,10 @@ func OptionalAuthMiddleware(tokenService tokens.TokenService, authRepo ports.Aut
 		c.Locals(UserIDKey, user.ID)
 		c.Locals(UserEmailKey, user.Email)
 		c.Locals(UserRoleKey, string(user.Role))
-		c.Locals(TenantIDKey, user.TenantID)
+		// Only inject tenant_id if user has one (it's a pointer that can be nil)
+		if user.TenantID != nil {
+			c.Locals(TenantIDKey, *user.TenantID) // Dereference the pointer
+		}
 		c.Locals(JWTClaimsKey, claims)
 
 		log.Printf("✅ Optionally authenticated user: %s (%s)", user.Email, user.ID)

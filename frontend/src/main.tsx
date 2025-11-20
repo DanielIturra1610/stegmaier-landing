@@ -7,6 +7,10 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { queryClient } from './lib/queryClient'
+import { Toaster } from '@/components/ui/toaster'
+
+// CRÍTICO: Configurar interceptores de Axios antes de cualquier petición
+import './config/axios.config'
 
 // CRÍTICO: Desregistrar todos los Service Workers para evitar bloqueos de API
 if ('serviceWorker' in navigator) {
@@ -26,6 +30,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <ThemeProvider>
           <App />
+          <Toaster />
           <ReactQueryDevtools initialIsOpen={false} />
         </ThemeProvider>
       </AuthProvider>

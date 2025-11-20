@@ -22,6 +22,25 @@ interface AdminStats {
   courses_published: number;
 }
 
+// User creation interface
+export interface CreateUserDTO {
+  email: string;
+  password: string;
+  full_name: string;
+  role: 'student' | 'instructor' | 'admin';
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_verified: boolean;
+  tenant_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 class AdminService {
   private getHeaders() {
     return getAuthHeaders();
@@ -259,13 +278,13 @@ class AdminService {
         method: 'PUT',
         headers: this.getHeaders()
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
         console.error('❌ [adminService] Change user role error:', response.status, errorData);
         throw new Error(errorData.detail || `Error changing user role: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ [adminService] User role changed successfully:', { userId, newRole });
       return data;
@@ -275,6 +294,220 @@ class AdminService {
       const errorMessage = apiError.response?.data?.detail || (error as Error).message || 'Error changing user role';
       throw new Error(errorMessage);
     }
+  }
+
+  /**
+   * POST /api/v1/admin/users
+   * Crea un nuevo usuario con rol específico
+   */
+  async createUser(userData: CreateUserDTO): Promise<User> {
+    try {
+      console.log('🔍 [adminService] Creating user:', { email: userData.email, role: userData.role });
+
+      // Validación básica
+      if (!userData.email || !userData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        throw new Error('Email inválido');
+      }
+
+      if (!userData.password || userData.password.length < 8) {
+        throw new Error('La contraseña debe tener al menos 8 caracteres');
+      }
+
+      if (!userData.full_name || userData.full_name.trim().length < 3) {
+        throw new Error('El nombre completo debe tener al menos 3 caracteres');
+      }
+
+      if (!['student', 'instructor', 'admin'].includes(userData.role)) {
+        throw new Error('Rol inválido. Debe ser: student, instructor o admin');
+      }
+
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users`), {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(userData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('❌ [adminService] Create user error:', response.status, errorData);
+
+        // Manejar errores específicos
+        if (response.status === 409) {
+          throw new Error('Ya existe un usuario con ese email');
+        }
+        if (response.status === 403) {
+          throw new Error('No tienes permisos para crear usuarios');
+        }
+
+        throw new Error(errorData.detail || `Error creating user: ${response.status}`);
+      }
+
+      const user = await response.json();
+      console.log('✅ [adminService] User created successfully:', user.id);
+
+      return user;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [adminService] Create user exception:', apiError);
+      const errorMessage = apiError.response?.data?.detail || (error as Error).message || 'Error creating user';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * GET /api/v1/admin/users/:id
+   * Obtiene un usuario específico por ID
+   */
+  async getUserById(userId: string): Promise<User> {
+    try {
+      console.log('🔍 [adminService] Fetching user:', userId);
+
+      if (!userId) {
+        throw new Error('ID de usuario requerido');
+      }
+
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users/${userId}`), {
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('❌ [adminService] Get user by ID error:', response.status, errorData);
+
+        if (response.status === 404) {
+          throw new Error('Usuario no encontrado');
+        }
+
+        throw new Error(errorData.detail || `Error fetching user: ${response.status}`);
+      }
+
+      const user = await response.json();
+      console.log('✅ [adminService] User loaded:', user.id);
+
+      return user;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [adminService] Get user by ID exception:', apiError);
+      const errorMessage = apiError.response?.data?.detail || (error as Error).message || 'Error fetching user';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * PUT /api/v1/admin/users/:id
+   * Actualiza un usuario existente
+   */
+  async updateUser(userId: string, updates: Partial<CreateUserDTO>): Promise<User> {
+    try {
+      console.log('🔍 [adminService] Updating user:', userId);
+
+      if (!userId) {
+        throw new Error('ID de usuario requerido');
+      }
+
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users/${userId}`), {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('❌ [adminService] Update user error:', response.status, errorData);
+
+        if (response.status === 404) {
+          throw new Error('Usuario no encontrado');
+        }
+        if (response.status === 403) {
+          throw new Error('No tienes permisos para actualizar este usuario');
+        }
+
+        throw new Error(errorData.detail || `Error updating user: ${response.status}`);
+      }
+
+      const user = await response.json();
+      console.log('✅ [adminService] User updated successfully:', user.id);
+
+      return user;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [adminService] Update user exception:', apiError);
+      const errorMessage = apiError.response?.data?.detail || (error as Error).message || 'Error updating user';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * DELETE /api/v1/admin/users/:id
+   * Elimina un usuario (soft delete)
+   */
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      console.log('🔍 [adminService] Deleting user:', userId);
+
+      if (!userId) {
+        throw new Error('ID de usuario requerido');
+      }
+
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users/${userId}`), {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('❌ [adminService] Delete user error:', response.status, errorData);
+
+        if (response.status === 404) {
+          throw new Error('Usuario no encontrado');
+        }
+        if (response.status === 403) {
+          throw new Error('No tienes permisos para eliminar este usuario');
+        }
+
+        throw new Error(errorData.detail || `Error deleting user: ${response.status}`);
+      }
+
+      console.log('✅ [adminService] User deleted successfully:', userId);
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [adminService] Delete user exception:', apiError);
+      const errorMessage = apiError.response?.data?.detail || (error as Error).message || 'Error deleting user';
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Validación: Verifica fortaleza de contraseña
+   * Retorna array de requisitos no cumplidos
+   */
+  validatePasswordStrength(password: string): string[] {
+    const errors: string[] = [];
+
+    if (password.length < 8) {
+      errors.push('Mínimo 8 caracteres');
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push('Al menos una letra mayúscula');
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push('Al menos una letra minúscula');
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push('Al menos un número');
+    }
+    if (!/[@$!%*?&]/.test(password)) {
+      errors.push('Al menos un carácter especial (@$!%*?&)');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Validación: Verifica si un email es válido
+   */
+  isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 }
 

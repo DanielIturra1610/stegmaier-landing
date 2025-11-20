@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualización de Solicitud</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 56px; margin-bottom: 15px;">📋</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Actualización de Solicitud</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Gracias por tu interés en inscribirte en nuestro curso. Después de revisar tu solicitud, lamentamos informarte que en este momento no podemos aprobar tu inscripción en:
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Course Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 25px; border-radius: 8px;">
+                                <h2 style="margin: 0 0 10px 0; color: #374151; font-size: 20px; font-weight: 700;">{{.CourseTitle}}</h2>
+                                <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                                    Estado: <strong>No aprobada</strong>
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Reason Section -->
+                    {{if .Reason}}
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 6px;">
+                                <p style="margin: 0 0 10px 0; color: #991b1b; font-size: 14px; font-weight: 600;">
+                                    Motivo:
+                                </p>
+                                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+                                    {{.Reason}}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+
+                    <!-- Alternative Options -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">¿Qué puedes hacer?</h3>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 15px; background-color: #eff6ff; border-radius: 6px; margin-bottom: 10px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">🔍</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #1e40af; font-size: 16px; font-weight: 600;">Explora otros cursos</h4>
+                                                <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.5;">Tenemos muchos otros cursos que podrían interesarte</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td style="height: 10px;"></td></tr>
+                                <tr>
+                                    <td style="padding: 15px; background-color: #f0fdf4; border-radius: 6px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">💬</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #15803d; font-size: 16px; font-weight: 600;">Contacta a soporte</h4>
+                                                <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.5;">Si tienes preguntas, nuestro equipo está aquí para ayudarte</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td style="height: 10px;"></td></tr>
+                                <tr>
+                                    <td style="padding: 15px; background-color: #fef3c7; border-radius: 6px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">🔄</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #92400e; font-size: 16px; font-weight: 600;">Vuelve a intentarlo</h4>
+                                                <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.5;">Puedes solicitar inscripción nuevamente en el futuro</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Support Info -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #eff6ff; border: 2px dashed #3b82f6; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; margin-bottom: 15px;">💌</div>
+                                <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 18px; font-weight: 600;">¿Necesitas más información?</h3>
+                                <p style="margin: 0 0 20px 0; color: #1e40af; font-size: 14px; line-height: 1.5;">
+                                    Si tienes preguntas sobre esta decisión o necesitas orientación sobre otros cursos, no dudes en contactarnos.
+                                </p>
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                    <strong>Email:</strong> <a href="mailto:{{.SupportEmail}}" style="color: #2563eb; text-decoration: none;">{{.SupportEmail}}</a>
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Buttons -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0 5px;">
+                                        <a href="{{.CoursesURL}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                                            Ver Otros Cursos
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0 5px;">
+                                        <a href="mailto:{{.SupportEmail}}" style="display: inline-block; background-color: #ffffff; color: #2563eb; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; border: 2px solid #2563eb;">
+                                            Contactar Soporte
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Encouragement Message -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px;">
+                            <div style="border-left: 4px solid #d1d5db; padding-left: 20px;">
+                                <p style="margin: 0; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                                    No te desanimes. Cada experiencia de aprendizaje es única, y hay muchas otras oportunidades esperándote. Estamos aquí para apoyar tu desarrollo profesional.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                Gracias por tu interés en {{.PlatformName}}
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

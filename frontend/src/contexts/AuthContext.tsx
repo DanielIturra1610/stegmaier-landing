@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials, RegisterData } from '../types/auth';
+import { Tenant } from '../types/tenant';
 import { authService } from '../services/auth.service';
+import tenantService from '../services/tenantService';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -9,6 +11,11 @@ interface AuthContextType extends AuthState {
   verifyEmail: (token: string) => Promise<boolean>;
   resendVerification: (email: string) => Promise<boolean>;
   clearError: () => void;
+  // Tenant management
+  currentTenantId: string | null;
+  setCurrentTenantId: (tenantId: string) => Promise<void>;
+  availableTenants: Tenant[];
+  loadAvailableTenants: () => Promise<void>;
 }
 
 // Crear contexto con valor predeterminado
@@ -36,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const token = localStorage.getItem('auth_token');
     const userStr = localStorage.getItem('auth_user');
     let user: User | null = null;
-    
+
     try {
       if (userStr) {
         user = JSON.parse(userStr) as User;
@@ -44,7 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error parsing user from localStorage', error);
     }
-    
+
     return {
       ...initialState,
       user,
@@ -54,6 +61,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isLoading: !!token, // Si hay token, verificaremos su validez
     };
   });
+
+  // Estado de tenants
+  const [currentTenantId, setCurrentTenantIdState] = useState<string | null>(() => {
+    return localStorage.getItem('current_tenant_id');
+  });
+
+  const [availableTenants, setAvailableTenants] = useState<Tenant[]>([]);
 
   // Verificar token al inicio
   useEffect(() => {
@@ -115,16 +129,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Obtener el perfil completo del usuario inmediatamente después del login
         const fullUserData = await authService.getCurrentUser();
-        
+
         // Actualizar el estado con los datos completos del usuario
         setState({
           user: fullUserData,
           token: authResponse.access_token,
           isAuthenticated: true,
-          isVerified: true, 
+          isVerified: true,
           isLoading: false,
           error: null,
         });
+
+        // Cargar tenants disponibles DESPUÉS de que el login complete
+        await loadAvailableTenants();
       } catch (profileError) {
         // Si hay error al cargar el perfil completo, usamos los datos básicos de la autenticación
         console.error('Error al cargar perfil completo:', profileError);
@@ -150,6 +167,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLoading: false,
           error: null,
         });
+
+        // Cargar tenants disponibles incluso si hubo error al cargar el perfil
+        try {
+          await loadAvailableTenants();
+        } catch (tenantError) {
+          console.error('Error loading tenants after login:', tenantError);
+        }
       }
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Error al iniciar sesión';
@@ -177,10 +201,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user: fullUserData,
           token: authResponse.access_token,
           isAuthenticated: true,
-          isVerified: fullUserData.verified, 
+          isVerified: fullUserData.verified,
           isLoading: false,
           error: null,
         });
+
+        // Cargar tenants disponibles DESPUÉS de que el registro complete
+        await loadAvailableTenants();
       } catch (profileError) {
         // Si hay error al cargar el perfil completo, usamos los datos básicos del registro
         console.error('Error al cargar perfil completo después del registro:', profileError);
@@ -206,6 +233,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLoading: false,
           error: null,
         });
+
+        // Cargar tenants disponibles incluso si hubo error al cargar el perfil
+        try {
+          await loadAvailableTenants();
+        } catch (tenantError) {
+          console.error('Error loading tenants after register:', tenantError);
+        }
       }
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Error al registrar usuario';
@@ -299,6 +333,75 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState(prev => ({ ...prev, error: null }));
   };
 
+  // ============================================
+  // Tenant Management Functions
+  // ============================================
+
+  /**
+   * Establece el tenant actual, llama al backend para obtener nuevo JWT y persiste en localStorage
+   */
+  const setCurrentTenantId = async (tenantId: string) => {
+    try {
+      console.log('🔍 [AuthContext] Setting current tenant:', tenantId);
+
+      // Llamar al backend para seleccionar el tenant y obtener nuevo JWT con tenant_id
+      const response = await tenantService.selectTenant(tenantId);
+
+      // Actualizar el token con el nuevo JWT que incluye tenant_id
+      if (response.token) {
+        localStorage.setItem('auth_token', response.token);
+
+        // Actualizar estado del token
+        setState(prev => ({
+          ...prev,
+          token: response.token
+        }));
+      }
+
+      // Persistir el tenant_id actual
+      localStorage.setItem('current_tenant_id', tenantId);
+      setCurrentTenantIdState(tenantId);
+
+      console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name);
+    } catch (error) {
+      console.error('❌ [AuthContext] Error setting tenant:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Carga la lista de tenants disponibles para el usuario
+   * Usa el nuevo endpoint /api/v1/tenants que retorna tenants con memberships
+   */
+  const loadAvailableTenants = async () => {
+    try {
+      console.log('🔍 [AuthContext] Loading available tenants...');
+
+      // Si es superadmin, cargar todos los tenants del sistema
+      if (state.user?.role === 'superadmin') {
+        const response = await tenantService.getTenants(0, 100);
+        setAvailableTenants(response.tenants);
+        console.log('✅ [AuthContext] Loaded superadmin tenants:', response.tenants.length);
+      } else {
+        // Para usuarios normales, cargar tenants donde tienen memberships activas
+        const userTenants = await tenantService.getUserTenants();
+        setAvailableTenants(userTenants);
+        console.log('✅ [AuthContext] Loaded user tenants:', userTenants.length);
+      }
+    } catch (error) {
+      console.error('❌ [AuthContext] Error loading tenants:', error);
+      setAvailableTenants([]);
+    }
+  };
+
+  // Cargar tenants disponibles al autenticarse
+  // DESACTIVADO: Ahora se carga manualmente después de login/register para evitar race conditions
+  // useEffect(() => {
+  //   if (state.isAuthenticated && state.user) {
+  //     loadAvailableTenants();
+  //   }
+  // }, [state.isAuthenticated, state.user?.id]);
+
   // Valores del contexto
   const contextValue: AuthContextType = {
     ...state,
@@ -308,6 +411,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     verifyEmail,
     resendVerification,
     clearError,
+    // Tenant management
+    currentTenantId,
+    setCurrentTenantId,
+    availableTenants,
+    loadAvailableTenants,
   };
 
   return (

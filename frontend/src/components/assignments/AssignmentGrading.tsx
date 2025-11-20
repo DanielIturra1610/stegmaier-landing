@@ -4,21 +4,29 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  AcademicCapIcon,
-  DocumentTextIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  ChartBarIcon,
-  UserIcon,
-  CalendarIcon,
-  FunnelIcon,
-  ArrowDownTrayIcon,
-  PencilIcon,
-  EyeIcon,
-  ChevronDownIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
+  GraduationCap,
+  FileText,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  BarChart3,
+  User,
+  Calendar,
+  Filter,
+  Download,
+  Pencil,
+  Eye,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '../../contexts/AuthContext';
 import { assignmentService } from '../../services/assignmentService';
 import {
@@ -287,8 +295,8 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Cargando submissions...</span>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-muted-foreground">Cargando submissions...</span>
       </div>
     );
   }
@@ -296,126 +304,121 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   return (
     <div className="space-y-6">
       {/* Header with Statistics */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
-            <p className="text-gray-600 mt-1">Calificación y gestión de entregas</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={loadSubmissions}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{assignment.title}</h2>
+              <p className="text-muted-foreground mt-1">Calificación y gestión de entregas</p>
+            </div>
+            <Button variant="outline" onClick={loadSubmissions}>
               Actualizar
-            </button>
-          </div>
-        </div>
-
-        {/* Statistics Cards */}
-        {statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <UserIcon className="h-8 w-8 text-blue-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-blue-600">Total Estudiantes</p>
-                  <p className="text-2xl font-bold text-blue-900">{statistics.total_students}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <DocumentTextIcon className="h-8 w-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-green-600">Entregas</p>
-                  <p className="text-2xl font-bold text-green-900">{statistics.total_submissions}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <AcademicCapIcon className="h-8 w-8 text-purple-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-purple-600">Calificadas</p>
-                  <p className="text-2xl font-bold text-purple-900">{statistics.graded_submissions}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <ChartBarIcon className="h-8 w-8 text-yellow-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-yellow-600">Promedio</p>
-                  <p className="text-2xl font-bold text-yellow-900">{statistics.average_grade.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Filters and Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {/* Status Filter */}
-            <div className="flex items-center space-x-2">
-              <FunnelIcon className="h-5 w-5 text-gray-400" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="all">Todas las entregas</option>
-                <option value="submitted">Enviadas</option>
-                <option value="pending">Pendientes de calificar</option>
-                <option value="graded">Calificadas</option>
-                <option value="late">Entregas tardías</option>
-              </select>
-            </div>
-
-            {/* Results count */}
-            <span className="text-sm text-gray-600">
-              {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
-            </span>
+            </Button>
           </div>
 
-          {/* Bulk Actions */}
-          {selectedSubmissions.length > 0 && (
-            <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-600">
-                {selectedSubmissions.length} seleccionada{selectedSubmissions.length !== 1 ? 's' : ''}
-              </span>
-              <button
-                onClick={handleBulkGrade}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-              >
-                Calificar en Lote
-              </button>
+          {/* Statistics Cards */}
+          {statistics && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <User className="h-8 w-8 text-blue-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-blue-600">Total Estudiantes</p>
+                    <p className="text-2xl font-bold text-blue-900">{statistics.total_students}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <FileText className="h-8 w-8 text-green-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-green-600">Entregas</p>
+                    <p className="text-2xl font-bold text-green-900">{statistics.total_submissions}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <GraduationCap className="h-8 w-8 text-purple-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-purple-600">Calificadas</p>
+                    <p className="text-2xl font-bold text-purple-900">{statistics.graded_submissions}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <BarChart3 className="h-8 w-8 text-yellow-600" />
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-yellow-600">Promedio</p>
+                    <p className="text-2xl font-bold text-yellow-900">{statistics.average_grade.toFixed(1)}%</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Filters and Actions */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-muted-foreground" />
+                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as FilterStatus)}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filtrar por estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las entregas</SelectItem>
+                    <SelectItem value="submitted">Enviadas</SelectItem>
+                    <SelectItem value="pending">Pendientes de calificar</SelectItem>
+                    <SelectItem value="graded">Calificadas</SelectItem>
+                    <SelectItem value="late">Entregas tardías</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Results count */}
+              <Badge variant="outline">
+                {filteredSubmissions.length} submission{filteredSubmissions.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+
+            {/* Bulk Actions */}
+            {selectedSubmissions.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary">
+                  {selectedSubmissions.length} seleccionada{selectedSubmissions.length !== 1 ? 's' : ''}
+                </Badge>
+                <Button onClick={handleBulkGrade}>
+                  Calificar en Lote
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Submissions Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
+      <Card>
+        <CardHeader className="border-b">
+          <div className="flex items-center gap-3">
+            <Checkbox
               checked={selectedSubmissions.length === (Array.isArray(filteredSubmissions) ? filteredSubmissions : []).filter(s => s.status === SubmissionStatus.SUBMITTED).length}
-              onChange={handleSelectAll}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              onCheckedChange={handleSelectAll}
             />
-            <span className="ml-3 text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium">
               Seleccionar todo
             </span>
           </div>
-        </div>
+        </CardHeader>
 
         <div className="divide-y divide-gray-200">
           {filteredSubmissions.map((submission) => (
@@ -425,11 +428,9 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     {submission.status === SubmissionStatus.SUBMITTED && (
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedSubmissions.includes(submission.id)}
-                        onChange={() => handleSelectSubmission(submission.id)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        onCheckedChange={() => handleSelectSubmission(submission.id)}
                       />
                     )}
                     
@@ -440,17 +441,17 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                         </h3>
                         {getStatusBadge(submission)}
                         {submission.is_late && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <ClockIcon className="h-3 w-3 mr-1" />
+                          <Badge variant="destructive" className="text-xs">
+                            <Clock className="h-3 w-3 mr-1" />
                             {submission.days_late} día{submission.days_late !== 1 ? 's' : ''} tarde
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       
-                      <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="mt-1 flex items-center space-x-4 text-xs text-muted-foreground">
                         {submission.submitted_at && (
                           <span className="flex items-center">
-                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            <Calendar className="h-3 w-3 mr-1" />
                             {new Date(submission.submitted_at).toLocaleString()}
                           </span>
                         )}
@@ -461,34 +462,36 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center gap-4">
                     <div className="text-right">
                       {getGradeBadge(submission)}
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setExpandedSubmission(
                           expandedSubmission === submission.id ? null : submission.id
                         )}
-                        className="p-1 text-gray-400 hover:text-gray-600"
                       >
                         {expandedSubmission === submission.id ? (
-                          <ChevronDownIcon className="h-5 w-5" />
+                          <ChevronDown className="h-5 w-5" />
                         ) : (
-                          <ChevronRightIcon className="h-5 w-5" />
+                          <ChevronRight className="h-5 w-5" />
                         )}
-                      </button>
-                      
+                      </Button>
+
                       {submission.status === SubmissionStatus.SUBMITTED && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => setGradingSubmission(
                             gradingSubmission === submission.id ? null : submission.id
                           )}
-                          className="p-2 text-blue-600 hover:text-blue-800"
                         >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -517,15 +520,15 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                           {submission.files.map((file) => (
                             <div key={file.id} className="flex items-center justify-between bg-white p-2 rounded border">
                               <div className="flex items-center space-x-2">
-                                <DocumentTextIcon className="h-4 w-4 text-gray-400" />
+                                <FileText className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm">{file.original_filename}</span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted-foreground">
                                   ({assignmentService.formatFileSize(file.file_size)})
                                 </span>
                               </div>
-                              <button className="text-blue-600 hover:text-blue-800 text-sm">
-                                <ArrowDownTrayIcon className="h-4 w-4" />
-                              </button>
+                              <Button variant="ghost" size="icon">
+                                <Download className="h-4 w-4" />
+                              </Button>
                             </div>
                           ))}
                         </div>
@@ -567,13 +570,12 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Puntos (máximo: {assignment.max_points})
                         </label>
-                        <input
+                        <Input
                           type="number"
                           min="0"
                           max={assignment.max_points}
                           value={gradeInputs[submission.id]?.points || ''}
                           onChange={(e) => handleGradeChange(submission.id, 'points', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="0"
                         />
                       </div>
@@ -581,29 +583,27 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Feedback
                         </label>
-                        <textarea
+                        <Textarea
                           value={gradeInputs[submission.id]?.feedback || ''}
                           onChange={(e) => handleGradeChange(submission.id, 'feedback', e.target.value)}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Comentarios para el estudiante..."
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-end space-x-3 mt-4">
-                      <button
+                    <div className="flex items-center justify-end gap-3 mt-4">
+                      <Button
+                        variant="outline"
                         onClick={() => setGradingSubmission(null)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                       >
                         Cancelar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         onClick={() => handleGradeSubmission(submission.id)}
                         disabled={!gradeInputs[submission.id]?.points}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Guardar Calificación
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -613,18 +613,18 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
         </div>
 
         {filteredSubmissions.length === 0 && (
-          <div className="text-center py-12">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <CardContent className="text-center py-12">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No hay submissions</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {filterStatus === 'all' 
+            <p className="mt-1 text-sm text-muted-foreground">
+              {filterStatus === 'all'
                 ? 'No se han enviado assignments todavía.'
                 : 'No hay submissions que coincidan con el filtro seleccionado.'
               }
             </p>
-          </div>
+          </CardContent>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

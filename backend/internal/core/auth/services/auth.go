@@ -81,9 +81,16 @@ func (s *AuthServiceImpl) Register(ctx context.Context, tenantID string, dto *do
 	}
 
 	// Create user entity
+	// TenantID is nullable - users can register without a tenant
+	// and will be prompted to create/join a tenant after registration
+	var tenantIDPtr *string
+	if tenantID != "" {
+		tenantIDPtr = &tenantID
+	}
+
 	user := &domain.User{
 		ID:           uuid.New().String(),
-		TenantID:     tenantID,
+		TenantID:     tenantIDPtr,
 		Email:        dto.Email,
 		PasswordHash: passwordHash,
 		FullName:     dto.FullName,
@@ -147,8 +154,9 @@ func (s *AuthServiceImpl) Login(ctx context.Context, tenantID string, dto *domai
 		return nil, ports.ErrInvalidCredentials
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches ONLY if tenantID was provided in the request
+	// This allows users to login without selecting a tenant first
+	if tenantID != "" && user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return nil, ports.ErrTenantMismatch
 	}
 
@@ -353,8 +361,8 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, tenantID string, d
 		return nil
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return nil
 	}
 
@@ -540,11 +548,27 @@ func (s *AuthServiceImpl) UpdateProfile(ctx context.Context, userID string, dto 
 
 // Helper methods
 
+// stringPtrEquals safely compares a *string with a string
+func stringPtrEquals(ptr *string, str string) bool {
+	if ptr == nil {
+		return str == ""
+	}
+	return *ptr == str
+}
+
+// stringPtrValue safely gets the value of a *string, returning empty string if nil
+func stringPtrValue(ptr *string) string {
+	if ptr == nil {
+		return ""
+	}
+	return *ptr
+}
+
 // generateAccessToken creates a JWT access token for a user
 func (s *AuthServiceImpl) generateAccessToken(user *domain.User) (string, error) {
 	claims := &tokens.Claims{
 		UserID:   user.ID,
-		TenantID: user.TenantID,
+		TenantID: stringPtrValue(user.TenantID),
 		Email:    user.Email,
 		Role:     user.Role,
 	}
@@ -635,10 +659,15 @@ func (s *UserManagementServiceImpl) CreateUser(ctx context.Context, tenantID str
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Create user entity
+	// Create user entity with nullable tenant ID
+	var tenantIDPtr *string
+	if tenantID != "" {
+		tenantIDPtr = &tenantID
+	}
+
 	user := &domain.User{
 		ID:           uuid.New().String(),
-		TenantID:     tenantID,
+		TenantID:     tenantIDPtr,
 		Email:        dto.Email,
 		PasswordHash: passwordHash,
 		FullName:     dto.FullName,
@@ -663,8 +692,8 @@ func (s *UserManagementServiceImpl) GetUserByID(ctx context.Context, tenantID st
 		return nil, ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return nil, ports.ErrTenantMismatch
 	}
 
@@ -684,8 +713,8 @@ func (s *UserManagementServiceImpl) UpdateUser(ctx context.Context, tenantID str
 		return nil, ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return nil, ports.ErrTenantMismatch
 	}
 
@@ -732,8 +761,8 @@ func (s *UserManagementServiceImpl) DeleteUser(ctx context.Context, tenantID str
 		return ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return ports.ErrTenantMismatch
 	}
 
@@ -768,7 +797,7 @@ func (s *UserManagementServiceImpl) ListUsers(ctx context.Context, tenantID stri
 	// Filter users by tenant (repository should do this, but double-check for security)
 	filteredUsers := make([]*domain.User, 0)
 	for _, user := range users {
-		if user.TenantID == tenantID {
+		if stringPtrEquals(user.TenantID, tenantID) {
 			filteredUsers = append(filteredUsers, user)
 		}
 	}
@@ -842,7 +871,7 @@ func (s *UserManagementServiceImpl) GetUsersByIDs(ctx context.Context, tenantID 
 	// Filter by tenant and convert to DTOs
 	userDTOs := make([]*domain.UserDTO, 0)
 	for _, user := range users {
-		if user.TenantID == tenantID {
+		if stringPtrEquals(user.TenantID, tenantID) {
 			userDTOs = append(userDTOs, domain.ToUserDTO(user))
 		}
 	}
@@ -858,8 +887,8 @@ func (s *UserManagementServiceImpl) VerifyUserByAdmin(ctx context.Context, tenan
 		return ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return ports.ErrTenantMismatch
 	}
 
@@ -887,8 +916,8 @@ func (s *UserManagementServiceImpl) UnverifyUser(ctx context.Context, tenantID s
 		return ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return ports.ErrTenantMismatch
 	}
 
@@ -911,8 +940,8 @@ func (s *UserManagementServiceImpl) ResetUserPassword(ctx context.Context, tenan
 		return ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return ports.ErrTenantMismatch
 	}
 
@@ -951,8 +980,8 @@ func (s *UserManagementServiceImpl) ForcePasswordChange(ctx context.Context, ten
 		return ports.ErrUserNotFound
 	}
 
-	// Verify tenant matches
-	if user.TenantID != tenantID {
+	// Verify tenant matches (skip check if user has no tenant yet)
+	if user.TenantID != nil && !stringPtrEquals(user.TenantID, tenantID) {
 		return ports.ErrTenantMismatch
 	}
 

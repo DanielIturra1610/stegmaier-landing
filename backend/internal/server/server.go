@@ -389,8 +389,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// 1. Initialize certificates repository
 	certificateRepo := certificateadapters.NewPostgreSQLCertificateRepository(tenantDB.DB)
 
-	// 2. Initialize certificate generator (PDF generation)
-	certificateGenerator := certificateadapters.NewSimplePDFGenerator()
+	// 2. Initialize certificate generator (PDF generation with gofpdf)
+	certificateGenerator := certificateadapters.NewPDFGenerator()
 
 	// 3. Initialize certificate storage (local file system)
 	certificateStorage, err := certificateadapters.NewLocalCertificateStorage("./certificates", cfg.Server.BaseURL+"/certificates")

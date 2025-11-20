@@ -1,285 +1,175 @@
 /**
- * Servicio para gestión de progreso de videos
- * ✅ CORREGIDO: URLs centralizadas, sin URLs relativas
+ * Progress Service
+ * Manages student progress tracking for courses, lessons, and quizzes
+ * Synchronized with backend Progress Controller (16 endpoints)
  */
-import { API_CONFIG, API_ENDPOINTS, getAuthHeaders, buildApiUrl } from '../config/api.config';
-import { CourseProgressResponse, LessonProgressResponse, UserProgressSummaryResponse, ProgressStatus } from '../types/progress';
 
-export interface VideoProgress {
-  lesson_id: string;
-  video_id: string;
-  current_position: number;
-  duration: number;
-  watch_percentage: number;
-  is_completed: boolean;
-  total_watch_time: number;
-  sessions_count: number;
-  last_watched: string | null;
-  bookmarks: number;
-  notes: number;
+import axios from 'axios';
+import { API_ENDPOINTS, getAuthHeaders, buildApiUrl } from '../config/api.config';
+
+// ============================================================
+// TypeScript Interfaces matching Backend DTOs
+// ============================================================
+
+export enum ProgressStatus {
+  NOT_STARTED = 'not_started',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
 }
 
-export interface VideoBookmark {
-  id: string;
-  lesson_id: string;
-  video_id: string;
-  timestamp: number;
-  title: string;
-  description: string;
-  created_at: string;
-}
-
-export interface VideoNote {
-  id: string;
-  lesson_id: string;
-  video_id: string;
-  timestamp: number;
-  content: string;
-  is_private: boolean;
-  created_at: string;
-}
-
-export interface ProgressSummary {
-  total_videos: number;
-  completed_videos: number;
-  completion_percentage: number;
-  total_watch_time: number;
-  recent_activity: VideoProgress[];
+export enum MilestoneType {
+  MILESTONE_25 = '25%',
+  MILESTONE_50 = '50%',
+  MILESTONE_75 = '75%',
+  MILESTONE_100 = '100%',
 }
 
 export interface UpdateProgressRequest {
-  current_position: number;
-  duration: number;
-  session_time?: number;
+  completedLessons: number;
+  completedQuizzes: number;
+  timeSpent: number; // Time in minutes
 }
 
-export interface CreateBookmarkRequest {
-  timestamp: number;
-  title: string;
-  description: string;
+export interface RecordActivityRequest {
+  lessonId?: string;
+  quizId?: string;
+  timeSpent: number; // Time in minutes
+  completionStatus: boolean;
 }
 
-export interface CreateNoteRequest {
-  timestamp: number;
-  content: string;
-  is_private: boolean;
+export interface CompleteCourseRequest {
+  certificateId?: string;
 }
+
+export interface GetProgressHistoryRequest {
+  page: number;
+  pageSize: number;
+  startDate?: string; // RFC3339 format
+  endDate?: string; // RFC3339 format
+  milestone?: string;
+  sortBy?: string; // snapshot_date
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface GetCourseStatisticsRequest {
+  startDate?: string; // RFC3339 format
+  endDate?: string; // RFC3339 format
+  status?: ProgressStatus;
+}
+
+export interface CourseProgressResponse {
+  id: string;
+  tenantId: string;
+  userId: string;
+  userName?: string;
+  courseId: string;
+  courseName?: string;
+  enrollmentId: string;
+  status: ProgressStatus;
+  progressPercentage: number;
+  completedLessons: number;
+  totalLessons: number;
+  completedQuizzes: number;
+  totalQuizzes: number;
+  totalTimeSpent: number; // Minutes
+  completionRate: number; // 0.0 to 1.0
+  estimatedTimeLeft?: number; // Minutes
+  startedAt?: string;
+  completedAt?: string;
+  lastAccessedAt?: string;
+  certificateId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseProgressDetailResponse extends CourseProgressResponse {
+  daysActive: number;
+  averageTimePerDay: number; // Minutes
+  milestonesAchieved: MilestoneType[];
+  recentSnapshots?: ProgressSnapshotResponse[];
+  lessonCompletionRate: number; // Percentage
+  quizCompletionRate: number; // Percentage
+}
+
+export interface ProgressSnapshotResponse {
+  id: string;
+  userId: string;
+  courseId: string;
+  progressPercentage: number;
+  completedLessons: number;
+  completedQuizzes: number;
+  totalTimeSpent: number;
+  milestoneType: MilestoneType;
+  milestoneData?: string;
+  snapshotDate: string;
+  createdAt: string;
+}
+
+export interface ProgressStatisticsResponse {
+  courseId: string;
+  courseName?: string;
+  totalStudents: number;
+  activeStudents: number;
+  completedStudents: number;
+  notStartedStudents: number;
+  averageProgress: number; // Percentage
+  averageTimeSpent: number; // Minutes
+  completionRate: number; // Percentage
+  averageLessonsPerUser: number;
+  averageQuizzesPerUser: number;
+}
+
+export interface ProgressSummaryResponse {
+  totalCourses: number;
+  inProgressCourses: number;
+  completedCourses: number;
+  averageProgress: number; // Percentage
+  totalTimeSpent: number; // Minutes
+  totalCertificates: number;
+}
+
+export interface ListProgressResponse {
+  progress: CourseProgressResponse[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ListProgressHistoryResponse {
+  snapshots: ProgressSnapshotResponse[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface ProgressAnalyticsResponse {
+  [key: string]: any; // Flexible structure for analytics data
+}
+
+// ============================================================
+// Progress Service Class
+// ============================================================
 
 class ProgressService {
-  /**
-   * Actualizar progreso de un video
-   */
-  async updateVideoProgress(
-    lessonId: string, 
-    videoId: string, 
-    progressData: UpdateProgressRequest
-  ): Promise<VideoProgress> {
-    try {
-      console.log('📊 [progressService] Updating video progress:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`),
-        {
-          method: 'PUT',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(progressData)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error updating progress: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Progress updated:', result.progress);
-      return result.progress;
-    } catch (error) {
-      console.error('❌ [progressService] Error updating video progress:', error);
-      throw error;
-    }
-  }
+  // ============================================================
+  // Student Progress Operations (6 endpoints)
+  // ============================================================
 
   /**
-   * Obtener progreso de un video
+   * GET /api/v1/progress/my/summary
+   * Get summary of student's progress across all enrolled courses
    */
-  async getVideoProgress(lessonId: string, videoId: string): Promise<VideoProgress | null> {
+  async getMyProgressSummary(): Promise<ProgressSummaryResponse> {
     try {
-      console.log('📊 [progressService] Getting video progress:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}`),
-        {
-          method: 'GET',
-          headers: getAuthHeaders()
-        }
+      console.log('📊 [progressService] Getting my progress summary');
+      const response = await axios.get<ProgressSummaryResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/summary`),
+        { headers: getAuthHeaders() }
       );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null; // No hay progreso registrado
-        }
-        throw new Error(`Error getting progress: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Retrieved progress:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ [progressService] Error getting video progress:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Crear un bookmark en un video
-   */
-  async createBookmark(
-    lessonId: string, 
-    videoId: string, 
-    bookmarkData: CreateBookmarkRequest
-  ): Promise<VideoBookmark> {
-    try {
-      console.log('🔖 [progressService] Creating bookmark:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`),
-        {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(bookmarkData)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error creating bookmark: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Bookmark created:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ [progressService] Error creating bookmark:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtener bookmarks de un video
-   */
-  async getVideoBookmarks(lessonId: string, videoId: string): Promise<VideoBookmark[]> {
-    try {
-      console.log('🔖 [progressService] Getting video bookmarks:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/bookmarks`),
-        {
-          method: 'GET',
-          headers: getAuthHeaders()
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return []; // No hay bookmarks
-        }
-        throw new Error(`Error getting bookmarks: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Retrieved bookmarks:', result.length);
-      return result;
-    } catch (error) {
-      console.error('❌ [progressService] Error getting video bookmarks:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Crear una nota en un video
-   */
-  async createNote(
-    lessonId: string, 
-    videoId: string, 
-    noteData: CreateNoteRequest
-  ): Promise<VideoNote> {
-    try {
-      console.log('📝 [progressService] Creating note:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`),
-        {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(noteData)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error creating note: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Note created:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ [progressService] Error creating note:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Obtener notas de un video
-   */
-  async getVideoNotes(lessonId: string, videoId: string): Promise<VideoNote[]> {
-    try {
-      console.log('📝 [progressService] Getting video notes:', { lessonId, videoId });
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/videos/${lessonId}/${videoId}/notes`),
-        {
-          method: 'GET',
-          headers: getAuthHeaders()
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return []; // No hay notas
-        }
-        throw new Error(`Error getting notes: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Retrieved notes:', result.length);
-      return result;
-    } catch (error) {
-      console.error('❌ [progressService] Error getting video notes:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Obtener resumen de progreso del usuario
-   */
-  async getProgressSummary(): Promise<ProgressSummary> {
-    try {
-      console.log('📈 [progressService] Getting progress summary');
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/summary`),
-        {
-          method: 'GET',
-          headers: getAuthHeaders()
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error getting progress summary: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Retrieved progress summary:', result);
-      return result;
+      console.log('✅ [progressService] Progress summary retrieved:', response.data);
+      return response.data;
     } catch (error) {
       console.error('❌ [progressService] Error getting progress summary:', error);
       throw error;
@@ -287,125 +177,408 @@ class ProgressService {
   }
 
   /**
-   * Obtener progreso detallado de todos los videos
+   * Alias for getMyProgressSummary() for backwards compatibility
    */
-  async getDetailedProgress(): Promise<VideoProgress[]> {
+  async getUserProgressSummary(): Promise<ProgressSummaryResponse> {
+    return this.getMyProgressSummary();
+  }
+
+  /**
+   * GET /api/v1/progress/my
+   * Get paginated list of all courses with progress
+   */
+  async getMyProgressList(
+    page = 1,
+    pageSize = 20
+  ): Promise<ListProgressResponse> {
     try {
-      console.log('📊 [progressService] Getting detailed progress');
-      
-      const response = await fetch(
-        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/detailed`),
+      console.log('📊 [progressService] Getting my progress list:', { page, pageSize });
+      const response = await axios.get<ListProgressResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my`),
         {
-          method: 'GET',
-          headers: getAuthHeaders()
+          headers: getAuthHeaders(),
+          params: { page, pageSize }
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Error getting detailed progress: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ [progressService] Retrieved detailed progress:', result.length);
-      return result;
+      console.log('✅ [progressService] Progress list retrieved:', response.data.totalCount, 'items');
+      return response.data;
     } catch (error) {
-      console.error('❌ [progressService] Error getting detailed progress:', error);
-      return [];
+      console.error('❌ [progressService] Error getting progress list:', error);
+      throw error;
     }
   }
 
-  // Assignment progress methods (stub implementations for build fix)
-  async startAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string): Promise<any> {
-    console.log('🚀 [progressService] Starting assignment:', assignmentId, 'for lesson:', lessonId);
-    return { success: true };
+  /**
+   * GET /api/v1/progress/my/courses/:courseId
+   * Get detailed progress information for a specific course
+   */
+  async getMyProgress(courseId: string): Promise<CourseProgressDetailResponse> {
+    try {
+      console.log('📊 [progressService] Getting my progress for course:', courseId);
+      const response = await axios.get<CourseProgressDetailResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Course progress retrieved:', response.data.progressPercentage + '%');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting course progress:', error);
+      throw error;
+    }
   }
 
-  async updateAssignmentProgress(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, data: Record<string, unknown>): Promise<{ success: boolean }> {
-    console.log('📊 [progressService] Updating assignment progress:', assignmentId, 'for lesson:', lessonId);
-    return { success: true };
+  /**
+   * PUT /api/v1/progress/my/courses/:courseId
+   * Update progress for a specific course
+   */
+  async updateMyProgress(
+    courseId: string,
+    data: UpdateProgressRequest
+  ): Promise<CourseProgressResponse> {
+    try {
+      console.log('📊 [progressService] Updating my progress for course:', courseId);
+      const response = await axios.put<CourseProgressResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}`),
+        data,
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Progress updated successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error updating progress:', error);
+      throw error;
+    }
   }
 
-  async completeAssignment(lessonId: string, assignmentId: string, courseId: string, enrollmentId: string, submissionId: string): Promise<{ success: boolean }> {
-    console.log('✅ [progressService] Completing assignment:', assignmentId, 'for lesson:', lessonId);
-    return { success: true };
+  /**
+   * POST /api/v1/progress/my/courses/:courseId/activity
+   * Record completion of a lesson or quiz
+   */
+  async recordActivity(
+    courseId: string,
+    data: RecordActivityRequest
+  ): Promise<{ message: string }> {
+    try {
+      console.log('📊 [progressService] Recording activity for course:', courseId);
+      const response = await axios.post<{ message: string }>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}/activity`),
+        data,
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Activity recorded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error recording activity:', error);
+      throw error;
+    }
   }
 
-  async getCourseProgress(courseId: string): Promise<CourseProgressResponse> {
-    console.log('📚 [progressService] Getting course progress:', courseId);
-
-    // TODO: Implement actual API call when backend is ready
-    return {
-      course_progress: {
-        id: 'temp-progress-id',
-        course_id: courseId,
-        progress_percentage: 0,
-        status: ProgressStatus.NOT_STARTED,
-        lessons_completed: 0,
-        total_lessons: 0,
-        total_time_spent: 0,
-        certificate_issued: false,
-      },
-      lessons_progress: [],
-      completion_percentage: 0,
-      certificate_available: false,
-      message: 'Mock data - implementation pending'
-    };
+  /**
+   * GET /api/v1/progress/my/courses/:courseId/history
+   * Get historical snapshots of progress with optional filters
+   */
+  async getMyProgressHistory(
+    courseId: string,
+    params?: GetProgressHistoryRequest
+  ): Promise<ListProgressHistoryResponse> {
+    try {
+      console.log('📊 [progressService] Getting progress history for course:', courseId);
+      const response = await axios.get<ListProgressHistoryResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}/history`),
+        {
+          headers: getAuthHeaders(),
+          params: params
+        }
+      );
+      console.log('✅ [progressService] Progress history retrieved:', response.data.totalCount, 'snapshots');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting progress history:', error);
+      throw error;
+    }
   }
 
-  async getUserProgressSummary(): Promise<any> {
-    console.log('👤 [progressService] Getting user progress summary');
-    return { total_courses: 0, completed_courses: 0 };
+  // ============================================================
+  // Admin/Instructor Progress Management (6 endpoints)
+  // ============================================================
+
+  /**
+   * GET /api/v1/progress/:progressId
+   * Get detailed progress information by progress ID (Admin/Instructor)
+   */
+  async getProgress(progressId: string): Promise<CourseProgressDetailResponse> {
+    try {
+      console.log('📊 [progressService] Getting progress by ID:', progressId);
+      const response = await axios.get<CourseProgressDetailResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/${progressId}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Progress retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting progress:', error);
+      throw error;
+    }
   }
 
-  async getLessonProgress(lessonId: string): Promise<any> {
-    console.log('📖 [progressService] Getting lesson progress:', lessonId);
-    return { completed: false, progress: 0 };
+  /**
+   * DELETE /api/v1/progress/:progressId
+   * Permanently delete a progress record (Admin only)
+   */
+  async deleteProgress(progressId: string): Promise<{ message: string }> {
+    try {
+      console.log('📊 [progressService] Deleting progress:', progressId);
+      const response = await axios.delete<{ message: string }>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/${progressId}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Progress deleted successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error deleting progress:', error);
+      throw error;
+    }
   }
 
-  async startLesson(lessonId: string, courseId: string, enrollmentId: string): Promise<any> {
-    console.log('🚀 [progressService] Starting lesson:', lessonId, 'for course:', courseId);
-    return { success: true };
+  /**
+   * POST /api/v1/progress/:progressId/complete
+   * Mark progress as completed (Admin/Instructor)
+   */
+  async markProgressAsCompleted(
+    progressId: string,
+    data?: CompleteCourseRequest
+  ): Promise<{ message: string }> {
+    try {
+      console.log('📊 [progressService] Marking progress as completed:', progressId);
+      const response = await axios.post<{ message: string }>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/${progressId}/complete`),
+        data || {},
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Progress marked as completed');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error marking progress as completed:', error);
+      throw error;
+    }
   }
 
-  async completeLesson(lessonId: string, courseId: string, enrollmentId: string): Promise<any> {
-    console.log('✅ [progressService] Completing lesson:', lessonId, 'for course:', courseId);
-    return { success: true };
+  /**
+   * POST /api/v1/progress/:progressId/reset
+   * Reset progress to initial state (Admin/Instructor)
+   */
+  async resetProgress(progressId: string): Promise<{ message: string }> {
+    try {
+      console.log('📊 [progressService] Resetting progress:', progressId);
+      const response = await axios.post<{ message: string }>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/${progressId}/reset`),
+        {},
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] Progress reset successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error resetting progress:', error);
+      throw error;
+    }
   }
 
-  async updateLessonProgress(lessonId: string, courseId: string, enrollmentId: string, progress: Record<string, unknown>): Promise<{ success: boolean }> {
-    console.log('📊 [progressService] Updating lesson progress:', lessonId, 'for course:', courseId);
-    return { success: true };
+  /**
+   * GET /api/v1/progress/users/:userId/courses/:courseId
+   * Get progress for a specific user in a specific course (Admin/Instructor)
+   */
+  async getProgressByUser(
+    userId: string,
+    courseId: string
+  ): Promise<CourseProgressDetailResponse> {
+    try {
+      console.log('📊 [progressService] Getting progress for user:', userId, 'course:', courseId);
+      const response = await axios.get<CourseProgressDetailResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/users/${userId}/courses/${courseId}`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [progressService] User progress retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting user progress:', error);
+      throw error;
+    }
   }
 
-  async savePendingProgress(lessonId: string, progressData: Record<string, unknown>): Promise<void> {
-    console.log('💾 [progressService] Saving pending progress for lesson:', lessonId);
+  /**
+   * GET /api/v1/progress/courses/:courseId
+   * List all progress for a course (Admin/Instructor)
+   */
+  async listCourseProgress(
+    courseId: string,
+    page = 1,
+    pageSize = 20
+  ): Promise<ListProgressResponse> {
+    try {
+      console.log('📊 [progressService] Listing course progress for:', courseId);
+      const response = await axios.get<ListProgressResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/courses/${courseId}`),
+        {
+          headers: getAuthHeaders(),
+          params: { page, pageSize }
+        }
+      );
+      console.log('✅ [progressService] Course progress list retrieved:', response.data.totalCount, 'items');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error listing course progress:', error);
+      throw error;
+    }
   }
 
-  async syncPendingProgress(): Promise<{ success: boolean }> {
-    console.log('🔄 [progressService] Syncing pending progress');
-    return { success: true };
+  // ============================================================
+  // Statistics (2 endpoints)
+  // ============================================================
+
+  /**
+   * GET /api/v1/progress/courses/:courseId/statistics
+   * Get comprehensive statistics about student progress (Admin/Instructor)
+   */
+  async getCourseStatistics(
+    courseId: string,
+    filters?: GetCourseStatisticsRequest
+  ): Promise<ProgressStatisticsResponse> {
+    try {
+      console.log('📊 [progressService] Getting course statistics for:', courseId);
+      const response = await axios.get<ProgressStatisticsResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/courses/${courseId}/statistics`),
+        {
+          headers: getAuthHeaders(),
+          params: filters
+        }
+      );
+      console.log('✅ [progressService] Course statistics retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting course statistics:', error);
+      throw error;
+    }
   }
 
-  // Utilidades de progreso
+  /**
+   * GET /api/v1/progress/courses/:courseId/analytics
+   * Get detailed analytics and insights (Admin/Instructor)
+   */
+  async getProgressAnalytics(
+    courseId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<ProgressAnalyticsResponse> {
+    try {
+      console.log('📊 [progressService] Getting progress analytics for:', courseId);
+      const response = await axios.get<ProgressAnalyticsResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/courses/${courseId}/analytics`),
+        {
+          headers: getAuthHeaders(),
+          params: { startDate, endDate }
+        }
+      );
+      console.log('✅ [progressService] Progress analytics retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting progress analytics:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================
+  // Snapshots (2 endpoints)
+  // ============================================================
+
+  /**
+   * POST /api/v1/progress/my/courses/:courseId/snapshot
+   * Create a milestone snapshot (25%, 50%, 75%, 100%)
+   */
+  async createMilestoneSnapshot(
+    courseId: string,
+    milestoneType: MilestoneType
+  ): Promise<{ message: string }> {
+    try {
+      console.log('📊 [progressService] Creating milestone snapshot:', milestoneType, 'for course:', courseId);
+      const response = await axios.post<{ message: string }>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}/snapshot`),
+        null,
+        {
+          headers: getAuthHeaders(),
+          params: { milestoneType }
+        }
+      );
+      console.log('✅ [progressService] Milestone snapshot created successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error creating milestone snapshot:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * GET /api/v1/progress/my/courses/:courseId/snapshots
+   * Get all milestone snapshots for a course
+   */
+  async getProgressSnapshots(
+    courseId: string,
+    page = 1,
+    pageSize = 20
+  ): Promise<ListProgressHistoryResponse> {
+    try {
+      console.log('📊 [progressService] Getting progress snapshots for course:', courseId);
+      const response = await axios.get<ListProgressHistoryResponse>(
+        buildApiUrl(`${API_ENDPOINTS.PROGRESS}/my/courses/${courseId}/snapshots`),
+        {
+          headers: getAuthHeaders(),
+          params: { page, pageSize }
+        }
+      );
+      console.log('✅ [progressService] Progress snapshots retrieved:', response.data.totalCount, 'snapshots');
+      return response.data;
+    } catch (error) {
+      console.error('❌ [progressService] Error getting progress snapshots:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================
+  // Utility Functions
+  // ============================================================
+
+  /**
+   * Format time in seconds to HH:MM:SS or MM:SS
+   */
   formatTime(seconds: number): string {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
-  calculateWatchPercentage(currentPosition: number, duration: number): number {
-    if (duration <= 0) return 0;
-    return Math.min(Math.round((currentPosition / duration) * 100), 100);
+  /**
+   * Format minutes to human-readable duration
+   */
+  formatMinutes(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+
+    if (hours > 0) {
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+    return `${mins}m`;
   }
 
-  isVideoCompleted(currentPosition: number, duration: number): boolean {
-    const watchPercentage = this.calculateWatchPercentage(currentPosition, duration);
-    return watchPercentage >= 90; // Considerado completo al 90%
+  /**
+   * Calculate progress percentage
+   */
+  calculateProgressPercentage(completed: number, total: number): number {
+    if (total <= 0) return 0;
+    return Math.min(Math.round((completed / total) * 100), 100);
   }
 }
 

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificado Generado</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 56px; margin-bottom: 15px;">📜</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Tu Certificado está Listo</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Nos complace informarte que tu certificado oficial ha sido generado y está disponible para descargar.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Certificate Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 2px solid #8b5cf6; padding: 30px; border-radius: 12px;">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <div style="font-size: 40px; margin-bottom: 10px;">🎓</div>
+                                    <h2 style="margin: 0 0 10px 0; color: #5b21b6; font-size: 20px; font-weight: 700;">{{.CourseTitle}}</h2>
+                                    <p style="margin: 0; color: #6d28d9; font-size: 14px;">
+                                        Certificado N° {{.CertificateNumber}}
+                                    </p>
+                                </div>
+
+                                <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #c4b5fd;">
+                                    <table role="presentation" style="width: 100%;">
+                                        <tr>
+                                            <td style="padding: 8px 0; color: #6b7280; font-size: 13px; font-weight: 600;">Estado:</td>
+                                            <td style="padding: 8px 0; text-align: right;">
+                                                <span style="background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">✓ Verificado</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; color: #6b7280; font-size: 13px; font-weight: 600;">Formato:</td>
+                                            <td style="padding: 8px 0; text-align: right; color: #1f2937; font-size: 13px;">PDF de alta calidad</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px 0; color: #6b7280; font-size: 13px; font-weight: 600;">Validez:</td>
+                                            <td style="padding: 8px 0; text-align: right; color: #1f2937; font-size: 13px;">Permanente</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Download Section -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px; text-align: center;">
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 15px;">
+                                Haz clic en el botón de abajo para descargar tu certificado oficial
+                            </p>
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <a href="{{.DownloadURL}}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
+                                            📥 Descargar Certificado
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Features -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">¿Qué puedes hacer con tu certificado?</h3>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #10b981; font-size: 20px; margin-right: 12px;">✓</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Agregarlo a tu perfil de LinkedIn para destacar tus habilidades</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #10b981; font-size: 20px; margin-right: 12px;">✓</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Incluirlo en tu CV y portafolio profesional</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #10b981; font-size: 20px; margin-right: 12px;">✓</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Compartirlo con empleadores y reclutadores</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #10b981; font-size: 20px; margin-right: 12px;">✓</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Verificar su autenticidad con el número de certificado único</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Info Box -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 6px;">
+                                <p style="margin: 0 0 10px 0; color: #1e40af; font-size: 14px; font-weight: 600;">
+                                    💡 Consejo profesional
+                                </p>
+                                <p style="margin: 0; color: #1e40af; font-size: 13px; line-height: 1.6;">
+                                    Tu certificado incluye un código QR y número de verificación únicos que permiten a cualquier persona validar su autenticidad en nuestra plataforma.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <a href="{{.CertificatesURL}}" style="display: inline-block; background-color: #ffffff; color: #8b5cf6; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; border: 2px solid #8b5cf6;">
+                                            Ver Todos Mis Certificados
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                ¡Felicitaciones por tu logro!
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

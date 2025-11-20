@@ -53,6 +53,49 @@ func (mr *MigrationRunner) RunTenantMigrations(tenantID, migrationsPath string) 
 	return nil
 }
 
+// RunAllTenantMigrations ejecuta las migraciones para todos los tenants activos
+func (mr *MigrationRunner) RunAllTenantMigrations(migrationsPath string) error {
+	log.Println("🔄 Running migrations for all active tenants...")
+
+	// Get all active tenants from control DB
+	query := `SELECT id, database_name FROM tenants WHERE status = 'active'`
+	rows, err := mr.manager.GetControlDB().Query(query)
+	if err != nil {
+		return fmt.Errorf("failed to query active tenants: %w", err)
+	}
+	defer rows.Close()
+
+	var failedTenants []string
+	successCount := 0
+
+	for rows.Next() {
+		var tenantID, dbName string
+		if err := rows.Scan(&tenantID, &dbName); err != nil {
+			log.Printf("⚠️  Failed to scan tenant row: %v", err)
+			continue
+		}
+
+		// Run migrations for this tenant
+		if err := mr.RunTenantMigrations(tenantID, migrationsPath); err != nil {
+			log.Printf("❌ Failed to run migrations for tenant %s (%s): %v", tenantID, dbName, err)
+			failedTenants = append(failedTenants, tenantID)
+		} else {
+			successCount++
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating tenant rows: %w", err)
+	}
+
+	log.Printf("✅ Tenant migrations completed: %d successful", successCount)
+	if len(failedTenants) > 0 {
+		return fmt.Errorf("%d tenant migrations failed: %v", len(failedTenants), failedTenants)
+	}
+
+	return nil
+}
+
 // runMigrations ejecuta las migraciones en una base de datos específica
 func (mr *MigrationRunner) runMigrations(db *sql.DB, dbName, migrationsPath string) error {
 	// Crear driver de PostgreSQL

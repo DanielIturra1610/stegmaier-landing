@@ -9,6 +9,7 @@ import (
 // CreateLessonRequest represents a request to create a lesson
 type CreateLessonRequest struct {
 	CourseID    uuid.UUID   `json:"course_id" validate:"required"`
+	ModuleID    uuid.UUID   `json:"module_id" validate:"required"`
 	Title       string      `json:"title" validate:"required,min=3,max=200"`
 	Description *string     `json:"description,omitempty" validate:"omitempty,max=1000"`
 	ContentType ContentType `json:"content_type" validate:"required"`
@@ -49,6 +50,7 @@ func (req *CreateLessonRequest) Validate() error {
 
 // UpdateLessonRequest represents a request to update a lesson
 type UpdateLessonRequest struct {
+	ModuleID    *uuid.UUID  `json:"module_id,omitempty"`
 	Title       *string     `json:"title,omitempty" validate:"omitempty,min=3,max=200"`
 	Description *string     `json:"description,omitempty" validate:"omitempty,max=1000"`
 	ContentType *ContentType `json:"content_type,omitempty"`
@@ -135,6 +137,7 @@ type LessonResponse struct {
 	ID          uuid.UUID   `json:"id"`
 	TenantID    uuid.UUID   `json:"tenant_id"`
 	CourseID    uuid.UUID   `json:"course_id"`
+	ModuleID    *uuid.UUID  `json:"module_id,omitempty"`
 	Title       string      `json:"title"`
 	Description *string     `json:"description,omitempty"`
 	ContentType ContentType `json:"content_type"`
@@ -152,6 +155,7 @@ type LessonDetailResponse struct {
 	ID          uuid.UUID   `json:"id"`
 	TenantID    uuid.UUID   `json:"tenant_id"`
 	CourseID    uuid.UUID   `json:"course_id"`
+	ModuleID    *uuid.UUID  `json:"module_id,omitempty"`
 	Title       string      `json:"title"`
 	Description *string     `json:"description,omitempty"`
 	ContentType ContentType `json:"content_type"`
@@ -209,6 +213,7 @@ func (lr *LessonResponse) FromEntity(lesson *Lesson) {
 	lr.ID = lesson.ID
 	lr.TenantID = lesson.TenantID
 	lr.CourseID = lesson.CourseID
+	lr.ModuleID = lesson.ModuleID
 	lr.Title = lesson.Title
 	lr.Description = lesson.Description
 	lr.ContentType = lesson.ContentType
@@ -226,6 +231,7 @@ func (ldr *LessonDetailResponse) FromEntity(lesson *Lesson) {
 	ldr.ID = lesson.ID
 	ldr.TenantID = lesson.TenantID
 	ldr.CourseID = lesson.CourseID
+	ldr.ModuleID = lesson.ModuleID
 	ldr.Title = lesson.Title
 	ldr.Description = lesson.Description
 	ldr.ContentType = lesson.ContentType

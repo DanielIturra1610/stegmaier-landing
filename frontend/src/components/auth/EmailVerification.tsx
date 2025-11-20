@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import Alert from '../ui/Alert';
+import { Alert } from '@/components/ui/alert';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 /**

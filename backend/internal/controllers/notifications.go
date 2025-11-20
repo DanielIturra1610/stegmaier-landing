@@ -22,6 +22,50 @@ func NewNotificationController(notificationService ports.NotificationService) *N
 }
 
 // ============================================================================
+// Helper Functions for Context Extraction
+// ============================================================================
+
+// getUserIDFromContext safely extracts and parses userID from Fiber context
+func getUserIDFromContext(c *fiber.Ctx) (uuid.UUID, error) {
+	userIDRaw := c.Locals("userID")
+	if userIDRaw == nil {
+		return uuid.Nil, fiber.NewError(fiber.StatusUnauthorized, "User ID not found in context")
+	}
+
+	userIDStr, ok := userIDRaw.(string)
+	if !ok {
+		return uuid.Nil, fiber.NewError(fiber.StatusInternalServerError, "Invalid user ID type in context")
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return uuid.Nil, fiber.NewError(fiber.StatusBadRequest, "Invalid user ID format")
+	}
+
+	return userID, nil
+}
+
+// getTenantIDFromContext safely extracts and parses tenantID from Fiber context
+func getTenantIDFromContext(c *fiber.Ctx) (uuid.UUID, error) {
+	tenantIDRaw := c.Locals("tenant_id") // Use snake_case key to match TenantMiddleware
+	if tenantIDRaw == nil {
+		return uuid.Nil, fiber.NewError(fiber.StatusBadRequest, "Tenant ID not found in context")
+	}
+
+	tenantIDStr, ok := tenantIDRaw.(string)
+	if !ok {
+		return uuid.Nil, fiber.NewError(fiber.StatusInternalServerError, "Invalid tenant ID type in context")
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return uuid.Nil, fiber.NewError(fiber.StatusBadRequest, "Invalid tenant ID format")
+	}
+
+	return tenantID, nil
+}
+
+// ============================================================================
 // Notification CRUD Operations
 // ============================================================================
 
@@ -29,9 +73,9 @@ func NewNotificationController(notificationService ports.NotificationService) *N
 // POST /api/v1/notifications
 func (ctrl *NotificationController) CreateNotification(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -58,9 +102,9 @@ func (ctrl *NotificationController) CreateNotification(c *fiber.Ctx) error {
 // POST /api/v1/notifications/bulk
 func (ctrl *NotificationController) CreateBulkNotifications(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -96,15 +140,15 @@ func (ctrl *NotificationController) GetNotification(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Call service
@@ -120,15 +164,15 @@ func (ctrl *NotificationController) GetNotification(c *fiber.Ctx) error {
 // GET /api/v1/notifications
 func (ctrl *NotificationController) GetUserNotifications(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse query parameters
@@ -183,15 +227,15 @@ func (ctrl *NotificationController) UpdateNotificationStatus(c *fiber.Ctx) error
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Parse request body
@@ -223,15 +267,15 @@ func (ctrl *NotificationController) MarkAsRead(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Call service
@@ -252,15 +296,15 @@ func (ctrl *NotificationController) MarkAsUnread(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Call service
@@ -281,15 +325,15 @@ func (ctrl *NotificationController) ArchiveNotification(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Call service
@@ -310,15 +354,15 @@ func (ctrl *NotificationController) DeleteNotification(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Call service
@@ -337,15 +381,15 @@ func (ctrl *NotificationController) DeleteNotification(c *fiber.Ctx) error {
 // POST /api/v1/notifications/mark-all-read
 func (ctrl *NotificationController) MarkAllAsRead(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service
@@ -360,15 +404,15 @@ func (ctrl *NotificationController) MarkAllAsRead(c *fiber.Ctx) error {
 // DELETE /api/v1/notifications/read
 func (ctrl *NotificationController) DeleteAllRead(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service
@@ -387,15 +431,15 @@ func (ctrl *NotificationController) DeleteAllRead(c *fiber.Ctx) error {
 // GET /api/v1/notifications/unread/count
 func (ctrl *NotificationController) GetUnreadCount(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service
@@ -417,9 +461,9 @@ func (ctrl *NotificationController) GetUnreadCount(c *fiber.Ctx) error {
 // POST /api/v1/notifications/course-completion
 func (ctrl *NotificationController) SendCourseCompletionNotification(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -440,9 +484,9 @@ func (ctrl *NotificationController) SendCourseCompletionNotification(c *fiber.Ct
 // POST /api/v1/notifications/progress
 func (ctrl *NotificationController) SendProgressNotification(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -463,9 +507,9 @@ func (ctrl *NotificationController) SendProgressNotification(c *fiber.Ctx) error
 // POST /api/v1/notifications/enrollment
 func (ctrl *NotificationController) SendEnrollmentNotification(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -486,9 +530,9 @@ func (ctrl *NotificationController) SendEnrollmentNotification(c *fiber.Ctx) err
 // POST /api/v1/notifications/quiz-completion
 func (ctrl *NotificationController) SendQuizCompletionNotification(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -509,9 +553,9 @@ func (ctrl *NotificationController) SendQuizCompletionNotification(c *fiber.Ctx)
 // POST /api/v1/notifications/announcements
 func (ctrl *NotificationController) SendAnnouncement(c *fiber.Ctx) error {
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -536,15 +580,15 @@ func (ctrl *NotificationController) SendAnnouncement(c *fiber.Ctx) error {
 // GET /api/v1/notifications/preferences
 func (ctrl *NotificationController) GetUserPreferences(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service
@@ -560,15 +604,15 @@ func (ctrl *NotificationController) GetUserPreferences(c *fiber.Ctx) error {
 // PUT /api/v1/notifications/preferences
 func (ctrl *NotificationController) UpdateUserPreferences(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -594,15 +638,15 @@ func (ctrl *NotificationController) UpdateUserPreferences(c *fiber.Ctx) error {
 // POST /api/v1/notifications/push/subscribe
 func (ctrl *NotificationController) CreatePushSubscription(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Parse request body
@@ -624,15 +668,15 @@ func (ctrl *NotificationController) CreatePushSubscription(c *fiber.Ctx) error {
 // GET /api/v1/notifications/push/subscriptions
 func (ctrl *NotificationController) GetUserPushSubscriptions(c *fiber.Ctx) error {
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service
@@ -654,15 +698,15 @@ func (ctrl *NotificationController) DeletePushSubscription(c *fiber.Ctx) error {
 	}
 
 	// Get user ID from context
-	userID, err := uuid.Parse(c.Locals("userID").(string))
+	userID, err := getUserIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+		return err
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := getTenantIDFromContext(c)
 	if err != nil {
-		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+		return err
 	}
 
 	// Call service

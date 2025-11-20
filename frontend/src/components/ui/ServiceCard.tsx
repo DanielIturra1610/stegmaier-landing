@@ -3,7 +3,7 @@ import { useState } from 'react'
 import * as L from 'lucide-react'
 import type { Service } from '../../types'
 import { cn } from '../../lib/utils'
-import Button from './button'
+import { Button } from './button'
 import React from 'react';
 
 interface ServiceCardProps extends Omit<Service, 'benefits' | 'timeframe'> {

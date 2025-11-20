@@ -1,5 +1,39 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  Settings,
+  Bell,
+  Palette,
+  Sliders,
+  Globe,
+  Clock,
+  Mail,
+  BookOpen,
+  Award,
+  Moon,
+  Sun,
+  Type,
+  Play,
+  Download,
+  CheckCircle,
+  RotateCcw,
+  Trash2,
+  Eye,
+  EyeOff
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 /**
  * Página de configuración de la plataforma
@@ -7,7 +41,6 @@ import { useAuth } from '../../contexts/AuthContext';
  */
 const SettingsPage: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'appearance' | 'advanced'>('general');
   
   // Estados para opciones de configuración
   const [settings, setSettings] = useState({
@@ -59,373 +92,495 @@ const SettingsPage: React.FC = () => {
     });
   };
 
-  // Clases para pestañas activas/inactivas
-  const getTabClasses = (tab: 'general' | 'notifications' | 'appearance' | 'advanced') => {
-    return activeTab === tab
-      ? "text-primary-600 border-b-2 border-primary-600 px-4 py-2 font-medium text-sm"
-      : "text-gray-500 hover:text-gray-700 px-4 py-2 font-medium text-sm cursor-pointer border-b-2 border-transparent hover:border-gray-300";
-  };
-
-  // Componente para toggles de configuración
-  const ToggleSwitch: React.FC<{
-    label: string;
-    description?: string;
-    isChecked: boolean;
-    onChange: () => void;
-  }> = ({ label, description, isChecked, onChange }) => {
-    return (
-      <div className="flex items-center justify-between py-3">
-        <div>
-          <h4 className="text-sm font-medium text-gray-900">{label}</h4>
-          {description && <p className="text-xs text-gray-500">{description}</p>}
-        </div>
-        <button
-          type="button"
-          className={`${
-            isChecked ? 'bg-primary-600' : 'bg-gray-200'
-          } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-          role="switch"
-          aria-checked={isChecked}
-          onClick={onChange}
-        >
-          <span className="sr-only">{label}</span>
-          <span
-            aria-hidden="true"
-            className={`${
-              isChecked ? 'translate-x-5' : 'translate-x-0'
-            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-          />
-        </button>
-      </div>
-    );
-  };
-
-  // Componente para selección de opciones
-  const SelectOption: React.FC<{
-    label: string;
-    description?: string;
-    options: { value: string; label: string }[];
-    value: string;
-    onChange: (value: string) => void;
-  }> = ({ label, description, options, value, onChange }) => {
-    return (
-      <div className="py-3">
-        <div className="mb-1">
-          <label htmlFor={label.toLowerCase().replace(/\s+/g, '-')} className="text-sm font-medium text-gray-900">
-            {label}
-          </label>
-          {description && <p className="text-xs text-gray-500">{description}</p>}
-        </div>
-        <select
-          id={label.toLowerCase().replace(/\s+/g, '-')}
-          name={label.toLowerCase().replace(/\s+/g, '-')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6 pb-10">
-
-
-      {/* Contenido principal */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Navegación por pestañas */}
-        <div className="border-b border-gray-200">
-          <nav className="flex -mb-px px-4" aria-label="Tabs">
-            <button
-              onClick={() => setActiveTab('general')}
-              className={getTabClasses('general')}
-            >
-              General
-            </button>
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={getTabClasses('notifications')}
-            >
-              Notificaciones
-            </button>
-            <button
-              onClick={() => setActiveTab('appearance')}
-              className={getTabClasses('appearance')}
-            >
-              Apariencia
-            </button>
-            <button
-              onClick={() => setActiveTab('advanced')}
-              className={getTabClasses('advanced')}
-            >
-              Avanzado
-            </button>
-          </nav>
-        </div>
-        
-        {/* Contenido de cada pestaña */}
-        <div className="p-6">
-          {/* Configuración general */}
-          {activeTab === 'general' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-                Configuración General
-              </h2>
-
-              <SelectOption
-                label="Idioma"
-                description="Idioma de la plataforma"
-                options={[
-                  { value: 'es', label: 'Español' },
-                  { value: 'en', label: 'English' },
-                  { value: 'pt', label: 'Português' }
-                ]}
-                value={settings.general.language}
-                onChange={(value) => handleSelectChange('general', 'language', value)}
-              />
-
-              <SelectOption
-                label="Zona horaria"
-                description="Zona horaria para fechas y horarios"
-                options={[
-                  { value: 'America/Santiago', label: 'Santiago (GMT-4)' },
-                  { value: 'America/Mexico_City', label: 'Ciudad de México (GMT-6)' },
-                  { value: 'America/Bogota', label: 'Bogotá (GMT-5)' },
-                  { value: 'America/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
-                  { value: 'Europe/Madrid', label: 'Madrid (GMT+1)' }
-                ]}
-                value={settings.general.timeZone}
-                onChange={(value) => handleSelectChange('general', 'timeZone', value)}
-              />
-
-              <div className="border-t border-gray-200 pt-4 mt-4">
-                <ToggleSwitch
-                  label="Notificaciones por correo"
-                  description="Recibir notificaciones importantes por correo electrónico"
-                  isChecked={settings.general.emailNotifications}
-                  onChange={() => handleToggle('general', 'emailNotifications')}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Guardar cambios
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Configuración de notificaciones */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-                Preferencias de Notificaciones
-              </h2>
-
-              <div className="divide-y divide-gray-200">
-                <ToggleSwitch
-                  label="Actualizaciones de cursos"
-                  description="Recibir notificaciones cuando los cursos se actualicen"
-                  isChecked={settings.notifications.courseUpdates}
-                  onChange={() => handleToggle('notifications', 'courseUpdates')}
-                />
-
-                <ToggleSwitch
-                  label="Nuevas lecciones"
-                  description="Notificaciones cuando se añadan nuevas lecciones a tus cursos"
-                  isChecked={settings.notifications.newLessons}
-                  onChange={() => handleToggle('notifications', 'newLessons')}
-                />
-
-                <ToggleSwitch
-                  label="Recordatorios de finalización"
-                  description="Recordatorios para continuar cursos en progreso"
-                  isChecked={settings.notifications.completionReminders}
-                  onChange={() => handleToggle('notifications', 'completionReminders')}
-                />
-
-                <ToggleSwitch
-                  label="Emails de marketing"
-                  description="Recibir información sobre nuevos cursos y ofertas"
-                  isChecked={settings.notifications.marketingEmails}
-                  onChange={() => handleToggle('notifications', 'marketingEmails')}
-                />
-
-                <ToggleSwitch
-                  label="Logros y certificados"
-                  description="Notificaciones cuando obtengas logros o certificados"
-                  isChecked={settings.notifications.achievements}
-                  onChange={() => handleToggle('notifications', 'achievements')}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Guardar cambios
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Configuración de apariencia */}
-          {activeTab === 'appearance' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-                Apariencia y Accesibilidad
-              </h2>
-
-              <SelectOption
-                label="Tema"
-                description="Apariencia visual de la plataforma"
-                options={[
-                  { value: 'light', label: 'Claro' },
-                  { value: 'dark', label: 'Oscuro' },
-                  { value: 'system', label: 'Ajuste del sistema' }
-                ]}
-                value={settings.appearance.theme}
-                onChange={(value) => handleSelectChange('appearance', 'theme', value)}
-              />
-
-              <SelectOption
-                label="Tamaño de fuente"
-                description="Escala del texto en la plataforma"
-                options={[
-                  { value: 'small', label: 'Pequeño' },
-                  { value: 'medium', label: 'Mediano' },
-                  { value: 'large', label: 'Grande' }
-                ]}
-                value={settings.appearance.fontScale}
-                onChange={(value) => handleSelectChange('appearance', 'fontScale', value)}
-              />
-
-              <div className="divide-y divide-gray-200 pt-2">
-                <ToggleSwitch
-                  label="Movimiento reducido"
-                  description="Reducir o eliminar animaciones y transiciones"
-                  isChecked={settings.appearance.reducedMotion}
-                  onChange={() => handleToggle('appearance', 'reducedMotion')}
-                />
-
-                <ToggleSwitch
-                  label="Alto contraste"
-                  description="Aumentar el contraste para mejor legibilidad"
-                  isChecked={settings.appearance.highContrast}
-                  onChange={() => handleToggle('appearance', 'highContrast')}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end">
-                <button
-                  type="button"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                >
-                  Aplicar cambios
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Configuración avanzada */}
-          {activeTab === 'advanced' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-                Configuración Avanzada
-              </h2>
-
-              <div className="divide-y divide-gray-200">
-                <ToggleSwitch
-                  label="Reproducción automática"
-                  description="Reproducir videos automáticamente al cargar lecciones"
-                  isChecked={settings.advanced.autoPlay}
-                  onChange={() => handleToggle('advanced', 'autoPlay')}
-                />
-
-                <ToggleSwitch
-                  label="Avance automático"
-                  description="Avanzar automáticamente a la siguiente lección al completar"
-                  isChecked={settings.advanced.autoAdvance}
-                  onChange={() => handleToggle('advanced', 'autoAdvance')}
-                />
-
-                <ToggleSwitch
-                  label="Descargar transcripciones"
-                  description="Habilitar opción para descargar transcripciones de lecciones"
-                  isChecked={settings.advanced.downloadTranscripts}
-                  onChange={() => handleToggle('advanced', 'downloadTranscripts')}
-                />
-
-                <ToggleSwitch
-                  label="Mostrar subtítulos"
-                  description="Mostrar subtítulos en videos automáticamente"
-                  isChecked={settings.advanced.showCaptions}
-                  onChange={() => handleToggle('advanced', 'showCaptions')}
-                />
-              </div>
-
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <h3 className="text-md font-medium text-gray-900 mb-3">Datos del curso</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <button
-                      type="button"
-                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                    >
-                      <svg className="mr-2 -ml-1 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Exportar datos de progreso
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                    >
-                      <svg className="mr-2 -ml-1 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Sincronizar progreso
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <h3 className="text-md font-medium text-red-600 mb-2">Zona de peligro</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Las siguientes acciones son permanentes y no se pueden deshacer.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Reiniciar progreso de cursos
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center px-4 py-2 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Eliminar cuenta y datos
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <Settings className="w-8 h-8" />
+          Configuración
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Administra las preferencias de tu cuenta y la plataforma
+        </p>
       </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="general" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            <span className="hidden sm:inline">General</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Notificaciones</span>
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            <span className="hidden sm:inline">Apariencia</span>
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-2">
+            <Sliders className="w-4 h-4" />
+            <span className="hidden sm:inline">Avanzado</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* General Settings Tab */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Configuración General
+              </CardTitle>
+              <CardDescription>
+                Idioma, zona horaria y preferencias básicas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Idioma
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Idioma de la plataforma
+                </p>
+                <Select
+                  value={settings.general.language}
+                  onValueChange={(value) => handleSelectChange('general', 'language', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="pt">Português</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Zona horaria
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Zona horaria para fechas y horarios
+                </p>
+                <Select
+                  value={settings.general.timeZone}
+                  onValueChange={(value) => handleSelectChange('general', 'timeZone', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="America/Santiago">Santiago (GMT-4)</SelectItem>
+                    <SelectItem value="America/Mexico_City">Ciudad de México (GMT-6)</SelectItem>
+                    <SelectItem value="America/Bogota">Bogotá (GMT-5)</SelectItem>
+                    <SelectItem value="America/Buenos_Aires">Buenos Aires (GMT-3)</SelectItem>
+                    <SelectItem value="Europe/Madrid">Madrid (GMT+1)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Notificaciones por correo
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Recibir notificaciones importantes por correo electrónico
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.general.emailNotifications}
+                  onCheckedChange={() => handleToggle('general', 'emailNotifications')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-end">
+                <Button>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Guardar cambios
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Preferencias de Notificaciones
+              </CardTitle>
+              <CardDescription>
+                Controla qué notificaciones quieres recibir
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Actualizaciones de cursos
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Recibir notificaciones cuando los cursos se actualicen
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.notifications.courseUpdates}
+                  onCheckedChange={() => handleToggle('notifications', 'courseUpdates')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Nuevas lecciones
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Notificaciones cuando se añadan nuevas lecciones a tus cursos
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.notifications.newLessons}
+                  onCheckedChange={() => handleToggle('notifications', 'newLessons')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Recordatorios de finalización
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Recordatorios para continuar cursos en progreso
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.notifications.completionReminders}
+                  onCheckedChange={() => handleToggle('notifications', 'completionReminders')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Emails de marketing
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Recibir información sobre nuevos cursos y ofertas
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.notifications.marketingEmails}
+                  onCheckedChange={() => handleToggle('notifications', 'marketingEmails')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Award className="w-4 h-4" />
+                    Logros y certificados
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Notificaciones cuando obtengas logros o certificados
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.notifications.achievements}
+                  onCheckedChange={() => handleToggle('notifications', 'achievements')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-end">
+                <Button>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Guardar cambios
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Appearance Tab */}
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Apariencia y Accesibilidad
+              </CardTitle>
+              <CardDescription>
+                Personaliza la apariencia visual de la plataforma
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Moon className="w-4 h-4" />
+                  Tema
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Apariencia visual de la plataforma
+                </p>
+                <Select
+                  value={settings.appearance.theme}
+                  onValueChange={(value) => handleSelectChange('appearance', 'theme', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">
+                      <div className="flex items-center gap-2">
+                        <Sun className="w-4 h-4" />
+                        Claro
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="dark">
+                      <div className="flex items-center gap-2">
+                        <Moon className="w-4 h-4" />
+                        Oscuro
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="system">Ajuste del sistema</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Type className="w-4 h-4" />
+                  Tamaño de fuente
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Escala del texto en la plataforma
+                </p>
+                <Select
+                  value={settings.appearance.fontScale}
+                  onValueChange={(value) => handleSelectChange('appearance', 'fontScale', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">Pequeño</SelectItem>
+                    <SelectItem value="medium">Mediano</SelectItem>
+                    <SelectItem value="large">Grande</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <EyeOff className="w-4 h-4" />
+                    Movimiento reducido
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Reducir o eliminar animaciones y transiciones
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.appearance.reducedMotion}
+                  onCheckedChange={() => handleToggle('appearance', 'reducedMotion')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    Alto contraste
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Aumentar el contraste para mejor legibilidad
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.appearance.highContrast}
+                  onCheckedChange={() => handleToggle('appearance', 'highContrast')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-end">
+                <Button>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Aplicar cambios
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Advanced Settings Tab */}
+        <TabsContent value="advanced" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sliders className="w-5 h-5" />
+                Configuración Avanzada
+              </CardTitle>
+              <CardDescription>
+                Opciones avanzadas de reproducción y contenido
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Play className="w-4 h-4" />
+                    Reproducción automática
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Reproducir videos automáticamente al cargar lecciones
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.advanced.autoPlay}
+                  onCheckedChange={() => handleToggle('advanced', 'autoPlay')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Avance automático
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Avanzar automáticamente a la siguiente lección al completar
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.advanced.autoAdvance}
+                  onCheckedChange={() => handleToggle('advanced', 'autoAdvance')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Descargar transcripciones
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Habilitar opción para descargar transcripciones de lecciones
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.advanced.downloadTranscripts}
+                  onCheckedChange={() => handleToggle('advanced', 'downloadTranscripts')}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium">Mostrar subtítulos</label>
+                  <p className="text-xs text-muted-foreground">
+                    Mostrar subtítulos en videos automáticamente
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.advanced.showCaptions}
+                  onCheckedChange={() => handleToggle('advanced', 'showCaptions')}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Data Management Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Datos del curso</CardTitle>
+              <CardDescription>
+                Exportar y sincronizar tu progreso
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Button variant="outline" className="w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar datos de progreso
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Sincronizar progreso
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Alert variant="destructive">
+            <Trash2 className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-1">Zona de peligro</h3>
+                  <p className="text-sm">
+                    Las siguientes acciones son permanentes y no se pueden deshacer.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button variant="destructive" size="sm" className="w-full">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reiniciar progreso
+                  </Button>
+                  <Button variant="destructive" size="sm" className="w-full">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar cuenta
+                  </Button>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

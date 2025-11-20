@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"log"
+
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/gofiber/fiber/v2"
@@ -21,20 +23,34 @@ func NewAuthController(authService ports.AuthService) *AuthController {
 // Register handles user registration
 // POST /api/v1/auth/register
 func (ctrl *AuthController) Register(c *fiber.Ctx) error {
+	log.Println("🔵 Register handler called")
 	var dto domain.RegisterDTO
 	if err := c.BodyParser(&dto); err != nil {
+		log.Printf("❌ Body parse error: %v\n", err)
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
 	}
+	log.Printf("✅ Body parsed successfully: %s\n", dto.Email)
 
 	// Get tenant ID from context (set by tenant middleware)
-	tenantID := c.Locals("tenantID").(string)
+	// For public registration without tenant, we'll use empty string
+	// The service layer will handle tenant assignment
+	tenantID := ""
+	if tid := c.Locals("tenant_id"); tid != nil {
+		if tidStr, ok := tid.(string); ok {
+			tenantID = tidStr
+		}
+	}
+	log.Printf("🔵 TenantID: %s\n", tenantID)
 
 	// Call service using Fiber's context
+	log.Println("🔵 Calling authService.Register...")
 	response, err := ctrl.authService.Register(c.Context(), tenantID, &dto)
 	if err != nil {
+		log.Printf("❌ Service error: %v\n", err)
 		return HandleError(c, err)
 	}
 
+	log.Println("✅ Registration successful")
 	return SuccessResponse(c, fiber.StatusCreated, "User registered successfully", response)
 }
 
@@ -46,8 +62,13 @@ func (ctrl *AuthController) Login(c *fiber.Ctx) error {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	// Get tenant ID from context
-	tenantID := c.Locals("tenantID").(string)
+	// Get tenant ID from context (may be empty for users without tenant)
+	tenantID := ""
+	if tid := c.Locals("tenant_id"); tid != nil {
+		if tidStr, ok := tid.(string); ok {
+			tenantID = tidStr
+		}
+	}
 
 	// Call service using Fiber's context
 	response, err := ctrl.authService.Login(c.Context(), tenantID, &dto)
@@ -138,7 +159,7 @@ func (ctrl *AuthController) ForgotPassword(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID := c.Locals("tenantID").(string)
+	tenantID := c.Locals("tenant_id").(string)
 
 	// Call service using Fiber's context
 	err := ctrl.authService.ForgotPassword(c.Context(), tenantID, &dto)

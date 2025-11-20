@@ -61,9 +61,8 @@ func (s *JWTService) Generate(claims *Claims) (string, error) {
 		return "", fmt.Errorf("user_id claim is required")
 	}
 
-	if claims.TenantID == "" {
-		return "", fmt.Errorf("tenant_id claim is required")
-	}
+	// Note: TenantID is optional - users can register without a tenant
+	// and select one later via tenant selection flow
 
 	// Set registered claims
 	now := time.Now()

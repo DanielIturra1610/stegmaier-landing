@@ -36,13 +36,13 @@ func (c *MediaController) UploadMedia(ctx *fiber.Ctx) error {
 	// Obtener archivo del formulario
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "No file provided", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "No file provided")
 	}
 
 	// Abrir archivo
 	fileReader, err := file.Open()
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to open file", err)
+		return ErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to open file")
 	}
 	defer fileReader.Close()
 
@@ -75,7 +75,8 @@ func (c *MediaController) UploadMedia(ctx *fiber.Ctx) error {
 	// Subir archivo
 	response, err := c.service.UploadMedia(req, fileReader)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusCreated, "Media uploaded successfully", response)
@@ -89,12 +90,12 @@ func (c *MediaController) UploadMultiple(ctx *fiber.Ctx) error {
 	// Obtener todos los archivos del formulario
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "No files provided", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "No files provided")
 	}
 
 	files := form.File["files"]
 	if len(files) == 0 {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "No files provided", nil)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "No files provided")
 	}
 
 	// Preparar requests y readers
@@ -129,7 +130,8 @@ func (c *MediaController) UploadMultiple(ctx *fiber.Ctx) error {
 	// Subir archivos
 	responses, err := c.service.UploadMultiple(requests, readers)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusCreated, fmt.Sprintf("Uploaded %d files successfully", len(responses)), responses)
@@ -146,12 +148,13 @@ func (c *MediaController) GetMedia(ctx *fiber.Ctx) error {
 
 	mediaID, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	response, err := c.service.GetMedia(tenantID, userID, mediaID)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Media retrieved successfully", response)
@@ -164,7 +167,7 @@ func (c *MediaController) GetUserMedia(ctx *fiber.Ctx) error {
 
 	targetUserID, err := uuid.Parse(ctx.Params("userId", userID.String()))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid user ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid user ID")
 	}
 
 	limit := ctx.QueryInt("limit", 20)
@@ -172,7 +175,8 @@ func (c *MediaController) GetUserMedia(ctx *fiber.Ctx) error {
 
 	response, err := c.service.GetUserMedia(tenantID, targetUserID, limit, offset)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "User media retrieved successfully", response)
@@ -188,7 +192,8 @@ func (c *MediaController) GetMyMedia(ctx *fiber.Ctx) error {
 
 	response, err := c.service.GetUserMedia(tenantID, userID, limit, offset)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "My media retrieved successfully", response)
@@ -241,7 +246,8 @@ func (c *MediaController) ListMedia(ctx *fiber.Ctx) error {
 
 	response, err := c.service.ListMedia(filters)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Media list retrieved successfully", response)
@@ -254,17 +260,18 @@ func (c *MediaController) UpdateMedia(ctx *fiber.Ctx) error {
 
 	mediaID, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	var req domain.UpdateMediaRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	response, err := c.service.UpdateMedia(tenantID, userID, mediaID, req)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Media updated successfully", response)
@@ -277,11 +284,12 @@ func (c *MediaController) DeleteMedia(ctx *fiber.Ctx) error {
 
 	mediaID, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	if err := c.service.DeleteMedia(tenantID, userID, mediaID); err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Media deleted successfully", nil)
@@ -298,14 +306,15 @@ func (c *MediaController) GetDownloadURL(ctx *fiber.Ctx) error {
 
 	mediaID, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	expirySeconds := ctx.QueryInt("expiry", 3600) // Default 1 hour
 
 	url, err := c.service.GetMediaDownloadURL(tenantID, userID, mediaID, expirySeconds)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Download URL generated successfully", fiber.Map{
@@ -321,12 +330,13 @@ func (c *MediaController) DownloadMedia(ctx *fiber.Ctx) error {
 
 	mediaID, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid media ID")
 	}
 
 	reader, media, err := c.service.DownloadMedia(tenantID, userID, mediaID)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 	defer reader.Close()
 
@@ -350,7 +360,7 @@ func (c *MediaController) SearchMedia(ctx *fiber.Ctx) error {
 
 	query := ctx.Query("q", "")
 	if query == "" {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Search query is required", nil)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Search query is required")
 	}
 
 	limit := ctx.QueryInt("limit", 20)
@@ -358,7 +368,8 @@ func (c *MediaController) SearchMedia(ctx *fiber.Ctx) error {
 
 	response, err := c.service.SearchMedia(tenantID, userID, query, limit, offset)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Search completed successfully", response)
@@ -372,12 +383,13 @@ func (c *MediaController) GetMediaByContext(ctx *fiber.Ctx) error {
 	context := domain.MediaContext(ctx.Params("context"))
 	contextID, err := uuid.Parse(ctx.Params("contextId"))
 	if err != nil {
-		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid context ID", err)
+		return ErrorResponse(ctx, fiber.StatusBadRequest, "Invalid context ID")
 	}
 
 	response, err := c.service.GetMediaByContext(tenantID, userID, context, contextID)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Context media retrieved successfully", response)
@@ -393,7 +405,8 @@ func (c *MediaController) GetStorageStats(ctx *fiber.Ctx) error {
 
 	stats, err := c.service.GetStorageStats(tenantID)
 	if err != nil {
-		return ErrorResponse(ctx, MapDomainError(err))
+		statusCode, message := MapDomainError(err)
+		return ErrorResponse(ctx, statusCode, message)
 	}
 
 	return SuccessResponse(ctx, fiber.StatusOK, "Storage stats retrieved successfully", stats)

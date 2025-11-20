@@ -27,6 +27,7 @@ type ServerConfig struct {
 	Port        string
 	Environment string
 	CORSOrigins []string
+	BaseURL     string // Base URL for generating links (e.g., "https://lms.stegmaier.com" or "http://localhost:8080")
 }
 
 // DatabaseConfig contiene la configuración de bases de datos
@@ -80,11 +81,14 @@ type RedisConfig struct {
 
 // StorageConfig contiene la configuración de almacenamiento
 type StorageConfig struct {
-	Type            string
+	Type            string // "local", "s3", "minio"
 	AWSAccessKey    string
 	AWSSecretKey    string
 	AWSRegion       string
 	S3Bucket        string
+	Endpoint        string // MinIO endpoint (e.g., "localhost:9000")
+	BucketPrefix    string // Prefix for bucket names per tenant
+	UseSSL          bool   // SSL for MinIO/S3
 }
 
 // LoggingConfig contiene la configuración de logging
@@ -133,6 +137,7 @@ func loadServerConfig() ServerConfig {
 		Port:        getEnv("PORT", "8000"),
 		Environment: getEnv("ENV", "development"),
 		CORSOrigins: strings.Split(corsOrigins, ","),
+		BaseURL:     getEnv("BASE_URL", "http://localhost:8000"),
 	}
 }
 
@@ -209,6 +214,9 @@ func loadStorageConfig() StorageConfig {
 		AWSSecretKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
 		AWSRegion:    getEnv("AWS_REGION", "us-east-1"),
 		S3Bucket:     getEnv("AWS_S3_BUCKET", "stegmaier-media"),
+		Endpoint:     getEnv("STORAGE_ENDPOINT", ""),
+		BucketPrefix: getEnv("STORAGE_BUCKET_PREFIX", "stegmaier"),
+		UseSSL:       getEnvAsBool("STORAGE_USE_SSL", true),
 	}
 }
 
@@ -293,6 +301,11 @@ func (c *Config) IsDevelopment() bool {
 // IsProduction retorna true si el entorno es producción
 func (c *Config) IsProduction() bool {
 	return c.Server.Environment == "production"
+}
+
+// GetRedisAddr retorna la dirección de conexión a Redis
+func (r *RedisConfig) GetRedisAddr() string {
+	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
 // Helper functions

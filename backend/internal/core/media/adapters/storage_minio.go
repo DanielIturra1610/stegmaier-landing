@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DanielIturra1610/stegmaier-landing/internal/core/media/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/media/ports"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
@@ -216,7 +215,7 @@ func (s *MinioStorageService) GetFileMetadata(tenantID uuid.UUID, fileName strin
 	// Agregar metadatos adicionales si existen
 	for key, values := range stat.UserMetadata {
 		if len(values) > 0 {
-			metadata[key] = values[0]
+			metadata[key] = string(values[0])
 		}
 	}
 

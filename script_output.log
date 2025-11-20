@@ -1,0 +1,140 @@
+[0;34m==>[0m Creating SuperAdmin user in control database...
+[1;33m⚠[0m SuperAdmin user might already exist, fetching from database...
+ERROR:  invalid input syntax for type uuid: ""
+LINE 3: WHERE id = ''::uuid;
+                   ^
+[0;32m✓[0m SuperAdmin user created - ID: 
+[0;34m==>[0m Logging in as superadmin...
+[0;32m✓[0m SuperAdmin logged in successfully
+[0;34m==>[0m Creating tenant 'SICMON'...
+[0;32m✓[0m Tenant created with ID: eb98e0da-8174-433c-ae96-52d45e0b61f8
+[0;34m==>[0m Creating tenant database 'stegmaier_tenant_sicmon'...
+[0;32m✓[0m Tenant database created
+[0;34m==>[0m Running migrations on tenant database...
+CREATE EXTENSION
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE FUNCTION
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+COMMENT
+[0;32m✓[0m Migrations applied successfully
+[0;34m==>[0m Registering admin user for SICMON tenant...
+[1;33m⚠[0m Admin user might already exist, attempting login...
+[0;32m✓[0m Admin user ready - ID: 
+ERROR:  invalid input syntax for type uuid: ""
+LINE 3: WHERE id = ''::uuid;
+                   ^
+[0;34m==>[0m Registering instructor user for SICMON tenant...
+[1;33m⚠[0m Instructor user might already exist, fetching from database...
+[0;32m✓[0m Instructor user created - ID: 
+ERROR:  invalid input syntax for type uuid: ""
+LINE 3: WHERE id = ''::uuid;
+                   ^
+[0;34m==>[0m Logging in as instructor...
+[0;32m✓[0m Instructor logged in successfully
+[0;34m==>[0m Registering student user for SICMON tenant...
+[1;33m⚠[0m Student user might already exist, fetching from database...
+[0;32m✓[0m Student user created - ID: 
+ERROR:  invalid input syntax for type uuid: ""
+LINE 3: WHERE id = ''::uuid;
+                   ^
+[0;34m==>[0m Creating course 'Estructura de procesos - SICMON'...
+[0;32m✓[0m Course created - ID: 
+[0;34m==>[0m Creating course modules...
+[0;32m✓[0m Module 1 created - ID: 
+[0;32m✓[0m Module 2 created - ID: 
+[0;32m✓[0m Module 3 created - ID: 
+[0;32m✓[0m Module 4 created - ID: 
+[0;34m==>[0m Creating lessons for Module 1...
+[0;32m✓[0m Module 1 lessons created (3 lessons)
+[0;34m==>[0m Creating lessons for Module 2...
+[0;32m✓[0m Module 2 lessons created (4 lessons)
+[0;34m==>[0m Creating lessons for Module 3...
+[0;32m✓[0m Module 3 lessons created (3 lessons)
+[0;34m==>[0m Creating lessons for Module 4...
+[0;32m✓[0m Module 4 lessons created (4 lessons)
+[0;34m==>[0m Creating quizzes...
+[0;32m✓[0m Quiz 1 created - ID: 
+[0;32m✓[0m Quiz 1 questions created (3 questions)
+[0;32m✓[0m Quiz 2 created - ID: 
+[0;32m✓[0m Quiz 2 questions created (2 questions)
+[0;32m✓[0m Quiz 3 created - ID: 
+[0;32m✓[0m Quiz 3 questions created (2 questions)
+[0;34m==>[0m Enrolling student in course...
+[0;32m✓[0m Student enrolled in course
+
+============================================
+[0;32m✓[0m Test Data Setup Complete!
+============================================
+
+SuperAdmin Account (No Tenant):
+  - Email: superadmin@stegmaier.com
+  - Password: SuperAdmin123!@#
+  - ID: 
+  - Role: superadmin
+
+Tenant Information:
+  - Name: SICMON
+  - Slug: sicmon
+  - ID: eb98e0da-8174-433c-ae96-52d45e0b61f8
+  - Database: stegmaier_tenant_sicmon
+
+User Accounts (SICMON Tenant):
+  Admin:
+    - Email: admin@stegmaier.com
+    - Password: Admin123!@#
+    - ID: 
+    - Role: admin
+
+  Instructor:
+    - Email: instructor@stegmaier.com
+    - Password: Instructor123!@#
+    - ID: 
+    - Role: instructor
+
+  Student:
+    - Email: student@stegmaier.com
+    - Password: Student123!@#
+    - ID: 
+    - Role: student
+
+Course Created:
+  - Title: Estructura de procesos - SICMON
+  - ID: 
+  - Modules: 4
+  - Lessons: 14 (all video type with placeholder URLs)
+  - Quizzes: 3
+
+Next Steps:
+  1. Access the frontend at http://localhost:5173
+  2. Log in with any of the accounts above
+  3. Replace placeholder video URLs with actual video files
+  4. Upload videos using the media upload endpoints
+  5. Test the complete course flow
+
+URLs:
+  - Frontend: http://localhost:5173
+  - Backend API: http://localhost:8000/api/v1
+  - MinIO Console: http://localhost:9001 (minioadmin/minioadmin)
+
+API Configuration:
+  - Base URL: http://localhost:8000/api/v1
+  - Tenant Header: X-Tenant-ID: eb98e0da-8174-433c-ae96-52d45e0b61f8
+
+============================================

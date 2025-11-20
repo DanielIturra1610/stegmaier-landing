@@ -32,6 +32,23 @@ func main() {
 	dbManager := database.GetInstance()
 	log.Println("✅ Database manager initialized")
 
+	// Run database migrations
+	log.Println("🔄 Running database migrations...")
+	migrationRunner := database.NewMigrationRunner(dbManager)
+
+	// Run control DB migrations
+	if err := migrationRunner.RunControlMigrations("migrations/control"); err != nil {
+		log.Fatalf("❌ Failed to run control migrations: %v", err)
+	}
+
+	// Run tenant migrations for all existing active tenants
+	if err := migrationRunner.RunAllTenantMigrations("migrations/tenants"); err != nil {
+		log.Printf("⚠️  Warning: Some tenant migrations failed: %v", err)
+		// Don't fail startup, just log the warning
+	}
+
+	log.Println("✅ Database migrations completed")
+
 	// Crear servidor con configuración y database manager
 	srv := server.New(cfg, dbManager)
 

@@ -54,6 +54,9 @@ type CourseRepository interface {
 	// UpdateRating updates the rating statistics for a course
 	UpdateRating(ctx context.Context, courseID, tenantID uuid.UUID, rating float64, count int) error
 
+	// SyncRatingFromReviews syncs course rating from the course_ratings table
+	SyncRatingFromReviews(ctx context.Context, courseID, tenantID uuid.UUID) error
+
 	// GetPublishedCourses retrieves all published courses
 	GetPublishedCourses(ctx context.Context, tenantID uuid.UUID, page, pageSize int) ([]*domain.Course, int, error)
 }

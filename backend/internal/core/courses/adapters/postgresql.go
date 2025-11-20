@@ -663,6 +663,63 @@ func (r *PostgreSQLCourseRepository) UpdateRating(ctx context.Context, courseID,
 	return nil
 }
 
+// SyncRatingFromReviews syncs course rating from the course_ratings table
+func (r *PostgreSQLCourseRepository) SyncRatingFromReviews(ctx context.Context, courseID, tenantID uuid.UUID) error {
+	query := `
+		UPDATE courses c SET
+			rating = COALESCE(cr.average_rating, 0),
+			rating_count = COALESCE(cr.total_reviews, 0),
+			updated_at = $1
+		FROM course_ratings cr
+		WHERE c.id = cr.course_id
+			AND c.tenant_id = cr.tenant_id
+			AND c.id = $2
+			AND c.tenant_id = $3
+			AND c.deleted_at IS NULL
+	`
+
+	now := time.Now()
+	result, err := r.db.ExecContext(ctx, query, now, courseID, tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to sync rating from reviews: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	// If no rows were affected, it might be because there are no ratings yet
+	// In that case, we should set rating to 0
+	if rowsAffected == 0 {
+		// Check if course exists
+		var exists bool
+		checkQuery := `SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL)`
+		err = r.db.QueryRowContext(ctx, checkQuery, courseID, tenantID).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("failed to check course existence: %w", err)
+		}
+		if !exists {
+			return ports.ErrCourseNotFound
+		}
+
+		// Course exists but has no ratings, set to 0
+		updateQuery := `
+			UPDATE courses SET
+				rating = 0,
+				rating_count = 0,
+				updated_at = $1
+			WHERE id = $2 AND tenant_id = $3 AND deleted_at IS NULL
+		`
+		_, err = r.db.ExecContext(ctx, updateQuery, now, courseID, tenantID)
+		if err != nil {
+			return fmt.Errorf("failed to reset rating to zero: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // GetPublishedCourses retrieves all published courses
 func (r *PostgreSQLCourseRepository) GetPublishedCourses(ctx context.Context, tenantID uuid.UUID, page, pageSize int) ([]*domain.Course, int, error) {
 	// Count total

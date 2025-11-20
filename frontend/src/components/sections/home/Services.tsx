@@ -4,7 +4,7 @@ import * as L from 'lucide-react'
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion'
 import ServiceCard from '../../ui/ServiceCard'
-import Button from '../../ui/button'
+import { Button } from '../../ui/button'
 import type { Service } from '../../../types'
 import SectionConnector from '../../ui/SectionConnector'
 

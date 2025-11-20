@@ -232,7 +232,7 @@ func getTenantInfo(dbManager *database.Manager, tenantID string) (*database.Tena
 	query := `
 		SELECT id, name, slug, database_name, node_number, status
 		FROM tenants
-		WHERE (id = $1 OR slug = $1) AND status = 'active'
+		WHERE (id::text = $1 OR slug = $1) AND status = 'active'
 		LIMIT 1
 	`
 
@@ -258,29 +258,43 @@ func OptionalTenantMiddleware(dbManager *database.Manager) fiber.Handler {
 	InitTenantCache(5 * time.Minute)
 
 	return func(c *fiber.Ctx) error {
+		log.Printf("🔵 OptionalTenantMiddleware called for: %s %s", c.Method(), c.Path())
+
+		// Wrap in recover to catch any panics
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("❌ PANIC in OptionalTenantMiddleware: %v", r)
+			}
+		}()
+
 		tenantID := extractTenantID(c)
+		log.Printf("🔵 Extracted tenantID: '%s'", tenantID)
 
 		if tenantID == "" {
 			// No tenant ID, but that's OK for optional middleware
+			log.Printf("✅ No tenant ID - continuing without tenant context")
 			return c.Next()
 		}
 
 		// Try cache first
 		tenantInfo, cached := tenantCache.Get(tenantID)
 		if cached {
+			log.Printf("✅ Tenant found in cache: %s", tenantID)
 			injectTenantContext(c, tenantInfo)
 			return c.Next()
 		}
 
 		// Fetch from database
+		log.Printf("🔵 Fetching tenant from database: %s", tenantID)
 		tenantInfo, err := getTenantInfo(dbManager, tenantID)
 		if err != nil {
 			// Tenant not found, but continue anyway (optional)
-			log.Printf("⚠️  Optional tenant not found: %s", tenantID)
+			log.Printf("⚠️  Optional tenant not found: %s - Error: %v", tenantID, err)
 			return c.Next()
 		}
 
 		// Cache and inject
+		log.Printf("✅ Tenant found in database: %s", tenantID)
 		tenantCache.Set(tenantID, tenantInfo)
 		injectTenantContext(c, tenantInfo)
 

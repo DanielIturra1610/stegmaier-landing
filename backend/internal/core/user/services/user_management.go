@@ -58,10 +58,16 @@ func (s *UserManagementService) CreateUser(ctx context.Context, dto *domain.Crea
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	// Convert tenant ID to pointer (nullable)
+	var tenantIDPtr *string
+	if dto.TenantID != "" {
+		tenantIDPtr = &dto.TenantID
+	}
+
 	// Create user entity
 	user := &authdomain.User{
 		ID:           uuid.New().String(),
-		TenantID:     dto.TenantID,
+		TenantID:     tenantIDPtr,
 		Email:        dto.Email,
 		PasswordHash: hashedPassword,
 		FullName:     dto.FullName,

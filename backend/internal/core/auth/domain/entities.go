@@ -5,7 +5,7 @@ import "time"
 // User represents a user in the system
 type User struct {
 	ID           string    `json:"id" db:"id"`
-	TenantID     string    `json:"tenant_id" db:"tenant_id"`
+	TenantID     *string   `json:"tenant_id,omitempty" db:"tenant_id"` // Nullable - user can register without tenant
 	Email        string    `json:"email" db:"email"`
 	PasswordHash string    `json:"-" db:"password_hash"` // Never expose in JSON
 	FullName     string    `json:"full_name" db:"full_name"`

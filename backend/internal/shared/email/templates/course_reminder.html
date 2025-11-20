@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recordatorio de Curso</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 56px; margin-bottom: 15px;">⏰</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">¡Te extrañamos!</h1>
+                            <p style="margin: 10px 0 0 0; color: #cffafe; font-size: 16px;">Es hora de continuar tu aprendizaje</p>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                Notamos que hace un tiempo no ingresas a tu curso. ¡No te rindas ahora! Has hecho un gran progreso y estás más cerca de completarlo.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Course Progress Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-left: 4px solid #06b6d4; padding: 25px; border-radius: 8px;">
+                                <h2 style="margin: 0 0 15px 0; color: #0c4a6e; font-size: 20px; font-weight: 700;">{{.CourseTitle}}</h2>
+
+                                <!-- Progress Bar -->
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: #0e7490; font-size: 13px; font-weight: 600;">Tu progreso</span>
+                                        <span style="color: #0e7490; font-size: 13px; font-weight: 700;">{{.ProgressPercentage}}%</span>
+                                    </div>
+                                    <div style="background-color: #ffffff; border-radius: 12px; height: 12px; overflow: hidden; border: 1px solid #67e8f9;">
+                                        <div style="background: linear-gradient(90deg, #06b6d4 0%, #0891b2 100%); height: 100%; width: {{.ProgressPercentage}}%; border-radius: 12px;"></div>
+                                    </div>
+                                </div>
+
+                                <p style="margin: 0; color: #0e7490; font-size: 14px;">
+                                    <strong>Última actividad:</strong> {{.LastActivity}}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Motivation Section -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="text-align: center; padding: 30px; background-color: #fef9c3; border-radius: 8px;">
+                                <div style="font-size: 48px; margin-bottom: 15px;">💪</div>
+                                <h3 style="margin: 0 0 10px 0; color: #854d0e; font-size: 20px; font-weight: 700;">¡Estás muy cerca!</h3>
+                                <p style="margin: 0; color: #a16207; font-size: 15px; line-height: 1.6;">
+                                    Solo un poco más de esfuerzo y alcanzarás tu objetivo
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Benefits -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Al completar este curso obtendrás:</h3>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 0 15px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">📜</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #1f2937; font-size: 15px; font-weight: 600;">Certificado oficial</h4>
+                                                <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Acredita tus conocimientos con un certificado verificable</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 15px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">🎯</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #1f2937; font-size: 15px; font-weight: 600;">Nuevas habilidades</h4>
+                                                <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Domina conceptos que impulsarán tu carrera profesional</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">🚀</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #1f2937; font-size: 15px; font-weight: 600;">Crecimiento personal</h4>
+                                                <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Cumple tu meta de aprendizaje continuo</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 15px; font-weight: 600;">
+                                Retoma donde lo dejaste
+                            </p>
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <a href="{{.CourseURL}}" style="display: inline-block; background-color: #06b6d4; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(6, 182, 212, 0.3);">
+                                            Continuar Curso
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Tips Section -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px;">
+                            <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 20px; border-radius: 6px;">
+                                <p style="margin: 0 0 10px 0; color: #065f46; font-size: 14px; font-weight: 600;">
+                                    💡 Consejo para el éxito
+                                </p>
+                                <p style="margin: 0; color: #065f46; font-size: 13px; line-height: 1.6;">
+                                    Dedica solo 15-20 minutos al día para avanzar constantemente. La consistencia es clave para completar tu objetivo de aprendizaje.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Quote -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px;">
+                            <div style="border-left: 4px solid #d1d5db; padding-left: 20px;">
+                                <p style="margin: 0; color: #6b7280; font-size: 15px; font-style: italic; line-height: 1.6;">
+                                    "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+                                </p>
+                                <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 13px;">
+                                    — Robert Collier
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                ¿Necesitas ayuda? Visita tu <a href="{{.DashboardURL}}" style="color: #06b6d4; text-decoration: none;">dashboard</a>
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

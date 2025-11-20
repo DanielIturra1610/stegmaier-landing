@@ -3,16 +3,21 @@
  */
 import React, { useState } from 'react';
 import { CourseDetail, LessonOverview, UserCourseAccess } from '../../types/course';
-import { 
-  BookOpen, 
-  CheckCircle, 
-  Lock, 
-  PlayCircle, 
+import {
+  BookOpen,
+  CheckCircle,
+  Lock,
+  PlayCircle,
   Clock,
   User,
   Target,
   List
 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CourseContentProps {
   course: CourseDetail;
@@ -113,12 +118,9 @@ const CourseContent: React.FC<CourseContentProps> = ({
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Etiquetas</h3>
           <div className="flex flex-wrap gap-2">
             {course.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-              >
+              <Badge key={index} variant="secondary">
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
@@ -183,9 +185,9 @@ const CourseContent: React.FC<CourseContentProps> = ({
                     )}
                     
                     {lesson.is_free_preview && (
-                      <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                         Gratis
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   
@@ -228,17 +230,12 @@ const CourseContent: React.FC<CourseContentProps> = ({
       <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
         {/* Avatar del instructor */}
         <div className="flex-shrink-0">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-300 rounded-full flex items-center justify-center">
-            {course.instructor.avatar ? (
-              <img
-                src={course.instructor.avatar}
-                alt={course.instructor.name}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <User className="w-10 h-10 text-gray-500" />
-            )}
-          </div>
+          <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
+            <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+            <AvatarFallback>
+              <User className="w-10 h-10" />
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         {/* Info del instructor */}
@@ -306,45 +303,39 @@ const CourseContent: React.FC<CourseContentProps> = ({
     </div>
   );
 
-  const tabs = [
-    { id: 'overview', label: 'Descripción', icon: BookOpen },
-    { id: 'content', label: 'Contenido', icon: List },
-    { id: 'instructor', label: 'Instructor', icon: User }
-  ];
-
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6" aria-label="Tabs">
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveTab(id as TabType)}
-              className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200
-                ${activeTab === id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }
-              `}
-            >
-              <div className="flex items-center space-x-2">
-                <Icon className="w-5 h-5" />
-                <span>{label}</span>
-              </div>
-            </button>
-          ))}
-        </nav>
-      </div>
+    <Card>
+      <CardContent className="p-6">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Descripción</span>
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <List className="w-4 h-4" />
+              <span className="hidden sm:inline">Contenido</span>
+            </TabsTrigger>
+            <TabsTrigger value="instructor" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Instructor</span>
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Tab Content */}
-      <div className="p-6">
-        {activeTab === 'overview' && renderOverviewTab()}
-        {activeTab === 'content' && renderContentTab()}
-        {activeTab === 'instructor' && renderInstructorTab()}
-      </div>
-    </div>
+          <TabsContent value="overview" className="mt-6">
+            {renderOverviewTab()}
+          </TabsContent>
+
+          <TabsContent value="content" className="mt-6">
+            {renderContentTab()}
+          </TabsContent>
+
+          <TabsContent value="instructor" className="mt-6">
+            {renderInstructorTab()}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

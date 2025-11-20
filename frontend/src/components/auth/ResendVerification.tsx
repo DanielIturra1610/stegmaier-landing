@@ -3,7 +3,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../contexts/AuthContext';
 import FormInput from '../ui/FormInput';
-import Alert from '../ui/Alert';
+import { Alert } from '@/components/ui/alert';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Validación con Yup

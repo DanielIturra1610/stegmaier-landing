@@ -4,9 +4,9 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Quiz, Question, StudentAnswer, AttemptStatus, 
-  QuizTakerProps, QuizState 
+import {
+  Quiz, Question, StudentAnswer, AttemptStatus,
+  QuizTakerProps, QuizState
 } from '../../types/quiz';
 import quizService from '../../services/quizService';
 import { analyticsService } from '../../services/analyticsService';
@@ -15,13 +15,12 @@ import QuestionRenderer from './QuestionRenderer';
 import QuizProgress from './QuizProgress';
 import QuizTimer from './QuizTimer';
 import QuizResults from './QuizResults';
-import { 
-  ChevronLeftIcon, 
-  ChevronRightIcon, 
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline';
+import { ChevronLeft, ChevronRight, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 const QuizTaker: React.FC<QuizTakerProps> = ({ 
   quizId, 
@@ -281,8 +280,8 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando quiz...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Cargando quiz...</p>
         </div>
       </div>
     );
@@ -291,20 +290,21 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
   // Error state
   if (state.error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <div className="flex items-center text-red-600 mb-4">
-            <ExclamationTriangleIcon className="h-6 w-6 mr-2" />
-            <h2 className="text-lg font-semibold">Error</h2>
-          </div>
-          <p className="text-gray-700 mb-6">{state.error}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700"
-          >
-            Volver
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{state.error}</AlertDescription>
+            </Alert>
+            <div className="mt-6">
+              <Button onClick={() => navigate(-1)} className="w-full">
+                Volver
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -331,25 +331,25 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header con progreso y timer */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <Card className="sticky top-0 z-10 rounded-none border-t-0 border-l-0 border-r-0">
+        <CardHeader className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-semibold text-gray-900">
+            <CardTitle className="text-xl">
               {state.quiz.title}
-            </h1>
-            
+            </CardTitle>
+
             {state.attempt.time_remaining && (
-              <div className="flex items-center text-orange-600">
-                <ClockIcon className="h-5 w-5 mr-1" />
+              <Badge variant="outline" className="flex items-center gap-1 text-orange-600 border-orange-600">
+                <Clock className="h-4 w-4" />
                 <QuizTimer
                   timeRemaining={state.attempt.time_remaining}
                   onTimeUp={handleTimeUp}
                   showWarnings
                 />
-              </div>
+              </Badge>
             )}
           </div>
-          
+
           <QuizProgress
             currentQuestion={state.currentQuestionIndex + 1}
             totalQuestions={state.quiz.questions.length}
@@ -357,37 +357,36 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
             timeRemaining={state.attempt.time_remaining}
             duration={state.quiz.config.time_limit}
           />
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
       {/* Contenido principal */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm border">
-          {/* Información de la pregunta */}
-          <div className="px-6 py-4 border-b border-gray-200">
+        <Card>
+          <CardHeader>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-500">
+              <Badge variant="secondary">
                 Pregunta {state.currentQuestionIndex + 1} de {state.quiz.questions.length}
-              </span>
-              <span className="text-sm text-gray-500">
+              </Badge>
+              <Badge variant="outline">
                 {currentQuestion.points} {currentQuestion.points === 1 ? 'punto' : 'puntos'}
-              </span>
+              </Badge>
             </div>
-            
-            <h2 className="text-lg font-medium text-gray-900 mb-2">
+
+            <CardTitle className="text-lg">
               {currentQuestion.title}
-            </h2>
-            
+            </CardTitle>
+
             {currentQuestion.content && (
-              <div 
-                className="text-gray-700 prose prose-sm max-w-none"
+              <div
+                className="text-muted-foreground prose prose-sm max-w-none mt-2"
                 dangerouslySetInnerHTML={{ __html: currentQuestion.content }}
               />
             )}
-          </div>
+          </CardHeader>
 
-          {/* Renderizador de pregunta */}
-          <div className="px-6 py-6">
+          <CardContent className="space-y-6">
+            {/* Renderizador de pregunta */}
             <QuestionRenderer
               question={currentQuestion}
               answer={state.answers.get(currentQuestion.id)}
@@ -395,59 +394,61 @@ const QuizTaker: React.FC<QuizTakerProps> = ({
               disabled={state.isSubmitting}
               timeRemaining={currentQuestion.time_limit}
             />
-          </div>
 
-          {/* Navegación */}
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <button
-              onClick={goToPreviousQuestion}
-              disabled={!canGoPrevious() || state.isSubmitting}
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeftIcon className="h-4 w-4 mr-1" />
-              Anterior
-            </button>
+            {/* Navegación */}
+            <Separator />
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={goToPreviousQuestion}
+                disabled={!canGoPrevious() || state.isSubmitting}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
 
-            <div className="flex items-center space-x-3">
-              {hasUnsavedChanges && (
-                <span className="text-sm text-amber-600 flex items-center">
-                  <div className="h-2 w-2 bg-amber-500 rounded-full mr-2"></div>
-                  Cambios no guardados
-                </span>
-              )}
-              
-              {isLastQuestion() ? (
-                <button
-                  onClick={submitQuiz}
-                  disabled={state.isSubmitting}
-                  className="flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <CheckCircleIcon className="h-4 w-4 mr-2" />
-                  {state.isSubmitting ? 'Enviando...' : 'Enviar Quiz'}
-                </button>
-              ) : (
-                <button
-                  onClick={goToNextQuestion}
-                  disabled={!canGoNext() || state.isSubmitting}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Siguiente
-                  <ChevronRightIcon className="h-4 w-4 ml-1" />
-                </button>
-              )}
+              <div className="flex items-center space-x-3">
+                {hasUnsavedChanges && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-600">
+                    <div className="h-2 w-2 bg-amber-500 rounded-full mr-2"></div>
+                    Cambios no guardados
+                  </Badge>
+                )}
+
+                {isLastQuestion() ? (
+                  <Button
+                    onClick={submitQuiz}
+                    disabled={state.isSubmitting}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {state.isSubmitting ? 'Enviando...' : 'Enviar Quiz'}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={goToNextQuestion}
+                    disabled={!canGoNext() || state.isSubmitting}
+                  >
+                    Siguiente
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Instrucciones */}
         {state.quiz.instructions && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-900 mb-2">Instrucciones</h3>
-            <div 
-              className="text-blue-800 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: state.quiz.instructions }}
-            />
-          </div>
+          <Alert className="mt-6 border-l-4 border-blue-400 bg-blue-50">
+            <AlertTitle className="text-blue-900">Instrucciones</AlertTitle>
+            <AlertDescription asChild>
+              <div
+                className="text-blue-800 prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: state.quiz.instructions }}
+              />
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     </div>

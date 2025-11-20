@@ -29,9 +29,8 @@ func NewPostgreSQLProfileRepository(controlDB *sqlx.DB) ports.ProfileRepository 
 // profileRow represents a profile row from the database
 type profileRow struct {
 	UserID      uuid.UUID  `db:"user_id"`
-	TenantID    uuid.UUID  `db:"tenant_id"`
-	FirstName   string     `db:"first_name"`
-	LastName    string     `db:"last_name"`
+	TenantID    *uuid.UUID `db:"tenant_id"`
+	FullName    *string    `db:"full_name"`
 	AvatarURL   *string    `db:"avatar_url"`
 	Bio         *string    `db:"bio"`
 	PhoneNumber *string    `db:"phone_number"`
@@ -47,24 +46,24 @@ type profileRow struct {
 
 // preferencesRow represents a preferences row from the database
 type preferencesRow struct {
-	UserID               uuid.UUID `db:"user_id"`
-	TenantID             uuid.UUID `db:"tenant_id"`
-	EmailNotifications   bool      `db:"email_notifications"`
-	PushNotifications    bool      `db:"push_notifications"`
-	CourseReminders      bool      `db:"course_reminders"`
-	WeeklyDigest         bool      `db:"weekly_digest"`
-	MarketingEmails      bool      `db:"marketing_emails"`
-	PrivateProfile       bool      `db:"private_profile"`
-	ShowProgressPublicly bool      `db:"show_progress_publicly"`
-	CreatedAt            time.Time `db:"created_at"`
-	UpdatedAt            time.Time `db:"updated_at"`
+	UserID               uuid.UUID  `db:"user_id"`
+	TenantID             *uuid.UUID `db:"tenant_id"`
+	EmailNotifications   bool       `db:"email_notifications"`
+	PushNotifications    bool       `db:"push_notifications"`
+	CourseReminders      bool       `db:"course_reminders"`
+	WeeklyDigest         bool       `db:"weekly_digest"`
+	MarketingEmails      bool       `db:"marketing_emails"`
+	PrivateProfile       bool       `db:"private_profile"`
+	ShowProgressPublicly bool       `db:"show_progress_publicly"`
+	CreatedAt            time.Time  `db:"created_at"`
+	UpdatedAt            time.Time  `db:"updated_at"`
 }
 
 // GetProfile retrieves a user's profile by user ID and tenant ID
 func (r *PostgreSQLProfileRepository) GetProfile(ctx context.Context, userID, tenantID uuid.UUID) (*domain.UserProfile, error) {
 	query := `
 		SELECT
-			user_id, tenant_id, first_name, last_name, avatar_url, bio,
+			user_id, tenant_id, full_name, avatar_url, bio,
 			phone_number, date_of_birth, country, city, timezone, language,
 			theme, created_at, updated_at
 		FROM profiles
@@ -102,8 +101,7 @@ func (r *PostgreSQLProfileRepository) GetProfile(ctx context.Context, userID, te
 	profile := &domain.UserProfile{
 		UserID:      row.UserID,
 		TenantID:    row.TenantID,
-		FirstName:   row.FirstName,
-		LastName:    row.LastName,
+		FullName:    row.FullName,
 		AvatarURL:   row.AvatarURL,
 		Bio:         row.Bio,
 		PhoneNumber: row.PhoneNumber,
@@ -137,16 +135,16 @@ func (r *PostgreSQLProfileRepository) CreateProfile(ctx context.Context, profile
 	// Insert profile
 	profileQuery := `
 		INSERT INTO profiles (
-			user_id, tenant_id, first_name, last_name, avatar_url, bio,
+			user_id, tenant_id, full_name, avatar_url, bio,
 			phone_number, date_of_birth, country, city, timezone, language,
 			theme, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 		)
 	`
 
 	_, err = tx.ExecContext(ctx, profileQuery,
-		profile.UserID, profile.TenantID, profile.FirstName, profile.LastName,
+		profile.UserID, profile.TenantID, profile.FullName,
 		profile.AvatarURL, profile.Bio, profile.PhoneNumber, profile.DateOfBirth,
 		profile.Country, profile.City, profile.Timezone, profile.Language,
 		profile.Theme, profile.CreatedAt, profile.UpdatedAt,
@@ -198,22 +196,21 @@ func (r *PostgreSQLProfileRepository) UpdateProfile(ctx context.Context, profile
 	query := `
 		UPDATE profiles
 		SET
-			first_name = $1,
-			last_name = $2,
-			bio = $3,
-			phone_number = $4,
-			date_of_birth = $5,
-			country = $6,
-			city = $7,
-			timezone = $8,
-			language = $9,
-			theme = $10,
-			updated_at = $11
-		WHERE user_id = $12 AND tenant_id = $13
+			full_name = $1,
+			bio = $2,
+			phone_number = $3,
+			date_of_birth = $4,
+			country = $5,
+			city = $6,
+			timezone = $7,
+			language = $8,
+			theme = $9,
+			updated_at = $10
+		WHERE user_id = $11 AND tenant_id = $12
 	`
 
 	result, err := r.controlDB.ExecContext(ctx, query,
-		profile.FirstName, profile.LastName, profile.Bio, profile.PhoneNumber,
+		profile.FullName, profile.Bio, profile.PhoneNumber,
 		profile.DateOfBirth, profile.Country, profile.City, profile.Timezone,
 		profile.Language, profile.Theme, time.Now(), profile.UserID, profile.TenantID,
 	)

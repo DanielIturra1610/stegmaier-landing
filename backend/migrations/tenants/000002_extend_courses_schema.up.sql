@@ -21,8 +21,7 @@ CREATE TABLE IF NOT EXISTS course_categories (
     CONSTRAINT course_categories_course_count_positive CHECK (course_count >= 0)
 );
 
--- Add missing fields to courses table
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::UUID;
+-- Add extended fields to courses table (tenant_id and deleted_at already exist from migration 000001)
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS slug VARCHAR(200);
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES course_categories(id) ON DELETE SET NULL;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS price DECIMAL(10,2) DEFAULT 0.00;
@@ -34,41 +33,21 @@ ALTER TABLE courses ADD COLUMN IF NOT EXISTS target_audience JSONB DEFAULT '[]':
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS enrollment_count INTEGER DEFAULT 0;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.00;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
-
--- Rename duration_hours to duration (minutes)
-ALTER TABLE courses RENAME COLUMN duration_hours TO duration;
-
--- Update existing columns
-ALTER TABLE courses ALTER COLUMN thumbnail_url DROP DEFAULT;
-ALTER TABLE courses DROP COLUMN IF EXISTS instructor_name;
-
--- Update level constraint to include expert
-ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_level_check;
-ALTER TABLE courses ADD CONSTRAINT courses_level_check
-    CHECK (level IN ('beginner', 'intermediate', 'advanced', 'expert'));
-
--- Update status constraint to include deleted
-ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_status_check;
-ALTER TABLE courses ADD CONSTRAINT courses_status_check
-    CHECK (status IN ('draft', 'published', 'archived', 'deleted'));
 
 -- Add new constraints
-ALTER TABLE courses ADD CONSTRAINT courses_slug_unique UNIQUE (tenant_id, slug);
-ALTER TABLE courses ADD CONSTRAINT courses_price_positive CHECK (price >= 0);
-ALTER TABLE courses ADD CONSTRAINT courses_enrollment_count_positive CHECK (enrollment_count >= 0);
-ALTER TABLE courses ADD CONSTRAINT courses_rating_range CHECK (rating >= 0 AND rating <= 5);
-ALTER TABLE courses ADD CONSTRAINT courses_rating_count_positive CHECK (rating_count >= 0);
+ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_slug_unique UNIQUE (tenant_id, slug);
+ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_price_positive CHECK (price >= 0);
+ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_enrollment_count_positive CHECK (enrollment_count >= 0);
+ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_rating_range CHECK (rating >= 0 AND rating <= 5);
+ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_rating_count_positive CHECK (rating_count >= 0);
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_courses_tenant ON courses(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_courses_category ON courses(category_id);
 CREATE INDEX IF NOT EXISTS idx_courses_slug ON courses(tenant_id, slug);
 CREATE INDEX IF NOT EXISTS idx_courses_published ON courses(tenant_id, is_published) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_courses_level ON courses(level);
 CREATE INDEX IF NOT EXISTS idx_courses_price ON courses(price);
 CREATE INDEX IF NOT EXISTS idx_courses_rating ON courses(rating);
-CREATE INDEX IF NOT EXISTS idx_courses_deleted ON courses(deleted_at);
 
 -- Create indexes for course_categories
 CREATE INDEX IF NOT EXISTS idx_course_categories_tenant ON course_categories(tenant_id);

@@ -30,9 +30,15 @@ func (r *PostgreSQLAuthRepository) CreateUser(ctx context.Context, user *domain.
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 
+	// Convert *string to sql.NullString for proper NULL handling
+	var tenantID sql.NullString
+	if user.TenantID != nil {
+		tenantID = sql.NullString{String: *user.TenantID, Valid: true}
+	}
+
 	_, err := r.db.ExecContext(ctx, query,
 		user.ID,
-		user.TenantID,
+		tenantID, // Use sql.NullString instead of *string
 		user.Email,
 		user.PasswordHash,
 		user.FullName,

@@ -5,6 +5,15 @@
  */
 import React, { useState, useCallback, useEffect } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { headerAnimations } from '../animations';
 import { notificationService } from '../../../services/notificationService';
 import { useNotifications } from '../../../contexts/NotificationContext';
@@ -134,187 +143,142 @@ export const HeaderNotifications: React.FC<HeaderNotificationsProps> = ({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Botón de notificaciones */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          relative p-2 rounded-lg
-          ${headerAnimations.actions.button}
-          text-gray-500 dark:text-gray-400
-          hover:text-gray-700 dark:hover:text-gray-200
-          hover:bg-gray-100 dark:hover:bg-gray-800
-        `}
-        aria-label={`Notificaciones ${unreadCount > 0 ? `(${unreadCount} no leídas)` : ''}`}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        <Bell className="w-5 h-5" aria-hidden="true" />
-        
-        {/* Badge de contador */}
-        {unreadCount > 0 && (
-          <span className={`
-            absolute -top-1 -right-1 
-            w-5 h-5 
-            bg-red-500 text-white 
-            text-xs font-bold 
-            rounded-full 
-            flex items-center justify-center
-            ${headerAnimations.onlineIndicator.online}
-          `}>
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            aria-label={`Notificaciones ${unreadCount > 0 ? `(${unreadCount} no leídas)` : ''}`}
+          >
+            <Bell className="w-5 h-5" aria-hidden="true" />
 
-      {/* Panel de notificaciones */}
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-          
-          {/* Dropdown */}
-          <div className={`
-            absolute right-0 top-full mt-2 z-20
-            ${headerAnimations.actions.dropdown}
-            bg-white dark:bg-gray-800
-            border border-gray-200 dark:border-gray-700
-            rounded-lg shadow-lg
-            w-80 max-w-sm
-          `}>
-            {/* Header del panel */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Notificaciones
-              </h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
+            {/* Badge de contador */}
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent className="w-80 max-w-sm" align="end">
+          {/* Header del panel */}
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <h3 className="text-sm font-semibold">Notificaciones</h3>
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={markAllAsRead}
+                className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+              >
+                Marcar todas como leídas
+              </Button>
+            )}
+          </div>
+
+          {/* Lista de notificaciones */}
+          <ScrollArea className="max-h-96">
+            {visibleNotifications.length === 0 ? (
+              <div className="px-4 py-8 text-center">
+                <Bell className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  No tienes notificaciones
+                </p>
+              </div>
+            ) : (
+              visibleNotifications.map((notification) => (
+                <div
+                  key={notification.id}
                   className={`
-                    text-xs text-blue-600 dark:text-blue-400
-                    hover:text-blue-700 dark:hover:text-blue-300
-                    ${headerAnimations.actions.button}
+                    px-4 py-3 border-b last:border-b-0
+                    ${!notification.read ? 'bg-accent/50' : ''}
+                    hover:bg-accent cursor-pointer transition-colors relative
                   `}
+                  onClick={() => markAsRead(notification.id)}
                 >
-                  Marcar todas como leídas
-                </button>
-              )}
-            </div>
+                  <div className="flex items-start gap-3">
+                    {/* Icono de tipo */}
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getNotificationIcon(notification.type)}
+                    </div>
 
-            {/* Lista de notificaciones */}
-            <div className="max-h-96 overflow-y-auto">
-              {visibleNotifications.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No tienes notificaciones
-                  </p>
-                </div>
-              ) : (
-                visibleNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`
-                      px-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0
-                      ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/10' : ''}
-                      ${headerAnimations.actions.button}
-                      cursor-pointer
-                    `}
-                    onClick={() => markAsRead(notification.id)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      {/* Icono de tipo */}
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      
-                      {/* Contenido */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className={`
-                            text-sm font-medium 
-                            ${!notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}
-                          `}>
-                            {notification.title}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatTimestamp(notification.timestamp)}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeNotification(notification.id);
-                              }}
-                              className={`
-                                p-1 rounded
-                                text-gray-400 hover:text-gray-600 dark:hover:text-gray-200
-                                hover:bg-gray-200 dark:hover:bg-gray-600
-                                ${headerAnimations.actions.button}
-                              `}
-                              aria-label="Eliminar notificación"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          {notification.message}
+                    {/* Contenido */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`text-sm font-medium ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          {notification.title}
                         </p>
-                        
-                        {/* Acción opcional */}
-                        {notification.action && (
-                          <button
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimestamp(notification.timestamp)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              notification.action!.onClick();
+                              removeNotification(notification.id);
                             }}
-                            className={`
-                              text-xs text-blue-600 dark:text-blue-400
-                              hover:text-blue-700 dark:hover:text-blue-300
-                              font-medium
-                              ${headerAnimations.actions.button}
-                            `}
+                            className="h-6 w-6"
+                            aria-label="Eliminar notificación"
                           >
-                            {notification.action.label}
-                          </button>
-                        )}
-                        
-                        {/* Indicador de no leída */}
-                        {!notification.read && (
-                          <div className="absolute right-2 top-3 w-2 h-2 bg-blue-600 rounded-full" />
-                        )}
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
+
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {notification.message}
+                      </p>
+
+                      {/* Acción opcional */}
+                      {notification.action && (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            notification.action!.onClick();
+                          }}
+                          className="h-auto p-0 text-xs font-medium"
+                        >
+                          {notification.action.label}
+                        </Button>
+                      )}
+
+                      {/* Indicador de no leída */}
+                      {!notification.read && (
+                        <div className="absolute right-2 top-3 w-2 h-2 bg-primary rounded-full" />
+                      )}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                </div>
+              ))
+            )}
+          </ScrollArea>
 
-            {/* Footer con enlace a ver todas */}
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-              <button 
-                onClick={() => {
-                  setIsOpen(false);
-                  setNotificationCenterOpen(true);
-                }}
-                className={`
-                  text-sm text-blue-600 dark:text-blue-400
-                  hover:text-blue-700 dark:hover:text-blue-300
-                  font-medium
-                  ${headerAnimations.actions.button}
-                `}
-              >
-                Ver todas las notificaciones
-              </button>
-            </div>
+          {/* Footer con enlace a ver todas */}
+          <DropdownMenuSeparator />
+          <div className="px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setIsOpen(false);
+                setNotificationCenterOpen(true);
+              }}
+              className="w-full justify-center text-sm font-medium"
+            >
+              Ver todas las notificaciones
+            </Button>
           </div>
-        </>
-      )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* NotificationCenter completo */}
       <NotificationCenter

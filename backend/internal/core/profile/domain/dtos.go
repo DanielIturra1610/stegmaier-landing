@@ -11,9 +11,7 @@ import (
 type GetProfileResponse struct {
 	UserID      uuid.UUID          `json:"userId"`
 	Email       string             `json:"email"`
-	FirstName   string             `json:"firstName"`
-	LastName    string             `json:"lastName"`
-	FullName    string             `json:"fullName"`
+	FullName    *string            `json:"fullName,omitempty"`
 	AvatarURL   *string            `json:"avatarUrl,omitempty"`
 	Bio         *string            `json:"bio,omitempty"`
 	PhoneNumber *string            `json:"phoneNumber,omitempty"`
@@ -32,8 +30,7 @@ type GetProfileResponse struct {
 
 // UpdateProfileRequest represents a request to update profile information
 type UpdateProfileRequest struct {
-	FirstName   *string `json:"firstName,omitempty"`
-	LastName    *string `json:"lastName,omitempty"`
+	FullName    *string `json:"fullName,omitempty"`
 	Bio         *string `json:"bio,omitempty"`
 	PhoneNumber *string `json:"phoneNumber,omitempty"`
 	DateOfBirth *string `json:"dateOfBirth,omitempty"` // ISO 8601 format (YYYY-MM-DD)
@@ -82,13 +79,8 @@ type DeleteAvatarResponse struct {
 
 // Validate validates the UpdateProfileRequest
 func (r *UpdateProfileRequest) Validate() error {
-	if r.FirstName != nil {
-		if err := ValidateFirstName(*r.FirstName); err != nil {
-			return err
-		}
-	}
-	if r.LastName != nil {
-		if err := ValidateLastName(*r.LastName); err != nil {
+	if r.FullName != nil {
+		if err := ValidateFullName(r.FullName); err != nil {
 			return err
 		}
 	}
@@ -172,8 +164,7 @@ func (r *UploadAvatarRequest) Validate() error {
 
 // HasUpdates checks if the UpdateProfileRequest has any updates
 func (r *UpdateProfileRequest) HasUpdates() bool {
-	return r.FirstName != nil ||
-		r.LastName != nil ||
+	return r.FullName != nil ||
 		r.Bio != nil ||
 		r.PhoneNumber != nil ||
 		r.DateOfBirth != nil ||
@@ -201,11 +192,8 @@ func (r *UpdateProfileRequest) ApplyToProfile(profile *UserProfile) error {
 		return err
 	}
 
-	if r.FirstName != nil {
-		profile.FirstName = *r.FirstName
-	}
-	if r.LastName != nil {
-		profile.LastName = *r.LastName
+	if r.FullName != nil {
+		profile.FullName = r.FullName
 	}
 	if r.Bio != nil {
 		profile.Bio = r.Bio
@@ -279,9 +267,7 @@ func ProfileToResponse(profile *UserProfile, email, role string, isVerified bool
 	return &GetProfileResponse{
 		UserID:      profile.UserID,
 		Email:       email,
-		FirstName:   profile.FirstName,
-		LastName:    profile.LastName,
-		FullName:    profile.GetFullName(),
+		FullName:    profile.FullName,
 		AvatarURL:   profile.AvatarURL,
 		Bio:         profile.Bio,
 		PhoneNumber: profile.PhoneNumber,
