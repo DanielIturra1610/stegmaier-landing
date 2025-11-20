@@ -174,6 +174,37 @@ func (s *LessonServiceImpl) UpdateLesson(ctx context.Context, lessonID, tenantID
 	return response, nil
 }
 
+// UpdateLessonVideo updates a lesson with uploaded video information
+func (s *LessonServiceImpl) UpdateLessonVideo(ctx context.Context, lessonID, tenantID, mediaID uuid.UUID, videoURL string) (*domain.LessonDetailResponse, error) {
+	// Get existing lesson
+	lesson, err := s.lessonRepo.GetByID(ctx, lessonID, tenantID)
+	if err != nil {
+		return nil, ports.NewLessonError("UpdateLessonVideo", err, "failed to get lesson")
+	}
+
+	// Check if lesson is deleted
+	if lesson.DeletedAt != nil {
+		return nil, ports.NewLessonError("UpdateLessonVideo", ports.ErrLessonDeleted, "lesson has been deleted")
+	}
+
+	// Update media_id and video_url
+	lesson.MediaID = &mediaID
+	lesson.VideoURL = &videoURL
+	lesson.ContentType = domain.ContentTypeVideo
+	lesson.UpdatedAt = time.Now()
+
+	// Update lesson in database
+	if err := s.lessonRepo.Update(ctx, lesson); err != nil {
+		return nil, ports.NewLessonError("UpdateLessonVideo", ports.ErrLessonUpdateFailed, err.Error())
+	}
+
+	// Convert to response
+	response := &domain.LessonDetailResponse{}
+	response.FromEntity(lesson)
+
+	return response, nil
+}
+
 // DeleteLesson soft deletes a lesson
 func (s *LessonServiceImpl) DeleteLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error {
 	// Check if lesson exists

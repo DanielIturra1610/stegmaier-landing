@@ -44,6 +44,7 @@ type LessonService interface {
 	// Lesson management (instructor/admin)
 	CreateLesson(ctx context.Context, tenantID uuid.UUID, req *domain.CreateLessonRequest) (*domain.LessonDetailResponse, error)
 	UpdateLesson(ctx context.Context, lessonID, tenantID uuid.UUID, req *domain.UpdateLessonRequest) (*domain.LessonDetailResponse, error)
+	UpdateLessonVideo(ctx context.Context, lessonID, tenantID, mediaID uuid.UUID, videoURL string) (*domain.LessonDetailResponse, error)
 	DeleteLesson(ctx context.Context, lessonID, tenantID uuid.UUID) error
 	ReorderLessons(ctx context.Context, courseID, tenantID uuid.UUID, req *domain.ReorderLessonsRequest) error
 

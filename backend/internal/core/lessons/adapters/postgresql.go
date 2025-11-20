@@ -131,14 +131,15 @@ func (r *PostgreSQLLessonRepository) Update(ctx context.Context, lesson *domain.
 			title = $1, description = $2, content_type = $3,
 			content_url = $4, content = $5, duration = $6,
 			order_index = $7, is_published = $8, is_free = $9,
-			quiz_id = $10, updated_at = $11
-		WHERE id = $12 AND tenant_id = $13 AND deleted_at IS NULL
+			quiz_id = $10, media_id = $11, video_url = $12, updated_at = $13
+		WHERE id = $14 AND tenant_id = $15 AND deleted_at IS NULL
 	`
 
 	result, err := r.db.ExecContext(ctx, query,
 		lesson.Title, lesson.Description, lesson.ContentType, lesson.ContentURL,
 		lesson.Content, lesson.Duration, lesson.OrderIndex, lesson.IsPublished,
-		lesson.IsFree, lesson.QuizID, lesson.UpdatedAt, lesson.ID, lesson.TenantID,
+		lesson.IsFree, lesson.QuizID, lesson.MediaID, lesson.VideoURL, lesson.UpdatedAt,
+		lesson.ID, lesson.TenantID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update lesson: %w", err)

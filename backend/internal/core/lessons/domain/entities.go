@@ -22,13 +22,16 @@ type Lesson struct {
 	ID          uuid.UUID   `json:"id"`
 	TenantID    uuid.UUID   `json:"tenant_id"`
 	CourseID    uuid.UUID   `json:"course_id"`
+	ModuleID    *uuid.UUID  `json:"module_id,omitempty"`    // Associated module/section
 	Title       string      `json:"title"`
 	Description *string     `json:"description,omitempty"`
 	ContentType ContentType `json:"content_type"`
 	ContentURL  *string     `json:"content_url,omitempty"`
 	Content     *string     `json:"content,omitempty"`      // For text content
+	MediaID     *uuid.UUID  `json:"media_id,omitempty"`     // Reference to media table for videos
+	VideoURL    *string     `json:"video_url,omitempty"`    // Pre-signed URL for video playback
 	Duration    *int        `json:"duration,omitempty"`     // Duration in minutes
-	OrderIndex  int         `json:"order_index"`            // Order within the course
+	OrderIndex  int         `json:"order_index"`            // Order within the module or course
 	IsPublished bool        `json:"is_published"`           // Whether the lesson is published
 	IsFree      bool        `json:"is_free"`                // Whether the lesson is free to preview
 	QuizID      *uuid.UUID  `json:"quiz_id,omitempty"`      // Associated quiz if any

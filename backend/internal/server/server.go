@@ -228,10 +228,10 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// 2. Initialize lesson service (now with module repository for validation)
 	lessonService := lessonservices.NewLessonService(lessonRepo, moduleRepo)
 
-	// 3. Initialize lesson controller
-	lessonController := controllers.NewLessonController(lessonService)
+	// Note: Lesson controller initialization moved after media module
+	// to support video upload functionality
 
-	log.Println("✅ Lessons module initialized")
+	log.Println("✅ Lessons service initialized")
 
 	// Initialize dependency injection for quizzes module
 	log.Println("🔧 Initializing quizzes module...")
@@ -317,6 +317,11 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	mediaController := controllers.NewMediaController(mediaService)
 
 	log.Println("✅ Media module initialized")
+
+	// Initialize lesson controller (moved here to have access to mediaService)
+	log.Println("🔧 Initializing lesson controller with media support...")
+	lessonController := controllers.NewLessonController(lessonService, mediaService)
+	log.Println("✅ Lesson controller initialized")
 
 	// NOTE: Modules module initialization has been moved up before lessons module
 	// See lines 207-220 for the actual initialization

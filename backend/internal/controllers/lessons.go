@@ -2,9 +2,12 @@ package controllers
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
+	mediadomain "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/domain"
+	mediaports "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/ports"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -12,12 +15,14 @@ import (
 // LessonController handles lesson-related HTTP requests
 type LessonController struct {
 	lessonService ports.LessonService
+	mediaService  mediaports.MediaService
 }
 
 // NewLessonController creates a new LessonController
-func NewLessonController(lessonService ports.LessonService) *LessonController {
+func NewLessonController(lessonService ports.LessonService, mediaService mediaports.MediaService) *LessonController {
 	return &LessonController{
 		lessonService: lessonService,
+		mediaService:  mediaService,
 	}
 }
 
@@ -31,7 +36,7 @@ func (ctrl *LessonController) GetLesson(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -64,7 +69,7 @@ func (ctrl *LessonController) GetLessonsByCourse(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -110,7 +115,7 @@ func (ctrl *LessonController) GetLessonsWithProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -156,7 +161,7 @@ func (ctrl *LessonController) MarkLessonComplete(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -191,7 +196,7 @@ func (ctrl *LessonController) GetLessonCompletion(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -221,7 +226,7 @@ func (ctrl *LessonController) GetCourseProgress(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -253,7 +258,7 @@ func (ctrl *LessonController) CreateLesson(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -286,7 +291,7 @@ func (ctrl *LessonController) UpdateLesson(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -316,7 +321,7 @@ func (ctrl *LessonController) DeleteLesson(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -339,7 +344,7 @@ func (ctrl *LessonController) ReorderLessons(c *fiber.Ctx) error {
 	}
 
 	// Get tenant ID from context
-	tenantID, err := uuid.Parse(c.Locals("tenantID").(string))
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
 	if err != nil {
 		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
 	}
@@ -356,4 +361,73 @@ func (ctrl *LessonController) ReorderLessons(c *fiber.Ctx) error {
 	}
 
 	return SuccessResponse(c, fiber.StatusOK, "Lessons reordered successfully", nil)
+}
+
+// UploadLessonVideo uploads a video file for a lesson
+// POST /api/v1/lessons/:id/upload-video
+func (ctrl *LessonController) UploadLessonVideo(c *fiber.Ctx) error {
+	// Get lesson ID from params
+	lessonID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid lesson ID")
+	}
+
+	// Get tenant ID from context
+	tenantID, err := uuid.Parse(c.Locals("tenant_id").(string))
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid tenant ID")
+	}
+
+	// Get user ID from context
+	userID, err := uuid.Parse(c.Locals("user_id").(string))
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid user ID")
+	}
+
+	// Get video file from form
+	file, err := c.FormFile("video")
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusBadRequest, "No video file provided")
+	}
+
+	// Validate file type (must be video)
+	if !strings.HasPrefix(file.Header.Get("Content-Type"), "video/") {
+		return ErrorResponse(c, fiber.StatusBadRequest, "File must be a video")
+	}
+
+	// Open file
+	src, err := file.Open()
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusInternalServerError, "Failed to open file")
+	}
+	defer src.Close()
+
+	// Upload to MinIO via Media Service
+	uploadReq := mediadomain.UploadMediaRequest{
+		TenantID:     tenantID,
+		UserID:       userID,
+		FileName:     file.Filename,
+		OriginalName: file.Filename,
+		MimeType:     file.Header.Get("Content-Type"),
+		FileSize:     file.Size,
+		Context:      mediadomain.MediaContextLesson,
+		ContextID:    &lessonID,
+		Visibility:   mediadomain.MediaVisibilityPrivate,
+	}
+
+	mediaResp, err := ctrl.mediaService.UploadMedia(uploadReq, src)
+	if err != nil {
+		return ErrorResponse(c, fiber.StatusInternalServerError, "Failed to upload video: "+err.Error())
+	}
+
+	// Update lesson with media_id and video_url
+	lesson, err := ctrl.lessonService.UpdateLessonVideo(c.Context(), lessonID, tenantID, mediaResp.ID, mediaResp.URL)
+	if err != nil {
+		return HandleError(c, err)
+	}
+
+	return SuccessResponse(c, fiber.StatusOK, "Video uploaded successfully", map[string]interface{}{
+		"lesson": lesson,
+		"media":  mediaResp,
+	})
 }
