@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Info,
   Send,
-  RotateCw
+  RotateCw,
+  Download
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,15 +43,48 @@ export const AssignmentSubmissionComponent: React.FC<AssignmentSubmissionProps> 
   const [isSaving, setIsSaving] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<AssignmentFile[]>(existingSubmission?.files || []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [templateFiles, setTemplateFiles] = useState<AssignmentFile[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   
   // Refs
   const fileUploaderRef = useRef<any>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load existing submission on mount
+  // Load existing submission and template files on mount
   useEffect(() => {
     loadSubmission();
+    loadTemplateFiles();
   }, [assignment.id]);
+
+  const loadTemplateFiles = async () => {
+    try {
+      setLoadingTemplates(true);
+      const files = await assignmentService.getAssignmentFiles(assignment.id);
+      // Filter only template files (is_template = true or file_category = 'template')
+      const templates = files.filter(f => f.is_template || f.file_category === 'template');
+      setTemplateFiles(templates);
+    } catch (error: any) {
+      console.error('Error loading template files:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const handleDownloadTemplate = async (file: AssignmentFile) => {
+    try {
+      const blob = await assignmentService.downloadAssignmentFile(assignment.id, file.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.original_filename || file.filename || 'template';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      onError?.(error.message || 'Error al descargar el archivo');
+    }
+  };
 
   // Auto-save functionality
   useEffect(() => {
@@ -256,6 +290,47 @@ export const AssignmentSubmissionComponent: React.FC<AssignmentSubmissionProps> 
               <AlertTitle className="text-blue-900">Instrucciones</AlertTitle>
               <AlertDescription className="text-blue-800 whitespace-pre-wrap">
                 {assignment.instructions}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Template Files Section */}
+          {templateFiles.length > 0 && (
+            <Alert className="mt-4 border-green-200 bg-green-50">
+              <Download className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-900">Archivos Plantilla Disponibles</AlertTitle>
+              <AlertDescription className="text-green-800">
+                <p className="mb-3">Descarga estos archivos para completar tu assignment:</p>
+                <div className="space-y-2">
+                  {templateFiles.map((file) => (
+                    <div
+                      key={file.id}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <FileText className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {file.original_filename || file.filename}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {assignmentService.formatFileSize(file.file_size)}
+                            {file.description && ` • ${file.description}`}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadTemplate(file)}
+                        className="bg-green-600 text-white hover:bg-green-700 border-green-600"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Descargar
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </AlertDescription>
             </Alert>
           )}

@@ -36,7 +36,9 @@ import {
   SubmissionGrade,
   SubmissionStatus,
   GradeStatus,
-  AssignmentStatistics
+  AssignmentStatistics,
+  Rubric,
+  RubricCriterion
 } from '../../types/assignment';
 
 type FilterStatus = 'all' | 'submitted' | 'graded' | 'pending' | 'late';
@@ -63,12 +65,26 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
   const [expandedSubmission, setExpandedSubmission] = useState<string | null>(null);
   const [gradingSubmission, setGradingSubmission] = useState<string | null>(null);
   const [gradeInputs, setGradeInputs] = useState<Record<string, { points: number; feedback: string }>>({});
+  const [rubric, setRubric] = useState<Rubric | null>(null);
+  const [rubricGrades, setRubricGrades] = useState<Record<string, Record<string, number>>>({});
 
-  // Load submissions and statistics
+  // Load submissions, statistics, and rubric
   useEffect(() => {
     loadSubmissions();
     loadStatistics();
+    loadRubric();
   }, [assignment.id]);
+
+  const loadRubric = async () => {
+    if (!assignment.rubric_id) return;
+
+    try {
+      const rubricData = await assignmentService.getAssignmentRubric(assignment.id);
+      setRubric(rubricData);
+    } catch (error: any) {
+      console.error('Error loading rubric:', error);
+    }
+  };
 
   // Filter and sort submissions
   useEffect(() => {
@@ -186,6 +202,30 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
         [field]: value
       }
     }));
+  };
+
+  const handleRubricCriterionChange = (submissionId: string, criterionId: string, points: number) => {
+    setRubricGrades(prev => ({
+      ...prev,
+      [submissionId]: {
+        ...prev[submissionId],
+        [criterionId]: points
+      }
+    }));
+
+    // Calculate total points from rubric
+    if (rubric) {
+      const currentGrades = { ...rubricGrades[submissionId], [criterionId]: points };
+      const totalPoints = Object.values(currentGrades).reduce((sum, pts) => sum + pts, 0);
+
+      setGradeInputs(prev => ({
+        ...prev,
+        [submissionId]: {
+          ...prev[submissionId],
+          points: totalPoints
+        }
+      }));
+    }
   };
 
   const handleGradeSubmission = async (submissionId: string) => {
@@ -565,32 +605,122 @@ export const AssignmentGrading: React.FC<AssignmentGradingProps> = ({
                 <div className="px-4 pb-4 bg-blue-50 border-t border-blue-200">
                   <div className="py-4">
                     <h4 className="text-sm font-medium text-gray-900 mb-4">Calificar submission</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Puntos (máximo: {assignment.max_points})
-                        </label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max={assignment.max_points}
-                          value={gradeInputs[submission.id]?.points || ''}
-                          onChange={(e) => handleGradeChange(submission.id, 'points', parseFloat(e.target.value) || 0)}
-                          placeholder="0"
-                        />
+
+                    {/* Rubric-based grading */}
+                    {rubric && rubric.criteria && rubric.criteria.length > 0 ? (
+                      <div className="space-y-4">
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <GraduationCap className="h-5 w-5 text-purple-600" />
+                            <h5 className="font-medium text-purple-900">Calificación con Rúbrica: {rubric.name}</h5>
+                          </div>
+                          <p className="text-sm text-purple-700">{rubric.description}</p>
+                        </div>
+
+                        {/* Rubric criteria */}
+                        <div className="space-y-3">
+                          {rubric.criteria.map((criterion) => (
+                            <div key={criterion.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                              <div className="mb-3">
+                                <h6 className="font-medium text-gray-900">{criterion.name}</h6>
+                                <p className="text-sm text-gray-600 mt-1">{criterion.description}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Puntos máximos: {criterion.max_points} • Peso: {criterion.weight}%
+                                </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Seleccionar nivel de desempeño:
+                                </label>
+                                <div className="grid grid-cols-1 gap-2">
+                                  {criterion.levels.map((level, idx) => (
+                                    <label
+                                      key={idx}
+                                      className={`flex items-start p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                        rubricGrades[submission.id]?.[criterion.id] === level.points
+                                          ? 'border-purple-500 bg-purple-50'
+                                          : 'border-gray-200 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name={`criterion-${submission.id}-${criterion.id}`}
+                                        value={level.points}
+                                        checked={rubricGrades[submission.id]?.[criterion.id] === level.points}
+                                        onChange={() => handleRubricCriterionChange(submission.id, criterion.id, level.points)}
+                                        className="mt-1"
+                                      />
+                                      <div className="ml-3 flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium text-gray-900">{level.name}</span>
+                                          <Badge variant={rubricGrades[submission.id]?.[criterion.id] === level.points ? "default" : "outline"}>
+                                            {level.points} pts
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-1">{level.description}</p>
+                                      </div>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Total points calculated */}
+                        <div className="bg-gray-100 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">Total de puntos:</span>
+                            <span className="text-lg font-bold text-gray-900">
+                              {gradeInputs[submission.id]?.points || 0} / {assignment.max_points}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Feedback */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Feedback General
+                          </label>
+                          <Textarea
+                            value={gradeInputs[submission.id]?.feedback || ''}
+                            onChange={(e) => handleGradeChange(submission.id, 'feedback', e.target.value)}
+                            rows={4}
+                            placeholder="Comentarios generales para el estudiante..."
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Feedback
-                        </label>
-                        <Textarea
-                          value={gradeInputs[submission.id]?.feedback || ''}
-                          onChange={(e) => handleGradeChange(submission.id, 'feedback', e.target.value)}
-                          rows={3}
-                          placeholder="Comentarios para el estudiante..."
-                        />
+                    ) : (
+                      /* Standard grading without rubric */
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Puntos (máximo: {assignment.max_points})
+                          </label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max={assignment.max_points}
+                            value={gradeInputs[submission.id]?.points || ''}
+                            onChange={(e) => handleGradeChange(submission.id, 'points', parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Feedback
+                          </label>
+                          <Textarea
+                            value={gradeInputs[submission.id]?.feedback || ''}
+                            onChange={(e) => handleGradeChange(submission.id, 'feedback', e.target.value)}
+                            rows={3}
+                            placeholder="Comentarios para el estudiante..."
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
+
                     <div className="flex items-center justify-end gap-3 mt-4">
                       <Button
                         variant="outline"

@@ -245,19 +245,60 @@ class AssignmentService {
   }
 
   /**
+   * Obtener archivos de un assignment (templates, referencias, etc.)
+   */
+  async getAssignmentFiles(assignmentId: string): Promise<AssignmentFile[]> {
+    try {
+      console.log('📁 [assignmentService] Getting assignment files for:', assignmentId);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files`),
+        { headers: getAuthHeaders() }
+      );
+      console.log('✅ [assignmentService] Assignment files retrieved:', response.data.length);
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error getting assignment files:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al obtener archivos');
+    }
+  }
+
+  /**
+   * Descargar archivo de assignment
+   */
+  async downloadAssignmentFile(assignmentId: string, fileId: string): Promise<Blob> {
+    try {
+      console.log('⬇️ [assignmentService] Downloading assignment file:', fileId);
+      const response = await axios.get(
+        buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files/${fileId}/download`),
+        {
+          headers: getAuthHeaders(),
+          responseType: 'blob'
+        }
+      );
+      console.log('✅ [assignmentService] Assignment file downloaded successfully');
+      return response.data;
+    } catch (error) {
+      const apiError = error as APIError;
+      console.error('❌ [assignmentService] Error downloading assignment file:', apiError);
+      throw new Error(apiError.response?.data?.detail || 'Error al descargar archivo');
+    }
+  }
+
+  /**
    * Eliminar archivo de assignment
    */
   async deleteAssignmentFile(assignmentId: string, fileId: string): Promise<void> {
     try {
-      console.log(' [assignmentService] Deleting assignment file:', fileId);
+      console.log('🗑️ [assignmentService] Deleting assignment file:', fileId);
       await axios.delete(
         buildApiUrl(`${API_ENDPOINTS.ASSIGNMENTS}/${assignmentId}/files/${fileId}`),
         { headers: getAuthHeaders() }
       );
-      console.log(' [assignmentService] Assignment file deleted successfully');
+      console.log('✅ [assignmentService] Assignment file deleted successfully');
     } catch (error) {
       const apiError = error as APIError;
-      console.error(' [assignmentService] Error deleting assignment file:', apiError);
+      console.error('❌ [assignmentService] Error deleting assignment file:', apiError);
       throw new Error(apiError.response?.data?.detail || 'Error al eliminar archivo');
     }
   }
