@@ -22,9 +22,10 @@ type UserFixture struct {
 
 // ToUser converts a UserFixture to a domain.User
 func (f *UserFixture) ToUser() *domain.User {
+	tenantID := f.TenantID
 	return &domain.User{
 		ID:           f.ID,
-		TenantID:     f.TenantID,
+		TenantID:     &tenantID,
 		Email:        f.Email,
 		PasswordHash: f.PasswordHash,
 		FullName:     f.FullName,

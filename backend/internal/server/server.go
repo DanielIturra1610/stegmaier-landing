@@ -680,6 +680,7 @@ func (s *Server) setupRoutes() {
 		// Instructor/Admin actions (TODO: Add instructor/admin middleware)
 		lessonsProtected.Put("/:id", s.lessonController.UpdateLesson)
 		lessonsProtected.Delete("/:id", s.lessonController.DeleteLesson)
+		lessonsProtected.Post("/:id/video", s.lessonController.UploadLessonVideo)
 	}
 
 	// Course-specific lesson routes (nested under courses)
