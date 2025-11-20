@@ -25,11 +25,31 @@ import (
 	notificationservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/services"
 	mediaadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/adapters"
 	mediaservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/services"
+	moduleadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/modules/adapters"
+	moduleservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/modules/services"
+	reviewadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/reviews/adapters"
+	reviewservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/reviews/services"
+	analyticsadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/adapters"
+	analyticsservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/services"
+	analyticscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/controllers"
+	enrollmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/adapters"
+	enrollmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/services"
+	enrollmentcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/controllers"
+	progressadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/adapters"
+	progressservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/services"
+	progresscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/controllers"
+	certificateadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/adapters"
+	certificateservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/services"
+	certificatecontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/controllers"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
+	tenantadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/adapters"
+	tenantservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/services"
+	tenantcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/controllers"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/email"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/hasher"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/tokens"
 	"github.com/gofiber/fiber/v2"
@@ -37,6 +57,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -51,6 +72,7 @@ type Server struct {
 	app                    *fiber.App
 	config                 *config.Config
 	dbManager              *database.Manager
+	controlDB              *sqlx.DB // Control DB for tenant management
 	authController         *controllers.AuthController
 	userController         *controllers.UserManagementController
 	profileController      *controllers.ProfileController
@@ -61,6 +83,13 @@ type Server struct {
 	assignmentController   *controllers.AssignmentController
 	notificationController *controllers.NotificationController
 	mediaController        *controllers.MediaController
+	moduleController       *controllers.ModuleController
+	reviewController       *controllers.ReviewController
+	analyticsController    *analyticscontrollers.AnalyticsController
+	enrollmentController   *enrollmentcontrollers.EnrollmentController
+	progressController     *progresscontrollers.ProgressController
+	certificateController  *certificatecontrollers.CertificateController
+	tenantController       *tenantcontrollers.TenantController
 	tokenService           tokens.TokenService
 	authRepo               ports.AuthRepository
 }
@@ -175,14 +204,29 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Courses module initialized")
 
+	// Initialize dependency injection for modules module
+	// NOTE: Modules must be initialized BEFORE lessons because lessons depend on modules
+	log.Println("🔧 Initializing modules module...")
+
+	// 1. Initialize module repository
+	moduleRepo := moduleadapters.NewPostgreSQLModuleRepository(tenantDB)
+
+	// 2. Initialize module service
+	moduleService := moduleservices.NewModuleService(moduleRepo)
+
+	// 3. Initialize module controller
+	moduleController := controllers.NewModuleController(moduleService)
+
+	log.Println("✅ Modules module initialized")
+
 	// Initialize dependency injection for lessons module
 	log.Println("🔧 Initializing lessons module...")
 
 	// 1. Initialize lesson repository
 	lessonRepo := lessonadapters.NewPostgreSQLLessonRepository(tenantDB)
 
-	// 2. Initialize lesson service
-	lessonService := lessonservices.NewLessonService(lessonRepo)
+	// 2. Initialize lesson service (now with module repository for validation)
+	lessonService := lessonservices.NewLessonService(lessonRepo, moduleRepo)
 
 	// 3. Initialize lesson controller
 	lessonController := controllers.NewLessonController(lessonService)
@@ -232,10 +276,16 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// 1. Initialize notification repository
 	notificationRepo := notificationadapters.NewPostgreSQLNotificationRepository(tenantDB)
 
-	// 2. Initialize notification service
-	notificationService := notificationservices.NewNotificationService(notificationRepo)
+	// 2. Initialize email service
+	log.Println("📧 Initializing email service...")
+	emailService := email.NewEmailService(&cfg.Email, cfg.Server.BaseURL)
+	emailServiceAdapter := email.NewEmailServiceAdapter(emailService)
+	log.Println("✅ Email service initialized")
 
-	// 3. Initialize notification controller
+	// 3. Initialize notification service with email support
+	notificationService := notificationservices.NewNotificationService(notificationRepo, emailServiceAdapter)
+
+	// 4. Initialize notification controller
 	notificationController := controllers.NewNotificationController(notificationService)
 
 	log.Println("✅ Notifications module initialized")
@@ -246,9 +296,9 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// 1. Initialize MinIO storage service
 	storageService, err := mediaadapters.NewMinioStorageService(
 		cfg.Storage.Endpoint,
-		cfg.Storage.AccessKey,
-		cfg.Storage.SecretKey,
-		cfg.Storage.Region,
+		cfg.Storage.AWSAccessKey,
+		cfg.Storage.AWSSecretKey,
+		cfg.Storage.AWSRegion,
 		cfg.Storage.BucketPrefix,
 		cfg.Storage.UseSSL,
 	)
@@ -268,11 +318,112 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Media module initialized")
 
+	// NOTE: Modules module initialization has been moved up before lessons module
+	// See lines 207-220 for the actual initialization
+
+	// Initialize dependency injection for reviews module
+	log.Println("🔧 Initializing reviews module...")
+
+	// 1. Initialize review repository
+	reviewRepo := reviewadapters.NewPostgreSQLReviewRepository(tenantDB)
+
+	// 2. Initialize review service with course repository for rating sync
+	// The course repository implements CourseRatingSync interface
+	reviewService := reviewservices.NewReviewService(reviewRepo, courseRepo)
+
+	// 3. Initialize review controller
+	reviewController := controllers.NewReviewController(reviewService)
+
+	log.Println("✅ Reviews module initialized")
+
+	// Initialize dependency injection for analytics module
+	log.Println("🔧 Initializing analytics module...")
+
+	// 1. Initialize analytics repository
+	analyticsRepo := analyticsadapters.NewPostgreSQLAnalyticsRepository(tenantDB.DB)
+
+	// 2. Initialize analytics service
+	analyticsService := analyticsservices.NewAnalyticsService(analyticsRepo)
+
+	// 3. Initialize analytics controller
+	analyticsController := analyticscontrollers.NewAnalyticsController(analyticsService)
+
+	log.Println("✅ Analytics module initialized")
+
+	// Initialize dependency injection for enrollments module
+	log.Println("🔧 Initializing enrollments module...")
+
+	// 1. Initialize enrollments repository
+	enrollmentRepo := enrollmentadapters.NewPostgreSQLEnrollmentRepository(tenantDB.DB)
+
+	// 2. Initialize enrollments service
+	enrollmentService := enrollmentservices.NewEnrollmentService(enrollmentRepo)
+
+	// 3. Initialize enrollments controller
+	enrollmentController := enrollmentcontrollers.NewEnrollmentController(enrollmentService)
+
+	log.Println("✅ Enrollments module initialized")
+
+	// Initialize dependency injection for progress module
+	log.Println("🔧 Initializing progress module...")
+
+	// 1. Initialize progress repository
+	progressRepo := progressadapters.NewPostgreSQLProgressRepository(tenantDB.DB)
+
+	// 2. Initialize progress service
+	progressService := progressservices.NewProgressService(progressRepo)
+
+	// 3. Initialize progress controller
+	progressController := progresscontrollers.NewProgressController(progressService)
+
+	log.Println("✅ Progress module initialized")
+
+	// Initialize dependency injection for certificates module
+	log.Println("🔧 Initializing certificates module...")
+
+	// 1. Initialize certificates repository
+	certificateRepo := certificateadapters.NewPostgreSQLCertificateRepository(tenantDB.DB)
+
+	// 2. Initialize certificate generator (PDF generation)
+	certificateGenerator := certificateadapters.NewSimplePDFGenerator()
+
+	// 3. Initialize certificate storage (local file system)
+	certificateStorage, err := certificateadapters.NewLocalCertificateStorage("./certificates", cfg.Server.BaseURL+"/certificates")
+	if err != nil {
+		log.Fatalf("❌ Failed to initialize certificate storage: %v", err)
+	}
+
+	// 4. Initialize certificates service
+	certificateService := certificateservices.NewCertificateService(certificateRepo, certificateGenerator, certificateStorage, cfg.Server.BaseURL)
+
+	// 5. Initialize certificates controller
+	certificateController := certificatecontrollers.NewCertificateController(certificateService)
+
+	log.Println("✅ Certificates module initialized")
+
+	// Initialize dependency injection for tenants module
+	log.Println("🔧 Initializing tenants module...")
+
+	// 1. Initialize migration runner
+	migrationRunner := database.NewMigrationRunner(dbManager)
+
+	// 2. Initialize tenant repository
+	tenantRepo := tenantadapters.NewPostgresTenantRepository(controlDB, dbManager)
+
+	// 3. Initialize tenant service (with userManagementService dependency)
+	tenantService := tenantservices.NewTenantService(tenantRepo, dbManager, migrationRunner, tokenService, userManagementService)
+
+	// 4. Initialize tenant controller
+	tenantController := tenantcontrollers.NewTenantController(tenantService)
+
+	log.Println("✅ Tenants module initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
 		app:                    app,
 		config:                 cfg,
 		dbManager:              dbManager,
+		controlDB:              controlDB,
 		authController:         authController,
 		userController:         userController,
 		profileController:      profileController,
@@ -283,6 +434,13 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		assignmentController:   assignmentController,
 		notificationController: notificationController,
 		mediaController:        mediaController,
+		moduleController:       moduleController,
+		reviewController:       reviewController,
+		analyticsController:    analyticsController,
+		enrollmentController:   enrollmentController,
+		progressController:     progressController,
+		certificateController:  certificateController,
+		tenantController:       tenantController,
 		tokenService:           tokenService,
 		authRepo:               authRepo,
 	}
@@ -358,9 +516,10 @@ func (s *Server) setupRoutes() {
 	// API version group
 	api := s.app.Group("/api")
 
-	// Apply tenant middleware to all API routes
-	// This will extract tenant_id and inject it into context
-	api.Use(middleware.TenantMiddleware(s.dbManager))
+	// Apply OPTIONAL tenant middleware to all API routes
+	// This will try to extract tenant_id but won't fail if missing
+	// Individual route groups can require tenant if needed
+	api.Use(middleware.OptionalTenantMiddleware(s.dbManager))
 
 	v1 := api.Group("/v1")
 
@@ -407,6 +566,32 @@ func (s *Server) setupRoutes() {
 	}
 
 	// ============================================================
+	// Tenant Routes (Protected - Authentication required)
+	// ============================================================
+	tenants := v1.Group("/tenants")
+	tenants.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	{
+		// Get user's tenants and invitations
+		tenants.Get("/", s.tenantController.GetUserTenants)
+		tenants.Get("/invitations", s.tenantController.GetPendingInvitations)
+
+		// Create new tenant (user becomes admin)
+		tenants.Post("/", s.tenantController.CreateTenant)
+
+		// Select tenant (switches context)
+		tenants.Post("/select", s.tenantController.SelectTenant)
+
+		// Invitation management
+		tenants.Post("/invitations/accept", s.tenantController.AcceptInvitation)
+		tenants.Post("/invitations/reject", s.tenantController.RejectInvitation)
+
+		// Admin-only routes (require tenant context and admin role)
+		tenants.Post("/invite", s.tenantController.InviteUser)
+		tenants.Post("/users", s.tenantController.CreateUserInTenant)
+		tenants.Get("/members", s.tenantController.GetTenantMembers)
+	}
+
+	// ============================================================
 	// Course Routes
 	// ============================================================
 	courses := v1.Group("/courses")
@@ -421,9 +606,11 @@ func (s *Server) setupRoutes() {
 		courses.Get("/", s.courseController.ListCourses)
 	}
 
-	// Protected course routes (authentication required)
+	// Protected course routes (authentication + tenant membership required)
 	coursesProtected := courses.Group("")
 	coursesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	coursesProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	coursesProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Student actions
 		coursesProtected.Post("/:id/enroll", s.courseController.EnrollCourse)
@@ -475,9 +662,11 @@ func (s *Server) setupRoutes() {
 		lessons.Get("/:id", s.lessonController.GetLesson)
 	}
 
-	// Protected lesson routes (authentication required)
+	// Protected lesson routes (authentication + tenant membership required)
 	lessonsProtected := lessons.Group("")
 	lessonsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	lessonsProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	lessonsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Student actions
 		lessonsProtected.Post("/:id/complete", s.lessonController.MarkLessonComplete)
@@ -508,9 +697,11 @@ func (s *Server) setupRoutes() {
 		quizzes.Get("/:id", s.quizController.GetQuiz)
 	}
 
-	// Protected quiz routes (authentication required)
+	// Protected quiz routes (authentication + tenant membership required)
 	quizzesProtected := quizzes.Group("")
 	quizzesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	quizzesProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	quizzesProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Student actions
 		quizzesProtected.Post("/:quizId/attempts", s.quizController.StartQuizAttempt)
@@ -551,9 +742,11 @@ func (s *Server) setupRoutes() {
 		assignments.Get("/:id", s.assignmentController.GetAssignment)
 	}
 
-	// Protected assignment routes (authentication required)
+	// Protected assignment routes (authentication + tenant membership required)
 	assignmentsProtected := assignments.Group("")
 	assignmentsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	assignmentsProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	assignmentsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Student actions - View assignments
 		assignmentsProtected.Get("/my", s.assignmentController.GetMyAssignments)
@@ -619,9 +812,11 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	rubrics := v1.Group("/rubrics")
 
-	// Protected rubric routes (authentication required)
+	// Protected rubric routes (authentication + tenant membership required)
 	rubricsProtected := rubrics.Group("")
 	rubricsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	rubricsProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	rubricsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Instructor/Admin actions - Rubric management
 		rubricsProtected.Post("/", s.assignmentController.CreateRubric)
@@ -648,9 +843,11 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	notifications := v1.Group("/notifications")
 
-	// All notification routes are protected (authentication required)
+	// All notification routes are protected (authentication + tenant membership required)
 	notificationsProtected := notifications.Group("")
 	notificationsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	notificationsProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	notificationsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Basic CRUD operations for notifications
 		notificationsProtected.Post("/", s.notificationController.CreateNotification)
@@ -694,9 +891,11 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	media := v1.Group("/media")
 
-	// All media routes are protected (authentication required)
+	// All media routes are protected (authentication + tenant membership required)
 	mediaProtected := media.Group("")
 	mediaProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	mediaProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	mediaProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Upload operations
 		mediaProtected.Post("/upload", s.mediaController.UploadMedia)
@@ -721,6 +920,130 @@ func (s *Server) setupRoutes() {
 		// Statistics
 		mediaProtected.Get("/stats", s.mediaController.GetStorageStats)
 	}
+
+	// ============================================================
+	// Module Routes
+	// ============================================================
+	modules := v1.Group("/modules")
+
+	// Public module routes (read-only for published modules)
+	{
+		modules.Get("/:id", s.moduleController.GetModule)
+		modules.Get("/:id/lessons", s.moduleController.GetModuleWithLessons)
+	}
+
+	// Protected module routes (authentication + tenant membership required)
+	modulesProtected := modules.Group("")
+	modulesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	modulesProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	modulesProtected.Use(middleware.MembershipMiddleware(s.controlDB))
+	{
+		// Student actions - Progress tracking
+		modulesProtected.Get("/:id/progress", s.moduleController.GetModuleProgress)
+		modulesProtected.Post("/:id/progress", s.moduleController.UpdateModuleProgress)
+
+		// Instructor/Admin actions - Module CRUD
+		modulesProtected.Post("/", s.moduleController.CreateModule)
+		modulesProtected.Patch("/:id", s.moduleController.UpdateModule)
+		modulesProtected.Delete("/:id", s.moduleController.DeleteModule)
+
+		// Instructor/Admin actions - Publishing
+		modulesProtected.Post("/:id/publish", s.moduleController.PublishModule)
+		modulesProtected.Post("/:id/unpublish", s.moduleController.UnpublishModule)
+	}
+
+	// Course-specific module routes (nested under courses)
+	// Public: Get modules for a course
+	courses.Get("/:courseId/modules", s.moduleController.GetCourseModules)
+
+	// Protected: Course module routes
+	coursesProtected.Get("/:courseId/modules/progress", s.moduleController.GetCourseModulesWithProgress)
+	coursesProtected.Post("/:courseId/modules", s.moduleController.CreateModule)
+	coursesProtected.Post("/:courseId/modules/reorder", s.moduleController.ReorderModules)
+
+	// ============================================================
+	// Review Routes
+	// ============================================================
+	reviews := v1.Group("/reviews")
+
+	// Public review routes (read-only for public reviews)
+	{
+		reviews.Get("/:id", s.reviewController.GetReview)
+	}
+
+	// Protected review routes (authentication + tenant membership required)
+	reviewsProtected := reviews.Group("")
+	reviewsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	reviewsProtected.Use(middleware.TenantMiddleware(s.dbManager))
+	reviewsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
+	{
+		// Student actions - Review CRUD
+		reviewsProtected.Post("/", s.reviewController.CreateReview)
+		reviewsProtected.Patch("/:id", s.reviewController.UpdateReview)
+		reviewsProtected.Delete("/:id", s.reviewController.DeleteReview)
+		reviewsProtected.Get("/my", s.reviewController.GetMyReviews)
+
+		// Student actions - Helpful voting
+		reviewsProtected.Post("/:id/vote", s.reviewController.VoteReview)
+		reviewsProtected.Delete("/:id/vote", s.reviewController.RemoveVote)
+
+		// Student actions - Report reviews
+		reviewsProtected.Post("/:id/report", s.reviewController.ReportReview)
+		reviewsProtected.Get("/:id/reports", s.reviewController.GetReviewReports)
+
+		// Admin actions - Moderation
+		reviewsProtected.Get("/reports/pending", s.reviewController.GetPendingReports)
+		reviewsProtected.Patch("/reports/:reportId/status", s.reviewController.UpdateReportStatus)
+		reviewsProtected.Delete("/:id/admin", s.reviewController.DeleteReviewByAdmin)
+	}
+
+	// Course-specific review routes (nested under courses)
+	// Public: Get reviews and rating for a course
+	courses.Get("/:courseId/reviews", s.reviewController.GetCourseReviews)
+	courses.Get("/:courseId/rating", s.reviewController.GetCourseRating)
+
+	// Protected: Get user's review for a course
+	coursesProtected.Get("/:courseId/my-review", s.reviewController.GetUserReviewForCourse)
+
+	// ============================================================
+	// Analytics Routes (Protected - Authentication required)
+	// ============================================================
+	// Note: All analytics routes are protected by authentication
+	// Permission checks happen at the service layer (students can only see their own, instructors see their courses, admins see all)
+	analytics := v1.Group("/analytics")
+	analytics.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	analytics.Use(middleware.TenantMiddleware(s.dbManager))
+	analytics.Use(middleware.MembershipMiddleware(s.controlDB))
+	s.analyticsController.RegisterRoutes(analytics)
+
+	// ============================================================
+	// Enrollment Routes (Protected - Authentication required)
+	// ============================================================
+	// Note: All enrollment routes are protected by authentication
+	// Students can enroll themselves and view their own enrollments
+	// Instructors/Admins can manage all enrollments for their courses
+	s.enrollmentController.RegisterRoutes(v1)
+
+	// ============================================================
+	// Progress Routes (Protected - Authentication required)
+	// ============================================================
+	// Note: All progress routes are protected by authentication
+	// Students can view and update their own progress
+	// Instructors/Admins can view and manage progress for all students
+	progress := v1.Group("/progress")
+	progress.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	progress.Use(middleware.TenantMiddleware(s.dbManager))
+	progress.Use(middleware.MembershipMiddleware(s.controlDB))
+	s.progressController.RegisterRoutes(progress)
+
+	// ============================================================
+	// Certificate Routes (Protected - Authentication required)
+	// ============================================================
+	// Note: All certificate routes are protected by authentication
+	// Students can view and download their own certificates
+	// Instructors/Admins can generate, manage, and revoke certificates
+	// Certificate verification endpoint is available for public use
+	s.certificateController.RegisterRoutes(v1)
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)
@@ -765,10 +1088,10 @@ func (s *Server) setupRoutes() {
 	superadmin.Use(middleware.RequireSuperAdmin()) // Requires superadmin role only
 
 	// Tenant Management (SuperAdmin only - critical operations)
-	tenants := superadmin.Group("/tenants")
+	superadminTenants := superadmin.Group("/tenants")
 	{
-		tenants.Get("/:tenantId/users", s.userController.GetUsersByTenant)
-		tenants.Get("/:tenantId/users/count", s.userController.CountUsersByTenant)
+		superadminTenants.Get("/:tenantId/users", s.userController.GetUsersByTenant)
+		superadminTenants.Get("/:tenantId/users/count", s.userController.CountUsersByTenant)
 	}
 }
 

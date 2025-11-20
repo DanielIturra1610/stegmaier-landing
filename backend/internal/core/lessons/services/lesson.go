@@ -2,23 +2,27 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
+	moduleports "github.com/DanielIturra1610/stegmaier-landing/internal/core/modules/ports"
 	"github.com/google/uuid"
 )
 
 // LessonServiceImpl implements the LessonService interface
 type LessonServiceImpl struct {
 	lessonRepo ports.LessonRepository
+	moduleRepo moduleports.ModuleRepository
 	// TODO: Add CourseRepository when implementing enrollment checks
 }
 
 // NewLessonService creates a new lesson service instance
-func NewLessonService(lessonRepo ports.LessonRepository) ports.LessonService {
+func NewLessonService(lessonRepo ports.LessonRepository, moduleRepo moduleports.ModuleRepository) ports.LessonService {
 	return &LessonServiceImpl{
 		lessonRepo: lessonRepo,
+		moduleRepo: moduleRepo,
 	}
 }
 
@@ -45,11 +49,21 @@ func (s *LessonServiceImpl) CreateLesson(ctx context.Context, tenantID uuid.UUID
 	// TODO: Validate quiz exists if QuizID is provided
 	// This will require QuizRepository dependency
 
+	// Validate that module exists and belongs to the course
+	module, err := s.moduleRepo.GetByID(tenantID, req.ModuleID)
+	if err != nil {
+		return nil, ports.NewLessonError("CreateLesson", err, fmt.Sprintf("module with ID %s not found", req.ModuleID))
+	}
+	if module.CourseID != req.CourseID {
+		return nil, ports.NewLessonError("CreateLesson", ports.ErrInvalidLessonData, fmt.Sprintf("module %s does not belong to course %s", req.ModuleID, req.CourseID))
+	}
+
 	// Create lesson entity
 	lesson := &domain.Lesson{
 		ID:          uuid.New(),
 		TenantID:    tenantID,
 		CourseID:    req.CourseID,
+		ModuleID:    &req.ModuleID,
 		Title:       req.Title,
 		Description: req.Description,
 		ContentType: req.ContentType,
@@ -98,6 +112,17 @@ func (s *LessonServiceImpl) UpdateLesson(ctx context.Context, lessonID, tenantID
 	// This will require CourseRepository to check ownership
 
 	// Update fields if provided
+	if req.ModuleID != nil {
+		// Validate module exists and belongs to the same course
+		module, err := s.moduleRepo.GetByID(tenantID, *req.ModuleID)
+		if err != nil {
+			return nil, ports.NewLessonError("UpdateLesson", err, fmt.Sprintf("module with ID %s not found", *req.ModuleID))
+		}
+		if module.CourseID != lesson.CourseID {
+			return nil, ports.NewLessonError("UpdateLesson", ports.ErrInvalidLessonData, fmt.Sprintf("module %s does not belong to course %s", *req.ModuleID, lesson.CourseID))
+		}
+		lesson.ModuleID = req.ModuleID
+	}
 	if req.Title != nil {
 		lesson.Title = *req.Title
 	}
