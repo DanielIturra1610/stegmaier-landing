@@ -164,6 +164,99 @@ class LessonService {
       throw error;
     }
   }
+
+  /**
+   * Upload video for a lesson
+   */
+  async uploadLessonVideo(
+    lessonId: string,
+    videoFile: File,
+    onProgress?: (progress: number) => void
+  ): Promise<{ lesson: LessonResponse; media: any }> {
+    console.log('📤 [LessonService] Uploading video for lesson:', lessonId);
+    console.log('📤 [LessonService] Video file:', {
+      name: videoFile.name,
+      size: videoFile.size,
+      type: videoFile.type
+    });
+
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append('video', videoFile);
+
+      console.log('📤 [LessonService] FormData created, sending request...');
+
+      // Upload with progress tracking
+      const response = await new Promise<Response>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            console.log(`📊 [LessonService] Upload progress: ${percentComplete.toFixed(2)}%`);
+            onProgress?.(percentComplete);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            // Create a Response-like object
+            resolve(new Response(xhr.responseText, {
+              status: xhr.status,
+              statusText: xhr.statusText,
+              headers: new Headers({
+                'Content-Type': xhr.getResponseHeader('Content-Type') || 'application/json'
+              })
+            }));
+          } else {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload aborted'));
+        });
+
+        xhr.open('POST', buildApiUrl(`${API_ENDPOINTS.LESSONS}/${lessonId}/video`));
+
+        // Set auth headers
+        const headers = this.getHeaders();
+        Object.entries(headers).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value);
+        });
+
+        xhr.send(formData);
+      });
+
+      console.log('📡 [LessonService] Response received, status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [LessonService] Upload error:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { detail: errorText };
+        }
+        throw new Error(errorData.detail || 'Error uploading video');
+      }
+
+      const result = await response.json();
+      console.log('✅ [LessonService] Video uploaded successfully:', result);
+
+      return result;
+    } catch (error) {
+      console.error('💥 [LessonService] Exception uploading video:', error);
+      throw error;
+    }
+  }
 }
 
 export const lessonService = new LessonService();
