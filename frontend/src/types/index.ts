@@ -84,3 +84,4 @@ export * from './progress';
 export * from './enrollment';
 export * from './notification';
 export * from './email';
+export * from './review';
