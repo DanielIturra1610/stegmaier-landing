@@ -27,11 +27,11 @@ export interface ProgressSummaryData {
  */
 export function useProgressSummary(courseId?: string) {
   return useQuery({
-    queryKey: courseId 
+    queryKey: courseId
       ? queryKeys.progress.summaryByCourse(courseId)
       : queryKeys.progress.summary(),
     queryFn: async () => {
-      const data = await progressService.getProgressSummary();
+      const data = await progressService.getMyProgressSummary();
       return data as ProgressSummaryData;
     },
     staleTime: 3 * 60 * 1000, // 3 minutos
