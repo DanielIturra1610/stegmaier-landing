@@ -6,7 +6,6 @@ import SectionConnector from '../../ui/SectionConnector';
 // Importar imágenes correctamente
 import imageFernando from '../../../assets/images/fotos-steg-equipo2.jpg';
 import imageCecilia from '../../../assets/images/fotos-steg-equipo1.jpg';
-import imageRocio from '../../../assets/images/fotos-steg-equipo3.jpg';
 import imageLucas from '../../../assets/images/fotos-steg-equipo4.jpg';
 
 // Datos del equipo
@@ -28,15 +27,6 @@ const teamMembers = [
     image: imageCecilia,
     linkedin: 'https://linkedin.com',
     department: 'dirección',
-  },
-  {
-    id: 3,
-    name: 'ROCIO CARRASCO',
-    role: 'Ingeniero en prevención de riesgos',
-    bio: 'Técnico nivel medio en construcción. Técnico en prevención de riesgos. Ingeniero en prevención de riesgos.',
-    image: imageRocio,
-    linkedin: 'https://linkedin.com',
-    department: 'equipo',
   },
   {
     id: 4,

@@ -3,7 +3,6 @@ import CompanyHero from '../components/sections/company/CompanyHero';
 import History from '../components/sections/company/History';
 import Values from '../components/sections/company/Values';
 import Team from '../components/sections/company/Team';
-import Certifications from '../components/sections/company/Certifications';
 import Mission from '../components/sections/company/Mission';
 import Vision from '../components/sections/company/Vision';
 import React from 'react';
@@ -24,7 +23,6 @@ function CompanyPage() {
       <History />
       <Values />
       <Team />
-      <Certifications />
     </>
   );
 }
