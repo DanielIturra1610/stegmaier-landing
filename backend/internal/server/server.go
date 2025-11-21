@@ -108,6 +108,10 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
+		// Buffer sizes - Fix 431 error
+		ReadBufferSize:  16384, // 16KB (default is 4096)
+		WriteBufferSize: 16384, // 16KB
+		BodyLimit:       10 * 1024 * 1024, // 10MB max body size
 		// Error handling
 		ErrorHandler: customErrorHandler,
 	})
@@ -478,7 +482,7 @@ func (s *Server) setupMiddlewares() {
 	s.app.Use(cors.New(cors.Config{
 		AllowOrigins:     strings.Join(s.config.Server.CORSOrigins, ","),
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Tenant-ID",
+		AllowHeaders:     "*", // Allow all headers to fix 431 error
 		AllowCredentials: true,
 		ExposeHeaders:    "Content-Length, Content-Type",
 		MaxAge:           3600,
