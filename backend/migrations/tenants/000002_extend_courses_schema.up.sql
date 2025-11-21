@@ -34,12 +34,44 @@ ALTER TABLE courses ADD COLUMN IF NOT EXISTS enrollment_count INTEGER DEFAULT 0;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.00;
 ALTER TABLE courses ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0;
 
--- Add new constraints
-ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_slug_unique UNIQUE (tenant_id, slug);
-ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_price_positive CHECK (price >= 0);
-ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_enrollment_count_positive CHECK (enrollment_count >= 0);
-ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_rating_range CHECK (rating >= 0 AND rating <= 5);
-ALTER TABLE courses ADD CONSTRAINT IF NOT EXISTS courses_rating_count_positive CHECK (rating_count >= 0);
+-- Add new constraints using DO block to avoid errors if they already exist
+DO $$
+BEGIN
+    -- Add unique constraint for slug
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'courses_slug_unique'
+    ) THEN
+        ALTER TABLE courses ADD CONSTRAINT courses_slug_unique UNIQUE (tenant_id, slug);
+    END IF;
+
+    -- Add CHECK constraint for price
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'courses_price_positive'
+    ) THEN
+        ALTER TABLE courses ADD CONSTRAINT courses_price_positive CHECK (price >= 0);
+    END IF;
+
+    -- Add CHECK constraint for enrollment_count
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'courses_enrollment_count_positive'
+    ) THEN
+        ALTER TABLE courses ADD CONSTRAINT courses_enrollment_count_positive CHECK (enrollment_count >= 0);
+    END IF;
+
+    -- Add CHECK constraint for rating range
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'courses_rating_range'
+    ) THEN
+        ALTER TABLE courses ADD CONSTRAINT courses_rating_range CHECK (rating >= 0 AND rating <= 5);
+    END IF;
+
+    -- Add CHECK constraint for rating_count
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'courses_rating_count_positive'
+    ) THEN
+        ALTER TABLE courses ADD CONSTRAINT courses_rating_count_positive CHECK (rating_count >= 0);
+    END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_courses_category ON courses(category_id);
