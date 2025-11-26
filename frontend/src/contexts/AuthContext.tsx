@@ -4,6 +4,30 @@ import { Tenant } from '../types/tenant';
 import { authService } from '../services/auth.service';
 import tenantService from '../services/tenantService';
 
+/**
+ * Decode JWT payload without verification (client-side only)
+ * Used to extract role from token since JWT is the source of truth
+ */
+function decodeJwtPayload(token: string): { role?: string; tenant_id?: string; user_id?: string } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    // Base64 URL decode
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error('Error decoding JWT:', e);
+    return null;
+  }
+}
+
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
@@ -87,40 +111,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             createdAt: userData.createdAt || new Date().toISOString()
           };
 
-          // Si hay un tenant seleccionado, preservar el rol del tenant guardado en localStorage
-          // El backend /auth/me devuelve el rol global, pero necesitamos el rol del tenant
+          // IMPORTANTE: El JWT es la fuente de verdad para el rol
+          // El backend /auth/me devuelve el rol global, pero el JWT tiene el rol del tenant
           const savedTenantId = localStorage.getItem('current_tenant_id');
-          const savedUserStr = localStorage.getItem('auth_user');
+          const currentToken = localStorage.getItem('auth_token');
+
           console.log('🔍 [AuthContext] verifyToken - savedTenantId:', savedTenantId);
-          console.log('🔍 [AuthContext] verifyToken - userData.role from backend:', userData.role);
-          console.log('🔍 [AuthContext] verifyToken - savedUserStr present:', !!savedUserStr);
+          console.log('🔍 [AuthContext] verifyToken - userData.role from backend /auth/me:', userData.role);
 
-          if (savedTenantId && savedUserStr) {
-            try {
-              const savedUser = JSON.parse(savedUserStr);
-              console.log('🔍 [AuthContext] verifyToken - savedUser.role from localStorage:', savedUser.role);
-              console.log('🔍 [AuthContext] verifyToken - savedUser full object:', JSON.stringify(savedUser, null, 2));
+          // Si hay un tenant seleccionado Y hay un token, extraer el rol del JWT
+          // El JWT es la fuente de verdad porque el backend lo genera con el rol correcto del tenant
+          if (savedTenantId && currentToken) {
+            const jwtPayload = decodeJwtPayload(currentToken);
+            console.log('🔍 [AuthContext] verifyToken - JWT payload:', jwtPayload);
 
-              // Preservar el rol del tenant si existe y es diferente (ej: admin en el tenant vs student global)
-              // También preservar si el rol guardado es más privilegiado que el global
-              const privilegeOrder = ['student', 'instructor', 'admin', 'superadmin'];
-              const savedRoleIndex = privilegeOrder.indexOf(savedUser.role);
-              const backendRoleIndex = privilegeOrder.indexOf(userData.role);
-
-              if (savedUser.role && (savedUser.role !== user.role || savedRoleIndex > backendRoleIndex)) {
-                console.log('🔄 [AuthContext] Preserving tenant role:', savedUser.role, 'instead of backend role:', user.role);
-                user.role = savedUser.role;
-              } else {
-                console.log('ℹ️ [AuthContext] Not preserving role - savedUser.role:', savedUser.role, 'user.role:', user.role);
-              }
-            } catch (e) {
-              console.error('Error parsing saved user:', e);
+            if (jwtPayload?.role) {
+              console.log('✅ [AuthContext] Using role from JWT:', jwtPayload.role, '(backend returned:', userData.role, ')');
+              user.role = jwtPayload.role as 'student' | 'instructor' | 'admin' | 'superadmin';
+            } else {
+              console.log('⚠️ [AuthContext] No role in JWT, using backend role:', userData.role);
             }
           } else {
-            console.log('ℹ️ [AuthContext] No tenant or saved user found, using backend role');
+            console.log('ℹ️ [AuthContext] No tenant selected or no token, using backend role:', userData.role);
           }
 
-          // Guardar el usuario actualizado en localStorage (preserve the tenant role we just set)
+          // Guardar el usuario actualizado en localStorage con el rol correcto del JWT
           localStorage.setItem('auth_user', JSON.stringify(user));
           console.log('✅ [AuthContext] verifyToken - final user.role:', user.role);
 
