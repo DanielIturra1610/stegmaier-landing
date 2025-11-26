@@ -91,18 +91,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // El backend /auth/me devuelve el rol global, pero necesitamos el rol del tenant
           const savedTenantId = localStorage.getItem('current_tenant_id');
           const savedUserStr = localStorage.getItem('auth_user');
+          console.log('🔍 [AuthContext] verifyToken - savedTenantId:', savedTenantId);
+          console.log('🔍 [AuthContext] verifyToken - userData.role from backend:', userData.role);
+          console.log('🔍 [AuthContext] verifyToken - savedUserStr present:', !!savedUserStr);
+
           if (savedTenantId && savedUserStr) {
             try {
               const savedUser = JSON.parse(savedUserStr);
-              // Preservar el rol del tenant si existe
-              if (savedUser.role && savedUser.role !== user.role) {
-                console.log('🔄 [AuthContext] Preserving tenant role:', savedUser.role, 'instead of global role:', user.role);
+              console.log('🔍 [AuthContext] verifyToken - savedUser.role from localStorage:', savedUser.role);
+              console.log('🔍 [AuthContext] verifyToken - savedUser full object:', JSON.stringify(savedUser, null, 2));
+
+              // Preservar el rol del tenant si existe y es diferente (ej: admin en el tenant vs student global)
+              // También preservar si el rol guardado es más privilegiado que el global
+              const privilegeOrder = ['student', 'instructor', 'admin', 'superadmin'];
+              const savedRoleIndex = privilegeOrder.indexOf(savedUser.role);
+              const backendRoleIndex = privilegeOrder.indexOf(userData.role);
+
+              if (savedUser.role && (savedUser.role !== user.role || savedRoleIndex > backendRoleIndex)) {
+                console.log('🔄 [AuthContext] Preserving tenant role:', savedUser.role, 'instead of backend role:', user.role);
                 user.role = savedUser.role;
+              } else {
+                console.log('ℹ️ [AuthContext] Not preserving role - savedUser.role:', savedUser.role, 'user.role:', user.role);
               }
             } catch (e) {
               console.error('Error parsing saved user:', e);
             }
+          } else {
+            console.log('ℹ️ [AuthContext] No tenant or saved user found, using backend role');
           }
+
+          // Guardar el usuario actualizado en localStorage (preserve the tenant role we just set)
+          localStorage.setItem('auth_user', JSON.stringify(user));
+          console.log('✅ [AuthContext] verifyToken - final user.role:', user.role);
 
           setState(prev => ({
             ...prev,
@@ -366,40 +386,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Llamar al backend para seleccionar el tenant y obtener nuevo JWT con tenant_id
       const response = await tenantService.selectTenant(tenantId);
 
+      console.log('🔍 [AuthContext] SelectTenant response:', JSON.stringify(response, null, 2));
+
+      // Verificar que tenemos una respuesta válida
+      if (!response) {
+        console.error('❌ [AuthContext] SelectTenant returned null/undefined response');
+        throw new Error('Invalid response from selectTenant');
+      }
+
       // Actualizar el token con el nuevo JWT que incluye tenant_id
-      if (response.token) {
-        localStorage.setItem('auth_token', response.token);
+      const newToken = response.token;
+      const newRole = response.role;
+
+      console.log('🔍 [AuthContext] Extracted from response - token:', newToken ? 'present' : 'missing', 'role:', newRole);
+
+      if (newToken) {
+        localStorage.setItem('auth_token', newToken);
+        console.log('✅ [AuthContext] New token saved to localStorage');
 
         // Actualizar estado del token Y el rol del usuario basándose en la membership del tenant
         // El rol devuelto por selectTenant es el rol de la membership en ese tenant específico
-        setState(prev => {
-          if (prev.user && response.role) {
-            const updatedUser = {
-              ...prev.user,
-              role: response.role as 'student' | 'instructor' | 'admin' | 'superadmin'
-            };
-            // Persistir el usuario actualizado en localStorage
-            localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-            console.log('🔄 [AuthContext] User role updated to:', response.role);
+        if (newRole) {
+          // Actualizar el usuario con el nuevo rol FUERA del setState para garantizar que se guarda
+          const currentUserStr = localStorage.getItem('auth_user');
+          if (currentUserStr) {
+            try {
+              const currentUser = JSON.parse(currentUserStr);
+              const updatedUser = {
+                ...currentUser,
+                role: newRole
+              };
+              localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+              console.log('✅ [AuthContext] User role saved to localStorage:', newRole);
 
-            return {
+              // Ahora actualizar el estado de React
+              setState(prev => ({
+                ...prev,
+                token: newToken,
+                user: prev.user ? { ...prev.user, role: newRole as 'student' | 'instructor' | 'admin' | 'superadmin' } : prev.user
+              }));
+            } catch (e) {
+              console.error('❌ [AuthContext] Error parsing current user from localStorage:', e);
+            }
+          } else {
+            console.warn('⚠️ [AuthContext] No user in localStorage to update role');
+            setState(prev => ({
               ...prev,
-              token: response.token,
-              user: updatedUser
-            };
+              token: newToken
+            }));
           }
-          return {
+        } else {
+          console.warn('⚠️ [AuthContext] No role in selectTenant response');
+          setState(prev => ({
             ...prev,
-            token: response.token
-          };
-        });
+            token: newToken
+          }));
+        }
+      } else {
+        console.warn('⚠️ [AuthContext] No token in selectTenant response');
       }
 
       // Persistir el tenant_id actual
       localStorage.setItem('current_tenant_id', tenantId);
       setCurrentTenantIdState(tenantId);
 
-      console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name, 'with role:', response.role);
+      console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name, 'with role:', newRole);
     } catch (error) {
       console.error('❌ [AuthContext] Error setting tenant:', error);
       throw error;
