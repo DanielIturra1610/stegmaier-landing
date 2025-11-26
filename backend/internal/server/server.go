@@ -1085,6 +1085,8 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	admin := v1.Group("/admin")
 	admin.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	admin.Use(middleware.TenantMiddleware(s.dbManager)) // Require tenant context for admin routes
+	admin.Use(middleware.MembershipMiddleware(s.controlDB)) // Verify membership in tenant
 	admin.Use(middleware.RequireAdmin()) // Requires admin or higher (superadmin)
 
 	// User Management
@@ -1118,16 +1120,16 @@ func (s *Server) setupRoutes() {
 	// Dashboard (Admin only)
 	admin.Get("/dashboard", s.adminDashboardHandler)
 
-	// Course Management (Admin only)
+	// Course Management (Admin only) - using tenant-aware controller
 	adminCourses := admin.Group("/courses")
 	{
-		adminCourses.Get("/", s.courseController.ListCourses)
-		adminCourses.Get("/:id", s.courseController.GetCourse)
-		adminCourses.Post("/", s.courseController.CreateCourse)
-		adminCourses.Put("/:id", s.courseController.UpdateCourse)
-		adminCourses.Delete("/:id", s.courseController.DeleteCourse)
-		adminCourses.Post("/:id/publish", s.courseController.PublishCourse)
-		adminCourses.Post("/:id/unpublish", s.courseController.UnpublishCourse)
+		adminCourses.Get("/", s.tenantAwareCourseController.ListCourses)
+		adminCourses.Get("/:id", s.tenantAwareCourseController.GetCourse)
+		adminCourses.Post("/", s.tenantAwareCourseController.CreateCourse)
+		adminCourses.Put("/:id", s.tenantAwareCourseController.UpdateCourse)
+		adminCourses.Delete("/:id", s.tenantAwareCourseController.DeleteCourse)
+		adminCourses.Post("/:id/publish", s.tenantAwareCourseController.PublishCourse)
+		adminCourses.Post("/:id/unpublish", s.tenantAwareCourseController.UnpublishCourse)
 	}
 
 	// ============================================================
