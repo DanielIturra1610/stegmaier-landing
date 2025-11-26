@@ -69,7 +69,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, index, isCollapsed }
               to={to}
               className={({ isActive }) => `
                 flex items-center px-2 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
-                relative overflow-hidden
+                relative
                 ${isActive ?
                   'bg-primary-700/90 text-white shadow-lg shadow-primary-500/20 border-l-4 border-primary-400' :
                   'text-gray-300 hover:bg-primary-600/50 hover:text-white hover:shadow-md'}
@@ -119,7 +119,11 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, index, isCollapsed }
  */
 const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) => {
   // Estado para controlar el modo colapsado (solo iconos)
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Usar localStorage para persistir la preferencia del usuario
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
   
   // Obtener datos del usuario para mostrar opciones basadas en rol
   const { user } = useAuth();
@@ -260,13 +264,8 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
     
     // Si no es admin, mostrar navegación normal de estudiante
     return baseNavItems;
-  }, [user?.role, baseNavItems]);
-
-  // Animaciones para el sidebar
-  const sidebarVariants = {
-    expanded: { width: "16rem" }, // 64 en Tailwind
-    collapsed: { width: "4.5rem" } // Aproximadamente para mostrar solo iconos
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   return (
     <>
@@ -289,12 +288,14 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
       <motion.div
         className={`
           fixed inset-y-0 left-0 z-30 bg-primary-800 transform transition-transform duration-300 ease-in-out
-          lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen overflow-hidden flex flex-col
+          lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
-        variants={sidebarVariants}
-        animate={isCollapsed ? "collapsed" : "expanded"}
-        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }} // Custom easing para movimiento natural
+        animate={{
+          width: isCollapsed ? '4.5rem' : '18rem',
+          minWidth: isCollapsed ? '4.5rem' : '18rem'
+        }}
+        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
         initial={false}
         data-onboarding="platform-sidebar"
       >
@@ -319,7 +320,11 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
 
           {/* Botón para colapsar/expandir en desktop */}
           <motion.button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => {
+              const newValue = !isCollapsed;
+              setIsCollapsed(newValue);
+              localStorage.setItem('sidebar-collapsed', String(newValue));
+            }}
             className="hidden lg:flex items-center justify-center text-gray-300 hover:text-white p-1 rounded-md hover:bg-primary-700 transition-colors"
             style={{ width: "40px", height: "40px" }} /* Tamaño fijo para mejor centrado */
             aria-label={isCollapsed ? "Expandir menú" : "Colapsar menú"}

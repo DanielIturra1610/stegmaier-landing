@@ -148,7 +148,7 @@ const PlatformLayout: React.FC = () => {
   */
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Command Palette - Búsqueda global (Cmd+K / Ctrl+K) */}
       <CommandPalette
         open={commandPaletteOpen}
@@ -183,7 +183,7 @@ const PlatformLayout: React.FC = () => {
       )}
 
       {/* Contenido principal */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Header contextual */}
         <PageHeader
           onMenuClick={toggleSidebar}
@@ -192,13 +192,13 @@ const PlatformLayout: React.FC = () => {
         
         {/* Contenido dinámico */}
         <main
-          className={`flex-1 overflow-auto ${isFullWidthPage ? '' : 'p-4 md:p-6'}`}
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${isFullWidthPage ? '' : 'p-4 md:p-6'}`}
           data-onboarding="dashboard-main"
         >
           {isFullWidthPage ? (
             <Outlet />
           ) : (
-            <div className="max-w-7xl mx-auto min-h-screen">
+            <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
           )}

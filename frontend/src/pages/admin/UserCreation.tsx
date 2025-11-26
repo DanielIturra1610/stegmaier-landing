@@ -168,7 +168,7 @@ const UserCreation: React.FC = () => {
 
       // Opcional: redirigir después de 2 segundos
       setTimeout(() => {
-        navigate('/platform/admin/users');
+        navigate('/platform/users');
       }, 2000);
     } catch (err: any) {
       const errorMsg = err.message || 'Error al crear usuario';
