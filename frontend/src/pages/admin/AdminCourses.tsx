@@ -75,9 +75,11 @@ const AdminCourses: React.FC = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('✅ [AdminCourses] Courses loaded successfully:', data.length);
-        setCourses(data);
+        const responseData = await response.json();
+        // Extract courses from API response structure: {success, message, data: {courses, total_count}}
+        const coursesArray = responseData?.data?.courses || responseData?.courses || (Array.isArray(responseData) ? responseData : []);
+        console.log('✅ [AdminCourses] Courses loaded successfully:', coursesArray.length);
+        setCourses(coursesArray);
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.detail || `Error ${response.status}: ${response.statusText}`;

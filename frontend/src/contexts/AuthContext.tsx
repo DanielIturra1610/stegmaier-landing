@@ -86,6 +86,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             full_name: userData.full_name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
             createdAt: userData.createdAt || new Date().toISOString()
           };
+
+          // Si hay un tenant seleccionado, preservar el rol del tenant guardado en localStorage
+          // El backend /auth/me devuelve el rol global, pero necesitamos el rol del tenant
+          const savedTenantId = localStorage.getItem('current_tenant_id');
+          const savedUserStr = localStorage.getItem('auth_user');
+          if (savedTenantId && savedUserStr) {
+            try {
+              const savedUser = JSON.parse(savedUserStr);
+              // Preservar el rol del tenant si existe
+              if (savedUser.role && savedUser.role !== user.role) {
+                console.log('🔄 [AuthContext] Preserving tenant role:', savedUser.role, 'instead of global role:', user.role);
+                user.role = savedUser.role;
+              }
+            } catch (e) {
+              console.error('Error parsing saved user:', e);
+            }
+          }
+
           setState(prev => ({
             ...prev,
             user,
