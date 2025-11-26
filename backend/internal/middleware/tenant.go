@@ -8,6 +8,7 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jmoiron/sqlx"
 )
 
 // Context keys for storing tenant information
@@ -16,6 +17,7 @@ const (
 	TenantSlugKey   = "tenant_slug"
 	TenantNameKey   = "tenant_name"
 	TenantDBNameKey = "tenant_db_name"
+	TenantDBConnKey = "tenant_db_conn" // Stores the *sqlx.DB connection to tenant database
 )
 
 // TenantCache stores tenant metadata in memory for faster access
@@ -114,6 +116,7 @@ func (tc *TenantCache) GetCacheSize() int {
 }
 
 // TenantMiddleware extracts tenant information and injects it into the request context
+// Also injects the tenant database connection for use by downstream handlers
 func TenantMiddleware(dbManager *database.Manager) fiber.Handler {
 	// Initialize cache if not already done (default 5 minute TTL)
 	InitTenantCache(5 * time.Minute)
@@ -135,8 +138,8 @@ func TenantMiddleware(dbManager *database.Manager) fiber.Handler {
 		// Try to get tenant info from cache
 		tenantInfo, cached := tenantCache.Get(tenantID)
 		if cached {
-			// Cache hit - inject into context and continue
-			injectTenantContext(c, tenantInfo)
+			// Cache hit - inject into context with DB connection and continue
+			injectTenantContextWithDB(c, tenantInfo, dbManager)
 			elapsed := time.Since(startTime)
 			log.Printf("✅ Tenant identified (cached): %s (%s) - %v", tenantInfo.Slug, tenantID, elapsed)
 			return c.Next()
@@ -155,8 +158,8 @@ func TenantMiddleware(dbManager *database.Manager) fiber.Handler {
 		// Store in cache
 		tenantCache.Set(tenantID, tenantInfo)
 
-		// Inject tenant info into context
-		injectTenantContext(c, tenantInfo)
+		// Inject tenant info and DB connection into context
+		injectTenantContextWithDB(c, tenantInfo, dbManager)
 
 		elapsed := time.Since(startTime)
 		log.Printf("✅ Tenant identified: %s (%s) - %v", tenantInfo.Slug, tenantID, elapsed)
@@ -252,8 +255,26 @@ func injectTenantContext(c *fiber.Ctx, info *database.TenantInfo) {
 	c.Locals(TenantDBNameKey, info.DatabaseName)
 }
 
+// injectTenantContextWithDB injects tenant information AND database connection into Fiber context
+func injectTenantContextWithDB(c *fiber.Ctx, info *database.TenantInfo, dbManager *database.Manager) {
+	c.Locals(TenantIDKey, info.ID)
+	c.Locals(TenantSlugKey, info.Slug)
+	c.Locals(TenantNameKey, info.Name)
+	c.Locals(TenantDBNameKey, info.DatabaseName)
+
+	// Get tenant database connection
+	tenantDB, err := dbManager.GetTenantConnection(info.ID)
+	if err != nil {
+		log.Printf("⚠️  Failed to get tenant DB connection for %s: %v", info.ID, err)
+		return
+	}
+	c.Locals(TenantDBConnKey, tenantDB)
+	log.Printf("✅ Tenant DB connection injected for tenant: %s", info.Slug)
+}
+
 // OptionalTenantMiddleware is like TenantMiddleware but doesn't fail if tenant is missing
 // Useful for public endpoints that may or may not need tenant context
+// Also injects the tenant database connection when tenant is found
 func OptionalTenantMiddleware(dbManager *database.Manager) fiber.Handler {
 	InitTenantCache(5 * time.Minute)
 
@@ -280,7 +301,7 @@ func OptionalTenantMiddleware(dbManager *database.Manager) fiber.Handler {
 		tenantInfo, cached := tenantCache.Get(tenantID)
 		if cached {
 			log.Printf("✅ Tenant found in cache: %s", tenantID)
-			injectTenantContext(c, tenantInfo)
+			injectTenantContextWithDB(c, tenantInfo, dbManager)
 			return c.Next()
 		}
 
@@ -293,10 +314,10 @@ func OptionalTenantMiddleware(dbManager *database.Manager) fiber.Handler {
 			return c.Next()
 		}
 
-		// Cache and inject
+		// Cache and inject with DB connection
 		log.Printf("✅ Tenant found in database: %s", tenantID)
 		tenantCache.Set(tenantID, tenantInfo)
-		injectTenantContext(c, tenantInfo)
+		injectTenantContextWithDB(c, tenantInfo, dbManager)
 
 		return c.Next()
 	}
@@ -315,4 +336,38 @@ func GetCacheStats() map[string]interface{} {
 		"size":        tenantCache.GetCacheSize(),
 		"ttl":         tenantCache.ttl.String(),
 	}
+}
+
+// GetTenantDBFromContext retrieves the tenant database connection from Fiber context
+// Returns nil if no tenant DB connection is available
+func GetTenantDBFromContext(c *fiber.Ctx) *sqlx.DB {
+	db := c.Locals(TenantDBConnKey)
+	if db == nil {
+		return nil
+	}
+	if tenantDB, ok := db.(*sqlx.DB); ok {
+		return tenantDB
+	}
+	return nil
+}
+
+// GetTenantIDFromContext retrieves the tenant ID from Fiber context
+func GetTenantIDFromContext(c *fiber.Ctx) string {
+	tenantID := c.Locals(TenantIDKey)
+	if tenantID == nil {
+		return ""
+	}
+	if tid, ok := tenantID.(string); ok {
+		return tid
+	}
+	return ""
+}
+
+// MustGetTenantDBFromContext retrieves the tenant database connection or returns an error response
+func MustGetTenantDBFromContext(c *fiber.Ctx) (*sqlx.DB, error) {
+	db := GetTenantDBFromContext(c)
+	if db == nil {
+		return nil, fiber.NewError(fiber.StatusBadRequest, "Tenant database connection not available. Please select a tenant first.")
+	}
+	return db, nil
 }

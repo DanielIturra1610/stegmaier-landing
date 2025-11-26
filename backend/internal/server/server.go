@@ -92,6 +92,10 @@ type Server struct {
 	tenantController       *tenantcontrollers.TenantController
 	tokenService           tokens.TokenService
 	authRepo               ports.AuthRepository
+	// Tenant-aware controllers for dynamic DB connection
+	tenantAwareCourseController       *controllers.TenantAwareCourseController
+	tenantAwareNotificationController *controllers.TenantAwareNotificationController
+	tenantAwareProgressController     *controllers.TenantAwareProgressController
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -427,6 +431,15 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 
 	log.Println("✅ Tenants module initialized")
 
+	// Initialize tenant-aware controllers for dynamic DB connection
+	log.Println("🔧 Initializing tenant-aware controllers...")
+
+	tenantAwareCourseController := controllers.NewTenantAwareCourseController()
+	tenantAwareNotificationController := controllers.NewTenantAwareNotificationController(emailServiceAdapter)
+	tenantAwareProgressController := controllers.NewTenantAwareProgressController()
+
+	log.Println("✅ Tenant-aware controllers initialized")
+
 	// Crear instancia del servidor
 	server := &Server{
 		app:                    app,
@@ -452,6 +465,10 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		tenantController:       tenantController,
 		tokenService:           tokenService,
 		authRepo:               authRepo,
+		// Tenant-aware controllers
+		tenantAwareCourseController:       tenantAwareCourseController,
+		tenantAwareNotificationController: tenantAwareNotificationController,
+		tenantAwareProgressController:     tenantAwareProgressController,
 	}
 
 	// Setup de middlewares
@@ -609,33 +626,36 @@ func (s *Server) setupRoutes() {
 	courses := v1.Group("/courses")
 
 	// Public course routes (read-only, no auth required)
+	// Note: Public routes still use the original controller as they use control DB
+	// When tenant context is available (via header or subdomain), use tenant-aware controller
 	{
-		courses.Get("/published", s.courseController.GetPublishedCourses)
-		courses.Get("/slug/:slug", s.courseController.GetCourseBySlug)
-		courses.Get("/instructor/:instructorId", s.courseController.GetCoursesByInstructor)
-		courses.Get("/category/:categoryId", s.courseController.GetCoursesByCategory)
-		courses.Get("/:id", s.courseController.GetCourse)
-		courses.Get("/", s.courseController.ListCourses)
+		courses.Get("/published", s.tenantAwareCourseController.GetPublishedCourses)
+		courses.Get("/slug/:slug", s.tenantAwareCourseController.GetCourseBySlug)
+		courses.Get("/instructor/:instructorId", s.tenantAwareCourseController.GetCoursesByInstructor)
+		courses.Get("/category/:categoryId", s.tenantAwareCourseController.GetCoursesByCategory)
+		courses.Get("/:id", s.tenantAwareCourseController.GetCourse)
+		courses.Get("/", s.tenantAwareCourseController.ListCourses)
 	}
 
 	// Protected course routes (authentication + tenant membership required)
+	// Using TenantAwareCourseController for dynamic tenant DB connection
 	coursesProtected := courses.Group("")
 	coursesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
 	coursesProtected.Use(middleware.TenantMiddleware(s.dbManager))
 	coursesProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
-		// Student actions
-		coursesProtected.Post("/:id/enroll", s.courseController.EnrollCourse)
-		coursesProtected.Post("/:id/unenroll", s.courseController.UnenrollCourse)
-		coursesProtected.Post("/:id/rate", s.courseController.RateCourse)
+		// Student actions - using tenant-aware controller
+		coursesProtected.Post("/:id/enroll", s.tenantAwareCourseController.EnrollCourse)
+		coursesProtected.Post("/:id/unenroll", s.tenantAwareCourseController.UnenrollCourse)
+		coursesProtected.Post("/:id/rate", s.tenantAwareCourseController.RateCourse)
 
-		// Instructor/Admin actions (TODO: Add instructor/admin middleware)
-		coursesProtected.Post("/", s.courseController.CreateCourse)
-		coursesProtected.Put("/:id", s.courseController.UpdateCourse)
-		coursesProtected.Delete("/:id", s.courseController.DeleteCourse)
-		coursesProtected.Post("/:id/publish", s.courseController.PublishCourse)
-		coursesProtected.Post("/:id/unpublish", s.courseController.UnpublishCourse)
-		coursesProtected.Post("/:id/archive", s.courseController.ArchiveCourse)
+		// Instructor/Admin actions - using tenant-aware controller
+		coursesProtected.Post("/", s.tenantAwareCourseController.CreateCourse)
+		coursesProtected.Put("/:id", s.tenantAwareCourseController.UpdateCourse)
+		coursesProtected.Delete("/:id", s.tenantAwareCourseController.DeleteCourse)
+		coursesProtected.Post("/:id/publish", s.tenantAwareCourseController.PublishCourse)
+		coursesProtected.Post("/:id/unpublish", s.tenantAwareCourseController.UnpublishCourse)
+		coursesProtected.Post("/:id/archive", s.tenantAwareCourseController.ArchiveCourse)
 	}
 
 	// ============================================================
@@ -857,46 +877,47 @@ func (s *Server) setupRoutes() {
 	notifications := v1.Group("/notifications")
 
 	// All notification routes are protected (authentication + tenant membership required)
+	// Using TenantAwareNotificationController for dynamic tenant DB connection
 	notificationsProtected := notifications.Group("")
 	notificationsProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
 	notificationsProtected.Use(middleware.TenantMiddleware(s.dbManager))
 	notificationsProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
-		// Basic CRUD operations for notifications
-		notificationsProtected.Post("/", s.notificationController.CreateNotification)
-		notificationsProtected.Get("/:id", s.notificationController.GetNotification)
-		notificationsProtected.Get("/", s.notificationController.GetUserNotifications)
-		notificationsProtected.Patch("/:id/status", s.notificationController.UpdateNotificationStatus)
-		notificationsProtected.Delete("/:id", s.notificationController.DeleteNotification)
+		// Basic CRUD operations for notifications - using tenant-aware controller
+		notificationsProtected.Post("/", s.tenantAwareNotificationController.CreateNotification)
+		notificationsProtected.Get("/:id", s.tenantAwareNotificationController.GetNotification)
+		notificationsProtected.Get("/", s.tenantAwareNotificationController.GetUserNotifications)
+		notificationsProtected.Patch("/:id/status", s.tenantAwareNotificationController.UpdateNotificationStatus)
+		notificationsProtected.Delete("/:id", s.tenantAwareNotificationController.DeleteNotification)
 
 		// Convenience methods for status updates
-		notificationsProtected.Post("/:id/read", s.notificationController.MarkAsRead)
-		notificationsProtected.Post("/:id/unread", s.notificationController.MarkAsUnread)
-		notificationsProtected.Post("/:id/archive", s.notificationController.ArchiveNotification)
+		notificationsProtected.Post("/:id/read", s.tenantAwareNotificationController.MarkAsRead)
+		notificationsProtected.Post("/:id/unread", s.tenantAwareNotificationController.MarkAsUnread)
+		notificationsProtected.Post("/:id/archive", s.tenantAwareNotificationController.ArchiveNotification)
 
 		// Bulk operations
-		notificationsProtected.Post("/bulk", s.notificationController.CreateBulkNotifications)
-		notificationsProtected.Post("/mark-all-read", s.notificationController.MarkAllAsRead)
-		notificationsProtected.Delete("/read", s.notificationController.DeleteAllRead)
+		notificationsProtected.Post("/bulk", s.tenantAwareNotificationController.CreateBulkNotifications)
+		notificationsProtected.Post("/mark-all-read", s.tenantAwareNotificationController.MarkAllAsRead)
+		notificationsProtected.Delete("/read", s.tenantAwareNotificationController.DeleteAllRead)
 
 		// Queries
-		notificationsProtected.Get("/unread/count", s.notificationController.GetUnreadCount)
+		notificationsProtected.Get("/unread/count", s.tenantAwareNotificationController.GetUnreadCount)
 
 		// Specific notification type endpoints
-		notificationsProtected.Post("/course-completion", s.notificationController.SendCourseCompletionNotification)
-		notificationsProtected.Post("/progress", s.notificationController.SendProgressNotification)
-		notificationsProtected.Post("/enrollment", s.notificationController.SendEnrollmentNotification)
-		notificationsProtected.Post("/quiz-completion", s.notificationController.SendQuizCompletionNotification)
-		notificationsProtected.Post("/announcement", s.notificationController.SendAnnouncement)
+		notificationsProtected.Post("/course-completion", s.tenantAwareNotificationController.SendCourseCompletionNotification)
+		notificationsProtected.Post("/progress", s.tenantAwareNotificationController.SendProgressNotification)
+		notificationsProtected.Post("/enrollment", s.tenantAwareNotificationController.SendEnrollmentNotification)
+		notificationsProtected.Post("/quiz-completion", s.tenantAwareNotificationController.SendQuizCompletionNotification)
+		notificationsProtected.Post("/announcement", s.tenantAwareNotificationController.SendAnnouncement)
 
 		// Notification preferences
-		notificationsProtected.Get("/preferences", s.notificationController.GetUserPreferences)
-		notificationsProtected.Put("/preferences", s.notificationController.UpdateUserPreferences)
+		notificationsProtected.Get("/preferences", s.tenantAwareNotificationController.GetUserPreferences)
+		notificationsProtected.Put("/preferences", s.tenantAwareNotificationController.UpdateUserPreferences)
 
 		// Push subscriptions
-		notificationsProtected.Post("/push-subscriptions", s.notificationController.CreatePushSubscription)
-		notificationsProtected.Get("/push-subscriptions", s.notificationController.GetUserPushSubscriptions)
-		notificationsProtected.Delete("/push-subscriptions/:id", s.notificationController.DeletePushSubscription)
+		notificationsProtected.Post("/push-subscriptions", s.tenantAwareNotificationController.CreatePushSubscription)
+		notificationsProtected.Get("/push-subscriptions", s.tenantAwareNotificationController.GetUserPushSubscriptions)
+		notificationsProtected.Delete("/push-subscriptions/:id", s.tenantAwareNotificationController.DeletePushSubscription)
 	}
 
 	// ============================================================
@@ -1043,11 +1064,12 @@ func (s *Server) setupRoutes() {
 	// Note: All progress routes are protected by authentication
 	// Students can view and update their own progress
 	// Instructors/Admins can view and manage progress for all students
+	// Using TenantAwareProgressController for dynamic tenant DB connection
 	progress := v1.Group("/progress")
 	progress.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
 	progress.Use(middleware.TenantMiddleware(s.dbManager))
 	progress.Use(middleware.MembershipMiddleware(s.controlDB))
-	s.progressController.RegisterRoutes(progress)
+	s.tenantAwareProgressController.RegisterRoutes(progress)
 
 	// ============================================================
 	// Certificate Routes (Protected - Authentication required)
