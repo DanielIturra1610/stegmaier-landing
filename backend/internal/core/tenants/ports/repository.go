@@ -27,4 +27,5 @@ type TenantRepository interface {
 	// User operations within tenant context
 	UpdateUserTenant(ctx context.Context, userID, tenantID string) error
 	GetTenantMembers(ctx context.Context, tenantID string) ([]*domain.TenantMembership, error)
+	GetTenantMembersWithUsers(ctx context.Context, tenantID string) ([]*domain.MemberWithUser, error)
 }

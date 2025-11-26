@@ -405,3 +405,47 @@ func (c *TenantController) GetTenantMembers(ctx *fiber.Ctx) error {
 		"data":    members,
 	})
 }
+
+// GetTenantMembersWithUsers retrieves all members of the current tenant with user details
+// @Summary Get tenant members with user details
+// @Description Get all members of the current tenant with user info (admin only)
+// @Tags tenants
+// @Produce json
+// @Success 200 {array} domain.MemberWithUser
+// @Failure 401 {object} fiber.Map
+// @Failure 403 {object} fiber.Map
+// @Router /api/v1/admin/tenants/users [get]
+func (c *TenantController) GetTenantMembersWithUsers(ctx *fiber.Ctx) error {
+	userID := ctx.Locals("userID")
+	if userID == nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Unauthorized",
+		})
+	}
+
+	tenantID := ctx.Locals("tenant_id")
+	if tenantID == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "No tenant selected",
+		})
+	}
+
+	members, err := c.tenantService.GetTenantMembersWithUsers(ctx.Context(), tenantID.(string), userID.(string))
+	if err != nil {
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Members with user details retrieved successfully",
+		"data": fiber.Map{
+			"users":       members,
+			"total_count": len(members),
+		},
+	})
+}

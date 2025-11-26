@@ -43,3 +43,22 @@ type Invitation struct {
 	InvitedAt       time.Time `json:"invited_at"`
 	Status          string    `json:"status"`
 }
+
+// MemberWithUser combines tenant membership with user details
+// Used for displaying users in the admin panel with their tenant-specific role
+type MemberWithUser struct {
+	// Membership fields
+	MembershipID string     `json:"membership_id"`
+	Role         string     `json:"role"`   // Role in THIS tenant (admin, instructor, student)
+	Status       string     `json:"status"` // Membership status (active, inactive, pending)
+	JoinedAt     *time.Time `json:"joined_at,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
+
+	// User fields
+	UserID    string  `json:"id"`        // Using "id" for frontend compatibility
+	Email     string  `json:"email"`
+	FullName  string  `json:"full_name"`
+	IsActive  bool    `json:"is_active"` // User's global active status
+	Verified  bool    `json:"verified"`
+	UserCreatedAt time.Time `json:"user_created_at"`
+}

@@ -1094,7 +1094,8 @@ func (s *Server) setupRoutes() {
 	{
 		// CRUD Operations
 		users.Post("/", s.userController.CreateUser)
-		users.Get("/", s.userController.ListUsers)
+		// Use tenant-aware user list that shows membership roles instead of global roles
+		users.Get("/", s.tenantController.GetTenantMembersWithUsers)
 		users.Get("/:id", s.userController.GetUserByID)
 		users.Put("/:id", s.userController.UpdateUser)
 		users.Delete("/:id", s.userController.DeleteUser)

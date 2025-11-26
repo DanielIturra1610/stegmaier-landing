@@ -516,3 +516,70 @@ func (r *PostgresTenantRepository) GetTenantMembers(ctx context.Context, tenantI
 
 	return members, nil
 }
+
+// GetTenantMembersWithUsers retrieves all members of a tenant with user details
+func (r *PostgresTenantRepository) GetTenantMembersWithUsers(ctx context.Context, tenantID string) ([]*domain.MemberWithUser, error) {
+	query := `
+		SELECT
+			tm.id as membership_id,
+			tm.role,
+			tm.status,
+			tm.joined_at,
+			tm.created_at,
+			u.id as user_id,
+			u.email,
+			u.full_name,
+			u.is_active,
+			u.is_verified,
+			u.created_at as user_created_at
+		FROM tenant_memberships tm
+		INNER JOIN users u ON tm.user_id = u.id
+		WHERE tm.tenant_id = $1
+		ORDER BY tm.created_at DESC
+	`
+
+	rows, err := r.controlDB.QueryContext(ctx, query, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant members with users: %w", err)
+	}
+	defer rows.Close()
+
+	var members []*domain.MemberWithUser
+	for rows.Next() {
+		var member domain.MemberWithUser
+		var joinedAt sql.NullTime
+		var fullName sql.NullString
+
+		err := rows.Scan(
+			&member.MembershipID,
+			&member.Role,
+			&member.Status,
+			&joinedAt,
+			&member.CreatedAt,
+			&member.UserID,
+			&member.Email,
+			&fullName,
+			&member.IsActive,
+			&member.Verified,
+			&member.UserCreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan member with user: %w", err)
+		}
+
+		if joinedAt.Valid {
+			member.JoinedAt = &joinedAt.Time
+		}
+		if fullName.Valid {
+			member.FullName = fullName.String
+		}
+
+		members = append(members, &member)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating members with users: %w", err)
+	}
+
+	return members, nil
+}

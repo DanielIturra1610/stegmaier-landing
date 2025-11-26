@@ -360,3 +360,19 @@ func normalizeSlug(name string) string {
 
 	return slug
 }
+
+// GetTenantMembersWithUsers retrieves all members of a tenant with user details (admin only)
+func (s *TenantService) GetTenantMembersWithUsers(ctx context.Context, tenantID, requestingUserID string) ([]*domain.MemberWithUser, error) {
+	// Verify requesting user is admin in this tenant
+	membership, err := s.repo.GetMembership(ctx, requestingUserID, tenantID)
+	if err != nil || membership.Role != "admin" {
+		return nil, fmt.Errorf("only admins can view tenant members")
+	}
+
+	members, err := s.repo.GetTenantMembersWithUsers(ctx, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant members with users: %w", err)
+	}
+
+	return members, nil
+}

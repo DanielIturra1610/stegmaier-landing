@@ -87,7 +87,18 @@ class AdminService {
 
       // El backend devuelve { success: true, data: { users: [...], total_count, ... } }
       // Extraemos el array de usuarios
-      const users = data?.data?.users || data?.users || (Array.isArray(data) ? data : []);
+      const rawUsers = data?.data?.users || data?.users || (Array.isArray(data) ? data : []);
+
+      // Mapear campos del backend al formato esperado por el frontend
+      // El nuevo endpoint de tenant members devuelve user_created_at en lugar de created_at
+      const users = rawUsers.map((user: any) => ({
+        ...user,
+        // El campo created_at puede venir como user_created_at del endpoint de tenant members
+        created_at: user.created_at || user.user_created_at,
+        // Asegurar que is_active está presente (puede estar en el root o como parte del membership)
+        is_active: user.is_active ?? (user.status === 'active'),
+      }));
+
       console.log('✅ [adminService] Users loaded:', users.length, 'users');
       return users;
     } catch (error) {
