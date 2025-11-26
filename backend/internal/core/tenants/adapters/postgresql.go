@@ -64,6 +64,33 @@ func (r *PostgresTenantRepository) CreateTenant(ctx context.Context, name, slug,
 	return tenantID, nil
 }
 
+// DeleteTenant deletes a tenant and its memberships (for rollback purposes)
+func (r *PostgresTenantRepository) DeleteTenant(ctx context.Context, tenantID string) error {
+	tx, err := r.controlDB.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Delete memberships first (foreign key constraint)
+	_, err = tx.ExecContext(ctx, "DELETE FROM tenant_memberships WHERE tenant_id = $1", tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to delete memberships: %w", err)
+	}
+
+	// Delete tenant
+	_, err = tx.ExecContext(ctx, "DELETE FROM tenants WHERE id = $1", tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to delete tenant: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // GetTenantByID retrieves a tenant by its ID
 func (r *PostgresTenantRepository) GetTenantByID(ctx context.Context, tenantID string) (*database.TenantInfo, error) {
 	query := `

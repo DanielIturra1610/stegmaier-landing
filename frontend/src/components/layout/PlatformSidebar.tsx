@@ -200,8 +200,9 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
   
   // Construir elementos de navegación dinámicamente basado en el rol
   const navItems = React.useMemo(() => {
-    // Si es admin, mostrar navegación administrativa
-    if (user?.role === 'admin') {
+    // Si es admin, instructor o superadmin, mostrar navegación administrativa
+    const isAdminRole = user?.role === 'admin' || user?.role === 'instructor' || user?.role === 'superadmin';
+    if (isAdminRole) {
       return [
         {
           to: "/platform/courses",

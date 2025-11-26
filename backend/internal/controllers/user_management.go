@@ -34,6 +34,32 @@ func (c *UserManagementController) CreateUser(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// Get the requesting user's role from context to validate role assignment
+	requestingUserRole := ctx.Locals(middleware.UserRoleKey)
+	if requestingUserRole != nil {
+		creatorRole := requestingUserRole.(string)
+
+		// Role hierarchy validation to prevent privilege escalation
+		// Only superadmin can create superadmin users
+		if dto.Role == "superadmin" && creatorRole != "superadmin" {
+			log.Printf("⚠️  Role escalation attempt: %s tried to create superadmin user", creatorRole)
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"error":   "Only superadmin can create superadmin users",
+			})
+		}
+
+		// Admin can create: student, instructor, admin (but not superadmin)
+		// Instructor can create: student only
+		if creatorRole == "instructor" && dto.Role != "student" {
+			log.Printf("⚠️  Role escalation attempt: instructor tried to create %s user", dto.Role)
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"success": false,
+				"error":   "Instructors can only create student users",
+			})
+		}
+	}
+
 	// Get tenant from context
 	tenantID := ctx.Locals(middleware.TenantIDKey)
 	if tenantID != nil {

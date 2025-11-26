@@ -68,42 +68,8 @@ CREATE TABLE IF NOT EXISTS lessons (
     CONSTRAINT lessons_duration_positive CHECK (duration_minutes >= 0)
 );
 
--- Enrollments table
-CREATE TABLE IF NOT EXISTS enrollments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    status VARCHAR(20) DEFAULT 'active',
-    progress_percentage DECIMAL(5,2) DEFAULT 0.00,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_activity TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT enrollments_unique_user_course UNIQUE (tenant_id, user_id, course_id),
-    CONSTRAINT enrollments_status_check CHECK (status IN ('active', 'completed', 'suspended', 'cancelled')),
-    CONSTRAINT enrollments_progress_range CHECK (progress_percentage >= 0 AND progress_percentage <= 100)
-);
-
--- Lesson Progress table
-CREATE TABLE IF NOT EXISTS lesson_progress (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-    enrollment_id UUID NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
-    is_completed BOOLEAN DEFAULT false,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    time_spent_seconds INTEGER DEFAULT 0,
-    last_position_seconds INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT lesson_progress_unique UNIQUE (tenant_id, user_id, lesson_id),
-    CONSTRAINT lesson_progress_time_positive CHECK (time_spent_seconds >= 0)
-);
+-- NOTE: Enrollments and lesson_progress tables moved to 000005_create_enrollments_schema.up.sql
+-- This prevents conflicts between different enrollment table definitions
 
 -- Quizzes table
 CREATE TABLE IF NOT EXISTS quizzes (
@@ -191,74 +157,53 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     CONSTRAINT submissions_status_check CHECK (status IN ('draft', 'submitted', 'graded', 'returned'))
 );
 
--- Certificates table
-CREATE TABLE IF NOT EXISTS certificates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    tenant_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    enrollment_id UUID NOT NULL REFERENCES enrollments(id) ON DELETE CASCADE,
-    certificate_url VARCHAR(500),
-    issued_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT certificates_unique_user_course UNIQUE (tenant_id, user_id, course_id)
-);
+-- NOTE: Certificates table moved to 000007_create_certificates_schema.up.sql
+-- This prevents conflicts and allows for the complete certificate structure
 
 -- Indexes for performance
-CREATE INDEX idx_courses_tenant ON courses(tenant_id);
-CREATE INDEX idx_courses_instructor ON courses(instructor_id);
-CREATE INDEX idx_courses_status ON courses(status);
-CREATE INDEX idx_courses_deleted ON courses(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_courses_tenant ON courses(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_courses_instructor ON courses(instructor_id);
+CREATE INDEX IF NOT EXISTS idx_courses_status ON courses(status);
+CREATE INDEX IF NOT EXISTS idx_courses_deleted ON courses(deleted_at);
 
-CREATE INDEX idx_modules_tenant ON modules(tenant_id);
-CREATE INDEX idx_modules_course ON modules(course_id);
-CREATE INDEX idx_modules_order ON modules(course_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_modules_tenant ON modules(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_modules_course ON modules(course_id);
+CREATE INDEX IF NOT EXISTS idx_modules_order ON modules(course_id, order_index);
 
-CREATE INDEX idx_lessons_tenant ON lessons(tenant_id);
-CREATE INDEX idx_lessons_module ON lessons(module_id);
-CREATE INDEX idx_lessons_course ON lessons(course_id);
-CREATE INDEX idx_lessons_order ON lessons(module_id, order_index);
+CREATE INDEX IF NOT EXISTS idx_lessons_tenant ON lessons(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_module ON lessons(module_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_course ON lessons(course_id);
+CREATE INDEX IF NOT EXISTS idx_lessons_order ON lessons(module_id, order_index);
 
-CREATE INDEX idx_enrollments_tenant ON enrollments(tenant_id);
-CREATE INDEX idx_enrollments_user ON enrollments(user_id);
-CREATE INDEX idx_enrollments_course ON enrollments(course_id);
-CREATE INDEX idx_enrollments_status ON enrollments(status);
+-- NOTE: Enrollments and lesson_progress indexes moved to 000005
 
-CREATE INDEX idx_lesson_progress_tenant ON lesson_progress(tenant_id);
-CREATE INDEX idx_lesson_progress_user ON lesson_progress(user_id);
-CREATE INDEX idx_lesson_progress_lesson ON lesson_progress(lesson_id);
-CREATE INDEX idx_lesson_progress_enrollment ON lesson_progress(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_tenant ON quizzes(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_quizzes_lesson ON quizzes(lesson_id);
 
-CREATE INDEX idx_quizzes_tenant ON quizzes(tenant_id);
-CREATE INDEX idx_quizzes_lesson ON quizzes(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_tenant ON quiz_questions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_questions_quiz ON quiz_questions(quiz_id);
 
-CREATE INDEX idx_quiz_questions_tenant ON quiz_questions(tenant_id);
-CREATE INDEX idx_quiz_questions_quiz ON quiz_questions(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_answers_tenant ON quiz_answers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_answers_question ON quiz_answers(question_id);
 
-CREATE INDEX idx_quiz_answers_tenant ON quiz_answers(tenant_id);
-CREATE INDEX idx_quiz_answers_question ON quiz_answers(question_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_tenant ON quiz_attempts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user ON quiz_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz ON quiz_attempts(quiz_id);
 
-CREATE INDEX idx_quiz_attempts_tenant ON quiz_attempts(tenant_id);
-CREATE INDEX idx_quiz_attempts_user ON quiz_attempts(user_id);
-CREATE INDEX idx_quiz_attempts_quiz ON quiz_attempts(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_tenant ON assignments(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_assignments_lesson ON assignments(lesson_id);
 
-CREATE INDEX idx_assignments_tenant ON assignments(tenant_id);
-CREATE INDEX idx_assignments_lesson ON assignments(lesson_id);
+CREATE INDEX IF NOT EXISTS idx_assignment_submissions_tenant ON assignment_submissions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_assignment_submissions_assignment ON assignment_submissions(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_assignment_submissions_user ON assignment_submissions(user_id);
 
-CREATE INDEX idx_assignment_submissions_tenant ON assignment_submissions(tenant_id);
-CREATE INDEX idx_assignment_submissions_assignment ON assignment_submissions(assignment_id);
-CREATE INDEX idx_assignment_submissions_user ON assignment_submissions(user_id);
-
-CREATE INDEX idx_certificates_tenant ON certificates(tenant_id);
-CREATE INDEX idx_certificates_user ON certificates(user_id);
-CREATE INDEX idx_certificates_course ON certificates(course_id);
+-- NOTE: Certificate indexes moved to 000007
 
 -- Triggers for updated_at
 CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON courses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_modules_updated_at BEFORE UPDATE ON modules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_lessons_updated_at BEFORE UPDATE ON lessons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_enrollments_updated_at BEFORE UPDATE ON enrollments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_lesson_progress_updated_at BEFORE UPDATE ON lesson_progress FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- NOTE: Enrollments and lesson_progress triggers moved to 000005
 CREATE TRIGGER update_quizzes_updated_at BEFORE UPDATE ON quizzes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_assignments_updated_at BEFORE UPDATE ON assignments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -266,8 +211,6 @@ CREATE TRIGGER update_assignments_updated_at BEFORE UPDATE ON assignments FOR EA
 COMMENT ON TABLE courses IS 'Courses created by instructors';
 COMMENT ON TABLE modules IS 'Course modules for organizing lessons';
 COMMENT ON TABLE lessons IS 'Individual lessons within modules';
-COMMENT ON TABLE enrollments IS 'Student enrollments in courses';
-COMMENT ON TABLE lesson_progress IS 'Tracks student progress in lessons';
+-- NOTE: Enrollments, lesson_progress, and certificates comments moved to their respective migration files
 COMMENT ON TABLE quizzes IS 'Quizzes for lessons or courses';
 COMMENT ON TABLE assignments IS 'Assignments for lessons or courses';
-COMMENT ON TABLE certificates IS 'Course completion certificates';

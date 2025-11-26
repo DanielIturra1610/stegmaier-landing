@@ -213,9 +213,9 @@ func extractFromSubdomain(c *fiber.Ctx) string {
 
 // extractFromJWT extracts tenant ID from JWT claims
 func extractFromJWT(c *fiber.Ctx) string {
-	// This will be populated by JWT middleware if it runs before tenant middleware
-	// For now, we check if it exists in locals
-	tenantID := c.Locals("jwt_tenant_id")
+	// This will be populated by AuthMiddleware if it runs before tenant middleware
+	// AuthMiddleware stores the tenant_id from JWT claims using TenantIDKey
+	tenantID := c.Locals(TenantIDKey)
 	if tenantID != nil {
 		if tid, ok := tenantID.(string); ok {
 			return tid

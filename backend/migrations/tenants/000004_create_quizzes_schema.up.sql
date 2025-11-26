@@ -14,7 +14,12 @@ ALTER TABLE quizzes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE
 -- Update existing columns if needed
 -- Note: Migration 000001 creates quizzes.passing_score as INTEGER DEFAULT 70
 -- This migration adds the constraint to ensure it's in range
-ALTER TABLE quizzes ADD CONSTRAINT IF NOT EXISTS quizzes_passing_score_check CHECK (passing_score >= 0 AND passing_score <= 100);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quizzes_passing_score_check') THEN
+        ALTER TABLE quizzes ADD CONSTRAINT quizzes_passing_score_check CHECK (passing_score >= 0 AND passing_score <= 100);
+    END IF;
+END $$;
 
 -- Extend quiz_questions table (already exists from 000001 as quiz_questions)
 -- Note: 000001 creates this as 'quiz_questions', this migration extends it
@@ -23,8 +28,15 @@ ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS explanation TEXT CHECK (expl
 ALTER TABLE quiz_questions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
 
 -- Add constraints for quiz questions
-ALTER TABLE quiz_questions ADD CONSTRAINT IF NOT EXISTS quiz_questions_text_length CHECK (LENGTH(question_text) >= 3 AND LENGTH(question_text) <= 1000);
-ALTER TABLE quiz_questions ADD CONSTRAINT IF NOT EXISTS questions_quiz_order_unique UNIQUE (tenant_id, quiz_id, order_index);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quiz_questions_text_length') THEN
+        ALTER TABLE quiz_questions ADD CONSTRAINT quiz_questions_text_length CHECK (LENGTH(question_text) >= 3 AND LENGTH(question_text) <= 1000);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'questions_quiz_order_unique') THEN
+        ALTER TABLE quiz_questions ADD CONSTRAINT questions_quiz_order_unique UNIQUE (tenant_id, quiz_id, order_index);
+    END IF;
+END $$;
 
 -- Rename quiz_answers to question_options if needed, or just extend it
 -- Note: 000001 creates 'quiz_answers' table, this migration will work with that structure
@@ -33,8 +45,15 @@ ALTER TABLE quiz_answers ADD COLUMN IF NOT EXISTS order_index INTEGER NOT NULL D
 ALTER TABLE quiz_answers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
 
 -- Add constraints for quiz answers
-ALTER TABLE quiz_answers ADD CONSTRAINT IF NOT EXISTS quiz_answers_text_length CHECK (text IS NULL OR LENGTH(text) >= 1);
-ALTER TABLE quiz_answers ADD CONSTRAINT IF NOT EXISTS options_question_order_unique UNIQUE (tenant_id, question_id, order_index);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quiz_answers_text_length') THEN
+        ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_text_length CHECK (text IS NULL OR LENGTH(text) >= 1);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'options_question_order_unique') THEN
+        ALTER TABLE quiz_answers ADD CONSTRAINT options_question_order_unique UNIQUE (tenant_id, question_id, order_index);
+    END IF;
+END $$;
 
 -- Extend quiz_attempts table (already exists from 000001)
 -- Note: 000001 creates basic quiz_attempts, this migration extends it
@@ -44,8 +63,15 @@ ALTER TABLE quiz_attempts ADD COLUMN IF NOT EXISTS attempt_number INTEGER DEFAUL
 ALTER TABLE quiz_attempts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
 
 -- Update quiz_attempts constraints
-ALTER TABLE quiz_attempts ADD CONSTRAINT IF NOT EXISTS quiz_attempts_score_check CHECK (score IS NULL OR (score >= 0 AND score <= 100));
-ALTER TABLE quiz_attempts ADD CONSTRAINT IF NOT EXISTS quiz_attempts_user_quiz_number_unique UNIQUE (tenant_id, quiz_id, user_id, attempt_number);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quiz_attempts_score_check') THEN
+        ALTER TABLE quiz_attempts ADD CONSTRAINT quiz_attempts_score_check CHECK (score IS NULL OR (score >= 0 AND score <= 100));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quiz_attempts_user_quiz_number_unique') THEN
+        ALTER TABLE quiz_attempts ADD CONSTRAINT quiz_attempts_user_quiz_number_unique UNIQUE (tenant_id, quiz_id, user_id, attempt_number);
+    END IF;
+END $$;
 
 -- Create student_answers table (stores student responses to quiz questions)
 -- Note: This is different from quiz_answers in 000001 which stores answer OPTIONS
@@ -66,11 +92,11 @@ CREATE TABLE IF NOT EXISTS student_answers (
 
 -- Create indexes for performance
 -- Quizzes indexes
-CREATE INDEX idx_quizzes_tenant_id ON quizzes(tenant_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_quizzes_course_id ON quizzes(course_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_quizzes_lesson_id ON quizzes(lesson_id) WHERE lesson_id IS NOT NULL AND deleted_at IS NULL;
-CREATE INDEX idx_quizzes_is_published ON quizzes(is_published) WHERE deleted_at IS NULL;
-CREATE INDEX idx_quizzes_created_at ON quizzes(created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_quizzes_tenant_id ON quizzes(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON quizzes(course_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_quizzes_lesson_id ON quizzes(lesson_id) WHERE lesson_id IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_quizzes_is_published ON quizzes(is_published) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_quizzes_created_at ON quizzes(created_at DESC) WHERE deleted_at IS NULL;
 
 -- Quiz questions indexes (basic indexes already exist from 000001)
 CREATE INDEX IF NOT EXISTS idx_quiz_questions_type ON quiz_questions(type);
@@ -81,17 +107,17 @@ CREATE INDEX IF NOT EXISTS idx_quiz_answers_is_correct ON quiz_answers(question_
 CREATE INDEX IF NOT EXISTS idx_quiz_answers_order_index ON quiz_answers(question_id, order_index);
 
 -- Quiz attempts indexes
-CREATE INDEX idx_quiz_attempts_tenant_id ON quiz_attempts(tenant_id);
-CREATE INDEX idx_quiz_attempts_quiz_id ON quiz_attempts(quiz_id);
-CREATE INDEX idx_quiz_attempts_user_id ON quiz_attempts(user_id);
-CREATE INDEX idx_quiz_attempts_user_quiz ON quiz_attempts(user_id, quiz_id);
-CREATE INDEX idx_quiz_attempts_completed_at ON quiz_attempts(completed_at);
-CREATE INDEX idx_quiz_attempts_started_at ON quiz_attempts(started_at DESC);
-CREATE INDEX idx_quiz_attempts_attempt_number ON quiz_attempts(quiz_id, user_id, attempt_number);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_tenant_id ON quiz_attempts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz_id ON quiz_attempts(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user_id ON quiz_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user_quiz ON quiz_attempts(user_id, quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_completed_at ON quiz_attempts(completed_at);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_started_at ON quiz_attempts(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_attempt_number ON quiz_attempts(quiz_id, user_id, attempt_number);
 
 -- Student answers indexes
-CREATE INDEX idx_student_answers_tenant_id ON student_answers(tenant_id);
-CREATE INDEX idx_student_answers_attempt_id ON student_answers(attempt_id);
-CREATE INDEX idx_student_answers_question_id ON student_answers(question_id);
-CREATE INDEX idx_student_answers_is_correct ON student_answers(is_correct) WHERE is_correct IS NULL;
-CREATE INDEX idx_student_answers_selected_option_id ON student_answers(selected_option_id) WHERE selected_option_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_student_answers_tenant_id ON student_answers(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_student_answers_attempt_id ON student_answers(attempt_id);
+CREATE INDEX IF NOT EXISTS idx_student_answers_question_id ON student_answers(question_id);
+CREATE INDEX IF NOT EXISTS idx_student_answers_is_correct ON student_answers(is_correct) WHERE is_correct IS NULL;
+CREATE INDEX IF NOT EXISTS idx_student_answers_selected_option_id ON student_answers(selected_option_id) WHERE selected_option_id IS NOT NULL;

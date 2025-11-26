@@ -595,9 +595,12 @@ func (s *Server) setupRoutes() {
 		tenants.Post("/invitations/reject", s.tenantController.RejectInvitation)
 
 		// Admin-only routes (require tenant context and admin role)
-		tenants.Post("/invite", s.tenantController.InviteUser)
-		tenants.Post("/users", s.tenantController.CreateUserInTenant)
-		tenants.Get("/members", s.tenantController.GetTenantMembers)
+		// These routes need OptionalTenantMiddleware to extract tenant_id from JWT or header
+		adminTenantRoutes := tenants.Group("")
+		adminTenantRoutes.Use(middleware.OptionalTenantMiddleware(s.dbManager))
+		adminTenantRoutes.Post("/invite", s.tenantController.InviteUser)
+		adminTenantRoutes.Post("/users", s.tenantController.CreateUserInTenant)
+		adminTenantRoutes.Get("/members", s.tenantController.GetTenantMembers)
 	}
 
 	// ============================================================
@@ -1090,6 +1093,21 @@ func (s *Server) setupRoutes() {
 		profiles.Put("/:id", s.profileController.UpdateProfile)
 	}
 
+	// Dashboard (Admin only)
+	admin.Get("/dashboard", s.adminDashboardHandler)
+
+	// Course Management (Admin only)
+	adminCourses := admin.Group("/courses")
+	{
+		adminCourses.Get("/", s.courseController.ListCourses)
+		adminCourses.Get("/:id", s.courseController.GetCourse)
+		adminCourses.Post("/", s.courseController.CreateCourse)
+		adminCourses.Put("/:id", s.courseController.UpdateCourse)
+		adminCourses.Delete("/:id", s.courseController.DeleteCourse)
+		adminCourses.Post("/:id/publish", s.courseController.PublishCourse)
+		adminCourses.Post("/:id/unpublish", s.courseController.UnpublishCourse)
+	}
+
 	// ============================================================
 	// SuperAdmin Routes (Protected - SuperAdmin only)
 	// ============================================================
@@ -1167,6 +1185,23 @@ func (s *Server) Shutdown() error {
 // GetApp retorna la instancia de Fiber (útil para testing)
 func (s *Server) GetApp() *fiber.App {
 	return s.app
+}
+
+// adminDashboardHandler returns basic dashboard statistics for admin
+func (s *Server) adminDashboardHandler(c *fiber.Ctx) error {
+	// Return basic dashboard data
+	// In a real implementation, this would query real statistics
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "Dashboard data retrieved successfully",
+		"data": fiber.Map{
+			"totalUsers":       0,
+			"totalCourses":     0,
+			"totalEnrollments": 0,
+			"activeUsers":      0,
+			"recentActivity":   []interface{}{},
+		},
+	})
 }
 
 // customErrorHandler maneja errores personalizados

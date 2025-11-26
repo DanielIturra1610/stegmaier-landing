@@ -84,8 +84,12 @@ class AdminService {
       }
 
       const data = await response.json();
-      console.log('✅ [adminService] Users loaded:', data.length || 0, 'users');
-      return data;
+
+      // El backend devuelve { success: true, data: { users: [...], total_count, ... } }
+      // Extraemos el array de usuarios
+      const users = data?.data?.users || data?.users || (Array.isArray(data) ? data : []);
+      console.log('✅ [adminService] Users loaded:', users.length, 'users');
+      return users;
     } catch (error) {
       const apiError = error as APIError;
       console.error('❌ [adminService] Get users exception:', apiError);
@@ -297,12 +301,13 @@ class AdminService {
   }
 
   /**
-   * POST /api/v1/admin/users
-   * Crea un nuevo usuario con rol específico
+   * POST /api/v1/tenants/users
+   * Crea un nuevo usuario con rol específico en el tenant actual
+   * Este endpoint crea el usuario Y su membership en el tenant
    */
   async createUser(userData: CreateUserDTO): Promise<User> {
     try {
-      console.log('🔍 [adminService] Creating user:', { email: userData.email, role: userData.role });
+      console.log('🔍 [adminService] Creating user in tenant:', { email: userData.email, role: userData.role });
 
       // Validación básica
       if (!userData.email || !userData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
@@ -321,7 +326,9 @@ class AdminService {
         throw new Error('Rol inválido. Debe ser: student, instructor o admin');
       }
 
-      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.ADMIN}/users`), {
+      // Usar el endpoint de tenants que crea usuario + membership
+      // La ruta es /api/v1/tenants/users (no /superadmin/tenants)
+      const response = await fetch(buildApiUrl('/tenants/users'), {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(userData)
@@ -339,11 +346,13 @@ class AdminService {
           throw new Error('No tienes permisos para crear usuarios');
         }
 
-        throw new Error(errorData.detail || `Error creating user: ${response.status}`);
+        throw new Error(errorData.detail || errorData.message || `Error creating user: ${response.status}`);
       }
 
-      const user = await response.json();
-      console.log('✅ [adminService] User created successfully:', user.id);
+      const result = await response.json();
+      // El endpoint devuelve { success: true, data: { user_id, email, ... } }
+      const user = result?.data || result;
+      console.log('✅ [adminService] User created successfully:', user.user_id || user.id);
 
       return user;
     } catch (error) {

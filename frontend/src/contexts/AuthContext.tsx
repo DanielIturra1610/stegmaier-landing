@@ -339,6 +339,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   /**
    * Establece el tenant actual, llama al backend para obtener nuevo JWT y persiste en localStorage
+   * IMPORTANTE: También actualiza el rol del usuario basándose en su membership en el tenant
    */
   const setCurrentTenantId = async (tenantId: string) => {
     try {
@@ -351,18 +352,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.token) {
         localStorage.setItem('auth_token', response.token);
 
-        // Actualizar estado del token
-        setState(prev => ({
-          ...prev,
-          token: response.token
-        }));
+        // Actualizar estado del token Y el rol del usuario basándose en la membership del tenant
+        // El rol devuelto por selectTenant es el rol de la membership en ese tenant específico
+        setState(prev => {
+          if (prev.user && response.role) {
+            const updatedUser = {
+              ...prev.user,
+              role: response.role as 'student' | 'instructor' | 'admin' | 'superadmin'
+            };
+            // Persistir el usuario actualizado en localStorage
+            localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+            console.log('🔄 [AuthContext] User role updated to:', response.role);
+
+            return {
+              ...prev,
+              token: response.token,
+              user: updatedUser
+            };
+          }
+          return {
+            ...prev,
+            token: response.token
+          };
+        });
       }
 
       // Persistir el tenant_id actual
       localStorage.setItem('current_tenant_id', tenantId);
       setCurrentTenantIdState(tenantId);
 
-      console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name);
+      console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name, 'with role:', response.role);
     } catch (error) {
       console.error('❌ [AuthContext] Error setting tenant:', error);
       throw error;

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"time"
@@ -46,66 +47,68 @@ func NewTenantService(
 
 // CreateTenant creates a new tenant organization
 func (s *TenantService) CreateTenant(ctx context.Context, dto *domain.CreateTenantDTO, ownerID string) (*domain.CreateTenantResponse, error) {
+	log.Printf("🏢 [TenantService] Starting tenant creation: name=%s, slug=%s, owner=%s", dto.Name, dto.Slug, ownerID)
+
 	// Validate DTO
 	if err := s.validator.Struct(dto); err != nil {
+		log.Printf("❌ [TenantService] Validation error: %v", err)
 		return nil, fmt.Errorf("validation error: %w", err)
 	}
 
 	// Validate slug format (alphanumeric, lowercase, hyphens allowed)
 	if !isValidSlug(dto.Slug) {
+		log.Printf("❌ [TenantService] Invalid slug format: %s", dto.Slug)
 		return nil, fmt.Errorf("slug must contain only lowercase letters, numbers, and hyphens")
 	}
 
 	// Check if tenant with slug already exists
 	exists, err := s.repo.TenantExistsBySlug(ctx, dto.Slug)
 	if err != nil {
+		log.Printf("❌ [TenantService] Error checking tenant existence: %v", err)
 		return nil, fmt.Errorf("failed to check tenant existence: %w", err)
 	}
 	if exists {
+		log.Printf("❌ [TenantService] Tenant with slug '%s' already exists", dto.Slug)
 		return nil, fmt.Errorf("tenant with slug '%s' already exists", dto.Slug)
 	}
 
 	// Generate database name from slug
 	dbName := fmt.Sprintf("tenant_%s", dto.Slug)
+	log.Printf("📦 [TenantService] Creating database: %s", dbName)
 
 	// Create tenant database
 	if err := s.manager.CreateTenantDatabase(dbName); err != nil {
+		log.Printf("❌ [TenantService] Failed to create database %s: %v", dbName, err)
 		return nil, fmt.Errorf("failed to create tenant database: %w", err)
 	}
+	log.Printf("✅ [TenantService] Database created successfully: %s", dbName)
 
 	// Create tenant record first to get tenant ID
+	log.Printf("📝 [TenantService] Creating tenant record in control database...")
 	tenantID, err := s.repo.CreateTenant(ctx, dto.Name, dto.Slug, dbName, dto.Description, dto.Email, dto.Phone, dto.Address, dto.Website, ownerID)
 	if err != nil {
+		log.Printf("❌ [TenantService] Failed to create tenant record: %v", err)
 		// Attempt to rollback database creation
 		_ = s.manager.DropTenantDatabase("", dbName)
 		return nil, fmt.Errorf("failed to create tenant: %w", err)
 	}
+	log.Printf("✅ [TenantService] Tenant record created with ID: %s", tenantID)
 
 	// Run tenant migrations
+	log.Printf("🔄 [TenantService] Running migrations for tenant: %s", tenantID)
 	if err := s.migrationRunner.RunTenantMigrations(tenantID, "migrations/tenants"); err != nil {
-		// Rollback database (tenant record will be orphaned but inactive)
+		log.Printf("❌ [TenantService] Failed to run migrations: %v", err)
+		// Rollback: delete tenant record and drop database
+		_ = s.repo.DeleteTenant(ctx, tenantID)
 		_ = s.manager.DropTenantDatabase(tenantID, dbName)
 		return nil, fmt.Errorf("failed to run tenant migrations: %w", err)
 	}
+	log.Printf("✅ [TenantService] Migrations completed successfully")
 
-	// Create admin membership for the owner
-	now := time.Now()
-	membership := &domain.TenantMembership{
-		UserID:    ownerID,
-		TenantID:  tenantID,
-		Role:      "admin",
-		Status:    "active",
-		InvitedBy: &ownerID, // Self-invited
-		InvitedAt: &now,
-		JoinedAt:  &now,
-	}
+	// Note: Admin membership is already created in CreateTenant repository method
+	log.Printf("✅ [TenantService] Admin membership was created with tenant record")
 
-	if err := s.repo.CreateMembership(ctx, membership); err != nil {
-		// Rollback: Drop database and tenant record will be orphaned
-		_ = s.manager.DropTenantDatabase(tenantID, dbName)
-		return nil, fmt.Errorf("failed to create admin membership: %w", err)
-	}
-
+	log.Printf("🎉 [TenantService] Tenant creation completed successfully: %s (%s)", dto.Name, tenantID)
 	return &domain.CreateTenantResponse{
 		TenantID:     tenantID,
 		Name:         dto.Name,

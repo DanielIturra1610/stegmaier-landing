@@ -66,42 +66,42 @@ CREATE TABLE IF NOT EXISTS review_reports (
 
 -- Create indexes for performance
 -- Reviews indexes
-CREATE INDEX idx_reviews_tenant_id ON reviews(tenant_id);
-CREATE INDEX idx_reviews_course_id ON reviews(course_id);
-CREATE INDEX idx_reviews_user_id ON reviews(user_id);
-CREATE INDEX idx_reviews_tenant_course ON reviews(tenant_id, course_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_reviews_tenant_user ON reviews(tenant_id, user_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_reviews_tenant_course_user ON reviews(tenant_id, course_id, user_id);
-CREATE INDEX idx_reviews_rating ON reviews(rating);
-CREATE INDEX idx_reviews_is_public ON reviews(is_public);
-CREATE INDEX idx_reviews_created_at ON reviews(created_at DESC);
-CREATE INDEX idx_reviews_updated_at ON reviews(updated_at DESC);
-CREATE INDEX idx_reviews_deleted_at ON reviews(deleted_at) WHERE deleted_at IS NOT NULL;
-CREATE INDEX idx_reviews_public_deleted ON reviews(tenant_id, course_id, is_public, deleted_at);
+CREATE INDEX IF NOT EXISTS idx_reviews_tenant_id ON reviews(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_course_id ON reviews(course_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_tenant_course ON reviews(tenant_id, course_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_reviews_tenant_user ON reviews(tenant_id, user_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_reviews_tenant_course_user ON reviews(tenant_id, course_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews(rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_is_public ON reviews(is_public);
+CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_updated_at ON reviews(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_deleted_at ON reviews(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_reviews_public_deleted ON reviews(tenant_id, course_id, is_public, deleted_at);
 
 -- Course ratings indexes
-CREATE INDEX idx_course_ratings_tenant_id ON course_ratings(tenant_id);
-CREATE INDEX idx_course_ratings_course_id ON course_ratings(course_id);
-CREATE INDEX idx_course_ratings_average_rating ON course_ratings(average_rating DESC);
-CREATE INDEX idx_course_ratings_total_reviews ON course_ratings(total_reviews DESC);
-CREATE INDEX idx_course_ratings_updated_at ON course_ratings(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_course_ratings_tenant_id ON course_ratings(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_course_ratings_course_id ON course_ratings(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_ratings_average_rating ON course_ratings(average_rating DESC);
+CREATE INDEX IF NOT EXISTS idx_course_ratings_total_reviews ON course_ratings(total_reviews DESC);
+CREATE INDEX IF NOT EXISTS idx_course_ratings_updated_at ON course_ratings(updated_at DESC);
 
 -- Review helpful indexes
-CREATE INDEX idx_review_helpful_tenant_id ON review_helpful(tenant_id);
-CREATE INDEX idx_review_helpful_review_id ON review_helpful(review_id);
-CREATE INDEX idx_review_helpful_user_id ON review_helpful(user_id);
-CREATE INDEX idx_review_helpful_tenant_review ON review_helpful(tenant_id, review_id);
-CREATE INDEX idx_review_helpful_is_helpful ON review_helpful(is_helpful);
-CREATE INDEX idx_review_helpful_created_at ON review_helpful(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_tenant_id ON review_helpful(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_review_id ON review_helpful(review_id);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_user_id ON review_helpful(user_id);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_tenant_review ON review_helpful(tenant_id, review_id);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_is_helpful ON review_helpful(is_helpful);
+CREATE INDEX IF NOT EXISTS idx_review_helpful_created_at ON review_helpful(created_at DESC);
 
 -- Review reports indexes
-CREATE INDEX idx_review_reports_tenant_id ON review_reports(tenant_id);
-CREATE INDEX idx_review_reports_review_id ON review_reports(review_id);
-CREATE INDEX idx_review_reports_reporter_id ON review_reports(reporter_id);
-CREATE INDEX idx_review_reports_status ON review_reports(status);
-CREATE INDEX idx_review_reports_tenant_status ON review_reports(tenant_id, status);
-CREATE INDEX idx_review_reports_created_at ON review_reports(created_at DESC);
-CREATE INDEX idx_review_reports_updated_at ON review_reports(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_review_reports_tenant_id ON review_reports(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_review_reports_review_id ON review_reports(review_id);
+CREATE INDEX IF NOT EXISTS idx_review_reports_reporter_id ON review_reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_review_reports_status ON review_reports(status);
+CREATE INDEX IF NOT EXISTS idx_review_reports_tenant_status ON review_reports(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_review_reports_created_at ON review_reports(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_review_reports_updated_at ON review_reports(updated_at DESC);
 
 -- Add comments for documentation
 COMMENT ON TABLE reviews IS 'Stores course reviews and ratings from students';

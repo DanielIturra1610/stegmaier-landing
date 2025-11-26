@@ -54,31 +54,31 @@ CREATE TABLE IF NOT EXISTS progress_snapshots (
 
 -- Create indexes for performance
 -- Course progress indexes
-CREATE INDEX idx_course_progress_tenant_id ON course_progress(tenant_id);
-CREATE INDEX idx_course_progress_user_id ON course_progress(user_id);
-CREATE INDEX idx_course_progress_course_id ON course_progress(course_id);
-CREATE INDEX idx_course_progress_enrollment_id ON course_progress(enrollment_id);
-CREATE INDEX idx_course_progress_status ON course_progress(status);
-CREATE INDEX idx_course_progress_user_course ON course_progress(user_id, course_id);
-CREATE INDEX idx_course_progress_tenant_user ON course_progress(tenant_id, user_id);
-CREATE INDEX idx_course_progress_tenant_course ON course_progress(tenant_id, course_id);
-CREATE INDEX idx_course_progress_started_at ON course_progress(started_at DESC) WHERE started_at IS NOT NULL;
-CREATE INDEX idx_course_progress_completed_at ON course_progress(completed_at DESC) WHERE completed_at IS NOT NULL;
-CREATE INDEX idx_course_progress_last_accessed_at ON course_progress(last_accessed_at DESC) WHERE last_accessed_at IS NOT NULL;
-CREATE INDEX idx_course_progress_percentage ON course_progress(progress_percentage DESC);
-CREATE INDEX idx_course_progress_updated_at ON course_progress(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_course_progress_tenant_id ON course_progress(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_user_id ON course_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_course_id ON course_progress(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_enrollment_id ON course_progress(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_status ON course_progress(status);
+CREATE INDEX IF NOT EXISTS idx_course_progress_user_course ON course_progress(user_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_tenant_user ON course_progress(tenant_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_tenant_course ON course_progress(tenant_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_course_progress_started_at ON course_progress(started_at DESC) WHERE started_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_course_progress_completed_at ON course_progress(completed_at DESC) WHERE completed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_course_progress_last_accessed_at ON course_progress(last_accessed_at DESC) WHERE last_accessed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_course_progress_percentage ON course_progress(progress_percentage DESC);
+CREATE INDEX IF NOT EXISTS idx_course_progress_updated_at ON course_progress(updated_at DESC);
 
 -- Progress snapshots indexes
-CREATE INDEX idx_progress_snapshots_tenant_id ON progress_snapshots(tenant_id);
-CREATE INDEX idx_progress_snapshots_user_id ON progress_snapshots(user_id);
-CREATE INDEX idx_progress_snapshots_course_id ON progress_snapshots(course_id);
-CREATE INDEX idx_progress_snapshots_enrollment_id ON progress_snapshots(enrollment_id);
-CREATE INDEX idx_progress_snapshots_user_course ON progress_snapshots(user_id, course_id);
-CREATE INDEX idx_progress_snapshots_tenant_user_course ON progress_snapshots(tenant_id, user_id, course_id);
-CREATE INDEX idx_progress_snapshots_milestone_type ON progress_snapshots(milestone_type);
-CREATE INDEX idx_progress_snapshots_snapshot_date ON progress_snapshots(snapshot_date DESC);
-CREATE INDEX idx_progress_snapshots_user_course_date ON progress_snapshots(user_id, course_id, snapshot_date DESC);
-CREATE INDEX idx_progress_snapshots_milestone ON progress_snapshots(user_id, course_id, milestone_type);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_tenant_id ON progress_snapshots(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_user_id ON progress_snapshots(user_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_course_id ON progress_snapshots(course_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_enrollment_id ON progress_snapshots(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_user_course ON progress_snapshots(user_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_tenant_user_course ON progress_snapshots(tenant_id, user_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_milestone_type ON progress_snapshots(milestone_type);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_snapshot_date ON progress_snapshots(snapshot_date DESC);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_user_course_date ON progress_snapshots(user_id, course_id, snapshot_date DESC);
+CREATE INDEX IF NOT EXISTS idx_progress_snapshots_milestone ON progress_snapshots(user_id, course_id, milestone_type);
 
 -- Add comments for documentation
 COMMENT ON TABLE course_progress IS 'Tracks overall student progress in courses with completion statistics';

@@ -48,17 +48,14 @@ CREATE TABLE IF NOT EXISTS certificate_templates (
     created_by UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT certificate_templates_name_tenant_unique UNIQUE (tenant_id, name),
-    CONSTRAINT certificate_templates_one_default_per_tenant CHECK (
-        NOT is_default OR
-        NOT EXISTS (
-            SELECT 1 FROM certificate_templates ct2
-            WHERE ct2.tenant_id = certificate_templates.tenant_id
-            AND ct2.is_default = true
-            AND ct2.id != certificate_templates.id
-        )
-    )
+    CONSTRAINT certificate_templates_name_tenant_unique UNIQUE (tenant_id, name)
 );
+
+-- Create a partial unique index to enforce only one default template per tenant
+-- This replaces the CHECK constraint with subquery which PostgreSQL doesn't support
+CREATE UNIQUE INDEX IF NOT EXISTS idx_certificate_templates_one_default_per_tenant
+    ON certificate_templates(tenant_id)
+    WHERE is_default = true;
 
 -- Add foreign key from certificates to templates (nullable)
 ALTER TABLE certificates
@@ -69,33 +66,33 @@ ALTER TABLE certificates
 
 -- Create indexes for performance
 -- Certificates indexes
-CREATE INDEX idx_certificates_tenant_id ON certificates(tenant_id);
-CREATE INDEX idx_certificates_user_id ON certificates(user_id);
-CREATE INDEX idx_certificates_course_id ON certificates(course_id);
-CREATE INDEX idx_certificates_enrollment_id ON certificates(enrollment_id);
-CREATE INDEX idx_certificates_progress_id ON certificates(progress_id);
-CREATE INDEX idx_certificates_template_id ON certificates(template_id) WHERE template_id IS NOT NULL;
-CREATE INDEX idx_certificates_number ON certificates(certificate_number);
-CREATE INDEX idx_certificates_verification_code ON certificates(verification_code);
-CREATE INDEX idx_certificates_status ON certificates(status);
-CREATE INDEX idx_certificates_user_course ON certificates(user_id, course_id);
-CREATE INDEX idx_certificates_tenant_user ON certificates(tenant_id, user_id);
-CREATE INDEX idx_certificates_tenant_course ON certificates(tenant_id, course_id);
-CREATE INDEX idx_certificates_issued_at ON certificates(issued_at DESC);
-CREATE INDEX idx_certificates_completion_date ON certificates(completion_date DESC);
-CREATE INDEX idx_certificates_expires_at ON certificates(expires_at) WHERE expires_at IS NOT NULL;
-CREATE INDEX idx_certificates_revoked_at ON certificates(revoked_at DESC) WHERE revoked_at IS NOT NULL;
-CREATE INDEX idx_certificates_grade ON certificates(grade DESC) WHERE grade IS NOT NULL;
-CREATE INDEX idx_certificates_updated_at ON certificates(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_certificates_tenant_id ON certificates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_user_id ON certificates(user_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_course_id ON certificates(course_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_enrollment_id ON certificates(enrollment_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_progress_id ON certificates(progress_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_template_id ON certificates(template_id) WHERE template_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_certificates_number ON certificates(certificate_number);
+CREATE INDEX IF NOT EXISTS idx_certificates_verification_code ON certificates(verification_code);
+CREATE INDEX IF NOT EXISTS idx_certificates_status ON certificates(status);
+CREATE INDEX IF NOT EXISTS idx_certificates_user_course ON certificates(user_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_tenant_user ON certificates(tenant_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_tenant_course ON certificates(tenant_id, course_id);
+CREATE INDEX IF NOT EXISTS idx_certificates_issued_at ON certificates(issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_certificates_completion_date ON certificates(completion_date DESC);
+CREATE INDEX IF NOT EXISTS idx_certificates_expires_at ON certificates(expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_certificates_revoked_at ON certificates(revoked_at DESC) WHERE revoked_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_certificates_grade ON certificates(grade DESC) WHERE grade IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_certificates_updated_at ON certificates(updated_at DESC);
 
 -- Certificate templates indexes
-CREATE INDEX idx_certificate_templates_tenant_id ON certificate_templates(tenant_id);
-CREATE INDEX idx_certificate_templates_created_by ON certificate_templates(created_by);
-CREATE INDEX idx_certificate_templates_name ON certificate_templates(name);
-CREATE INDEX idx_certificate_templates_is_default ON certificate_templates(is_default) WHERE is_default = true;
-CREATE INDEX idx_certificate_templates_is_active ON certificate_templates(is_active);
-CREATE INDEX idx_certificate_templates_tenant_default ON certificate_templates(tenant_id, is_default) WHERE is_default = true;
-CREATE INDEX idx_certificate_templates_updated_at ON certificate_templates(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_tenant_id ON certificate_templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_created_by ON certificate_templates(created_by);
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_name ON certificate_templates(name);
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_is_default ON certificate_templates(is_default) WHERE is_default = true;
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_is_active ON certificate_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_tenant_default ON certificate_templates(tenant_id, is_default) WHERE is_default = true;
+CREATE INDEX IF NOT EXISTS idx_certificate_templates_updated_at ON certificate_templates(updated_at DESC);
 
 -- Add comments for documentation
 COMMENT ON TABLE certificates IS 'Stores certificates issued for course completion';

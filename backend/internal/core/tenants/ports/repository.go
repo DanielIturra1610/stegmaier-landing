@@ -11,6 +11,7 @@ import (
 type TenantRepository interface {
 	// Tenant operations
 	CreateTenant(ctx context.Context, name, slug, dbName, description, email, phone string, address, website *string, ownerID string) (string, error)
+	DeleteTenant(ctx context.Context, tenantID string) error
 	GetTenantByID(ctx context.Context, tenantID string) (*database.TenantInfo, error)
 	GetTenantBySlug(ctx context.Context, slug string) (*database.TenantInfo, error)
 	TenantExistsBySlug(ctx context.Context, slug string) (bool, error)

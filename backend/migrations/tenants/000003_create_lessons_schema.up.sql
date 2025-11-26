@@ -15,8 +15,15 @@ ALTER TABLE lessons ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE
 -- Rename title column to match expected schema (from VARCHAR(255) to VARCHAR(200))
 -- Note: This is safe as it only restricts the length
 
--- Add unique constraint for lesson ordering
-ALTER TABLE lessons ADD CONSTRAINT IF NOT EXISTS lessons_order_unique UNIQUE (tenant_id, course_id, order_index, deleted_at);
+-- Add unique constraint for lesson ordering using DO block
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'lessons_order_unique'
+    ) THEN
+        ALTER TABLE lessons ADD CONSTRAINT lessons_order_unique UNIQUE (tenant_id, course_id, order_index, deleted_at);
+    END IF;
+END $$;
 
 -- Create lesson_completions table
 CREATE TABLE IF NOT EXISTS lesson_completions (
