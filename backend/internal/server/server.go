@@ -133,17 +133,24 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		"stegmaier-lms",
 	)
 
-	// 2. Initialize repositories (using Control DB from dbManager)
+	// 2. Initialize email service for auth (needed for verification emails)
+	log.Println("📧 Initializing email service for authentication...")
+	authEmailService := email.NewEmailService(&cfg.Email, cfg.Server.BaseURL)
+	authEmailAdapter := email.NewAuthEmailServiceAdapter(authEmailService)
+	log.Println("✅ Email service for authentication initialized")
+
+	// 3. Initialize repositories (using Control DB from dbManager)
 	controlDB := dbManager.GetControlDB()
 	authRepo := adapters.NewPostgreSQLAuthRepository(controlDB)
 	authUserRepo := adapters.NewPostgreSQLUserRepository(controlDB) // For profile service
 	userRepo := useradapters.NewPostgreSQLUserRepository(controlDB)
 
-	// 3. Initialize services
+	// 4. Initialize services
 	authService := services.NewAuthService(
 		authRepo,
 		passwordHasher,
 		tokenService,
+		authEmailAdapter,
 		services.AuthServiceConfig{
 			AccessTokenExpiry:  cfg.JWT.Expiration,
 			RefreshTokenExpiry: cfg.JWT.RefreshExpiration,

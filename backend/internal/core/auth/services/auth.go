@@ -20,6 +20,7 @@ type AuthServiceImpl struct {
 	repo          ports.AuthRepository
 	hasher        hasher.PasswordHasher
 	tokenService  tokens.TokenService
+	emailService  ports.EmailService
 	validator     *validator.Validate
 	accessExpiry  time.Duration
 	refreshExpiry time.Duration
@@ -40,12 +41,14 @@ func NewAuthService(
 	repo ports.AuthRepository,
 	hasher hasher.PasswordHasher,
 	tokenService tokens.TokenService,
+	emailService ports.EmailService,
 	config AuthServiceConfig,
 ) ports.AuthService {
 	return &AuthServiceImpl{
 		repo:          repo,
 		hasher:        hasher,
 		tokenService:  tokenService,
+		emailService:  emailService,
 		validator:     validator.New(),
 		accessExpiry:  config.AccessTokenExpiry,
 		refreshExpiry: config.RefreshTokenExpiry,
@@ -118,8 +121,15 @@ func (s *AuthServiceImpl) Register(ctx context.Context, tenantID string, dto *do
 		return nil, fmt.Errorf("failed to create verification token: %w", err)
 	}
 
-	// TODO: Send verification email (will be implemented with email service)
-	// emailService.SendVerificationEmail(user.Email, verifyToken.Token)
+	// Send verification email
+	if s.emailService != nil {
+		if err := s.emailService.SendWelcomeEmail(ctx, user.Email, user.FullName, verifyToken.Token); err != nil {
+			// Log the error but don't fail registration
+			fmt.Printf("Warning: failed to send verification email to %s: %v\n", user.Email, err)
+		} else {
+			fmt.Printf("INFO: Verification email sent to %s\n", user.Email)
+		}
+	}
 
 	// Generate JWT tokens
 	accessToken, err := s.generateAccessToken(user)
@@ -341,8 +351,14 @@ func (s *AuthServiceImpl) ResendVerification(ctx context.Context, dto *domain.Re
 		return fmt.Errorf("failed to create verification token: %w", err)
 	}
 
-	// TODO: Send verification email
-	// emailService.SendVerificationEmail(user.Email, verifyToken.Token)
+	// Send verification email
+	if s.emailService != nil {
+		if err := s.emailService.SendWelcomeEmail(ctx, user.Email, user.FullName, verifyToken.Token); err != nil {
+			fmt.Printf("Warning: failed to resend verification email to %s: %v\n", user.Email, err)
+			return ports.ErrVerificationEmailFailed
+		}
+		fmt.Printf("INFO: Verification email resent to %s\n", user.Email)
+	}
 
 	return nil
 }

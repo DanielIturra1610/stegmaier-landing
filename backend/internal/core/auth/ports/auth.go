@@ -6,6 +6,17 @@ import (
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/domain"
 )
 
+// EmailService defines the interface for sending emails from the auth module.
+// This interface allows the auth service to send verification and password reset emails
+// without depending directly on the email implementation.
+type EmailService interface {
+	// SendWelcomeEmail sends a welcome email with verification link to a new user.
+	SendWelcomeEmail(ctx context.Context, to, userName, verificationToken string) error
+
+	// SendPasswordResetEmail sends a password reset email with reset link.
+	SendPasswordResetEmail(ctx context.Context, to, userName, resetToken string) error
+}
+
 // AuthRepository defines the interface for authentication data persistence.
 // This interface abstracts the data layer operations for the authentication domain,
 // following the hexagonal architecture pattern. Implementations should handle

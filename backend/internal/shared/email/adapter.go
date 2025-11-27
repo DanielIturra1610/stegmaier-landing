@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	authports "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/ports"
 )
 
@@ -15,6 +16,13 @@ type EmailServiceAdapter struct {
 
 // NewEmailServiceAdapter crea un nuevo adaptador
 func NewEmailServiceAdapter(emailService *EmailService) ports.EmailService {
+	return &EmailServiceAdapter{
+		emailService: emailService,
+	}
+}
+
+// NewAuthEmailServiceAdapter crea un adaptador para el módulo de autenticación
+func NewAuthEmailServiceAdapter(emailService *EmailService) authports.EmailService {
 	return &EmailServiceAdapter{
 		emailService: emailService,
 	}
@@ -104,5 +112,25 @@ func (a *EmailServiceAdapter) SendEnrollmentEmail(ctx context.Context, to, userN
 		return fmt.Errorf("failed to send enrollment email: %w", err)
 	}
 
+	return nil
+}
+
+// SendWelcomeEmail envía email de bienvenida con verificación (implementa authports.EmailService)
+func (a *EmailServiceAdapter) SendWelcomeEmail(ctx context.Context, to, userName, verificationToken string) error {
+	if err := a.emailService.SendWelcomeEmail(ctx, to, userName, verificationToken); err != nil {
+		log.Printf("ERROR: Failed to send welcome email to %s: %v", to, err)
+		return fmt.Errorf("failed to send welcome email: %w", err)
+	}
+	log.Printf("INFO: Welcome email sent successfully to %s", to)
+	return nil
+}
+
+// SendPasswordResetEmail envía email de reseteo de contraseña (implementa authports.EmailService)
+func (a *EmailServiceAdapter) SendPasswordResetEmail(ctx context.Context, to, userName, resetToken string) error {
+	if err := a.emailService.SendPasswordResetEmail(ctx, to, userName, resetToken); err != nil {
+		log.Printf("ERROR: Failed to send password reset email to %s: %v", to, err)
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+	log.Printf("INFO: Password reset email sent successfully to %s", to)
 	return nil
 }
