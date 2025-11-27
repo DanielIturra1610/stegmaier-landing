@@ -39,7 +39,7 @@ services:
     image: redis:7-alpine
     container_name: stegmaier-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    command: redis-server --appendonly yes
     ports:
       - "${REDIS_EXPOSE_HOST:-0.0.0.0}:6379:6379"
     volumes:
@@ -47,7 +47,7 @@ services:
     networks:
       - stegmaier-network
     healthcheck:
-      test: ["CMD", "redis-cli", "${REDIS_PASSWORD:+-a}", "${REDIS_PASSWORD:-}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
