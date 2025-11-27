@@ -65,6 +65,7 @@ func (s *UserManagementService) CreateUser(ctx context.Context, dto *domain.Crea
 	}
 
 	// Create user entity
+	// Users created by admin are auto-verified (enterprise pattern)
 	user := &authdomain.User{
 		ID:           uuid.New().String(),
 		TenantID:     tenantIDPtr,
@@ -72,7 +73,7 @@ func (s *UserManagementService) CreateUser(ctx context.Context, dto *domain.Crea
 		PasswordHash: hashedPassword,
 		FullName:     dto.FullName,
 		Role:         dto.Role,
-		IsVerified:   false, // New users created by admin are not auto-verified
+		IsVerified:   true, // Admin-created users are auto-verified
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
