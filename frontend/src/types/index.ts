@@ -70,17 +70,24 @@ export interface Step {
 }
 
 // ============================================
-// Re-export domain types
+// Re-export domain types (explicit to avoid conflicts)
 // ============================================
 export * from './tenant';
-export * from './user';
-export * from './auth';
-export * from './course';
-export * from './lesson';
-export * from './module';
-export * from './quiz';
+export type { CreateUserDTO, UpdateUserDTO, PasswordStrength, validatePasswordRequirements } from './user';
+export type { AuthResponse, LoginCredentials, RegisterCredentials, VerifyEmailPayload, ResetPasswordPayload } from './auth';
+export type { Course, CourseCreate, CourseDetail, CourseListItem, CourseFilters, Category, CourseStats } from './course';
+export type { Lesson, LessonCreate, LessonUpdate, LessonAttachment, ContentType as LessonContentType } from './lesson';
+export type { Module, ModuleCreate, ModuleUpdate } from './module';
+export type { Quiz, QuizCreate, QuizQuestion, QuizSubmission, QuizResult } from './quiz';
 export * from './assignment';
-export * from './progress';
+export type {
+  CourseProgress,
+  LessonProgressRecord,
+  ProgressSummaryResponse,
+  UserProgressSummaryResponse,
+  CourseProgressResponse,
+  CourseProgressDetailResponse
+} from './progress';
 export * from './enrollment';
 export * from './notification';
 export * from './email';

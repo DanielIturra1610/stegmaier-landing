@@ -64,30 +64,52 @@ export const API_CONFIG = {
 
 // URLs específicas por servicio (sin duplicar /api/v1)
 export const API_ENDPOINTS = {
+  // Base (for generic endpoints)
+  BASE: '',
+
   // Auth
   AUTH: '/auth',
   USERS: '/users',
+
   // Courses
   COURSES: '/courses',
-  COURSES_AVAILABLE: '/courses', // Same as COURSES - backend returns all available courses
+  COURSES_AVAILABLE: '/courses',
   COURSES_STUDENT: '/courses/student',
+
   // Lessons
   LESSONS: '/lessons',
+
+  // Modules
+  MODULES: '/modules',
+
   // Enrollments
   ENROLLMENTS: '/enrollments',
+
   // Progress
   PROGRESS: '/progress',
+
   // Analytics
   ANALYTICS: '/analytics',
+
   // Media
   MEDIA: '/media',
+
   // Quizzes
   QUIZZES: '/quizzes',
+
   // Assignments
   ASSIGNMENTS: '/assignments',
+  ASSIGNMENTS_URL: '/assignments',
+
+  // Reviews
+  REVIEWS: '/reviews',
+
+  // Certificates
+  CERTIFICATES: '/certificates',
+
   // Instructor
   INSTRUCTOR: '/instructor',
-  
+
   // Admin
   ADMIN: '/admin',
 
@@ -99,7 +121,10 @@ export const API_ENDPOINTS = {
   NOTIFICATIONS: '/notifications',
 
   // Push subscriptions
-  PUSH_SUBSCRIPTIONS: '/push-subscriptions'
+  PUSH_SUBSCRIPTIONS: '/push-subscriptions',
+
+  // Profile
+  PROFILE: '/profile'
 } as const;
 
 /**
