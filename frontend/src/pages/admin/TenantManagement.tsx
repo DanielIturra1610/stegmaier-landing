@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   Plus,
@@ -109,6 +110,7 @@ const ConfirmDialog: React.FC<{
 
 const TenantManagement: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Estados
   const [tenants, setTenants] = useState<Tenant[]>([]);

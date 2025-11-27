@@ -32,8 +32,19 @@ export interface RegisterData {
   lastName: string;
 }
 
+export interface AuthResponseUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AuthResponse {
   access_token: string;
+  refresh_token?: string;
   token_type: string;
   expires_in: number;
   user_id: string;
@@ -41,6 +52,8 @@ export interface AuthResponse {
   email: string;
   role: string;
   message?: string;
+  // User object from backend
+  user?: AuthResponseUser;
   // Campos adicionales para soporte de nombre completo y fechas
   first_name?: string;
   last_name?: string;

@@ -89,6 +89,18 @@ export interface RejectEnrollmentRequestRequest {
   rejectionReason: string;
 }
 
+export interface EnrollmentProgressResponse {
+  enrollmentId: string;
+  courseId: string;
+  progressPercentage: number;
+  completedLessons: number;
+  totalLessons: number;
+  completedQuizzes: number;
+  totalQuizzes: number;
+  isCompleted: boolean;
+  certificateId?: string;
+}
+
 export interface EnrollmentStatsResponse {
   courseId: string;
   courseName?: string;
@@ -675,6 +687,59 @@ class EnrollmentService {
     } catch (error: any) {
       console.error('❌ [enrollmentService] Error rejecting request:', error);
       throw new Error(error.response?.data?.error || 'Failed to reject enrollment request');
+    }
+  }
+
+  /**
+   * Get enrollment progress - used by CertificateEligibilityChecker
+   * Returns progress data for an enrollment
+   */
+  async getEnrollmentProgress(enrollmentId: string): Promise<EnrollmentProgressResponse> {
+    try {
+      console.log('📊 [enrollmentService] Getting enrollment progress:', enrollmentId);
+      const response = await axios.get<EnrollmentDetailResponse>(
+        buildApiUrl(`${API_ENDPOINTS.ENROLLMENTS}/${enrollmentId}`),
+        { headers: getAuthHeaders() }
+      );
+
+      // Transform to EnrollmentProgressResponse format
+      const data = response.data;
+      return {
+        enrollmentId: data.id,
+        courseId: data.courseId,
+        progressPercentage: data.progressPercentage,
+        completedLessons: data.progressDetails?.completedLessons || 0,
+        totalLessons: data.courseDetails?.totalLessons || 0,
+        completedQuizzes: data.progressDetails?.completedQuizzes || 0,
+        totalQuizzes: data.courseDetails?.totalQuizzes || 0,
+        isCompleted: data.status === 'completed',
+        certificateId: data.certificateId
+      };
+    } catch (error: any) {
+      console.error('❌ [enrollmentService] Error getting enrollment progress:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unenroll from a course - used by MyCourses page
+   */
+  async unenrollFromCourse(courseId: string): Promise<void> {
+    try {
+      console.log('🚪 [enrollmentService] Unenrolling from course:', courseId);
+
+      // First get my enrollment for this course
+      const enrollments = await this.getMyEnrollments();
+      const enrollment = enrollments.find(e => e.courseId === courseId);
+
+      if (enrollment) {
+        await this.cancelEnrollment(enrollment.id);
+      }
+
+      console.log('✅ [enrollmentService] Successfully unenrolled');
+    } catch (error: any) {
+      console.error('❌ [enrollmentService] Error unenrolling:', error);
+      throw error;
     }
   }
 

@@ -13,9 +13,10 @@ import { CreateTenantDTO } from '../../types/tenant';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import { Alert } from '@/components/ui/alert';
 
-interface CreateTenantModalProps {
+export interface CreateTenantModalProps {
+  isOpen?: boolean;
   onClose: () => void;
-  onSuccess: (tenant: any) => void;
+  onSuccess: (tenant?: any) => void;
 }
 
 // Validación con Yup
@@ -46,11 +47,15 @@ const TenantSchema = Yup.object().shape({
 });
 
 const CreateTenantModal: React.FC<CreateTenantModalProps> = ({
+  isOpen = true,
   onClose,
   onSuccess
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [previewDbName, setPreviewDbName] = useState<string>('');
+
+  // Si no está abierto, no renderizar
+  if (!isOpen) return null;
 
   // Manejar submit
   const handleSubmit = async (

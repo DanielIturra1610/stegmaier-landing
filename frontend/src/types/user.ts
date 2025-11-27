@@ -5,6 +5,9 @@
 
 import { UserRole } from './tenant';
 
+// Re-export UserRole for backwards compatibility
+export { UserRole } from './tenant';
+
 // ============================================
 // User Entity
 // ============================================
@@ -184,6 +187,14 @@ export function calculatePasswordStrength(password: string): PasswordStrength {
   const isValid = score === 5;
 
   return { score, feedback, isValid };
+}
+
+/**
+ * Verifica si la contraseña es suficientemente fuerte
+ */
+export function isPasswordStrong(password: string): boolean {
+  const { isValid } = calculatePasswordStrength(password);
+  return isValid;
 }
 
 /**

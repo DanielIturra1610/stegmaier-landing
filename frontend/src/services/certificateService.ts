@@ -150,6 +150,11 @@ export interface CourseStatisticsResponse {
   averageTimeSpent: number;
 }
 
+// Type aliases for backwards compatibility
+export type Certificate = CertificateResponse;
+export type CertificateDetail = CertificateDetailResponse;
+export type CertificateTemplate = CertificateTemplateResponse;
+
 // ============================================================
 // Certificate Service Class
 // ============================================================

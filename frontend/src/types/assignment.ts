@@ -91,51 +91,62 @@ export interface Assignment {
   course_id: string;
   module_id?: string;
   lesson_id?: string;
-  
+
   // Files and resources
   attachments: AssignmentFile[];
   template_files: AssignmentFile[];
-  
+
   // Submission configuration
   max_file_size: number;
   allowed_file_types: string[];
   max_files: number;
   allow_multiple_submissions: boolean;
-  
+
   // Dates
   available_from?: string;
   due_date?: string;
   late_penalty_per_day: number;
   accept_late_submissions: boolean;
-  
+
   // Evaluation
   rubric?: Rubric;
+  rubric_id?: string; // For backwards compatibility
   max_points: number;
+  max_score?: number; // Alias for max_points
   passing_score: number;
-  
+
   // Advanced configuration
   peer_review_enabled: boolean;
   peer_reviews_required: number;
   anonymous_grading: boolean;
   plagiarism_check_enabled: boolean;
-  
+
+  // Legacy aliases for backwards compatibility
+  allow_late_submission?: boolean; // Alias for accept_late_submissions
+  late_penalty_percent?: number; // Alias for late_penalty_per_day
+  max_attempts?: number;
+  require_file_submission?: boolean;
+  allow_text_submission?: boolean;
+  enable_peer_review?: boolean; // Alias for peer_review_enabled
+  min_peer_reviews?: number; // Alias for peer_reviews_required
+
   // State
   is_published: boolean;
   estimated_duration: number;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
   published_at?: string;
   created_by: string;
-  
+
   // Statistics
   total_submissions: number;
   graded_submissions: number;
   average_grade: number;
   on_time_submissions: number;
   late_submissions: number;
-  
+
   // Computed properties
   is_available: boolean;
   is_overdue: boolean;

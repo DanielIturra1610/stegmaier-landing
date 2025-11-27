@@ -342,3 +342,6 @@ class NotificationService {
 }
 
 export const notificationService = new NotificationService();
+
+// Default export for backwards compatibility
+export default notificationService;
