@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   full_name?: string; // Agregado para soportar la respuesta del backend
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'instructor' | 'admin' | 'superadmin';
   profileImage?: string;
   verified: boolean;
   createdAt: string;

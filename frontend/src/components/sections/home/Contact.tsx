@@ -12,7 +12,7 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Button from '../../ui/button'
+import { Button } from '../../ui/button'
 import { cn } from '../../../lib/utils'
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik'
 import * as Yup from 'yup'

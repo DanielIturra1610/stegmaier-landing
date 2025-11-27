@@ -1,17 +1,22 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ChallengeCardProps, 
-  CelebrationLevel 
+import { Lock, Clock, CheckCircle, Star, Award } from 'lucide-react';
+import {
+  ChallengeCardProps,
+  CelebrationLevel
 } from './types';
-import { 
-  formatTimeRemaining, 
-  getCardStyle, 
-  getProgressDescription 
+import {
+  formatTimeRemaining,
+  getCardStyle,
+  getProgressDescription
 } from './utils';
 import { DIFFICULTY_LABELS, PROGRESS_RING } from './constants';
 import { IconRenderer, useCategoryIcon } from './IconRenderer';
 import { translateCategory } from '../../utils/categoryTranslations';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 /**
  * Componente ChallengeCard - Representa una tarjeta individual de desafío
@@ -117,168 +122,129 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
   
   return (
     <motion.div
-      className="relative rounded-lg overflow-hidden shadow-md"
-      style={{
-        backgroundColor: cardStyle.background,
-        border: `2px solid ${cardStyle.border}`,
-        opacity: status === 'expired' || status === 'locked' ? 0.7 : 1
-      }}
       variants={cardVariants}
       initial="hidden"
       animate="visible"
       whileHover="hover"
       whileTap="tap"
-      onClick={onClick}
-      role="listitem"
-      aria-label={`Desafío: ${challenge.title}. ${getProgressDescription(challenge, progress)}`}
-      tabIndex={0}
     >
+      <Card
+        className="relative overflow-hidden cursor-pointer transition-all"
+        style={{
+          backgroundColor: cardStyle.background,
+          borderColor: cardStyle.border,
+          opacity: status === 'expired' || status === 'locked' ? 0.7 : 1
+        }}
+        onClick={onClick}
+        role="listitem"
+        aria-label={`Desafío: ${challenge.title}. ${getProgressDescription(challenge, progress)}`}
+        tabIndex={0}
+      >
       {/* Estado de bloqueo */}
       {status === 'locked' && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 z-10">
           <div className="text-white text-center p-4">
-            <div className="mb-2 flex justify-center">
-              <IconRenderer iconName="lock" className="h-12 w-12 text-white" />
-            </div>
+            <Lock className="h-12 w-12 mx-auto mb-2" />
             <p className="font-medium">Completa requisitos previos para desbloquear</p>
           </div>
         </div>
       )}
-      
+
       {/* Estado expirado */}
       {status === 'expired' && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-10">
           <div className="text-white text-center p-4">
-            <div className="mb-2 flex justify-center">
-              <IconRenderer iconName="clock" className="h-12 w-12 text-white" />
-            </div>
-            <p className="font-medium">Tiempo agotado</p>
-            <button 
-              className="mt-2 px-4 py-2 bg-white text-gray-900 rounded-md font-medium"
+            <Clock className="h-12 w-12 mx-auto mb-2" />
+            <p className="font-medium mb-2">Tiempo agotado</p>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 // Aquí iría la lógica para reintentar
               }}
             >
               Reintentar
-            </button>
+            </Button>
           </div>
         </div>
       )}
       
       {/* Confetti para celebraciones */}
       {renderConfetti()}
-      
+
       {/* Header con ícono y nivel de dificultad */}
-      <div className="p-4 flex justify-between items-center border-b border-opacity-20" style={{ borderColor: cardStyle.border }}>
-        <div className="flex items-center">
-          <span className="mr-2 text-gray-700" style={{ color: cardStyle.text }}>
-            {useCategoryIcon(challenge.category, "h-6 w-6")}
-          </span>
-          <span className="text-sm font-medium" style={{ color: cardStyle.text }}>{translateCategory(challenge.category)}</span>
+      <CardHeader className="p-4 pb-3">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span style={{ color: cardStyle.text }}>
+              {useCategoryIcon(challenge.category, "h-5 w-5")}
+            </span>
+            <span className="text-sm font-medium" style={{ color: cardStyle.text }}>
+              {translateCategory(challenge.category)}
+            </span>
+          </div>
+          <Badge
+            variant="secondary"
+            className="text-xs"
+            style={{
+              backgroundColor: cardStyle.badge,
+              color: cardStyle.text
+            }}
+          >
+            {DIFFICULTY_LABELS[challenge.difficulty]}
+          </Badge>
         </div>
-        <span 
-          className="text-xs font-medium px-2 py-1 rounded-full" 
-          style={{ 
-            backgroundColor: cardStyle.badge,
-            color: cardStyle.text
-          }}
-        >
-          {DIFFICULTY_LABELS[challenge.difficulty]}
-        </span>
-      </div>
-      
+      </CardHeader>
+
       {/* Contenido principal */}
-      <div className="p-4">
+      <CardContent className="p-4 pt-0 space-y-4">
         {/* Título */}
         <h3 className="text-lg font-bold mb-2" style={{ color: cardStyle.text }}>
           {challenge.title}
         </h3>
         
         {/* Descripción */}
-        <p className="text-sm text-gray-600 mb-4">{challenge.description}</p>
-        
-        {/* Anillo de progreso */}
-        <div className="flex flex-col items-center justify-center mb-4 relative">
-          <div className="relative">
-            <svg width={PROGRESS_RING.radius * 2} height={PROGRESS_RING.radius * 2}>
-              {/* Fondo del anillo */}
-              <circle
-                stroke="#e6e6e6"
-                fill="transparent"
-                strokeWidth={PROGRESS_RING.stroke}
-                r={PROGRESS_RING.radius - PROGRESS_RING.stroke / 2}
-                cx={PROGRESS_RING.radius}
-                cy={PROGRESS_RING.radius}
-              />
-              
-              {/* Anillo de progreso animado */}
-              <motion.circle
-                stroke={cardStyle.progress}
-                fill="transparent"
-                strokeWidth={PROGRESS_RING.stroke}
-                strokeLinecap="round"
-                r={PROGRESS_RING.radius - PROGRESS_RING.stroke / 2}
-                cx={PROGRESS_RING.radius}
-                cy={PROGRESS_RING.radius}
-                strokeDasharray={PROGRESS_RING.circumference}
-                variants={progressRingVariants}
-                initial="hidden"
-                animate="visible"
-                style={{
-                  transformOrigin: 'center',
-                  transform: 'rotate(-90deg)'
-                }}
-              />
-            </svg>
-            
-            {/* Porcentaje de progreso */}
-            <div 
-              className="absolute inset-0 flex items-center justify-center flex-col"
-              aria-hidden="true"
-            >
+        <p className="text-sm text-muted-foreground">{challenge.description}</p>
+
+        {/* Progreso */}
+        <div className="space-y-3">
+          {isCompleted ? (
+            <div className="flex items-center justify-center py-4">
               <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.3 }}
-                className="text-2xl font-bold relative"
-                style={{ color: cardStyle.text }}
+                variants={celebrationVariants}
+                initial="initial"
+                animate="animate"
+                className="flex items-center gap-2"
               >
-                {isCompleted ? (
-                  <motion.div
-                    variants={celebrationVariants}
-                    initial="initial"
-                    animate="animate"
-                    className="flex items-center justify-center"
-                  >
-                    <IconRenderer iconName="check-circle" className="h-8 w-8 text-green-500" />
-                  </motion.div>
-                ) : (
-                  <>
-                    {`${progress}%`}
-                    {status === 'expiring' && (
-                      <motion.div 
-                        className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full font-medium text-center whitespace-nowrap"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        ¡Pronto expira!
-                      </motion.div>
-                    )}
-                  </>
-                )}
+                <CheckCircle className="h-8 w-8 text-green-500" />
+                <span className="text-lg font-bold text-green-600">¡Completado!</span>
               </motion.div>
             </div>
-          </div>
-          
+          ) : (
+            <>
+              {status === 'expiring' && (
+                <Badge variant="destructive" className="w-full justify-center">
+                  ¡Pronto expira!
+                </Badge>
+              )}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Progreso</span>
+                  <span className="font-bold" style={{ color: cardStyle.text }}>
+                    {progress}%
+                  </span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            </>
+          )}
+
           {/* Contador de tiempo restante */}
           {challenge.deadline && status !== 'completed' && status !== 'expired' && (
-            <div className="mt-2 text-sm font-medium flex items-center">
-              <span className="mr-1">
-                <IconRenderer iconName="clock" className="h-4 w-4 inline-block" />
-              </span>
-              <span className={status === 'expiring' ? 'text-red-500' : 'text-gray-600'}>
+            <div className="flex items-center justify-center gap-1 text-sm">
+              <Clock className="h-4 w-4" />
+              <span className={status === 'expiring' ? 'text-red-500 font-medium' : 'text-muted-foreground'}>
                 {formatTimeRemaining(challenge.deadline)}
               </span>
             </div>
@@ -286,29 +252,26 @@ const ChallengeCard: React.FC<ChallengeCardProps> = ({
         </div>
         
         {/* Sección de recompensa */}
-        <div className="flex items-center justify-between border-t border-opacity-20 pt-3" style={{ borderColor: cardStyle.border }}>
-          <div className="flex items-center">
-            <span className="text-sm font-medium text-gray-600 mr-2">Recompensa:</span>
-            {challenge.reward.type === 'xp' || challenge.reward.type === 'both' ? (
-              <div className="flex items-center mr-2" title={`${challenge.reward.value} puntos de experiencia`}>
-                <span className="text-yellow-500 mr-1">
-                  <IconRenderer iconName="star" className="h-4 w-4 inline-block" />
-                </span>
-                <span className="text-sm font-bold">{challenge.reward.value}XP</span>
-              </div>
-            ) : null}
-            
-            {challenge.reward.type === 'badge' || challenge.reward.type === 'both' ? (
-              <div className="flex items-center" title={`Insignia: ${challenge.reward.badgeName}`}>
-                <span className="text-blue-500 mr-1">
-                  <IconRenderer iconName="badge" className="h-4 w-4 inline-block" />
-                </span>
-                <span className="text-sm font-bold">{challenge.reward.badgeName}</span>
-              </div>
-            ) : null}
+        <div className="space-y-2 border-t pt-3" style={{ borderColor: cardStyle.border }}>
+          <span className="text-xs text-muted-foreground">Recompensa:</span>
+          <div className="flex flex-wrap gap-2">
+            {(challenge.reward.type === 'xp' || challenge.reward.type === 'both') && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Star className="h-3 w-3 text-yellow-500" />
+                <span className="font-bold">{challenge.reward.value} XP</span>
+              </Badge>
+            )}
+
+            {(challenge.reward.type === 'badge' || challenge.reward.type === 'both') && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Award className="h-3 w-3 text-blue-500" />
+                <span className="font-bold">{challenge.reward.badgeName}</span>
+              </Badge>
+            )}
           </div>
         </div>
-      </div>
+      </CardContent>
+    </Card>
     </motion.div>
   );
 };

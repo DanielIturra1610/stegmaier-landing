@@ -1,9 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRightIcon, ClockIcon, CalendarIcon, ChartBarIcon, DocumentTextIcon, LightBulbIcon, AcademicCapIcon, PresentationChartLineIcon } from '@heroicons/react/24/outline';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import EnrollmentButton from '../enrollment/EnrollmentButton';
 
 type CourseProps = {
   id: number;
@@ -38,6 +43,7 @@ const CourseCard: React.FC<CourseProps> = ({
   lastActivity = null,
   status = 'No comenzado'
 }) => {
+  const navigate = useNavigate();
   // Colores para los gradientes si no hay imagen - basados en categoría
   const categoryGradients: Record<string, { gradient: string, icon: React.ReactElement }> = {
     'Estrategia': { 
@@ -94,9 +100,8 @@ const CourseCard: React.FC<CourseProps> = ({
   const isActive = lastActivity ? (new Date().getTime() - new Date(lastActivity).getTime()) / (1000 * 3600 * 24) < 7 : false;
   
   return (
-    <motion.div 
-      className="rounded-lg shadow overflow-hidden flex flex-col bg-white relative group"
-      whileHover={{ 
+    <motion.div
+      whileHover={{
         scale: 1.02,
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
       }}
@@ -106,6 +111,7 @@ const CourseCard: React.FC<CourseProps> = ({
         damping: 17
       }}
     >
+    <Card className="overflow-hidden flex flex-col relative group h-full border-none shadow-lg">
       {/* Status indicator */}
       <div className="absolute top-0 left-0 bottom-0 w-1.5 z-10"
         style={{ backgroundColor: statusStyle.text.replace('text-', 'var(--color-') + ')' }}
@@ -147,22 +153,22 @@ const CourseCard: React.FC<CourseProps> = ({
         {/* Badges container */}
         <div className="absolute top-3 left-3 flex space-x-2 z-10">
           {category && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
+            <Badge variant="secondary" className="bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
               {category}
-            </span>
+            </Badge>
           )}
           {difficulty && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
+            <Badge variant="secondary" className="bg-white/70 backdrop-blur-sm text-gray-800 group-hover:bg-white transition-colors duration-300">
               {difficulty}
-            </span>
+            </Badge>
           )}
         </div>
-        
+
         {/* Status badge */}
         <div className="absolute top-3 right-3 z-10">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border ? `border ${statusStyle.border}` : ''}`}>
+          <Badge className={`${statusStyle.bg} ${statusStyle.text} ${statusStyle.border ? `border ${statusStyle.border}` : ''}`}>
             {currentStatus}
-          </span>
+          </Badge>
         </div>
 
         {/* Circular progress in bottom-right corner */}
@@ -187,12 +193,12 @@ const CourseCard: React.FC<CourseProps> = ({
         </div>
       </div>
 
-      <div className="p-5 flex-grow">
+      <CardContent className="p-5 flex-grow">
         {/* Description */}
-        <p className="text-sm text-gray-500 line-clamp-2">{description}</p>
-        
+        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+
         {/* Course info section */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {/* Estimated time */}
           {estimatedTime && (
             <div className="flex items-center">
@@ -200,15 +206,15 @@ const CourseCard: React.FC<CourseProps> = ({
               <span>{estimatedTime}</span>
             </div>
           )}
-          
+
           {/* Last activity date */}
           {lastActivity && (
             <div className="flex items-center">
               <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-              <span className={isActive ? 'text-primary-600 font-medium' : ''}>Última actividad: {formatDate(lastActivity)}</span>
+              <span className={isActive ? 'text-primary font-medium' : ''}>Última actividad: {formatDate(lastActivity)}</span>
             </div>
           )}
-          
+
           {/* Lessons counter */}
           {lessons > 0 && (
             <div className="flex items-center">
@@ -216,7 +222,7 @@ const CourseCard: React.FC<CourseProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </CardContent>
 
       {/* Progress bar */}
       {lessons > 0 && progress > 0 && (
@@ -236,19 +242,17 @@ const CourseCard: React.FC<CourseProps> = ({
         </div>
       )}
 
-      <div className="px-5 pb-4 pt-4">
-        <Link to={`/platform/courses/${id}`}>
-          <motion.button
-            className={`w-full py-2 px-4 rounded flex items-center justify-center transition-colors duration-200 ${progress >= 100 
-              ? 'bg-green-50 text-green-700 border border-green-500 hover:bg-green-100' 
-              : 'bg-white text-primary-600 border border-primary-600 hover:bg-primary-50'}`}
-            whileTap={{ scale: 0.95 }}
-          >
-            {progress >= 100 ? 'Ver certificado' : progress > 0 ? 'Continuar curso' : 'Comenzar curso'} 
-            <ArrowRightIcon className="ml-2 h-4 w-4" />
-          </motion.button>
-        </Link>
-      </div>
+      <CardFooter className="p-5 pt-4">
+        <EnrollmentButton
+          courseId={id.toString()}
+          courseName={title}
+          onNavigateToCourse={(courseId) => {
+            navigate(`/platform/courses/${courseId}`);
+          }}
+          className="w-full"
+        />
+      </CardFooter>
+    </Card>
     </motion.div>
   );
 };

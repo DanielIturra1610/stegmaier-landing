@@ -13,12 +13,12 @@ interface ProtectedRouteProps {
  * Componente para proteger rutas que requieren autenticación
  * y opcionalmente verificación de email
  */
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
   requireVerified = true,
-  allowedRoles 
+  allowedRoles
 }) => {
-  const { isAuthenticated, isVerified, isLoading, user } = useAuth();
+  const { isAuthenticated, isVerified, isLoading, user, currentTenantId } = useAuth();
   const location = useLocation();
 
   // Mostrar spinner mientras se verifica la autenticación
@@ -43,6 +43,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/verify-reminder" replace />;
   }
 
+  // NUEVO: Validar que tenga tenant seleccionado antes de acceder a /platform
+  // Excepto si ya está en /select-tenant
+  const isPlatformRoute = location.pathname.startsWith('/platform');
+  const isSelectTenantRoute = location.pathname === '/select-tenant';
+
+  if (isPlatformRoute && !currentTenantId && !isSelectTenantRoute) {
+    console.log('🔒 [ProtectedRoute] Sin tenant seleccionado, redirigiendo a /select-tenant');
+    return <Navigate to="/select-tenant" state={{ from: location.pathname }} replace />;
+  }
+
   // Verificar roles si se especifican
   if (allowedRoles && allowedRoles.length > 0) {
     // Logging para debugging (TEMPORAL - remover después de resolver)
@@ -52,7 +62,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       isAllowed: user && allowedRoles.includes(user?.role || ''),
       pathname: location.pathname
     });
-    
+
     if (!user || !allowedRoles.includes(user?.role || '')) {
       console.warn('⛔ [ProtectedRoute] Acceso denegado - rol no autorizado');
       return <Navigate to="/" state={{ from: location.pathname }} replace />;

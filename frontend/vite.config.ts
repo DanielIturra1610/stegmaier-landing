@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from 'url';
 
-// Esto reemplaza __dirname en ESM
-const __dirname = new URL(".", import.meta.url).pathname;
+// Esto reemplaza __dirname en ESM (compatible con Windows)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ command, mode }) => {
   const isProduction = mode === 'production';
@@ -13,6 +14,10 @@ export default defineConfig(({ command, mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),
+        "@components": path.resolve(__dirname, "src/components"),
+        "@lib": path.resolve(__dirname, "src/lib"),
+        "@hooks": path.resolve(__dirname, "src/hooks"),
+        "@assets": path.resolve(__dirname, "src/assets"),
       },
     },
     
@@ -64,7 +69,7 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: process.env.VITE_PROXY_TARGET || 'http://localhost:8000',
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
           changeOrigin: true,
           secure: false,
           configure: (proxy, options) => {
@@ -74,6 +79,11 @@ export default defineConfig(({ command, mode }) => {
               });
             }
           },
+        },
+        '/uploads': {
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
         },
       },
     },

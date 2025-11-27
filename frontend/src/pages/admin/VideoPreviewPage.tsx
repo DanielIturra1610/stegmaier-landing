@@ -16,7 +16,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
-import Button from '../../components/ui/button';
+import { Button } from '../../components/ui/button';
 import { mediaService, VideoInfo } from '../../services/mediaService';
 import { useAuth } from '../../contexts/AuthContext';
 

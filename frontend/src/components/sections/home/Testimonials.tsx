@@ -2,7 +2,7 @@ import { FC, useState, useEffect } from 'react'
 import { Quote, Star, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '../../../lib/utils'
-import Button from '../../ui/button'
+import { Button } from '../../ui/button'
 import React from 'react';
 import SectionConnector from '../../ui/SectionConnector'
 

@@ -1,0 +1,906 @@
+package controllers
+
+import (
+	"log"
+
+	assignmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/ports"
+	authPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
+	certificatePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/ports"
+	coursePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/ports"
+	enrollmentPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
+	lessonPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/core/media/domain"
+	notificationPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/ports"
+	profilePorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/ports"
+	progressPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
+	quizPorts "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/ports"
+	"github.com/gofiber/fiber/v2"
+)
+
+// APIResponse represents a standard API response
+type APIResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
+// SuccessResponse sends a successful response
+func SuccessResponse(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
+	return c.Status(statusCode).JSON(APIResponse{
+		Success: true,
+		Message: message,
+		Data:    data,
+	})
+}
+
+// ErrorResponse sends an error response
+func ErrorResponse(c *fiber.Ctx, statusCode int, message string) error {
+	return c.Status(statusCode).JSON(APIResponse{
+		Success: false,
+		Error:   message,
+	})
+}
+
+// MapDomainError maps domain errors to HTTP status codes
+func MapDomainError(err error) (int, string) {
+	switch err {
+	// User errors
+	case authPorts.ErrUserNotFound:
+		return fiber.StatusNotFound, "User not found"
+	case authPorts.ErrEmailAlreadyExists:
+		return fiber.StatusConflict, "Email already exists"
+	case authPorts.ErrUserAlreadyExists:
+		return fiber.StatusConflict, "User already exists"
+
+	// Authentication errors
+	case authPorts.ErrInvalidCredentials:
+		return fiber.StatusUnauthorized, "Invalid email or password"
+	case authPorts.ErrAccountNotVerified:
+		return fiber.StatusForbidden, "Account not verified. Please check your email"
+	case authPorts.ErrAccountLocked:
+		return fiber.StatusForbidden, "Account is locked. Please contact support"
+	case authPorts.ErrAccountDisabled:
+		return fiber.StatusForbidden, "Account is disabled"
+
+	// Token errors
+	case authPorts.ErrInvalidToken:
+		return fiber.StatusUnauthorized, "Invalid or malformed token"
+	case authPorts.ErrTokenExpired:
+		return fiber.StatusUnauthorized, "Token has expired"
+	case authPorts.ErrTokenRevoked:
+		return fiber.StatusUnauthorized, "Token has been revoked"
+	case authPorts.ErrTokenNotFound:
+		return fiber.StatusNotFound, "Token not found"
+	case authPorts.ErrRefreshTokenInvalid:
+		return fiber.StatusUnauthorized, "Invalid refresh token"
+
+	// Email verification errors
+	case authPorts.ErrVerificationTokenInvalid:
+		return fiber.StatusBadRequest, "Invalid verification token"
+	case authPorts.ErrVerificationTokenExpired:
+		return fiber.StatusBadRequest, "Verification token has expired"
+	case authPorts.ErrAlreadyVerified:
+		return fiber.StatusBadRequest, "Email already verified"
+
+	// Password errors
+	case authPorts.ErrPasswordTooWeak:
+		return fiber.StatusBadRequest, "Password doesn't meet security requirements"
+	case authPorts.ErrPasswordTooLong:
+		return fiber.StatusBadRequest, "Password exceeds maximum length"
+	case authPorts.ErrPasswordSameAsOld:
+		return fiber.StatusBadRequest, "New password must be different from old password"
+	case authPorts.ErrCurrentPasswordIncorrect:
+		return fiber.StatusBadRequest, "Current password is incorrect"
+	case authPorts.ErrPasswordResetTokenInvalid:
+		return fiber.StatusBadRequest, "Invalid password reset token"
+	case authPorts.ErrPasswordResetTokenExpired:
+		return fiber.StatusBadRequest, "Password reset token has expired"
+	case authPorts.ErrPasswordResetTokenUsed:
+		return fiber.StatusBadRequest, "Password reset token has already been used"
+
+	// Authorization errors
+	case authPorts.ErrUnauthorized:
+		return fiber.StatusUnauthorized, "Unauthorized access"
+	case authPorts.ErrForbidden:
+		return fiber.StatusForbidden, "Forbidden: insufficient permissions"
+	case authPorts.ErrInvalidRole:
+		return fiber.StatusBadRequest, "Invalid user role"
+
+	// Validation errors
+	case authPorts.ErrInvalidEmail:
+		return fiber.StatusBadRequest, "Invalid email format"
+	case authPorts.ErrInvalidInput:
+		return fiber.StatusBadRequest, "Invalid input data"
+	case authPorts.ErrMissingRequiredField:
+		return fiber.StatusBadRequest, "Missing required field"
+
+	// Tenant errors
+	case authPorts.ErrTenantNotFound:
+		return fiber.StatusNotFound, "Tenant not found"
+	case authPorts.ErrTenantInactive:
+		return fiber.StatusForbidden, "Tenant is inactive"
+	case authPorts.ErrTenantMismatch:
+		return fiber.StatusForbidden, "User does not belong to this tenant"
+
+	// Profile errors
+	case profilePorts.ErrProfileNotFound:
+		return fiber.StatusNotFound, "Profile not found"
+	case profilePorts.ErrInvalidInput:
+		return fiber.StatusBadRequest, "Invalid input data"
+	case profilePorts.ErrInvalidPassword:
+		return fiber.StatusBadRequest, "Invalid password"
+	case profilePorts.ErrUnauthorized:
+		return fiber.StatusUnauthorized, "Unauthorized access"
+	case profilePorts.ErrUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update profile"
+	case profilePorts.ErrInvalidFileFormat:
+		return fiber.StatusBadRequest, "Invalid file format. Only JPEG, PNG, and WebP are allowed"
+	case profilePorts.ErrFileTooLarge:
+		return fiber.StatusBadRequest, "File size exceeds maximum allowed (5MB)"
+	case profilePorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload file"
+	case profilePorts.ErrFileDeleteFailed:
+		return fiber.StatusInternalServerError, "Failed to delete file"
+
+	// Course errors
+	case coursePorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case coursePorts.ErrCourseAlreadyExists:
+		return fiber.StatusConflict, "Course already exists"
+	case coursePorts.ErrCourseSlugExists:
+		return fiber.StatusConflict, "Course slug already in use"
+	case coursePorts.ErrCourseDeleted:
+		return fiber.StatusGone, "Course has been deleted"
+	case coursePorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case coursePorts.ErrCourseArchived:
+		return fiber.StatusForbidden, "Course is archived"
+	case coursePorts.ErrInvalidCourseData:
+		return fiber.StatusBadRequest, "Invalid course data"
+	case coursePorts.ErrCourseNotEnrollable:
+		return fiber.StatusForbidden, "Course cannot be enrolled"
+	case coursePorts.ErrCourseUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update course"
+	case coursePorts.ErrInvalidInstructor:
+		return fiber.StatusBadRequest, "Invalid instructor"
+	case coursePorts.ErrInvalidCategory:
+		return fiber.StatusBadRequest, "Invalid category"
+
+	// Category errors
+	case coursePorts.ErrCategoryNotFound:
+		return fiber.StatusNotFound, "Category not found"
+	case coursePorts.ErrCategoryAlreadyExists:
+		return fiber.StatusConflict, "Category already exists"
+	case coursePorts.ErrCategorySlugExists:
+		return fiber.StatusConflict, "Category slug already in use"
+	case coursePorts.ErrCategoryHasCourses:
+		return fiber.StatusConflict, "Category has associated courses"
+	case coursePorts.ErrCategoryInactive:
+		return fiber.StatusForbidden, "Category is inactive"
+	case coursePorts.ErrInvalidParentCategory:
+		return fiber.StatusBadRequest, "Invalid parent category"
+	case coursePorts.ErrCircularCategoryReference:
+		return fiber.StatusBadRequest, "Circular category reference detected"
+	case coursePorts.ErrInvalidCategoryData:
+		return fiber.StatusBadRequest, "Invalid category data"
+
+	// Enrollment errors
+	case coursePorts.ErrAlreadyEnrolled:
+		return fiber.StatusConflict, "Already enrolled in this course"
+	case coursePorts.ErrNotEnrolled:
+		return fiber.StatusBadRequest, "Not enrolled in this course"
+	case coursePorts.ErrEnrollmentFailed:
+		return fiber.StatusInternalServerError, "Failed to enroll in course"
+	case coursePorts.ErrUnenrollmentFailed:
+		return fiber.StatusInternalServerError, "Failed to unenroll from course"
+	case coursePorts.ErrEnrollmentLimitReached:
+		return fiber.StatusForbidden, "Course enrollment limit reached"
+
+	// Rating errors
+	case coursePorts.ErrInvalidRating:
+		return fiber.StatusBadRequest, "Invalid rating value"
+	case coursePorts.ErrRatingFailed:
+		return fiber.StatusInternalServerError, "Failed to rate course"
+	case coursePorts.ErrCannotRateOwnCourse:
+		return fiber.StatusForbidden, "Cannot rate your own course"
+	case coursePorts.ErrMustBeEnrolledToRate:
+		return fiber.StatusForbidden, "Must be enrolled to rate course"
+
+	// Course authorization errors
+	case coursePorts.ErrNotCourseOwner:
+		return fiber.StatusForbidden, "Not the course owner"
+	case coursePorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
+
+	// Lesson errors
+	case lessonPorts.ErrLessonNotFound:
+		return fiber.StatusNotFound, "Lesson not found"
+	case lessonPorts.ErrLessonCompletionNotFound:
+		return fiber.StatusNotFound, "Lesson completion not found"
+	case lessonPorts.ErrInvalidLessonData:
+		return fiber.StatusBadRequest, "Invalid lesson data"
+	case lessonPorts.ErrInvalidContentType:
+		return fiber.StatusBadRequest, "Invalid content type"
+	case lessonPorts.ErrQuizIDRequired:
+		return fiber.StatusBadRequest, "Quiz ID required for quiz lessons"
+	case lessonPorts.ErrContentRequired:
+		return fiber.StatusBadRequest, "Content or content URL required"
+	case lessonPorts.ErrInvalidOrderIndex:
+		return fiber.StatusBadRequest, "Invalid order index"
+	case lessonPorts.ErrInvalidCompletionPercent:
+		return fiber.StatusBadRequest, "Invalid completion percent"
+	case lessonPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent"
+	case lessonPorts.ErrLessonDeleted:
+		return fiber.StatusGone, "Lesson has been deleted"
+	case lessonPorts.ErrLessonNotPublished:
+		return fiber.StatusForbidden, "Lesson is not published"
+	case lessonPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case lessonPorts.ErrQuizNotFound:
+		return fiber.StatusNotFound, "Quiz not found"
+	case lessonPorts.ErrLessonNotEnrollable:
+		return fiber.StatusForbidden, "Lesson cannot be accessed"
+	case lessonPorts.ErrNotEnrolledInCourse:
+		return fiber.StatusForbidden, "Not enrolled in course"
+	case lessonPorts.ErrLessonNotFree:
+		return fiber.StatusForbidden, "Lesson requires enrollment"
+	case lessonPorts.ErrNotLessonOwner:
+		return fiber.StatusForbidden, "Not the lesson owner"
+	case lessonPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
+	case lessonPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to lesson"
+	case lessonPorts.ErrLessonUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update lesson"
+	case lessonPorts.ErrCompletionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update lesson completion"
+	case lessonPorts.ErrReorderFailed:
+		return fiber.StatusInternalServerError, "Failed to reorder lessons"
+	case lessonPorts.ErrLessonCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create lesson"
+	case lessonPorts.ErrCompletionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create lesson completion"
+	case lessonPorts.ErrLessonDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete lesson"
+
+	// Quiz errors
+	case quizPorts.ErrQuizNotFound:
+		return fiber.StatusNotFound, "Quiz not found"
+	case quizPorts.ErrQuizAlreadyExists:
+		return fiber.StatusConflict, "Quiz already exists"
+	case quizPorts.ErrQuizDeleted:
+		return fiber.StatusGone, "Quiz has been deleted"
+	case quizPorts.ErrQuizNotPublished:
+		return fiber.StatusForbidden, "Quiz is not published"
+	case quizPorts.ErrInvalidQuizData:
+		return fiber.StatusBadRequest, "Invalid quiz data"
+	case quizPorts.ErrQuizCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create quiz"
+	case quizPorts.ErrQuizUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update quiz"
+	case quizPorts.ErrQuizDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete quiz"
+	case quizPorts.ErrQuizNotEnrollable:
+		return fiber.StatusForbidden, "Quiz cannot be accessed"
+
+	// Question errors
+	case quizPorts.ErrQuestionNotFound:
+		return fiber.StatusNotFound, "Question not found"
+	case quizPorts.ErrQuestionAlreadyExists:
+		return fiber.StatusConflict, "Question already exists"
+	case quizPorts.ErrInvalidQuestionData:
+		return fiber.StatusBadRequest, "Invalid question data"
+	case quizPorts.ErrInvalidQuestionType:
+		return fiber.StatusBadRequest, "Invalid question type"
+	case quizPorts.ErrInvalidQuestionPoints:
+		return fiber.StatusBadRequest, "Invalid question points"
+	case quizPorts.ErrQuestionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create question"
+	case quizPorts.ErrQuestionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update question"
+	case quizPorts.ErrQuestionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete question"
+	case quizPorts.ErrReorderFailed:
+		return fiber.StatusInternalServerError, "Failed to reorder questions"
+
+	// Question option errors
+	case quizPorts.ErrOptionNotFound:
+		return fiber.StatusNotFound, "Question option not found"
+	case quizPorts.ErrInvalidOptionData:
+		return fiber.StatusBadRequest, "Invalid option data"
+	case quizPorts.ErrOptionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create option"
+	case quizPorts.ErrOptionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update option"
+	case quizPorts.ErrOptionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete option"
+	case quizPorts.ErrNoCorrectOption:
+		return fiber.StatusBadRequest, "At least one correct option required"
+	case quizPorts.ErrInvalidOptionCount:
+		return fiber.StatusBadRequest, "Invalid number of options"
+
+	// Quiz attempt errors
+	case quizPorts.ErrAttemptNotFound:
+		return fiber.StatusNotFound, "Quiz attempt not found"
+	case quizPorts.ErrAttemptAlreadyExists:
+		return fiber.StatusConflict, "Quiz attempt already exists"
+	case quizPorts.ErrAttemptCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create quiz attempt"
+	case quizPorts.ErrAttemptUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update quiz attempt"
+	case quizPorts.ErrAttemptAlreadyComplete:
+		return fiber.StatusBadRequest, "Quiz attempt already completed"
+	case quizPorts.ErrMaxAttemptsReached:
+		return fiber.StatusForbidden, "Maximum attempts reached for this quiz"
+	case quizPorts.ErrTimeLimitExceeded:
+		return fiber.StatusForbidden, "Time limit exceeded for this quiz"
+	case quizPorts.ErrInvalidAttemptNumber:
+		return fiber.StatusBadRequest, "Invalid attempt number"
+	case quizPorts.ErrAttemptNotComplete:
+		return fiber.StatusBadRequest, "Quiz attempt not yet completed"
+
+	// Quiz answer errors
+	case quizPorts.ErrAnswerNotFound:
+		return fiber.StatusNotFound, "Quiz answer not found"
+	case quizPorts.ErrAnswerAlreadyExists:
+		return fiber.StatusConflict, "Answer already exists for this question"
+	case quizPorts.ErrInvalidAnswerData:
+		return fiber.StatusBadRequest, "Invalid answer data"
+	case quizPorts.ErrAnswerCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create answer"
+	case quizPorts.ErrAnswerUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update answer"
+	case quizPorts.ErrAnswerRequired:
+		return fiber.StatusBadRequest, "Answer required for this question"
+
+	// Validation errors
+	case quizPorts.ErrInvalidPassingScore:
+		return fiber.StatusBadRequest, "Invalid passing score (must be 0-100)"
+	case quizPorts.ErrInvalidTimeLimit:
+		return fiber.StatusBadRequest, "Invalid time limit"
+	case quizPorts.ErrInvalidMaxAttempts:
+		return fiber.StatusBadRequest, "Invalid max attempts"
+	case quizPorts.ErrInvalidScore:
+		return fiber.StatusBadRequest, "Invalid score (must be 0-100)"
+	case quizPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent"
+	case quizPorts.ErrInvalidOrderIndex:
+		return fiber.StatusBadRequest, "Invalid order index"
+	case quizPorts.ErrInvalidPointsAwarded:
+		return fiber.StatusBadRequest, "Invalid points awarded"
+	case quizPorts.ErrInvalidSubmission:
+		return fiber.StatusBadRequest, "Invalid quiz submission"
+	case quizPorts.ErrMissingRequiredAnswer:
+		return fiber.StatusBadRequest, "Missing answer for required question"
+	case quizPorts.ErrInvalidAnswerFormat:
+		return fiber.StatusBadRequest, "Invalid answer format for question type"
+
+	// Grading errors
+	case quizPorts.ErrAlreadyGraded:
+		return fiber.StatusBadRequest, "Question already graded"
+	case quizPorts.ErrNotGradedYet:
+		return fiber.StatusBadRequest, "Question not graded yet"
+	case quizPorts.ErrCannotGradeAutoGraded:
+		return fiber.StatusBadRequest, "Cannot manually grade auto-graded question"
+	case quizPorts.ErrRequiresManualGrading:
+		return fiber.StatusBadRequest, "Question requires manual grading"
+	case quizPorts.ErrGradingFailed:
+		return fiber.StatusInternalServerError, "Failed to grade question"
+	case quizPorts.ErrPendingGrading:
+		return fiber.StatusBadRequest, "Quiz has questions pending grading"
+
+	// Quiz authorization errors
+	case quizPorts.ErrNotQuizOwner:
+		return fiber.StatusForbidden, "Not the quiz owner"
+	case quizPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions"
+	case quizPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to quiz"
+	case quizPorts.ErrNotEnrolledInCourse:
+		return fiber.StatusForbidden, "Not enrolled in course"
+
+	// Quiz business logic errors
+	case quizPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case quizPorts.ErrLessonNotFound:
+		return fiber.StatusNotFound, "Lesson not found"
+	case quizPorts.ErrQuizNotStarted:
+		return fiber.StatusBadRequest, "Quiz attempt not started"
+	case quizPorts.ErrInvalidAttemptFlow:
+		return fiber.StatusBadRequest, "Invalid quiz attempt flow"
+	case quizPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve quiz statistics"
+
+	// Enrollment errors
+	case enrollmentPorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case enrollmentPorts.ErrEnrollmentAlreadyExists:
+		return fiber.StatusConflict, "Enrollment already exists"
+	case enrollmentPorts.ErrEnrollmentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create enrollment"
+	case enrollmentPorts.ErrEnrollmentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update enrollment"
+	case enrollmentPorts.ErrEnrollmentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete enrollment"
+	case enrollmentPorts.ErrInvalidEnrollmentData:
+		return fiber.StatusBadRequest, "Invalid enrollment data"
+	case enrollmentPorts.ErrInvalidEnrollmentStatus:
+		return fiber.StatusBadRequest, "Invalid enrollment status"
+
+	// Enrollment request errors
+	case enrollmentPorts.ErrEnrollmentRequestNotFound:
+		return fiber.StatusNotFound, "Enrollment request not found"
+	case enrollmentPorts.ErrEnrollmentRequestAlreadyExists:
+		return fiber.StatusConflict, "Enrollment request already exists"
+	case enrollmentPorts.ErrEnrollmentRequestCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create enrollment request"
+	case enrollmentPorts.ErrEnrollmentRequestUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update enrollment request"
+	case enrollmentPorts.ErrEnrollmentRequestAlreadyReviewed:
+		return fiber.StatusBadRequest, "Enrollment request already reviewed"
+	case enrollmentPorts.ErrInvalidEnrollmentRequestStatus:
+		return fiber.StatusBadRequest, "Invalid enrollment request status"
+
+	// Enrollment business logic errors
+	case enrollmentPorts.ErrAlreadyEnrolled:
+		return fiber.StatusConflict, "User is already enrolled in this course"
+	case enrollmentPorts.ErrEnrollmentExpired:
+		return fiber.StatusForbidden, "Enrollment has expired"
+	case enrollmentPorts.ErrEnrollmentNotActive:
+		return fiber.StatusForbidden, "Enrollment is not active"
+	case enrollmentPorts.ErrEnrollmentAlreadyCompleted:
+		return fiber.StatusBadRequest, "Enrollment is already completed"
+	case enrollmentPorts.ErrEnrollmentCancelled:
+		return fiber.StatusForbidden, "Enrollment is cancelled"
+	case enrollmentPorts.ErrCannotAccessCourse:
+		return fiber.StatusForbidden, "Cannot access course with current enrollment status"
+	case enrollmentPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case enrollmentPorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case enrollmentPorts.ErrCourseNotEnrollable:
+		return fiber.StatusForbidden, "Course is not available for enrollment"
+	case enrollmentPorts.ErrRequiresApproval:
+		return fiber.StatusForbidden, "Course requires approval for enrollment"
+
+	// Enrollment permission errors
+	case enrollmentPorts.ErrNotEnrolled:
+		return fiber.StatusForbidden, "User is not enrolled in this course"
+	case enrollmentPorts.ErrNotCourseInstructor:
+		return fiber.StatusForbidden, "User is not the instructor of this course"
+	case enrollmentPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to enrollment"
+	case enrollmentPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+
+	// Enrollment validation errors
+	case enrollmentPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case enrollmentPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case enrollmentPorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case enrollmentPorts.ErrInvalidRequestID:
+		return fiber.StatusBadRequest, "Invalid enrollment request ID"
+	case enrollmentPorts.ErrInvalidProgress:
+		return fiber.StatusBadRequest, "Invalid progress percentage (must be 0-100)"
+	case enrollmentPorts.ErrInvalidExpirationDate:
+		return fiber.StatusBadRequest, "Invalid expiration date"
+	case enrollmentPorts.ErrExpirationDateInPast:
+		return fiber.StatusBadRequest, "Expiration date must be in the future"
+	case enrollmentPorts.ErrMissingRejectionReason:
+		return fiber.StatusBadRequest, "Rejection reason is required"
+	case enrollmentPorts.ErrInvalidRejectionReason:
+		return fiber.StatusBadRequest, "Rejection reason must be at least 5 characters"
+
+	// Enrollment statistics errors
+	case enrollmentPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve enrollment statistics"
+	case enrollmentPorts.ErrNoEnrollments:
+		return fiber.StatusNotFound, "No enrollments found"
+
+	// Progress errors
+	case progressPorts.ErrProgressNotFound:
+		return fiber.StatusNotFound, "Course progress not found"
+	case progressPorts.ErrProgressAlreadyExists:
+		return fiber.StatusConflict, "Course progress already exists"
+	case progressPorts.ErrProgressCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create course progress"
+	case progressPorts.ErrProgressUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update course progress"
+	case progressPorts.ErrProgressDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete course progress"
+	case progressPorts.ErrInvalidProgressData:
+		return fiber.StatusBadRequest, "Invalid course progress data"
+	case progressPorts.ErrInvalidProgressStatus:
+		return fiber.StatusBadRequest, "Invalid progress status"
+	case progressPorts.ErrProgressAlreadyCompleted:
+		return fiber.StatusBadRequest, "Course progress is already completed"
+	case progressPorts.ErrProgressNotStarted:
+		return fiber.StatusBadRequest, "Course progress has not been started"
+	case progressPorts.ErrCannotCompleteProgress:
+		return fiber.StatusBadRequest, "Cannot complete progress: requirements not met"
+
+	// Progress snapshot errors
+	case progressPorts.ErrSnapshotNotFound:
+		return fiber.StatusNotFound, "Progress snapshot not found"
+	case progressPorts.ErrSnapshotCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create progress snapshot"
+	case progressPorts.ErrSnapshotDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete progress snapshot"
+	case progressPorts.ErrInvalidSnapshotData:
+		return fiber.StatusBadRequest, "Invalid progress snapshot data"
+	case progressPorts.ErrInvalidMilestoneType:
+		return fiber.StatusBadRequest, "Invalid milestone type"
+
+	// Progress tracking errors
+	case progressPorts.ErrInvalidCompletionData:
+		return fiber.StatusBadRequest, "Invalid completion data"
+	case progressPorts.ErrInvalidTimeSpent:
+		return fiber.StatusBadRequest, "Invalid time spent value"
+	case progressPorts.ErrInvalidProgressPercentage:
+		return fiber.StatusBadRequest, "Invalid progress percentage (must be 0-100)"
+	case progressPorts.ErrLessonNotCompleted:
+		return fiber.StatusBadRequest, "Lesson is not completed"
+	case progressPorts.ErrQuizNotCompleted:
+		return fiber.StatusBadRequest, "Quiz is not completed"
+	case progressPorts.ErrProgressCalculationFailed:
+		return fiber.StatusInternalServerError, "Failed to calculate progress"
+
+	// Progress permission errors
+	case progressPorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to progress"
+	case progressPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case progressPorts.ErrNotEnrolled:
+		return fiber.StatusForbidden, "User is not enrolled in this course"
+
+	// Progress validation errors
+	case progressPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case progressPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case progressPorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case progressPorts.ErrInvalidLessonID:
+		return fiber.StatusBadRequest, "Invalid lesson ID"
+	case progressPorts.ErrInvalidQuizID:
+		return fiber.StatusBadRequest, "Invalid quiz ID"
+	case progressPorts.ErrInvalidDateRange:
+		return fiber.StatusBadRequest, "Invalid date range"
+	case progressPorts.ErrInvalidPageParameters:
+		return fiber.StatusBadRequest, "Invalid page parameters"
+
+	// Progress statistics errors
+	case progressPorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve progress statistics"
+	case progressPorts.ErrNoProgressData:
+		return fiber.StatusNotFound, "No progress data found"
+	case progressPorts.ErrInsufficientData:
+		return fiber.StatusBadRequest, "Insufficient data for statistics"
+
+	// Progress course/enrollment errors
+	case progressPorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case progressPorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case progressPorts.ErrEnrollmentNotActive:
+		return fiber.StatusForbidden, "Enrollment is not active"
+	case progressPorts.ErrCourseNotPublished:
+		return fiber.StatusForbidden, "Course is not published"
+	case progressPorts.ErrCourseHasNoContent:
+		return fiber.StatusBadRequest, "Course has no content"
+
+	// Certificate errors
+	case certificatePorts.ErrCertificateNotFound:
+		return fiber.StatusNotFound, "Certificate not found"
+	case certificatePorts.ErrCertificateAlreadyExists:
+		return fiber.StatusConflict, "Certificate already exists for this user and course"
+	case certificatePorts.ErrCertificateCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create certificate"
+	case certificatePorts.ErrCertificateUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update certificate"
+	case certificatePorts.ErrCertificateDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete certificate"
+	case certificatePorts.ErrInvalidCertificateData:
+		return fiber.StatusBadRequest, "Invalid certificate data"
+	case certificatePorts.ErrInvalidCertificateStatus:
+		return fiber.StatusBadRequest, "Invalid certificate status"
+	case certificatePorts.ErrCertificateAlreadyRevoked:
+		return fiber.StatusBadRequest, "Certificate is already revoked"
+	case certificatePorts.ErrCertificateExpired:
+		return fiber.StatusBadRequest, "Certificate has expired"
+	case certificatePorts.ErrCannotRevokeCertificate:
+		return fiber.StatusBadRequest, "Cannot revoke certificate"
+
+	// Certificate verification errors
+	case certificatePorts.ErrVerificationFailed:
+		return fiber.StatusBadRequest, "Certificate verification failed"
+	case certificatePorts.ErrInvalidVerificationCode:
+		return fiber.StatusBadRequest, "Invalid verification code"
+	case certificatePorts.ErrInvalidCertificateNumber:
+		return fiber.StatusBadRequest, "Invalid certificate number"
+	case certificatePorts.ErrCertificateNotValid:
+		return fiber.StatusBadRequest, "Certificate is not valid"
+
+	// Certificate template errors
+	case certificatePorts.ErrTemplateNotFound:
+		return fiber.StatusNotFound, "Certificate template not found"
+	case certificatePorts.ErrTemplateAlreadyExists:
+		return fiber.StatusConflict, "Certificate template already exists"
+	case certificatePorts.ErrTemplateCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create certificate template"
+	case certificatePorts.ErrTemplateUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update certificate template"
+	case certificatePorts.ErrTemplateDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete certificate template"
+	case certificatePorts.ErrInvalidTemplateData:
+		return fiber.StatusBadRequest, "Invalid certificate template data"
+	case certificatePorts.ErrTemplateNotActive:
+		return fiber.StatusBadRequest, "Certificate template is not active"
+	case certificatePorts.ErrCannotDeleteDefaultTemplate:
+		return fiber.StatusBadRequest, "Cannot delete default template"
+	case certificatePorts.ErrNoDefaultTemplate:
+		return fiber.StatusNotFound, "No default certificate template found"
+
+	// Certificate generation errors
+	case certificatePorts.ErrGenerationFailed:
+		return fiber.StatusInternalServerError, "Failed to generate certificate"
+	case certificatePorts.ErrPDFGenerationFailed:
+		return fiber.StatusInternalServerError, "Failed to generate PDF certificate"
+	case certificatePorts.ErrInvalidFormat:
+		return fiber.StatusBadRequest, "Invalid certificate format"
+	case certificatePorts.ErrTemplateLoadFailed:
+		return fiber.StatusInternalServerError, "Failed to load certificate template"
+	case certificatePorts.ErrTemplateRenderFailed:
+		return fiber.StatusInternalServerError, "Failed to render certificate template"
+
+	// Certificate business logic errors
+	case certificatePorts.ErrCourseNotCompleted:
+		return fiber.StatusBadRequest, "Course is not completed"
+	case certificatePorts.ErrEnrollmentNotCompleted:
+		return fiber.StatusBadRequest, "Enrollment is not completed"
+	case certificatePorts.ErrProgressNotCompleted:
+		return fiber.StatusBadRequest, "Progress is not completed"
+	case certificatePorts.ErrAlreadyCertified:
+		return fiber.StatusConflict, "User already has a certificate for this course"
+	case certificatePorts.ErrInsufficientGrade:
+		return fiber.StatusBadRequest, "Insufficient grade for certification"
+	case certificatePorts.ErrCertificationRequirementsNotMet:
+		return fiber.StatusBadRequest, "Certification requirements not met"
+
+	// Certificate permission errors
+	case certificatePorts.ErrUnauthorizedAccess:
+		return fiber.StatusUnauthorized, "Unauthorized access to certificate"
+	case certificatePorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case certificatePorts.ErrNotCertificateOwner:
+		return fiber.StatusForbidden, "User is not the certificate owner"
+
+	// Certificate validation errors
+	case certificatePorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case certificatePorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case certificatePorts.ErrInvalidEnrollmentID:
+		return fiber.StatusBadRequest, "Invalid enrollment ID"
+	case certificatePorts.ErrInvalidProgressID:
+		return fiber.StatusBadRequest, "Invalid progress ID"
+	case certificatePorts.ErrInvalidTemplateID:
+		return fiber.StatusBadRequest, "Invalid template ID"
+	case certificatePorts.ErrInvalidGrade:
+		return fiber.StatusBadRequest, "Invalid grade (must be 0-100)"
+	case certificatePorts.ErrInvalidDateRange:
+		return fiber.StatusBadRequest, "Invalid date range"
+	case certificatePorts.ErrInvalidPageParameters:
+		return fiber.StatusBadRequest, "Invalid page parameters"
+	case certificatePorts.ErrMissingRevocationReason:
+		return fiber.StatusBadRequest, "Revocation reason is required"
+	case certificatePorts.ErrInvalidRevocationReason:
+		return fiber.StatusBadRequest, "Revocation reason must be at least 10 characters"
+
+	// Certificate statistics errors
+	case certificatePorts.ErrStatisticsFailed:
+		return fiber.StatusInternalServerError, "Failed to retrieve certificate statistics"
+	case certificatePorts.ErrNoCertificates:
+		return fiber.StatusNotFound, "No certificates found"
+	case certificatePorts.ErrInsufficientData:
+		return fiber.StatusBadRequest, "Insufficient data for statistics"
+
+	// Certificate storage errors
+	case certificatePorts.ErrStorageFailed:
+		return fiber.StatusInternalServerError, "Certificate storage operation failed"
+	case certificatePorts.ErrFileNotFound:
+		return fiber.StatusNotFound, "Certificate file not found"
+	case certificatePorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload certificate file"
+	case certificatePorts.ErrFileDownloadFailed:
+		return fiber.StatusInternalServerError, "Failed to download certificate file"
+
+	// Certificate course/enrollment/progress errors
+	case certificatePorts.ErrCourseNotFound:
+		return fiber.StatusNotFound, "Course not found"
+	case certificatePorts.ErrEnrollmentNotFound:
+		return fiber.StatusNotFound, "Enrollment not found"
+	case certificatePorts.ErrProgressNotFound:
+		return fiber.StatusNotFound, "Progress not found"
+	case certificatePorts.ErrUserNotFound:
+		return fiber.StatusNotFound, "User not found"
+
+	// Assignment errors
+	case assignmentPorts.ErrAssignmentNotFound:
+		return fiber.StatusNotFound, "Assignment not found"
+	case assignmentPorts.ErrAssignmentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create assignment"
+	case assignmentPorts.ErrAssignmentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update assignment"
+	case assignmentPorts.ErrAssignmentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete assignment"
+
+	// Submission errors
+	case assignmentPorts.ErrSubmissionNotFound:
+		return fiber.StatusNotFound, "Submission not found"
+	case assignmentPorts.ErrSubmissionCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create submission"
+	case assignmentPorts.ErrSubmissionUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update submission"
+	case assignmentPorts.ErrSubmissionDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete submission"
+
+	// File errors
+	case assignmentPorts.ErrFileNotFound:
+		return fiber.StatusNotFound, "File not found"
+	case assignmentPorts.ErrFileCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create file record"
+	case assignmentPorts.ErrFileUploadFailed:
+		return fiber.StatusInternalServerError, "Failed to upload file"
+	case assignmentPorts.ErrFileDownloadFailed:
+		return fiber.StatusInternalServerError, "Failed to download file"
+	case assignmentPorts.ErrFileDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete file"
+	case assignmentPorts.ErrInvalidFileType:
+		return fiber.StatusBadRequest, "Invalid file type"
+	case assignmentPorts.ErrFileTooLarge:
+		return fiber.StatusBadRequest, "File exceeds maximum allowed size"
+	case assignmentPorts.ErrFileTypeNotAllowed:
+		return fiber.StatusBadRequest, "File type not allowed for this assignment"
+
+	// Rubric errors
+	case assignmentPorts.ErrRubricNotFound:
+		return fiber.StatusNotFound, "Rubric not found"
+	case assignmentPorts.ErrRubricCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create rubric"
+	case assignmentPorts.ErrRubricUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update rubric"
+	case assignmentPorts.ErrRubricDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete rubric"
+
+	// Grade errors
+	case assignmentPorts.ErrGradeNotFound:
+		return fiber.StatusNotFound, "Grade not found"
+	case assignmentPorts.ErrGradeCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create grade"
+	case assignmentPorts.ErrGradeUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update grade"
+	case assignmentPorts.ErrGradeDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete grade"
+
+	// Comment errors
+	case assignmentPorts.ErrCommentNotFound:
+		return fiber.StatusNotFound, "Comment not found"
+	case assignmentPorts.ErrCommentCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create comment"
+	case assignmentPorts.ErrCommentUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update comment"
+	case assignmentPorts.ErrCommentDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete comment"
+
+	// Peer review errors
+	case assignmentPorts.ErrPeerReviewNotFound:
+		return fiber.StatusNotFound, "Peer review not found"
+	case assignmentPorts.ErrPeerReviewCreationFailed:
+		return fiber.StatusInternalServerError, "Failed to create peer review"
+	case assignmentPorts.ErrPeerReviewUpdateFailed:
+		return fiber.StatusInternalServerError, "Failed to update peer review"
+	case assignmentPorts.ErrPeerReviewDeletionFailed:
+		return fiber.StatusInternalServerError, "Failed to delete peer review"
+
+	// Assignment permission errors
+	case assignmentPorts.ErrUnauthorized:
+		return fiber.StatusUnauthorized, "Unauthorized access"
+	case assignmentPorts.ErrInsufficientPermissions:
+		return fiber.StatusForbidden, "Insufficient permissions for this action"
+	case assignmentPorts.ErrNotAssignmentOwner:
+		return fiber.StatusForbidden, "User is not the assignment owner"
+	case assignmentPorts.ErrNotSubmissionOwner:
+		return fiber.StatusForbidden, "User is not the submission owner"
+
+	// Assignment validation errors
+	case assignmentPorts.ErrInvalidRequest:
+		return fiber.StatusBadRequest, "Invalid request data"
+	case assignmentPorts.ErrInvalidTenantID:
+		return fiber.StatusBadRequest, "Invalid tenant ID"
+	case assignmentPorts.ErrInvalidUserID:
+		return fiber.StatusBadRequest, "Invalid user ID"
+	case assignmentPorts.ErrInvalidCourseID:
+		return fiber.StatusBadRequest, "Invalid course ID"
+	case assignmentPorts.ErrMissingParameter:
+		return fiber.StatusBadRequest, "Missing required parameter"
+
+	// Assignment storage errors
+	case assignmentPorts.ErrStorageFailed:
+		return fiber.StatusInternalServerError, "Storage operation failed"
+	case assignmentPorts.ErrStorageUnavailable:
+		return fiber.StatusServiceUnavailable, "Storage service unavailable"
+
+	// Assignment database errors
+	case assignmentPorts.ErrDatabaseError:
+		return fiber.StatusInternalServerError, "Database error occurred"
+	case assignmentPorts.ErrTransactionFailed:
+		return fiber.StatusInternalServerError, "Database transaction failed"
+	case assignmentPorts.ErrRecordNotFound:
+		return fiber.StatusNotFound, "Record not found"
+	case assignmentPorts.ErrDuplicateRecord:
+		return fiber.StatusConflict, "Duplicate record"
+
+	// Notification errors
+	case notificationPorts.ErrNotificationNotFound:
+		return fiber.StatusNotFound, "Notification not found"
+	case notificationPorts.ErrUnauthorizedAccess:
+		return fiber.StatusForbidden, "Unauthorized access to notification"
+	case notificationPorts.ErrInvalidTitle:
+		return fiber.StatusBadRequest, "Invalid notification title"
+	case notificationPorts.ErrInvalidMessage:
+		return fiber.StatusBadRequest, "Invalid notification message"
+	case notificationPorts.ErrInvalidStatus:
+		return fiber.StatusBadRequest, "Invalid notification status"
+	case notificationPorts.ErrNoRecipients:
+		return fiber.StatusBadRequest, "No recipients specified"
+	case notificationPorts.ErrPreferencesNotFound:
+		return fiber.StatusNotFound, "Notification preferences not found"
+	case notificationPorts.ErrSubscriptionNotFound:
+		return fiber.StatusNotFound, "Push subscription not found"
+	case notificationPorts.ErrSubscriptionAlreadyExists:
+		return fiber.StatusConflict, "Push subscription already exists"
+	case notificationPorts.ErrInvalidDigestFrequency:
+		return fiber.StatusBadRequest, "Invalid digest frequency"
+	case notificationPorts.ErrInvalidQuietHours:
+		return fiber.StatusBadRequest, "Invalid quiet hours format"
+	case notificationPorts.ErrNotificationExpired:
+		return fiber.StatusGone, "Notification has expired"
+
+	// Media errors
+	case domain.ErrMediaNotFound:
+		return fiber.StatusNotFound, "Media not found"
+	case domain.ErrUnauthorizedAccess:
+		return fiber.StatusForbidden, "Unauthorized access to media"
+	case domain.ErrInvalidFileName:
+		return fiber.StatusBadRequest, "Invalid file name"
+	case domain.ErrInvalidFileSize:
+		return fiber.StatusBadRequest, "Invalid file size"
+	case domain.ErrFileTooLarge:
+		return fiber.StatusRequestEntityTooLarge, "File size exceeds maximum allowed"
+	case domain.ErrInvalidMimeType:
+		return fiber.StatusBadRequest, "Invalid or unsupported mime type"
+	case domain.ErrUploadFailed:
+		return fiber.StatusInternalServerError, "File upload failed"
+	case domain.ErrStorageNotConfigured:
+		return fiber.StatusServiceUnavailable, "Storage service not configured"
+	case domain.ErrInsufficientStorage:
+		return fiber.StatusInsufficientStorage, "Insufficient storage space"
+
+	// Default
+	default:
+		return fiber.StatusInternalServerError, "Internal server error"
+	}
+}
+
+// HandleError processes an error and sends appropriate response
+func HandleError(c *fiber.Ctx, err error) error {
+	// Temporarily log the actual error for debugging
+	log.Printf("❌ HandleError called with error: %v\n", err)
+	statusCode, message := MapDomainError(err)
+	return ErrorResponse(c, statusCode, message)
+}

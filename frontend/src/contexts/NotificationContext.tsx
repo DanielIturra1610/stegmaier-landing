@@ -154,20 +154,27 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         20
       );
 
+      // Ensure notifications is always an array
+      const notificationsArray = Array.isArray(response?.notifications) ? response.notifications : [];
+
       if (page === 1) {
-        setNotifications(response.notifications);
+        setNotifications(notificationsArray);
       } else {
-        setNotifications(prev => [...prev, ...response.notifications]);
+        setNotifications(prev => [...(Array.isArray(prev) ? prev : []), ...notificationsArray]);
       }
 
       setCurrentPage(page);
-      setTotalPages(Math.ceil(response.total / 20));
-      setHasMore(page < Math.ceil(response.total / 20));
-      setUnreadCount(response.unread_count);
+      setTotalPages(Math.ceil((response?.total || 0) / 20));
+      setHasMore(page < Math.ceil((response?.total || 0) / 20));
+      setUnreadCount(response?.unread_count || 0);
 
     } catch (err) {
       console.error('Error loading notifications:', err);
       setError('Error cargando notificaciones');
+      // Set empty array on error to prevent undefined
+      if (page === 1) {
+        setNotifications([]);
+      }
     } finally {
       setLoading(false);
     }

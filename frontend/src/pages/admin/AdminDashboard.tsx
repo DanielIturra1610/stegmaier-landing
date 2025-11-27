@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import adminService from '../../services/adminService';
+import { Users, BookOpen, TrendingUp, CheckCircle, Plus, BarChart3, Activity, Settings, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 interface DashboardStats {
   users_total: number;
@@ -70,93 +75,154 @@ const AdminDashboard: React.FC = () => {
   };
   
   if (loading) {
-    return <div className="text-center py-8">Cargando estadísticas...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando estadísticas...</p>
+        </div>
+      </div>
+    );
   }
   
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Administrativo</h1>
-      
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard Administrativo</h1>
+        <p className="text-muted-foreground mt-2">
+          Gestiona tu plataforma educativa desde un solo lugar
+        </p>
+      </div>
+
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error al cargar estadísticas</AlertTitle>
+          <AlertDescription className="mt-2">
+            {error}
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={retryFetch}
+                disabled={loading}
+              >
+                {loading ? 'Cargando...' : 'Reintentar'}
+              </Button>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error al cargar estadísticas</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  className="bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200 border border-transparent rounded"
-                  onClick={retryFetch}
-                  disabled={loading}
-                >
-                  {loading ? 'Cargando...' : 'Reintentar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total Usuarios</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats?.users_total || 0}</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Total Cursos</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats?.courses_total || 0}</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Nuevos Usuarios</h3>
-          <p className="text-3xl font-bold text-green-600">{stats?.users_new_month || 0}</p>
-          <p className="text-sm text-gray-500">Último mes</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-sm font-medium text-gray-500">Cursos Publicados</h3>
-          <p className="text-3xl font-bold text-blue-600">{stats?.courses_published || 0}</p>
-        </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.users_total || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Usuarios registrados en la plataforma
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Cursos</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.courses_total || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cursos disponibles en el catálogo
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Nuevos Usuarios</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats?.users_new_month || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Registrados en el último mes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cursos Publicados</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{stats?.courses_published || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cursos activos y disponibles
+            </p>
+          </CardContent>
+        </Card>
       </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Acciones Rápidas</h2>
-        <div className="flex flex-wrap gap-4">
-          <a 
-            href="/platform/admin/courses/new" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Acciones Rápidas
+          </CardTitle>
+          <CardDescription>
+            Accede rápidamente a las funciones administrativas principales
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Button
+            onClick={() => window.location.href = '/platform/admin/courses/new'}
+            className="w-full justify-start"
+            size="lg"
           >
+            <Plus className="h-4 w-4 mr-2" />
             Crear Nuevo Curso
-          </a>
-          <a 
-            href="/platform/users" 
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+          </Button>
+
+          <Button
+            onClick={() => window.location.href = '/platform/users'}
+            variant="outline"
+            className="w-full justify-start"
+            size="lg"
           >
+            <Users className="h-4 w-4 mr-2" />
             Ver Usuarios
-          </a>
-          <a 
-            href="/platform/admin/analytics" 
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+          </Button>
+
+          <Button
+            onClick={() => window.location.href = '/platform/admin/analytics'}
+            variant="outline"
+            className="w-full justify-start"
+            size="lg"
           >
+            <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
-          </a>
-          <a 
-            href="/platform/admin/monitoring" 
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md"
+          </Button>
+
+          <Button
+            onClick={() => window.location.href = '/platform/admin/monitoring'}
+            variant="outline"
+            className="w-full justify-start"
+            size="lg"
           >
+            <Settings className="h-4 w-4 mr-2" />
             Monitoreo del Sistema
-          </a>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

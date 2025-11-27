@@ -17,10 +17,13 @@ const loginSchema = Yup.object().shape({
 
 // Esquema de validación para el formulario de registro
 const registerSchema = Yup.object().shape({
-  firstName: Yup.string()
-    .required('Nombre es requerido'),
-  lastName: Yup.string()
-    .required('Apellido es requerido'),
+  fullName: Yup.string()
+    .min(4, 'El nombre completo debe tener al menos 4 caracteres')
+    .max(100, 'El nombre completo es demasiado largo')
+    .required('Nombre completo es requerido')
+    .test('has-space', 'Por favor ingresa tu nombre y apellido', value => {
+      return value ? value.trim().includes(' ') : false;
+    }),
   email: Yup.string()
     .email('Email inválido')
     .required('Email es requerido'),
@@ -40,8 +43,7 @@ interface LoginFormValues {
 }
 
 interface RegisterFormValues {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -112,9 +114,15 @@ const AuthModal: React.FC = () => {
   // Manejar envío del formulario de registro
   const handleRegister = async (values: RegisterFormValues, { setSubmitting, setErrors }: any) => {
     try {
-      const { firstName, lastName, email, password } = values;
+      const { fullName, email, password } = values;
+
+      // Dividir el nombre completo en firstName y lastName para mantener compatibilidad
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || 'User';
+
       await register({ firstName, lastName, email, password });
-      
+
       // Cambiar al modal de verificación después del registro exitoso
       setModalType('verification');
       setVerificationStatus('success');
@@ -370,39 +378,24 @@ const AuthModal: React.FC = () => {
                 </Formik>
               ) : (
                 <Formik
-                  initialValues={{ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', auth: undefined } as RegisterFormValues}
+                  initialValues={{ fullName: '', email: '', password: '', confirmPassword: '', auth: undefined } as RegisterFormValues}
                   validationSchema={registerSchema}
                   onSubmit={handleRegister}
                 >
                   {({ isSubmitting, errors }) => (
                     <Form className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nombre
-                          </label>
-                          <Field
-                            type="text"
-                            name="firstName"
-                            id="firstName"
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-primary-700 text-gray-900 dark:text-white"
-                            placeholder="Juan"
-                          />
-                          <ErrorMessage name="firstName" component="div" className="mt-1 text-sm text-red-500" />
-                        </div>
-                        <div>
-                          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Apellido
-                          </label>
-                          <Field
-                            type="text"
-                            name="lastName"
-                            id="lastName"
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-primary-700 text-gray-900 dark:text-white"
-                            placeholder="Pérez"
-                          />
-                          <ErrorMessage name="lastName" component="div" className="mt-1 text-sm text-red-500" />
-                        </div>
+                      <div>
+                        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Nombre Completo
+                        </label>
+                        <Field
+                          type="text"
+                          name="fullName"
+                          id="fullName"
+                          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-primary-700 text-gray-900 dark:text-white"
+                          placeholder="Juan Pérez"
+                        />
+                        <ErrorMessage name="fullName" component="div" className="mt-1 text-sm text-red-500" />
                       </div>
                       
                       <div>

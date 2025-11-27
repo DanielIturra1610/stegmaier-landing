@@ -1,21 +1,34 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { Trophy, Target, X } from 'lucide-react';
 
 import ChallengeCard from './ChallengeCard';
-import { 
-  WeeklyChallengesProps, 
-  Challenge, 
+import {
+  WeeklyChallengesProps,
+  Challenge,
   ChallengeStatus,
-  CelebrationLevel 
+  CelebrationLevel
 } from './types';
-import { 
-  calculateProgress, 
+import {
+  calculateProgress,
   getChallengeStatus,
   getCelebrationLevel,
-  getNewlyReachedMilestones 
+  getNewlyReachedMilestones
 } from './utils';
 import { ANIMATION_TIMING } from './constants';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 /**
  * Componente principal WeeklyChallenges
@@ -171,31 +184,36 @@ const WeeklyChallenges: React.FC<WeeklyChallengesProps> = ({
     }
   };
 
+  const completionPercentage = challenges.length > 0
+    ? (completedChallenges.length / challenges.length) * 100
+    : 0;
+
   return (
-    <div className="weekly-challenges w-full">
-      <motion.div 
-        className="mb-4 flex justify-between items-center"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h2 className="text-2xl font-bold">Desafíos Semanales</h2>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-600 mr-2">
-            {completedChallenges.length}/{challenges.length} Completados
-          </span>
-          <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
-            <motion.div 
-              className="h-full bg-primary-500"
-              initial={{ width: 0 }}
-              animate={{ 
-                width: `${challenges.length > 0 ? (completedChallenges.length / challenges.length) * 100 : 0}%` 
-              }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
+    <div className="weekly-challenges w-full space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Target className="w-6 h-6 text-primary" />
+              Desafíos Semanales
+            </CardTitle>
+            <Badge variant="secondary" className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              {completedChallenges.length}/{challenges.length} Completados
+            </Badge>
           </div>
-        </div>
-      </motion.div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progreso semanal</span>
+              <span className="font-medium">{Math.round(completionPercentage)}%</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
       
       <motion.div
         ref={ref}
@@ -232,108 +250,75 @@ const WeeklyChallenges: React.FC<WeeklyChallengesProps> = ({
       </motion.div>
       
       {/* Modal de detalle */}
-      <AnimatePresence>
-        {selectedChallenge && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedChallenge(null)}
-          >
-            <motion.div
-              className="bg-white rounded-xl max-w-md w-full p-6 relative"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Botón cerrar */}
-              <button
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                onClick={() => setSelectedChallenge(null)}
-                aria-label="Cerrar"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              
-              {/* Contenido del detalle */}
-              <div className="text-center mb-4">
-                <span className="text-4xl mb-2 block">{selectedChallenge.icon}</span>
-                <h3 className="text-xl font-bold">{selectedChallenge.title}</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <p className="text-gray-700">{selectedChallenge.description}</p>
-                
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Progreso:</span>
-                    <span className="font-medium">
-                      {selectedChallenge.currentValue || 0}/{selectedChallenge.targetValue}
-                    </span>
-                  </div>
-                  
-                  <div className="h-2 bg-gray-300 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary-500" 
-                      style={{ 
-                        width: `${calculateProgress(selectedChallenge)}%` 
-                      }} 
-                    />
-                  </div>
-                </div>
-                
+      <Dialog open={!!selectedChallenge} onOpenChange={() => setSelectedChallenge(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex flex-col items-center text-center mb-4">
+              <span className="text-4xl mb-2">{selectedChallenge?.icon}</span>
+              <DialogTitle className="text-xl">{selectedChallenge?.title}</DialogTitle>
+              <DialogDescription className="mt-2">
+                {selectedChallenge?.description}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {selectedChallenge && (
+              <>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Progreso:</span>
+                      <span className="font-medium">
+                        {selectedChallenge.currentValue || 0}/{selectedChallenge.targetValue}
+                      </span>
+                    </div>
+                    <Progress value={calculateProgress(selectedChallenge)} className="h-2" />
+                  </CardContent>
+                </Card>
+
                 {selectedChallenge.deadline && (
-                  <div className="flex items-center">
-                    <span className="text-gray-600 mr-2">Fecha límite:</span>
-                    <span className="font-medium">
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <span className="text-sm text-muted-foreground">Fecha límite:</span>
+                    <span className="font-medium text-sm">
                       {selectedChallenge.deadline.toLocaleDateString()}
                     </span>
                   </div>
                 )}
-                
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Recompensa:</span>
-                    <div className="flex items-center">
-                      {selectedChallenge.reward.type === 'xp' || selectedChallenge.reward.type === 'both' ? (
-                        <div className="flex items-center mr-3">
-                          <span className="text-yellow-500 mr-1">⭐</span>
-                          <span className="font-bold">{selectedChallenge.reward.value}XP</span>
-                        </div>
-                      ) : null}
-                      
-                      {selectedChallenge.reward.type === 'badge' || selectedChallenge.reward.type === 'both' ? (
-                        <div className="flex items-center">
-                          <span className="text-blue-500 mr-1">🏆</span>
-                          <span className="font-bold">{selectedChallenge.reward.badgeName}</span>
-                        </div>
-                      ) : null}
-                    </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <span className="text-sm text-muted-foreground">Recompensa:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedChallenge.reward.type === 'xp' || selectedChallenge.reward.type === 'both') && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <span>⭐</span>
+                        {selectedChallenge.reward.value} XP
+                      </Badge>
+                    )}
+                    {(selectedChallenge.reward.type === 'badge' || selectedChallenge.reward.type === 'both') && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Trophy className="w-3 h-3" />
+                        {selectedChallenge.reward.badgeName}
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                
-                {/* Botón de acción */}
-                <button
-                  className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors"
-                  onClick={() => {
-                    // Aquí iría la lógica para iniciar o continuar el desafío
-                    setSelectedChallenge(null);
-                  }}
+
+                <Button
+                  className="w-full"
+                  onClick={() => setSelectedChallenge(null)}
                 >
-                  {completedChallenges.includes(selectedChallenge.id) 
+                  {completedChallenges.includes(selectedChallenge.id)
                     ? 'Ver detalles completos'
                     : 'Continuar desafío'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

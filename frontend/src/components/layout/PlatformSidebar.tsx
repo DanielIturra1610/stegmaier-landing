@@ -4,6 +4,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore - Importar imágenes
 import StegmaierLogoBlanco from '../../assets/images/Stegmaierlogoblanco.png';
 import { useAuth } from '../../contexts/AuthContext';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  BookOpen,
+  GraduationCap,
+  User,
+  Settings,
+  Award,
+  HelpCircle,
+  LayoutDashboard,
+  Users,
+  LogOut,
+} from 'lucide-react';
 
 interface PlatformSidebarProps {
   isOpen: boolean;
@@ -30,72 +57,60 @@ type NavItem = {
  * Elemento de navegación para el sidebar con efectos mejorados
  */
 const NavItem: React.FC<NavItemProps> = ({ to, icon, label, index, isCollapsed }) => {
-  // Estado para controlar el tooltip
-  const [showTooltip, setShowTooltip] = useState(false);
-  
   return (
-    <div 
-      className="relative mb-1" 
-      onMouseEnter={() => isCollapsed && setShowTooltip(true)} 
-      onMouseLeave={() => setShowTooltip(false)}
-      data-onboarding={`nav-item-${to.replace(/\//g, '-').replace(/^-/, '')}`}
-    >
-      <NavLink
-        to={to}
-        className={({ isActive }) => `
-          flex items-center px-2 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
-          relative overflow-hidden
-          ${isActive ? 
-            'bg-primary-700/90 text-white shadow-lg shadow-primary-500/20 border-l-4 border-primary-400' : 
-            'text-gray-300 hover:bg-primary-600/50 hover:text-white hover:shadow-md'}
-        `}
-        end={to === '/platform'} // Solo para la ruta principal
-      >
-        {/* Fondo hover sin difuminado */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none"></div>
-        
-        {/* Icono con animación */}
-        <motion.div 
-          className={`flex items-center justify-center ${isCollapsed ? 'w-full mx-auto' : 'mr-3'}`}
-          style={isCollapsed ? { minWidth: '100%' } : undefined}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {icon}
-        </motion.div>
-        
-        {/* Texto que se oculta en modo colapsado */}
-        <motion.span 
-          className="flex-1 whitespace-nowrap"
-          animate={{ 
-            opacity: isCollapsed ? 0 : 1,
-            width: isCollapsed ? 0 : 'auto',
-            marginLeft: isCollapsed ? 0 : undefined
-          }}
-          transition={{ duration: 0.2 }}
-        >
-          {label}
-        </motion.span>
-      </NavLink>
-      
-      {/* Tooltip para modo colapsado */}
-      <AnimatePresence>
-        {isCollapsed && showTooltip && (
-          <motion.div 
-            className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded-md z-50 whitespace-nowrap"
-            style={{ top: '50%', transform: 'translateY(-50%)' }}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className="relative mb-1"
+            data-onboarding={`nav-item-${to.replace(/\//g, '-').replace(/^-/, '')}`}
           >
+            <NavLink
+              to={to}
+              className={({ isActive }) => `
+                flex items-center px-2 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                relative
+                ${isActive ?
+                  'bg-primary-700/90 text-white shadow-lg shadow-primary-500/20 border-l-4 border-primary-400' :
+                  'text-gray-300 hover:bg-primary-600/50 hover:text-white hover:shadow-md'}
+              `}
+              end={to === '/platform'} // Solo para la ruta principal
+            >
+              {/* Fondo hover sin difuminado */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none"></div>
+
+              {/* Icono con animación */}
+              <motion.div
+                className={`flex items-center justify-center ${isCollapsed ? 'w-full mx-auto' : 'mr-3'}`}
+                style={isCollapsed ? { minWidth: '100%' } : undefined}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {icon}
+              </motion.div>
+
+              {/* Texto que se oculta en modo colapsado */}
+              <motion.span
+                className="flex-1 whitespace-nowrap"
+                animate={{
+                  opacity: isCollapsed ? 0 : 1,
+                  width: isCollapsed ? 0 : 'auto',
+                  marginLeft: isCollapsed ? 0 : undefined
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                {label}
+              </motion.span>
+            </NavLink>
+          </div>
+        </TooltipTrigger>
+        {isCollapsed && (
+          <TooltipContent side="right" className="bg-gray-800 text-white border-gray-700">
             {label}
-            {/* Triángulo indicador */}
-            <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 border-4 border-transparent border-r-gray-800"/>
-          </motion.div>
+          </TooltipContent>
         )}
-      </AnimatePresence>
-    </div>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -104,7 +119,11 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, index, isCollapsed }
  */
 const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) => {
   // Estado para controlar el modo colapsado (solo iconos)
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Usar localStorage para persistir la preferencia del usuario
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
   
   // Obtener datos del usuario para mostrar opciones basadas en rol
   const { user } = useAuth();
@@ -185,8 +204,9 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
   
   // Construir elementos de navegación dinámicamente basado en el rol
   const navItems = React.useMemo(() => {
-    // Si es admin, mostrar navegación administrativa
-    if (user?.role === 'admin') {
+    // Si es admin, instructor o superadmin, mostrar navegación administrativa
+    const isAdminRole = user?.role === 'admin' || user?.role === 'instructor' || user?.role === 'superadmin';
+    if (isAdminRole) {
       return [
         {
           to: "/platform/courses",
@@ -244,13 +264,8 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
     
     // Si no es admin, mostrar navegación normal de estudiante
     return baseNavItems;
-  }, [user?.role, baseNavItems]);
-
-  // Animaciones para el sidebar
-  const sidebarVariants = {
-    expanded: { width: "16rem" }, // 64 en Tailwind
-    collapsed: { width: "4.5rem" } // Aproximadamente para mostrar solo iconos
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.role]);
 
   return (
     <>
@@ -273,12 +288,14 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
       <motion.div
         className={`
           fixed inset-y-0 left-0 z-30 bg-primary-800 transform transition-transform duration-300 ease-in-out
-          lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen overflow-hidden flex flex-col
+          lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
-        variants={sidebarVariants}
-        animate={isCollapsed ? "collapsed" : "expanded"}
-        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }} // Custom easing para movimiento natural
+        animate={{
+          width: isCollapsed ? '4.5rem' : '18rem',
+          minWidth: isCollapsed ? '4.5rem' : '18rem'
+        }}
+        transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
         initial={false}
         data-onboarding="platform-sidebar"
       >
@@ -303,7 +320,11 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
 
           {/* Botón para colapsar/expandir en desktop */}
           <motion.button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => {
+              const newValue = !isCollapsed;
+              setIsCollapsed(newValue);
+              localStorage.setItem('sidebar-collapsed', String(newValue));
+            }}
             className="hidden lg:flex items-center justify-center text-gray-300 hover:text-white p-1 rounded-md hover:bg-primary-700 transition-colors"
             style={{ width: "40px", height: "40px" }} /* Tamaño fijo para mejor centrado */
             aria-label={isCollapsed ? "Expandir menú" : "Colapsar menú"}
@@ -344,39 +365,41 @@ const PlatformSidebar: React.FC<PlatformSidebarProps> = ({ isOpen, onClose }) =>
         </div>
 
         {/* Enlaces de navegación con animaciones escalonadas */}
-        <nav className="flex-1 px-2 py-4 overflow-y-auto">
-          {navItems.map((item, index) => {
-            // Si es un divisor
-            if ('type' in item && item.type === 'divider') {
-              return <div key={`divider-${index}`} className="border-t border-primary-700 my-2"></div>;
-            }
-            
-            // Si es un elemento de navegación normal
-            if ('to' in item && 'label' in item && 'icon' in item) {
-              return (
-                <motion.div
-                  key={item.to}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ 
-                    delay: index * 0.05, // Delay escalonado
-                    duration: 0.3
-                  }}
-                >
-                  <NavItem
-                    to={item.to as string}
-                    icon={item.icon}
-                    label={item.label as string}
-                    index={index}
-                    isCollapsed={isCollapsed}
-                  />
-                </motion.div>
-              );
-            }
-            
-            return null;
-          })}
-        </nav>
+        <ScrollArea className="flex-1 px-2 py-4">
+          <nav>
+            {navItems.map((item, index) => {
+              // Si es un divisor
+              if ('type' in item && item.type === 'divider') {
+                return <Separator key={`divider-${index}`} className="bg-primary-700 my-2" />;
+              }
+
+              // Si es un elemento de navegación normal
+              if ('to' in item && 'label' in item && 'icon' in item) {
+                return (
+                  <motion.div
+                    key={item.to}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: index * 0.05, // Delay escalonado
+                      duration: 0.3
+                    }}
+                  >
+                    <NavItem
+                      to={item.to as string}
+                      icon={item.icon}
+                      label={item.label as string}
+                      index={index}
+                      isCollapsed={isCollapsed}
+                    />
+                  </motion.div>
+                );
+              }
+
+              return null;
+            })}
+          </nav>
+        </ScrollArea>
         
         {/* Sección de perfil de usuario en la parte inferior */}
         <UserProfileSection isCollapsed={isCollapsed} />
@@ -394,10 +417,8 @@ interface UserProfileSectionProps {
  */
 const UserProfileSection: React.FC<UserProfileSectionProps> = ({ isCollapsed }) => {
   const { user, logout } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  
+
   // Generar iniciales para el avatar si no hay imagen de perfil
   const getInitials = () => {
     if (!user) return 'U';
@@ -410,25 +431,10 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ isCollapsed }) 
     }
     return user.email[0].toUpperCase();
   };
-  
-  // Cerrar el menú cuando se hace clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-  
+
   // Manejar el clic en las opciones del menú
   const handleOptionClick = (action: string) => {
-    setIsOpen(false);
-    
-    switch(action) {
+    switch (action) {
       case 'profile':
         navigate('/platform/profile');
         break;
@@ -442,123 +448,110 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ isCollapsed }) 
         break;
     }
   };
-  
+
   if (!user) return null;
-  
+
   return (
     <div className="mt-auto border-t border-primary-700 bg-primary-900/80 px-3 py-3">
-      <div className="relative" ref={dropdownRef}>
-        <motion.div 
-          className={`flex items-center cursor-pointer p-2 rounded-lg hover:bg-primary-800/60 transition-all ${isOpen ? 'bg-primary-800/60' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {/* Avatar de usuario o iniciales */}
-          <div className="relative">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-medium text-sm shadow-md">
-              {user.profileImage ? (
-                <img src={user.profileImage} alt="Perfil" className="h-full w-full object-cover rounded-full" />
-              ) : (
-                getInitials()
-              )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <motion.div
+            className="flex items-center cursor-pointer p-2 rounded-lg hover:bg-primary-800/60 transition-all"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {/* Avatar de usuario con badge de estado */}
+            <div className="relative">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user.profileImage} alt="Perfil" />
+                <AvatarFallback className="bg-gradient-to-br from-primary-400 to-primary-600 text-white font-medium text-sm">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              {/* Indicador de estado (online) */}
+              <Badge
+                variant="secondary"
+                className="absolute -bottom-0.5 -right-0.5 h-3 w-3 p-0 bg-green-500 hover:bg-green-500 border-2 border-primary-900 rounded-full"
+              />
             </div>
-            {/* Indicador de estado (online) */}
-            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-primary-900"></span>
-          </div>
-          
-          {/* Nombre de usuario - solo visible cuando no está colapsado */}
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.div 
-                className="ml-3 flex-1"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 'auto' }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white truncate">
-                    {user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}
-                  </span>
-                  <span className="text-xs text-gray-300 flex items-center gap-1">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    Conectado
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Flecha para indicar desplegable - solo visible cuando no está colapsado */}
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.svg 
-                className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </motion.svg>
-            )}
-          </AnimatePresence>
-        </motion.div>
-        
-        {/* Menú desplegable */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div 
-              className={`absolute bottom-full mb-2 ${isCollapsed ? 'left-0' : 'left-0 right-0'} bg-primary-800 rounded-lg shadow-lg py-1 border border-primary-700 z-50`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="px-3 py-2 border-b border-primary-700">
-                <div className="text-sm font-medium text-white">{user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}</div>
-                <div className="text-xs text-gray-300 truncate">{user.email}</div>
-              </div>
-              
-              <button 
-                className="w-full text-left flex items-center px-3 py-2 text-sm text-gray-200 hover:bg-primary-700 transition-colors"
-                onClick={() => handleOptionClick('profile')}
-              >
-                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Ver Perfil
-              </button>
-              
-              <button 
-                className="w-full text-left flex items-center px-3 py-2 text-sm text-gray-200 hover:bg-primary-700 transition-colors"
-                onClick={() => handleOptionClick('settings')}
-              >
-                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Configuración
-              </button>
-              
-              <div className="border-t border-primary-700 my-1"></div>
-              
-              <button 
-                className="w-full text-left flex items-center px-3 py-2 text-sm text-red-400 hover:bg-primary-700 transition-colors"
-                onClick={() => handleOptionClick('logout')}
-              >
-                <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Cerrar Sesión
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+
+            {/* Nombre de usuario - solo visible cuando no está colapsado */}
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.div
+                  className="ml-3 flex-1"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 'auto' }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-white truncate">
+                      {user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                      Conectado
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Flecha para indicar desplegable - solo visible cuando no está colapsado */}
+            <AnimatePresence>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          side={isCollapsed ? 'right' : 'top'}
+          align="start"
+          className="w-56 bg-primary-800 border-primary-700 text-white"
+        >
+          <DropdownMenuLabel className="border-b border-primary-700">
+            <div className="text-sm font-medium text-white">
+              {user.full_name || `${user.firstName || ''} ${user.lastName || ''}`}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+          </DropdownMenuLabel>
+
+          <DropdownMenuItem
+            onClick={() => handleOptionClick('profile')}
+            className="text-gray-200 hover:bg-primary-700 focus:bg-primary-700 cursor-pointer"
+          >
+            <User className="w-4 h-4 mr-3" />
+            Ver Perfil
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => handleOptionClick('settings')}
+            className="text-gray-200 hover:bg-primary-700 focus:bg-primary-700 cursor-pointer"
+          >
+            <Settings className="w-4 h-4 mr-3" />
+            Configuración
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="bg-primary-700" />
+
+          <DropdownMenuItem
+            onClick={() => handleOptionClick('logout')}
+            className="text-red-400 hover:bg-primary-700 focus:bg-primary-700 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 mr-3" />
+            Cerrar Sesión
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

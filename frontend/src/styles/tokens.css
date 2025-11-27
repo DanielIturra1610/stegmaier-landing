@@ -72,5 +72,119 @@
     --shadow-hover:   0 10px 25px rgba(0,0,0,.12);
     --shadow-card:    0 4px 6px rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.08);
     --shadow-elevated: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+
+    /* --- Shadcn/UI Theme Variables (HSL format) ------------------------- */
+    /* Background colors */
+    --background: 222.2 84% 4.9%;           /* Dark background for platform */
+    --foreground: 210 40% 98%;              /* Light text */
+
+    /* Card colors */
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    /* Popover colors */
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary colors (using corporate blue) */
+    --primary: 199 89% 32%;                 /* color-primary-500 */
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary colors */
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted colors */
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Accent colors (using corporate green) */
+    --accent: 162 91% 36%;                  /* color-accent-500 */
+    --accent-foreground: 210 40% 98%;
+
+    /* Destructive/Error colors */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Border colors */
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 32%;                    /* primary color */
+
+    /* Chart colors (using corporate palette) */
+    --chart-1: 199 89% 32%;                 /* primary */
+    --chart-2: 162 91% 36%;                 /* accent green */
+    --chart-3: 45 93% 47%;                  /* gold */
+    --chart-4: 217.2 32.6% 17.5%;          /* secondary */
+    --chart-5: 210 40% 98%;                 /* foreground */
+
+    /* Radius for components */
+    --radius: 0.5rem;                       /* 8px - matches radius-md */
+  }
+
+  /* Light theme variables (for platform areas if needed) */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 199 89% 32%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 162 91% 36%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 32%;
+
+    --radius: 0.5rem;
+  }
+
+  /* Dark theme variables */
+  .dark {
+    --background: 222.2 84% 4.9%;           /* Dark background */
+    --foreground: 210 40% 98%;              /* Light text */
+
+    --card: 222.2 47.4% 11.2%;              /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 199 89% 48%;                 /* Lighter primary for dark mode */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 162 91% 45%;                  /* Lighter accent for dark mode */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 50%;             /* Adjusted destructive for visibility */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 48%;
+
+    --radius: 0.5rem;
   }
 }

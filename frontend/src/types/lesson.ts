@@ -128,7 +128,7 @@ export interface LessonOverview {
 export interface LessonCreate {
   title: string;
   course_id: string;
-  module_id?: string;
+  module_id: string; // REQUIRED: Lessons must belong to a module
   order: number;
   content_type: ContentType;
   content_url?: string;

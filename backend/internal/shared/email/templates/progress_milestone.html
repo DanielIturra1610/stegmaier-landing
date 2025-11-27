@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Hito Alcanzado!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 64px; margin-bottom: 15px;">🎯🎊</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">¡Hito Alcanzado!</h1>
+                            <p style="margin: 10px 0 0 0; color: #fce7f3; font-size: 16px;">Sigues avanzando en tu aprendizaje</p>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                ¡Felicitaciones! Has alcanzado un importante hito en tu curso. Tu dedicación y esfuerzo están dando resultados.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Milestone Achievement Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 3px solid #ec4899; padding: 35px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 80px; margin-bottom: 20px; line-height: 1;">
+                                    {{if eq .Milestone 25}}🌟
+                                    {{else if eq .Milestone 50}}⭐
+                                    {{else if eq .Milestone 75}}💫
+                                    {{else}}🏆{{end}}
+                                </div>
+                                <h2 style="margin: 0 0 15px 0; color: #9f1239; font-size: 48px; font-weight: 700;">{{.Milestone}}%</h2>
+                                <p style="margin: 0 0 10px 0; color: #be123c; font-size: 18px; font-weight: 600;">Completado</p>
+                                <p style="margin: 0; color: #be123c; font-size: 15px;">{{.CourseTitle}}</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Progress Bar -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #f9fafb; padding: 25px; border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                    <span style="color: #6b7280; font-size: 14px; font-weight: 600;">Tu progreso</span>
+                                    <span style="color: #ec4899; font-size: 14px; font-weight: 700;">{{.Milestone}}% / 100%</span>
+                                </div>
+                                <div style="background-color: #e5e7eb; border-radius: 12px; height: 16px; overflow: hidden;">
+                                    <div style="background: linear-gradient(90deg, #ec4899 0%, #db2777 100%); height: 100%; width: {{.Milestone}}%; border-radius: 12px; box-shadow: 0 2px 4px rgba(236, 72, 153, 0.4);"></div>
+                                </div>
+
+                                <!-- Milestone Markers -->
+                                <div style="display: flex; justify-content: space-between; margin-top: 10px; padding: 0 4px;">
+                                    <span style="color: {{if ge .Milestone 25}}#10b981{{else}}#d1d5db{{end}}; font-size: 18px;">{{if ge .Milestone 25}}✓{{else}}○{{end}}</span>
+                                    <span style="color: {{if ge .Milestone 50}}#10b981{{else}}#d1d5db{{end}}; font-size: 18px;">{{if ge .Milestone 50}}✓{{else}}○{{end}}</span>
+                                    <span style="color: {{if ge .Milestone 75}}#10b981{{else}}#d1d5db{{end}}; font-size: 18px;">{{if ge .Milestone 75}}✓{{else}}○{{end}}</span>
+                                    <span style="color: {{if ge .Milestone 100}}#10b981{{else}}#d1d5db{{end}}; font-size: 18px;">{{if ge .Milestone 100}}✓{{else}}○{{end}}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 5px; padding: 0 4px;">
+                                    <span style="color: #9ca3af; font-size: 11px;">25%</span>
+                                    <span style="color: #9ca3af; font-size: 11px;">50%</span>
+                                    <span style="color: #9ca3af; font-size: 11px;">75%</span>
+                                    <span style="color: #9ca3af; font-size: 11px;">100%</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Motivational Message -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 6px; text-align: center;">
+                                <p style="margin: 0; color: #78350f; font-size: 16px; font-weight: 600; line-height: 1.6;">
+                                    {{if eq .Milestone 25}}"Has comenzado con el pie derecho. ¡Sigue así!"
+                                    {{else if eq .Milestone 50}}"¡Estás a mitad de camino! El éxito está más cerca."
+                                    {{else if eq .Milestone 75}}"¡Casi lo logras! Un último empujón hacia la meta."
+                                    {{else}}"¡Lo has logrado! Tu dedicación ha dado frutos."{{end}}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Next Steps -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">
+                                {{if lt .Milestone 100}}Continúa tu progreso{{else}}¿Qué sigue?{{end}}
+                            </h3>
+
+                            {{if lt .Milestone 100}}
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #ec4899; font-size: 20px; margin-right: 12px;">→</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Continúa con las siguientes lecciones del curso</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #ec4899; font-size: 20px; margin-right: 12px;">→</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Completa las evaluaciones para reforzar tu aprendizaje</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="color: #ec4899; font-size: 20px; margin-right: 12px;">→</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Dedica tiempo regular al estudio para mantener el impulso</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            {{else}}
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 20px; margin-right: 12px;">🎓</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Descarga tu certificado oficial del curso</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 12px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 20px; margin-right: 12px;">💼</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Comparte tu logro en LinkedIn y redes profesionales</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 20px; margin-right: 12px;">🔍</div>
+                                            <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6;">Explora otros cursos para seguir aprendiendo</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            {{end}}
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <a href="{{.CourseURL}}" style="display: inline-block; background-color: #ec4899; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);">
+                                            {{if lt .Milestone 100}}Continuar Aprendiendo{{else}}Ver Certificado{{end}}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Inspirational Quote -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px;">
+                            <div style="border-left: 4px solid #d1d5db; padding-left: 20px;">
+                                <p style="margin: 0; color: #6b7280; font-size: 15px; font-style: italic; line-height: 1.6;">
+                                    "El éxito es la suma de pequeños esfuerzos repetidos día tras día."
+                                </p>
+                                <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 13px;">
+                                    — Robert Collier
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                ¡Sigue así! Cada paso te acerca más a tu objetivo
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

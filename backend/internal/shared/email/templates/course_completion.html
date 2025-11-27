@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curso Completado</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 64px; margin-bottom: 15px;">🎉🏆</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">¡Felicitaciones!</h1>
+                            <p style="margin: 10px 0 0 0; color: #fef3c7; font-size: 16px;">Has completado el curso</p>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                ¡Excelente trabajo! Has completado exitosamente el curso y demostrado tu compromiso con el aprendizaje continuo.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Achievement Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; padding: 30px; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 48px; margin-bottom: 15px;">🎓</div>
+                                <h2 style="margin: 0 0 10px 0; color: #92400e; font-size: 22px; font-weight: 700;">{{.CourseTitle}}</h2>
+                                <p style="margin: 0; color: #78350f; font-size: 14px;">
+                                    Completado el {{.CompletionDate}}
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Certificate Section -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background-color: #eff6ff; border: 2px dashed #2563eb; padding: 25px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 40px; margin-bottom: 15px;">📜</div>
+                                <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 18px; font-weight: 600;">Tu Certificado está listo</h3>
+                                <p style="margin: 0 0 20px 0; color: #1e40af; font-size: 14px; line-height: 1.5;">
+                                    Descarga tu certificado oficial y compártelo en tus redes profesionales
+                                </p>
+                                <table role="presentation" style="margin: 0 auto;">
+                                    <tr>
+                                        <td style="padding: 0;">
+                                            <a href="{{.CertificateURL}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                                                Descargar Certificado
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Next Steps -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">¿Qué sigue ahora?</h3>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 15px; background-color: #f0fdf4; border-radius: 6px; margin-bottom: 10px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">🔍</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #15803d; font-size: 16px; font-weight: 600;">Explora más cursos</h4>
+                                                <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.5;">Continúa tu aprendizaje con nuestros otros cursos disponibles</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td style="height: 10px;"></td></tr>
+                                <tr>
+                                    <td style="padding: 15px; background-color: #fef2f2; border-radius: 6px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">💼</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #991b1b; font-size: 16px; font-weight: 600;">Comparte tu logro</h4>
+                                                <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.5;">Añade tu certificado a LinkedIn y destaca tu desarrollo profesional</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td style="height: 10px;"></td></tr>
+                                <tr>
+                                    <td style="padding: 15px; background-color: #f5f3ff; border-radius: 6px;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="font-size: 24px; margin-right: 15px;">📊</div>
+                                            <div>
+                                                <h4 style="margin: 0 0 5px 0; color: #5b21b6; font-size: 16px; font-weight: 600;">Revisa tu progreso</h4>
+                                                <p style="margin: 0; color: #5b21b6; font-size: 14px; line-height: 1.5;">Ve todos tus certificados y el progreso en otros cursos</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Buttons -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0 5px;">
+                                        <a href="{{.CertificatesURL}}" style="display: inline-block; background-color: #ffffff; color: #2563eb; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; border: 2px solid #2563eb;">
+                                            Ver Mis Certificados
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Motivational Quote -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px;">
+                            <div style="border-left: 4px solid #d1d5db; padding-left: 20px;">
+                                <p style="margin: 0; color: #6b7280; font-size: 15px; font-style: italic; line-height: 1.6;">
+                                    "El aprendizaje es un tesoro que seguirá a su dueño a todas partes."
+                                </p>
+                                <p style="margin: 10px 0 0 0; color: #9ca3af; font-size: 13px;">
+                                    — Proverbio Chino
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                ¡Sigue aprendiendo con {{.PlatformName}}!
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -68,3 +68,20 @@ export interface Step {
   desc: string;
   icon: LucideIcon;
 }
+
+// ============================================
+// Re-export domain types
+// ============================================
+export * from './tenant';
+export * from './user';
+export * from './auth';
+export * from './course';
+export * from './lesson';
+export * from './module';
+export * from './quiz';
+export * from './assignment';
+export * from './progress';
+export * from './enrollment';
+export * from './notification';
+export * from './email';
+export * from './review';

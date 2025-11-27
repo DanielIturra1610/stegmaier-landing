@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { User, Book, Users, TrendingUp, Bell, Calendar } from 'lucide-react';
+import { User, Book, Users, TrendingUp, Bell, Calendar, Plus, BarChart3, GraduationCap, AlertCircle } from 'lucide-react';
 import { instructorService } from '../../services/instructorService';
 import { useAuth } from '../../contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 interface DashboardStats {
   totalCourses: number;
@@ -88,25 +94,23 @@ const InstructorDashboard: React.FC = () => {
     change?: string;
     changeType?: 'positive' | 'negative' | 'neutral';
   }> = ({ title, value, icon, change, changeType = 'neutral' }) => (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {change && (
-            <p className={`text-sm mt-2 ${
-              changeType === 'positive' ? 'text-green-600' : 
-              changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
-            }`}>
-              {change}
-            </p>
-          )}
-        </div>
-        <div className="text-blue-600">
-          {icon}
-        </div>
-      </div>
-    </div>
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="text-muted-foreground">{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {change && (
+          <p className={`text-xs mt-1 flex items-center gap-1 ${
+            changeType === 'positive' ? 'text-green-600' :
+            changeType === 'negative' ? 'text-red-600' : 'text-muted-foreground'
+          }`}>
+            {change}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 
   const ActivityItem: React.FC<{ activity: RecentActivity }> = ({ activity }) => {
@@ -161,31 +165,23 @@ const InstructorDashboard: React.FC = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error al cargar el panel</AlertTitle>
+            <AlertDescription className="mt-2">
+              {error}
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={retryFetch}
+                  disabled={loading}
+                >
+                  {loading ? 'Cargando...' : 'Reintentar'}
+                </Button>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error al cargar el panel</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    className="bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200 border border-transparent rounded"
-                    onClick={retryFetch}
-                    disabled={loading}
-                  >
-                    {loading ? 'Cargando...' : 'Reintentar'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Stats Grid */}
@@ -234,68 +230,89 @@ const InstructorDashboard: React.FC = () => {
           />
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity & Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
                 Actividad Reciente
-              </h2>
-            </div>
-            <div className="p-3 max-h-96 overflow-y-auto">
-              {recentActivity.length > 0 ? (
-                recentActivity.map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))
-              ) : (
-                <p className="text-gray-500 text-center py-8">
-                  No hay actividad reciente
-                </p>
-              )}
-            </div>
-          </div>
+              </CardTitle>
+              <CardDescription>
+                Últimas actualizaciones de tus cursos y estudiantes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-96">
+                <div className="p-3">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity) => (
+                      <ActivityItem key={activity.id} activity={activity} />
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mb-2 opacity-50" />
+                      <p className="text-sm">No hay actividad reciente</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-md border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
                 Acciones Rápidas
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <button
+              </CardTitle>
+              <CardDescription>
+                Gestiona tus cursos y estudiantes fácilmente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
                 onClick={() => window.location.href = '/platform/instructor/courses/new'}
-                className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="w-full justify-start"
+                size="lg"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Crear Nuevo Curso
+              </Button>
+
+              <Button
+                onClick={() => window.location.href = '/platform/instructor/courses'}
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
               >
                 <Book className="h-4 w-4 mr-2" />
-                Crear Nuevo Curso
-              </button>
-              
-              <button
-                onClick={() => window.location.href = '/platform/instructor/courses'}
-                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                Ver Mis Cursos
+              </Button>
+
+              <Button
+                onClick={() => window.location.href = '/platform/instructor/students'}
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Ver Mis Cursos
-              </button>
-              
-              <button
-                onClick={() => window.location.href = '/platform/instructor/students'}
-                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
                 Ver Estudiantes
-              </button>
-              
-              <button
+              </Button>
+
+              <Button
                 onClick={() => window.location.href = '/platform/instructor/analytics'}
-                className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
               >
-                <Bell className="h-4 w-4 mr-2" />
+                <BarChart3 className="h-4 w-4 mr-2" />
                 Ver Analytics
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

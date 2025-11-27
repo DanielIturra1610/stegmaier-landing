@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscripción Confirmada</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">¡Inscripción Exitosa!</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 20px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                                Hola <strong>{{.UserName}}</strong>,
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                                ¡Felicitaciones! Te has inscrito exitosamente en el curso:
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Course Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 4px solid #2563eb; padding: 25px; border-radius: 8px;">
+                                <h2 style="margin: 0 0 10px 0; color: #1e40af; font-size: 20px; font-weight: 700;">{{.CourseTitle}}</h2>
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                    Ya puedes comenzar a aprender y avanzar en este curso
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Next Steps -->
+                    <tr>
+                        <td style="padding: 0 30px 30px 30px;">
+                            <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: 600;">Próximos pasos</h3>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 0 0 15px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="background-color: #2563eb; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 15px; flex-shrink: 0;">1</div>
+                                            <div>
+                                                <p style="margin: 0; color: #1f2937; font-size: 15px; font-weight: 600;">Accede al curso</p>
+                                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Ingresa al contenido del curso y revisa el temario completo</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 15px 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="background-color: #2563eb; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 15px; flex-shrink: 0;">2</div>
+                                            <div>
+                                                <p style="margin: 0; color: #1f2937; font-size: 15px; font-weight: 600;">Comienza a aprender</p>
+                                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Completa lecciones, ejercicios y evaluaciones a tu propio ritmo</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <div style="display: flex; align-items: start;">
+                                            <div style="background-color: #2563eb; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; margin-right: 15px; flex-shrink: 0;">3</div>
+                                            <div>
+                                                <p style="margin: 0; color: #1f2937; font-size: 15px; font-weight: 600;">Obtén tu certificado</p>
+                                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">Al completar el curso, recibirás un certificado oficial verificable</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Buttons -->
+                    <tr>
+                        <td style="padding: 0 30px 40px 30px; text-align: center;">
+                            <table role="presentation" style="margin: 0 auto;">
+                                <tr>
+                                    <td style="padding: 0 5px;">
+                                        <a href="{{.CourseURL}}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                                            Ir al Curso
+                                        </a>
+                                    </td>
+                                    <td style="padding: 0 5px;">
+                                        <a href="{{.DashboardURL}}" style="display: inline-block; background-color: #ffffff; color: #2563eb; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; border: 2px solid #2563eb;">
+                                            Ver Dashboard
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px; text-align: center;">
+                                ¿Tienes preguntas? Estamos aquí para ayudarte
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
+                                © {{.Year}} {{.PlatformName}}. Todos los derechos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

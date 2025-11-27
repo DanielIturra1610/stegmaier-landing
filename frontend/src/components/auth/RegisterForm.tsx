@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../contexts/AuthContext';
 import FormInput from '../ui/FormInput';
-import Alert from '../ui/Alert';
+import { Alert } from '@/components/ui/alert';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Validación con Yup
 const RegisterSchema = Yup.object().shape({
-  firstName: Yup.string()
-    .min(2, 'Demasiado corto')
-    .max(50, 'Demasiado largo')
-    .required('Nombre es requerido'),
-  lastName: Yup.string()
-    .min(2, 'Demasiado corto')
-    .max(50, 'Demasiado largo')
-    .required('Apellido es requerido'),
+  fullName: Yup.string()
+    .min(4, 'El nombre completo debe tener al menos 4 caracteres')
+    .max(100, 'El nombre completo es demasiado largo')
+    .required('Nombre completo es requerido')
+    .test('has-space', 'Por favor ingresa tu nombre y apellido', value => {
+      return value ? value.trim().includes(' ') : false;
+    }),
   email: Yup.string()
     .email('Email inválido')
     .required('Email es requerido'),
@@ -37,28 +37,41 @@ interface RegisterFormProps {
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false);
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
       setRegistrationError(null);
-      
+
       // Extraemos los datos necesarios para el registro
-      const { firstName, lastName, email, password } = values;
-      
+      const { fullName, email, password } = values;
+
+      // Dividir el nombre completo en firstName y lastName para mantener compatibilidad
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || 'User'; // Si no hay apellido, usar 'User'
+
       // Llamamos al servicio de autenticación
+      // El registro automáticamente hace login y autentica al usuario
       await register({ firstName, lastName, email, password });
-      
+
       setRegistrationSuccess(true);
-      
+
       // Callback opcional cuando el registro es exitoso
       if (onSuccess) {
         onSuccess();
       }
+
+      // Redirigir automáticamente a la página de selección de tenant
+      // después de un breve delay para que el usuario vea el mensaje de éxito
+      setTimeout(() => {
+        navigate('/select-tenant');
+      }, 1500);
     } catch (error: any) {
       // Manejar errores específicos de la API
-      const errorMsg = error.response?.data?.detail || 
+      const errorMsg = error.response?.data?.detail ||
                         'Error al registrar usuario. Por favor intenta de nuevo.';
       setRegistrationError(errorMsg);
     } finally {
@@ -80,13 +93,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         <Alert
           type="success"
           title="¡Registro exitoso!"
-          message="Te hemos enviado un correo de verificación. Por favor revisa tu bandeja de entrada para activar tu cuenta."
+          message="Tu cuenta ha sido creada. Serás redirigido a la selección de organización..."
         />
       ) : (
         <Formik
           initialValues={{
-            firstName: '',
-            lastName: '',
+            fullName: '',
             email: '',
             password: '',
             confirmPassword: '',
@@ -96,22 +108,13 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
         >
           {({ isSubmitting }) => (
             <Form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput
-                  label="Nombre"
-                  name="firstName"
-                  type="text"
-                  placeholder="Juan"
-                  required
-                />
-                <FormInput
-                  label="Apellido"
-                  name="lastName"
-                  type="text"
-                  placeholder="Pérez"
-                  required
-                />
-              </div>
+              <FormInput
+                label="Nombre Completo"
+                name="fullName"
+                type="text"
+                placeholder="Juan Pérez"
+                required
+              />
               
               <FormInput
                 label="Correo electrónico"

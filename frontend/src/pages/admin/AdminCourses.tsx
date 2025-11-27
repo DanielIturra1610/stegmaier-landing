@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  BookOpen,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Users,
+  GraduationCap,
+  DollarSign,
+  AlertCircle
+} from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCategoryLabel, getCategoryOptions } from '../../utils/courseCategories';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Course {
   id: string;
@@ -57,9 +75,11 @@ const AdminCourses: React.FC = () => {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('✅ [AdminCourses] Courses loaded successfully:', data.length);
-        setCourses(data);
+        const responseData = await response.json();
+        // Extract courses from API response structure: {success, message, data: {courses, total_count}}
+        const coursesArray = responseData?.data?.courses || responseData?.courses || (Array.isArray(responseData) ? responseData : []);
+        console.log('✅ [AdminCourses] Courses loaded successfully:', coursesArray.length);
+        setCourses(coursesArray);
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.detail || `Error ${response.status}: ${response.statusText}`;
@@ -136,36 +156,34 @@ const AdminCourses: React.FC = () => {
   };
   
   if (loading) {
-    return <div className="text-center py-8">Cargando cursos...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando cursos...</p>
+        </div>
+      </div>
+    );
   }
   
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error al cargar cursos</h3>
-            <div className="mt-2 text-sm text-red-700">
-              <p>{error}</p>
-            </div>
-            <div className="mt-4">
-              <button
-                type="button"
-                className="bg-red-100 px-2 py-1 text-sm font-medium text-red-800 hover:bg-red-200 border border-transparent rounded"
-                onClick={retryFetch}
-                disabled={loading}
-              >
-                {loading ? 'Cargando...' : 'Reintentar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error al cargar cursos</AlertTitle>
+        <AlertDescription>
+          <p className="mb-4">{error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={retryFetch}
+            disabled={loading}
+            className="bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900 border-red-300"
+          >
+            {loading ? 'Cargando...' : 'Reintentar'}
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
   
@@ -173,52 +191,65 @@ const AdminCourses: React.FC = () => {
     <div>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Gestión de Cursos</h1>
-        <Link
-          to="/platform/admin/courses/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-        >
-          + Nuevo Curso
-        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <BookOpen className="w-8 h-8 text-primary" />
+            Gestión de Cursos
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Administra y publica los cursos de la plataforma
+          </p>
+        </div>
+        <Button asChild className="bg-primary hover:bg-primary/90">
+          <Link to="/platform/admin/courses/new">
+            <Plus className="w-5 h-5 mr-2" />
+            Nuevo Curso
+          </Link>
+        </Button>
       </div>
       
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-            <select
-              value={publishedFilter}
-              onChange={(e) => setPublishedFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="all">Todos</option>
-              <option value="published">Publicados</option>
-              <option value="draft">Borradores</option>
-            </select>
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Estado</label>
+              <Select value={publishedFilter} onValueChange={setPublishedFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="published">Publicados</SelectItem>
+                  <SelectItem value="draft">Borradores</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Categoría</label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filtrar por categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {getCategoryOptions().map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            >
-              <option value="all">Todas</option>
-              {getCategoryOptions().map((category) => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
       
       {/* Tabla de cursos */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -255,13 +286,20 @@ const AdminCourses: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    course.is_published 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <Badge
+                    variant="secondary"
+                    className={course.is_published
+                      ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                      : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+                    }
+                  >
+                    {course.is_published ? (
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                    ) : (
+                      <XCircle className="w-3 h-3 mr-1" />
+                    )}
                     {course.status_label}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {course.lessons_count}
@@ -274,41 +312,72 @@ const AdminCourses: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
                   <div className="flex justify-end gap-2">
-                    <Link
-                      to={`/platform/admin/courses/${course.id}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
                     >
-                      Editar
-                    </Link>
-                    <button
+                      <Link to={`/platform/admin/courses/${course.id}/edit`}>
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleTogglePublish(course.id)}
-                      className={`${
-                        course.is_published 
-                          ? 'text-yellow-600 hover:text-yellow-900' 
-                          : 'text-green-600 hover:text-green-900'
-                      }`}
+                      className={course.is_published
+                        ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50'
+                        : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                      }
                     >
-                      {course.is_published ? 'Despublicar' : 'Publicar'}
-                    </button>
-                    <button
+                      {course.is_published ? (
+                        <>
+                          <XCircle className="w-4 h-4 mr-1" />
+                          Despublicar
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Publicar
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleDeleteCourse(course.id, course.title)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
+                      <Trash2 className="w-4 h-4 mr-1" />
                       Eliminar
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        
+
         {courses.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No hay cursos disponibles
+          <div className="text-center py-12">
+            <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No hay cursos disponibles
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Comienza creando tu primer curso
+            </p>
+            <Button asChild>
+              <Link to="/platform/admin/courses/new">
+                <Plus className="w-5 h-5 mr-2" />
+                Crear Curso
+              </Link>
+            </Button>
           </div>
         )}
-      </div>
+        </div>
+      </Card>
     </div>
   );
 };

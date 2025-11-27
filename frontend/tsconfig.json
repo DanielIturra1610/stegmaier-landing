@@ -18,12 +18,12 @@
       "esModuleInterop": true,
       "baseUrl": ".",
       "paths": {
-        "@/*": ["*"],
-        "@components/*": ["components/*"],
-        "@sections/*": ["sections/*"],
-        "@lib/*": ["lib/*"],
-        "@hooks/*": ["hooks/*"],
-        "@assets/*": ["assets/*"]
+        "@/*": ["./src/*"],
+        "@components/*": ["./src/components/*"],
+        "@sections/*": ["./src/sections/*"],
+        "@lib/*": ["./src/lib/*"],
+        "@hooks/*": ["./src/hooks/*"],
+        "@assets/*": ["./src/assets/*"]
       }
     },
     "include": ["src", "src/**/*", "src/tests/vitest.d.ts"],

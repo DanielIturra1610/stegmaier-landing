@@ -3,15 +3,21 @@
  */
 import React from 'react';
 import { CourseDetail, UserCourseAccess } from '../../types/course';
-import { 
-  Clock, 
-  BookOpen, 
-  Users, 
-  Star, 
+import {
+  Clock,
+  BookOpen,
+  Users,
+  Star,
   Award,
   CheckCircle,
-  PlayCircle 
+  PlayCircle
 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CourseHeroProps {
   course: CourseDetail;
@@ -70,22 +76,21 @@ const CourseHero: React.FC<CourseHeroProps> = ({
   const renderActionButton = () => {
     if (userAccess.is_enrolled) {
       return (
-        <button
-          onClick={onStart}
-          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-        >
+        <Button onClick={onStart} size="lg" className="w-full sm:w-auto">
           <PlayCircle className="w-5 h-5 mr-2" />
           {userAccess.enrollment_status === 'completed' ? 'Revisar Curso' : 'Continuar Curso'}
-        </button>
+        </Button>
       );
     }
 
     if (userAccess.can_enroll && onEnroll) {
       return (
-        <button
+        <Button
           onClick={onEnroll}
           disabled={enrollmentLoading}
-          className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          size="lg"
+          variant="default"
+          className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
         >
           {enrollmentLoading ? (
             <>
@@ -98,23 +103,20 @@ const CourseHero: React.FC<CourseHeroProps> = ({
               Inscribirse Gratis
             </>
           )}
-        </button>
+        </Button>
       );
     }
 
     return (
-      <button
-        disabled
-        className="inline-flex items-center px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed"
-      >
+      <Button disabled size="lg" variant="secondary" className="w-full sm:w-auto">
         No Disponible
-      </button>
+      </Button>
     );
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-6 lg:p-8">
+    <Card className="overflow-hidden">
+      <CardContent className="p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Imagen del curso */}
           <div className="lg:w-2/5">
@@ -123,33 +125,33 @@ const CourseHero: React.FC<CourseHeroProps> = ({
                 <img
                   src={course.cover_image}
                   alt={course.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-lg"
                 />
               ) : (
-                <div className="w-full h-64 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+                <div className="w-full h-64 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
                   <BookOpen className="w-16 h-16 text-white" />
                 </div>
               )}
             </div>
           </div>
-          
+
           {/* Información del curso */}
           <div className="lg:w-3/5 space-y-6">
             {/* Tags y nivel */}
-            <div className="flex flex-wrap items-center gap-3">
-              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getLevelColor(course.level)}`}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className={getLevelColor(course.level)}>
                 {getLevelText(course.level)}
-              </span>
-              
-              <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
+              </Badge>
+
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 {course.category}
-              </span>
-              
+              </Badge>
+
               {userAccess.is_enrolled && (
-                <span className="px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-                  <CheckCircle className="w-4 h-4 inline mr-1" />
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <CheckCircle className="w-3 h-3 inline mr-1" />
                   Inscrito
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -165,23 +167,14 @@ const CourseHero: React.FC<CourseHeroProps> = ({
 
             {/* Instructor */}
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                {course.instructor.avatar ? (
-                  <img
-                    src={course.instructor.avatar}
-                    alt={course.instructor.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-medium text-gray-600">
-                    {course.instructor.name.charAt(0)}
-                  </span>
-                )}
-              </div>
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                <AvatarFallback>{course.instructor.name.charAt(0)}</AvatarFallback>
+              </Avatar>
               <div>
                 <p className="font-medium text-gray-900">{course.instructor.name}</p>
                 {course.instructor.title && (
-                  <p className="text-sm text-gray-500">{course.instructor.title}</p>
+                  <p className="text-sm text-muted-foreground">{course.instructor.title}</p>
                 )}
               </div>
             </div>
@@ -233,7 +226,7 @@ const CourseHero: React.FC<CourseHeroProps> = ({
 
             {/* Progreso del usuario (solo si está inscrito) */}
             {userAccess.is_enrolled && course.user_enrollment && (
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-blue-900">
                     Progreso del curso
@@ -242,12 +235,7 @@ const CourseHero: React.FC<CourseHeroProps> = ({
                     {Math.round(course.user_enrollment.progress)}%
                   </span>
                 </div>
-                <div className="w-full bg-blue-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${course.user_enrollment.progress}%` }}
-                  ></div>
-                </div>
+                <Progress value={course.user_enrollment.progress} className="h-2" />
               </div>
             )}
 
@@ -258,23 +246,17 @@ const CourseHero: React.FC<CourseHeroProps> = ({
 
             {/* Restricciones (si las hay) */}
             {userAccess.restrictions.length > 0 && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <Award className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-yellow-800">
-                      {userAccess.restrictions.join('. ')}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <Alert className="border-l-4 border-yellow-400 bg-yellow-50">
+                <Award className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  {userAccess.restrictions.join('. ')}
+                </AlertDescription>
+              </Alert>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

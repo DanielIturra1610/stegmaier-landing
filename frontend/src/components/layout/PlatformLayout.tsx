@@ -7,6 +7,7 @@ import { User as AuthUser } from '../../types/auth';
 // import { ANALYTICS_EVENTS } from '../onboarding/constants';
 import PageHeader from '../header/PageHeader';
 import PlatformSidebar from './PlatformSidebar';
+import CommandPalette from '../command/CommandPalette';
 
 /**
  * Layout para la plataforma de cursos (área protegida)
@@ -15,6 +16,7 @@ import PlatformSidebar from './PlatformSidebar';
 const PlatformLayout: React.FC = () => {
   // Estado para la interfaz principal
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   // Obtener datos del usuario actual del contexto de autenticación
   const { user } = useAuth();
@@ -146,7 +148,13 @@ const PlatformLayout: React.FC = () => {
   */
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Command Palette - Búsqueda global (Cmd+K / Ctrl+K) */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+      />
+
       {/* TEMPORALMENTE DESHABILITADO: Sistema de onboarding para usuarios nuevos */}
       {/*
       {showOnboarding && user && !experienceLoading && (
@@ -175,21 +183,22 @@ const PlatformLayout: React.FC = () => {
       )}
 
       {/* Contenido principal */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Header contextual */}
-        <PageHeader 
+        <PageHeader
           onMenuClick={toggleSidebar}
+          onCommandPaletteOpen={() => setCommandPaletteOpen(true)}
         />
         
         {/* Contenido dinámico */}
         <main
-          className={`flex-1 overflow-auto ${isFullWidthPage ? '' : 'p-4 md:p-6'}`}
+          className={`flex-1 overflow-y-auto overflow-x-hidden ${isFullWidthPage ? '' : 'p-4 md:p-6'}`}
           data-onboarding="dashboard-main"
         >
           {isFullWidthPage ? (
             <Outlet />
           ) : (
-            <div className="max-w-7xl mx-auto min-h-screen">
+            <div className="max-w-7xl mx-auto">
               <Outlet />
             </div>
           )}

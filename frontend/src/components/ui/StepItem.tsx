@@ -1,6 +1,4 @@
 // src/components/ui/StepItem.tsx
-import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
 import { cn } from '../../lib/utils'
 import type { Step } from '../../types'
 import React from 'react';
@@ -26,9 +24,6 @@ const StepItem = ({
   onMouseEnter,
   onMouseLeave
 }: StepItemProps) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-50px' })
-  
   // Determine colors based on variant
   const variantStyles = {
     primary: {
@@ -55,15 +50,11 @@ const StepItem = ({
   };
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      transition={{ duration: 0.6, delay: id * 0.1 }}
+    <div
       className={cn(
         "relative",
-        direction === 'vertical' ? "md:flex" : "flex flex-col items-center"
+        direction === 'vertical' ? "md:flex" : "flex flex-col items-center",
+        "hover:-translate-y-2 transition-all duration-300"
       )}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -114,7 +105,7 @@ const StepItem = ({
         </h3>
         <p className="mt-2 text-gray-600">{desc}</p>
       </article>
-    </motion.div>
+    </div>
   )
 }
 

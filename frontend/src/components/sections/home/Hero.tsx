@@ -1,7 +1,7 @@
 import { FC, useRef } from 'react'
 import React from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion'
-import Button from '../../ui/button'
+import { Button } from '../../ui/button'
 import IsoBadge from '../../ui/IsoBadge'
 import SectionConnector from '../../ui/SectionConnector'
 

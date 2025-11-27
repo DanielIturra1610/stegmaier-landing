@@ -3,11 +3,15 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeft } from 'lucide-react';
 import quizService from '../../services/quizService';
 import QuizTaker from '../../components/quizzes/QuizTaker';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import type { Quiz } from '../../types/quiz';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 
 const QuizTakePage: React.FC = () => {
@@ -93,8 +97,8 @@ const QuizTakePage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando quiz...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando quiz...</p>
         </div>
       </div>
     );
@@ -102,30 +106,24 @@ const QuizTakePage: React.FC = () => {
 
   if (error || !quiz) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="text-red-500 mb-4">
-            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error al cargar el quiz</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={handleNavigateBack}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Volver al Curso
-            </button>
-            <button
-              onClick={loadQuiz}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Reintentar
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error al cargar el quiz</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="mt-6 flex gap-3 justify-center">
+              <Button onClick={handleNavigateBack}>
+                Volver al Curso
+              </Button>
+              <Button variant="secondary" onClick={loadQuiz}>
+                Reintentar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -137,16 +135,17 @@ const QuizTakePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleNavigateBack}
-                className="p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
                 title="Volver al curso"
               >
-                <ArrowLeftIcon className="h-5 w-5" />
-              </button>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">{quiz.title}</h1>
-                <p className="text-sm text-gray-600">Evaluación del curso</p>
+                <p className="text-sm text-muted-foreground">Evaluación del curso</p>
               </div>
             </div>
           </div>

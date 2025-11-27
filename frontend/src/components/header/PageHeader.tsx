@@ -4,7 +4,8 @@
  * Accesible (WCAG AA) con navegación semántica
  */
 import React from 'react';
-import { Award, Activity, Clock } from 'lucide-react';
+import { Award, Activity, Clock, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useHeaderConfig } from '../../hooks/useHeaderConfig';
 import HeaderBreadcrumbs from './sub/HeaderBreadcrumbs';
 import HeaderTitle from './sub/HeaderTitle';
@@ -13,17 +14,21 @@ import HeaderActions from './sub/HeaderActions';
 import HeaderTabs from './sub/HeaderTabs';
 import HeaderNotifications from './sub/HeaderNotifications';
 import ThemeToggle from './sub/ThemeToggle';
+import TenantSelector from '../tenant/TenantSelector';
+import CommandPaletteTrigger from '../command/CommandPaletteTrigger';
 import { HeaderStat } from './types';
 import { headerAnimations, themeAnimations } from './animations';
 
 interface PageHeaderProps {
   onMenuClick?: () => void;
+  onCommandPaletteOpen?: () => void;
   className?: string;
 }
 
-export const PageHeader: React.FC<PageHeaderProps> = ({ 
-  onMenuClick, 
-  className = '' 
+export const PageHeader: React.FC<PageHeaderProps> = ({
+  onMenuClick,
+  onCommandPaletteOpen,
+  className = ''
 }) => {
   const { config, data, period, setPeriod, refresh, loading, error } = useHeaderConfig();
 
@@ -87,22 +92,30 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {config.breadcrumbs && (
-                <HeaderBreadcrumbs 
+                <HeaderBreadcrumbs
                   breadcrumbs={config.breadcrumbs}
                   className="hidden sm:flex"
                 />
               )}
             </div>
-            
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center gap-2">
+              {/* Command Palette Trigger */}
+              {onCommandPaletteOpen && (
+                <CommandPaletteTrigger onClick={onCommandPaletteOpen} />
+              )}
+
+              {/* Selector de Tenant (solo para superadmin con múltiples tenants) */}
+              <TenantSelector showLabel={false} />
+
               {/* Notificaciones */}
               {config.showNotifications && (
                 <HeaderNotifications />
               )}
-              
+
               {/* Toggle de tema */}
               <ThemeToggle compact />
-              
+
               {/* Acciones principales */}
               <HeaderActions
                 period={period}
@@ -146,18 +159,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
           {/* Error state */}
           {error && !loading && (
-            <div className={`${headerAnimations.error.container} ${headerAnimations.error.content} rounded-md p-3`}>
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Error cargando datos
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{error}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error cargando datos</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
         </div>
 

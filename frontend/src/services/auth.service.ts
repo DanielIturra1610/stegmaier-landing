@@ -16,50 +16,78 @@ export const authService = {
    */
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     // Transformamos las credenciales al formato esperado por el backend
-    // El backend espera username o email, así que enviamos el email como username
+    // El backend espera email y password
     const backendCredentials = {
-      username: credentials.email,  // El backend puede autenticar con username o email
+      email: credentials.email,
       password: credentials.password
     };
-    
-    const response = await axios.post<AuthResponse>(buildApiUrl('/auth/login'), backendCredentials);
-    
+
+    const response = await axios.post(buildApiUrl('/auth/login'), backendCredentials);
+
+    // El backend envuelve la respuesta en { success, message, data }
+    const authData = response.data.data as AuthResponse;
+
+    console.log('🔍 [authService] Login response received:', {
+      hasToken: !!authData?.access_token,
+      tokenPreview: authData?.access_token?.substring(0, 20) + '...'
+    });
+
     // Guardar el token y los datos del usuario en localStorage para mantener la sesión
-    if (response.data && response.data.access_token) {
-      localStorage.setItem('auth_token', response.data.access_token);
+    if (authData && authData.access_token) {
+      console.log('🔍 [authService] Saving token to localStorage...');
+      localStorage.setItem('auth_token', authData.access_token);
+
+      // Verificar que se guardó correctamente
+      const savedToken = localStorage.getItem('auth_token');
+      console.log('🔍 [authService] Token saved verification:', {
+        saved: !!savedToken,
+        matches: savedToken === authData.access_token
+      });
+
       // Guardar información del usuario para acceso rápido
       const userData = {
-        id: response.data.user_id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role
+        id: authData.user?.id,
+        username: authData.user?.full_name,
+        email: authData.user?.email,
+        role: authData.user?.role
       };
       localStorage.setItem('auth_user', JSON.stringify(userData));
     }
-    
-    return response.data;
+
+    return authData;
   },
 
   /**
    * Registrar un nuevo usuario
    */
   register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await axios.post<AuthResponse>(buildApiUrl('/auth/register'), userData);
-    
+    // Transformar los datos del frontend al formato esperado por el backend
+    const backendPayload = {
+      email: userData.email,
+      password: userData.password,
+      full_name: `${userData.firstName} ${userData.lastName}`.trim(),
+      role: 'student' // Rol por defecto
+    };
+
+    const response = await axios.post(buildApiUrl('/auth/register'), backendPayload);
+
+    // El backend envuelve la respuesta en { success, message, data }
+    const authData = response.data.data as AuthResponse;
+
     // Guardar el token y los datos del usuario en localStorage para mantener la sesión
-    if (response.data && response.data.access_token) {
-      localStorage.setItem('auth_token', response.data.access_token);
+    if (authData && authData.access_token) {
+      localStorage.setItem('auth_token', authData.access_token);
       // Guardar información del usuario para acceso rápido
       const userData = {
-        id: response.data.user_id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role
+        id: authData.user?.id,
+        username: authData.user?.full_name,
+        email: authData.user?.email,
+        role: authData.user?.role
       };
       localStorage.setItem('auth_user', JSON.stringify(userData));
     }
-    
-    return response.data;
+
+    return authData;
   },
 
   /**
@@ -98,14 +126,19 @@ export const authService = {
    * Obtener información del usuario actual
    */
   getCurrentUser: async () => {
-    const response = await axios.get(buildApiUrl('/auth/me'), {
-      headers: getAuthHeaders()
-    });
-    const apiData = response.data;
-    
+    console.log('🔍 [authService] getCurrentUser called');
+    const tokenBeforeCall = localStorage.getItem('auth_token');
+    console.log('🔍 [authService] Token in localStorage before API call:', tokenBeforeCall ? tokenBeforeCall.substring(0, 20) + '...' : 'NO TOKEN');
+
+    // El interceptor de axios agregará automáticamente los headers de autenticación
+    const response = await axios.get(buildApiUrl('/auth/me'));
+
+    // El backend envuelve la respuesta en { success, message, data }
+    const apiData = response.data.data;
+
     // Console para debugging
     console.log('🔍 [authService] Raw API data:', apiData);
-    
+
     // Mapeo de los datos recibidos del API al formato que espera nuestra aplicación
     const userData = {
       id: apiData._id || apiData.id || '',
@@ -123,12 +156,12 @@ export const authService = {
       createdAt: apiData.createdAt || apiData.created_at || new Date().toISOString(),
       updatedAt: apiData.updatedAt || apiData.updated_at || new Date().toISOString()
     };
-    
+
     console.log('🔍 [authService] Mapped user data:', userData);
-    
+
     // Guardamos los datos actualizados en localStorage para acceso rápido
     localStorage.setItem('auth_user', JSON.stringify(userData));
-    
+
     return userData;
   },
 

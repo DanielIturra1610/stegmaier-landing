@@ -44,23 +44,7 @@ export const headerRouteConfig: Record<string, HeaderConfig> = {
   },
 
   // === COURSE PAGES ===
-  '/platform/courses': {
-    variant: 'standard',
-    title: 'Explorar Cursos',
-    breadcrumbs: [
-      { label: 'Plataforma', to: '/platform' },
-      { label: 'Cursos' }
-    ],
-    tabs: [
-      { label: 'Todos', to: '#todos', ariaControls: 'todos-panel' },
-      { label: 'Categorías', to: '#categorias', ariaControls: 'categorias-panel' },
-      { label: 'Populares', to: '#populares', ariaControls: 'populares-panel' }
-    ],
-    theme: 'light',
-    requires: ['auth'],
-    showSearch: true,
-    showNotifications: true
-  },
+  // '/platform/courses' - Header disabled, using in-page title instead
   
   '/platform/my-courses': {
     variant: 'standard', 
@@ -133,40 +117,9 @@ export const headerRouteConfig: Record<string, HeaderConfig> = {
     showUserMenu: true
   },
 
-  '/platform/admin/courses': {
-    variant: 'admin',
-    title: 'Gestión de Cursos',
-    breadcrumbs: [
-      { label: 'Plataforma', to: '/platform' },
-      { label: 'Gestión de Cursos' }
-    ],
-    tabs: [
-      { label: 'Lista', to: '#lista', ariaControls: 'lista-panel' },
-      { label: 'Crear', to: '#crear', ariaControls: 'crear-panel' },
-      { label: 'Categorías', to: '#categorias', ariaControls: 'categorias-panel' }
-    ],
-    theme: 'brand',
-    requires: ['auth', 'admin'],
-    showNotifications: true
-  },
+  // '/platform/admin/courses' - Header disabled, using in-page title instead
 
-  '/platform/admin/users': {
-    variant: 'admin',
-    title: 'Gestión de Usuarios',
-    breadcrumbs: [
-      { label: 'Plataforma', to: '/platform' },
-      { label: 'Administración', to: '/platform/admin' },
-      { label: 'Usuarios' }
-    ],
-    tabs: [
-      { label: 'Todos', to: '#todos', ariaControls: 'todos-panel' },
-      { label: 'Instructores', to: '#instructores', ariaControls: 'instructores-panel' },
-      { label: 'Estudiantes', to: '#estudiantes', ariaControls: 'estudiantes-panel' }
-    ],
-    theme: 'brand',
-    requires: ['auth', 'admin'],
-    showNotifications: true
-  },
+  // '/platform/users' - Header disabled, using in-page title instead
 
   '/platform/admin/analytics': {
     variant: 'admin',
@@ -275,22 +228,7 @@ export const headerRouteConfig: Record<string, HeaderConfig> = {
     showNotifications: true
   },
 
-  '/platform/settings': {
-    variant: 'standard',
-    title: 'Configuración',
-    breadcrumbs: [
-      { label: 'Plataforma', to: '/platform' },
-      { label: 'Configuración' }
-    ],
-    tabs: [
-      { label: 'General', to: '#general', ariaControls: 'general-panel' },
-      { label: 'Notificaciones', to: '#notificaciones', ariaControls: 'notificaciones-panel' },
-      { label: 'Privacidad', to: '#privacidad', ariaControls: 'privacidad-panel' }
-    ],
-    theme: 'light',
-    requires: ['auth'],
-    showNotifications: true
-  },
+  // '/platform/settings' - Header disabled, using in-page title instead
 
   // === SUPPORT ===
   '/platform/support': {

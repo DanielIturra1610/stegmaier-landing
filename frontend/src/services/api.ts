@@ -19,6 +19,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add tenant ID header for multi-tenancy
+    const tenantId = localStorage.getItem('current_tenant_id');
+    if (tenantId && tenantId.trim() !== '' && tenantId !== 'null' && tenantId !== 'undefined') {
+      config.headers['X-Tenant-ID'] = tenantId;
+    }
+
     return config;
   },
   (error) => {

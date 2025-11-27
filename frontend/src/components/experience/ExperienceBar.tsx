@@ -1,8 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Award, BookOpen, GraduationCap, Star } from 'lucide-react';
 import { ExperienceBarProps } from './types';
 import { calculateProgress, getLevelTitle, formatNumber } from './utils';
 import { ANIMATION_VARIANTS } from './constants';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 /**
  * ExperienceBar Component
@@ -25,46 +35,19 @@ const ExperienceBar: React.FC<ExperienceBarProps> = ({
   // Get dynamic title based on current level
   const levelTitle = getLevelTitle(currentLevel);
 
-  // Stats icons mapping
-  const statsIcons = {
-    courses: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-      </svg>
-    ),
-    lessons: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    certificates: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-      </svg>
-    )
-  };
-
   // Check if high level for special effects
   const isHighLevel = currentLevel >= 30;
 
   return (
-    <motion.div
-      className="w-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative overflow-hidden"
-      variants={ANIMATION_VARIANTS.containerFadeIn}
-      initial="initial"
-      animate="animate"
-      role="region"
-      aria-label="Progreso del usuario"
-    >
-      {/* Title */}
-      <motion.h2 
-        className="text-xl font-bold text-gray-800 mb-4"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        Tu progreso general
-      </motion.h2>
+    <Card className="w-full relative overflow-hidden">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Star className="w-5 h-5 text-primary" />
+          Tu progreso general
+        </CardTitle>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
 
       {/* Main Experience Bar Container */}
       <div className="w-full flex flex-col lg:flex-row items-center lg:items-start gap-6 mb-4">
@@ -138,70 +121,69 @@ const ExperienceBar: React.FC<ExperienceBarProps> = ({
           </motion.h3>
           
           {/* Progress bar container */}
-          <div className="w-full mb-3" role="progressbar" aria-valuenow={progressPercentage} aria-valuemin={0} aria-valuemax={100}>
-            {/* Background bar */}
-            <div className="w-full h-5 bg-primary-50 rounded-full overflow-hidden relative">
-              {/* Progress fill with gradient */}
-              <motion.div 
-                className={`
-                  h-full rounded-full 
-                  ${isHighLevel ? 
-                    'bg-gradient-to-r from-gold-500 to-accent-500' : 
-                    'bg-gradient-to-r from-primary-600 to-primary-400'
-                  }
-                `}
-                custom={progressPercentage}
-                variants={ANIMATION_VARIANTS.barAnimation}
-                initial="initial"
-                animate="animate"
-              />
-              
-              {/* XP text overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-xs font-medium text-gray-800">
-                  {formatNumber(currentLevelXP)} / {formatNumber(xpForNextLevel)} XP
-                </p>
-              </div>
+          <div className="w-full mb-3 space-y-2" role="progressbar" aria-valuenow={progressPercentage} aria-valuemin={0} aria-valuemax={100}>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">XP hasta nivel {currentLevel + 1}</span>
+              <span className="font-medium">
+                {formatNumber(currentLevelXP)} / {formatNumber(xpForNextLevel)}
+              </span>
             </div>
+            <Progress value={progressPercentage} className="h-3" />
           </div>
           
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-6 mt-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4">
             {/* Courses completed stat */}
-            <div className="flex flex-col sm:flex-row sm:items-center bg-primary-50 p-2 sm:p-3 rounded-lg">
-              <div className="flex justify-center sm:justify-start text-primary-500 mb-1 sm:mb-0 sm:mr-3">
-                {statsIcons.courses}
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-lg sm:text-xl font-bold text-primary-600">{coursesCompleted}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Cursos completados</p>
-              </div>
-            </div>
-            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center bg-primary-50 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-primary-100 transition-colors">
+                    <BookOpen className="h-6 w-6 text-primary-600 mb-1" />
+                    <p className="text-lg sm:text-xl font-bold text-primary-600">{coursesCompleted}</p>
+                    <p className="text-xs text-gray-600">Cursos</p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cursos completados</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* Lessons completed stat */}
-            <div className="flex flex-col sm:flex-row sm:items-center bg-primary-50 p-2 sm:p-3 rounded-lg">
-              <div className="flex justify-center sm:justify-start text-primary-500 mb-1 sm:mb-0 sm:mr-3">
-                {statsIcons.lessons}
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-lg sm:text-xl font-bold text-primary-600">{lessonsCompleted}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Lecciones completadas</p>
-              </div>
-            </div>
-            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center bg-green-50 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                    <Award className="h-6 w-6 text-green-600 mb-1" />
+                    <p className="text-lg sm:text-xl font-bold text-green-600">{lessonsCompleted}</p>
+                    <p className="text-xs text-gray-600">Lecciones</p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Lecciones completadas</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* Certificates stat */}
-            <div className="flex flex-col sm:flex-row sm:items-center bg-primary-50 p-2 sm:p-3 rounded-lg">
-              <div className="flex justify-center sm:justify-start text-primary-500 mb-1 sm:mb-0 sm:mr-3">
-                {statsIcons.certificates}
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-lg sm:text-xl font-bold text-primary-600">{certificates}</p>
-                <p className="text-xs sm:text-sm text-gray-500">Certificados obtenidos</p>
-              </div>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center bg-amber-50 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors">
+                    <GraduationCap className="h-6 w-6 text-amber-600 mb-1" />
+                    <p className="text-lg sm:text-xl font-bold text-amber-600">{certificates}</p>
+                    <p className="text-xs text-gray-600">Certificados</p>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Certificados obtenidos</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
+      </CardContent>
       
       {/* Decorative elements */}
       {isHighLevel && (
@@ -233,7 +215,7 @@ const ExperienceBar: React.FC<ExperienceBarProps> = ({
           <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-primary-500/10 to-transparent" />
         </div>
       )}
-    </motion.div>
+    </Card>
   );
 };
 

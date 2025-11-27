@@ -15,14 +15,29 @@
     text-rendering: optimizeLegibility;
     /* Prevenir escalado de texto en iOS */
     text-size-adjust: 100%;
+
+    /* Smooth theme transitions */
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   }
-  
+
   body {
     @apply bg-primary-900 text-white;
     font-synthesis: none;
     text-size-adjust: 100%;
     -webkit-font-smoothing: subpixel-antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    /* Smooth theme transitions */
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+
+  /* Smooth transitions for all elements that change with theme */
+  * {
+    @media (prefers-reduced-motion: no-preference) {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-timing-function: ease-in-out;
+      transition-duration: 0.2s;
+    }
   }
   
   /* Mejora subpíxel rendering para elementos clave, no para todos */

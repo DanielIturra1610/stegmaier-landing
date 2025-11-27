@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import { Flame, TrendingUp, Target } from 'lucide-react';
+import {
   StreakTrackerProps,
   TooltipData,
   ActivityLevel,
   ActivityData
 } from './types';
 import {
-  generateCalendarGrid, 
-  formatDate, 
+  generateCalendarGrid,
+  formatDate,
   formatDateRange,
   getStreakEmoji
 } from './utils';
@@ -17,6 +18,16 @@ import {
   ACTIVITY_COLORS,
   ANIMATION_VARIANTS
 } from './constants';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 /**
  * StreakTracker component displays a visual calendar of study activity (GitHub style)
@@ -75,74 +86,77 @@ const StreakTracker: React.FC<StreakTrackerProps> = ({
     setTooltipData(null);
   }, []);
   
-  // Render streak status pill with emoji
+  // Render streak status pill with emoji using shadcn Badge
   const renderStreakStatus = (streak: number, isLongest = false) => {
     const emoji = getStreakEmoji(streak);
-    
     const animationVariant = streak >= 7 && !isLongest ? 'animate' : 'initial';
-    
+
     return (
-      <motion.div 
-        className={`flex items-center gap-2 px-3 py-2 rounded-full ${
-          streak > 0 ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
-        }`}
+      <motion.div
         variants={ANIMATION_VARIANTS.pulse}
         initial="initial"
         animate={animationVariant}
         transition={ANIMATION_VARIANTS.pulseTransition}
       >
-        {emoji && <span className="text-lg">{emoji}</span>}
-        <span className="font-semibold text-sm">
-          {streak} {isLongest ? 'días (récord)' : 'días'}
-        </span>
+        <Badge
+          variant={streak > 0 ? "default" : "secondary"}
+          className={`flex items-center gap-2 px-3 py-2 ${
+            streak > 0 ? 'bg-amber-100 text-amber-800 hover:bg-amber-100' : ''
+          }`}
+        >
+          {streak >= 7 && <Flame className="w-4 h-4 text-orange-500" />}
+          {emoji && <span className="text-lg">{emoji}</span>}
+          <span className="font-semibold text-sm">
+            {streak} {isLongest ? 'días (récord)' : 'días'}
+          </span>
+        </Badge>
       </motion.div>
     );
   };
 
   return (
-    <div className="w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div className="flex flex-col gap-6">
-        {/* Header with stats */}
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <h3 className="text-xl font-bold text-gray-900 m-0">
-              Racha de estudio
-            </h3>
-            <span className="text-sm text-gray-500">
-              {formatDateRange(calendarData.startDate, calendarData.endDate)}
-            </span>
+    <Card className="w-full">
+      <CardHeader className="pb-4">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Racha de estudio
+          </CardTitle>
+          <span className="text-sm text-muted-foreground">
+            {formatDateRange(calendarData.startDate, calendarData.endDate)}
+          </span>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Current streak */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted-foreground">Racha actual</span>
+            {renderStreakStatus(currentStreak)}
           </div>
-          
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Current streak */}
-            <div className="flex flex-col gap-2">
-              <span className="text-sm text-gray-500">Racha actual</span>
-              {renderStreakStatus(currentStreak)}
-            </div>
-            
-            {/* Longest streak */}
-            <div className="flex flex-col gap-2">
-              <span className="text-sm text-gray-500">Mejor racha</span>
-              {renderStreakStatus(longestStreak, true)}
-            </div>
-            
-            {/* Weekly goal */}
-            <div className="flex flex-col gap-2">
-              <span className="text-sm text-gray-500">
-                Meta semanal ({Math.floor(weeklyProgress)}% completado)
+
+          {/* Longest streak */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted-foreground">Mejor racha</span>
+            {renderStreakStatus(longestStreak, true)}
+          </div>
+
+          {/* Weekly goal */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <Target className="w-4 h-4" />
+                Meta semanal
               </span>
-              <div className="h-8 w-full bg-gray-200 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full bg-blue-500 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${weeklyProgress}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                />
-              </div>
+              <span className="text-sm font-medium">{Math.floor(weeklyProgress)}%</span>
             </div>
+            <Progress value={weeklyProgress} className="h-2" />
           </div>
         </div>
+
+        <Separator />
         
         {/* Calendar grid - GitHub style improved */}
         <div className="w-full overflow-x-auto pb-4">
@@ -250,8 +264,8 @@ const StreakTracker: React.FC<StreakTrackerProps> = ({
             </div>
           </div>
         </div>
-      </div>
-      
+      </CardContent>
+
       {/* Tooltip - Improved styling */}
       <AnimatePresence>
         {tooltipData && (
@@ -283,7 +297,7 @@ const StreakTracker: React.FC<StreakTrackerProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 };
 

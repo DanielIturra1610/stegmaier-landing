@@ -1,5 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import profileService, { ProfileResponse } from '../../services/profileService';
+import {
+  User,
+  Mail,
+  Calendar,
+  Shield,
+  CheckCircle,
+  Edit,
+  Camera,
+  BookOpen,
+  Award,
+  TrendingUp,
+  Lock,
+  Key,
+  Trash2,
+  Bell,
+  Eye,
+  Moon,
+  Upload,
+  X
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 /**
  * Página de perfil del usuario
@@ -9,7 +44,33 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
-  
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // Fetch user profile to get avatar URL
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await profileService.getMyProfile();
+        if (response.success && response.data?.avatarUrl) {
+          setProfileImage(response.data.avatarUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   // En una implementación completa, aquí tendrías estados para los campos del formulario
   // y funciones para manejar la actualización del perfil
 
@@ -37,150 +98,202 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header con información del perfil destacada */}
-      <header className="bg-gradient-to-r from-primary-700 to-primary-800 text-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
-          {/* Avatar */}
-          <div className="flex-shrink-0">
-            <div className="relative">
-              <div className="h-24 w-24 bg-primary-500 rounded-full flex items-center justify-center text-white text-3xl font-bold border-4 border-white">
-                {getUserInitials()}
-              </div>
-              {user?.verified && (
-                <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+      {/* Hero Section with Cover Image */}
+      <Card className="overflow-hidden">
+        {/* Cover Image */}
+        <div className="relative h-32 md:h-40 bg-gradient-to-r from-primary-600 to-primary-800">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="absolute top-4 right-4"
+            onClick={() => {/* Implement cover upload */}}
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            Cambiar portada
+          </Button>
+        </div>
+
+        {/* Profile Info */}
+        <CardContent className="pt-0">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 -mt-16 md:-mt-12">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Avatar"
+                  className="h-28 w-28 md:h-32 md:w-32 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="h-28 w-28 md:h-32 md:w-32 bg-primary-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
+                  {getUserInitials()}
                 </div>
               )}
-            </div>
-          </div>
-          
-          {/* Información de usuario */}
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {user ? (
-                // Aseguramos mostrar el nombre completo correctamente
-                user?.full_name ? 
-                  user.full_name : 
-                  (user?.firstName || user?.lastName ? 
-                    `${user?.firstName || ''} ${user?.lastName || ''}`.trim() : 
-                    'Usuario')
-              ) : 'Usuario'}
-            </h1>
-            <p className="text-primary-100 mt-1">
-              {user?.email || 'Correo no disponible'}
-            </p>
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
-              {/* Badge de rol dinámico */}
-              <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium ${
-                user?.role === 'admin' 
-                  ? 'bg-red-500 text-white' 
-                  : 'bg-primary-500 text-white'
-              }`}>
-                {user?.role === 'admin' ? (
-                  <>
-                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 2L3 7v9a2 2 0 002 2h10a2 2 0 002-2V7l-7-5zM8 13a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
-                    </svg>
-                    Administrador
-                  </>
-                ) : 'Estudiante'}
-              </span>
               {user?.verified && (
-                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-500 text-white">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Verificado
-                </span>
+                <div className="absolute bottom-1 right-1 bg-green-500 rounded-full p-1.5 border-2 border-white shadow-md">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
               )}
-              <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-500 text-white">
-                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {day: 'numeric', month: 'long', year: 'numeric'}) : 'N/A'}
-              </span>
-              {/* Badge adicional para admins */}
-              {user?.role === 'admin' && (
-                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-yellow-500 text-white">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-                  </svg>
-                  Acceso Total
-                </span>
-              )}
+              <button
+                className="absolute bottom-1 left-1 bg-primary-500 rounded-full p-1.5 border-2 border-white shadow-md hover:bg-primary-600 transition-colors cursor-pointer"
+                onClick={() => setShowAvatarModal(true)}
+              >
+                <Camera className="h-5 w-5 text-white" />
+              </button>
             </div>
-          </div>
-          
-          {/* Botones de acción */}
-          <div className="flex-shrink-0 flex flex-col space-y-2">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200"
-            >
-              {isEditing ? 'Cancelar' : 'Editar perfil'}
-            </button>
-          </div>
-        </div>
-      </header>
-      
-      {/* Navegación por pestañas */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('personal')}
-              className={`${activeTab === 'personal' 
-                ? 'border-primary-500 text-primary-600' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
-                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200`}
-            >
-              Información Personal
-            </button>
-            <button
-              onClick={() => setActiveTab('preferences')}
-              className={`${activeTab === 'preferences' 
-                ? 'border-primary-500 text-primary-600' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
-                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200`}
-            >
-              Preferencias
-            </button>
-            <button
-              onClick={() => setActiveTab('security')}
-              className={`${activeTab === 'security' 
-                ? 'border-primary-500 text-primary-600' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} 
-                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200`}
-            >
-              Seguridad
-            </button>
-          </nav>
-        </div>
-      </div>
 
-      {/* Contenido dinámico según la pestaña activa */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6">
-          {/* Pestaña de información personal */}
-          {activeTab === 'personal' && (
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-medium text-gray-900">Información Personal</h2>
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Editar
-                  </button>
-                )}
+            {/* User Info */}
+            <div className="flex-1 text-center md:text-left pt-16 md:pt-4">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                {user ? (
+                  user?.full_name ?
+                    user.full_name :
+                    (user?.firstName || user?.lastName ?
+                      `${user?.firstName || ''} ${user?.lastName || ''}`.trim() :
+                      'Usuario')
+                ) : 'Usuario'}
+              </h1>
+              <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-muted-foreground">
+                <Mail className="w-4 h-4" />
+                <p>{user?.email || 'Correo no disponible'}</p>
               </div>
 
+              {/* Badges */}
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
+                <Badge variant={user?.role === 'admin' ? 'destructive' : 'default'} className="flex items-center gap-1">
+                  {user?.role === 'admin' ? (
+                    <>
+                      <Shield className="w-3 h-3" />
+                      Administrador
+                    </>
+                  ) : (
+                    <>
+                      <User className="w-3 h-3" />
+                      Estudiante
+                    </>
+                  )}
+                </Badge>
+                {user?.verified && (
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 hover:bg-green-100">
+                    <CheckCircle className="w-3 h-3" />
+                    Verificado
+                  </Badge>
+                )}
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  Desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES', {month: 'short', year: 'numeric'}) : 'N/A'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-4">
+              <Button onClick={() => setShowEditModal(true)}>
+                <Edit className="w-4 h-4 mr-2" />
+                Editar perfil
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary-100 rounded-lg">
+                <BookOpen className="w-6 h-6 text-primary-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Cursos</p>
+                <p className="text-2xl font-bold">0</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-amber-100 rounded-lg">
+                <Award className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Certificados</p>
+                <p className="text-2xl font-bold">0</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Puntos XP</p>
+                <p className="text-2xl font-bold">0</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Shield className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Nivel</p>
+                <p className="text-2xl font-bold">1</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content with Tabs */}
+      <Tabs defaultValue="personal" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="personal" className="flex items-center gap-2">
+            <User className="w-4 h-4" />
+            <span className="hidden sm:inline">Información Personal</span>
+            <span className="sm:hidden">Personal</span>
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Preferencias</span>
+            <span className="sm:hidden">Prefs</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            <span className="hidden sm:inline">Seguridad</span>
+            <span className="sm:hidden">Segur</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Personal Information Tab */}
+        <TabsContent value="personal" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Información Personal
+                </CardTitle>
+                {!isEditing && (
+                  <Button onClick={() => setIsEditing(true)} size="sm">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
               {isEditing ? (
                 <div className="space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -215,327 +328,501 @@ const ProfilePage: React.FC = () => {
                       />
                     </div>
                   </div>
+                  <Separator className="my-4" />
                   <div className="flex space-x-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(false)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                    >
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>
                       Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                    >
+                    </Button>
+                    <Button>
                       Guardar
-                    </button>
+                    </Button>
                   </div>
-                  <p className="text-xs text-center text-yellow-600 mt-2">
-                    La funcionalidad de edición de perfil estará disponible próximamente.
-                  </p>
+                  <Alert className="mt-4">
+                    <AlertDescription>
+                      La funcionalidad de edición de perfil estará disponible próximamente.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 className="font-medium text-gray-900 mb-3">Información básica</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Nombre completo</p>
-                        <p className="mt-1 text-gray-900 font-medium">{user ? (user?.full_name ? user.full_name : `${user?.firstName || ''} ${user?.lastName || ''}`.trim()) : 'No disponible'}</p>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Información básica
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Nombre completo</p>
+                        <p className="text-base font-medium">{user ? (user?.full_name ? user.full_name : `${user?.firstName || ''} ${user?.lastName || ''}`.trim()) : 'No disponible'}</p>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Correo electrónico</p>
-                        <p className="mt-1 text-gray-900 font-medium">{user?.email || 'No disponible'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Estado de cuenta</p>
-                        <p className="mt-1">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            user?.verified 
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {user?.verified ? 'Verificado' : 'Pendiente de verificación'}
-                          </span>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Correo electrónico</p>
+                        <p className="text-base font-medium flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-muted-foreground" />
+                          {user?.email || 'No disponible'}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 className="font-medium text-gray-900 mb-3">Información adicional</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Fecha de registro</p>
-                        <p className="mt-1 text-gray-900 font-medium">
-                          {user?.createdAt 
-                            ? new Date(user.createdAt).toLocaleDateString('es-ES', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Estado de cuenta</p>
+                        <Badge variant={user?.verified ? "secondary" : "outline"} className={user?.verified ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}>
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          {user?.verified ? 'Verificado' : 'Pendiente de verificación'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Fecha de registro</p>
+                        <p className="text-base font-medium flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          {user?.createdAt
+                            ? new Date(user.createdAt).toLocaleDateString('es-ES', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
                               })
                             : 'No disponible'}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Biografía</p>
-                        <p className="mt-1 text-gray-500 italic">
-                          No has proporcionado una biografía aún.
-                        </p>
-                      </div>
                     </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-4">Biografía</h3>
+                    <p className="text-sm text-muted-foreground italic">
+                      No has proporcionado una biografía aún.
+                    </p>
                   </div>
                 </div>
               )}
-            </div>
-          )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Pestaña de preferencias */}
-          {activeTab === 'preferences' && (
-            <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-6">Preferencias de Cuenta</h2>
-              
-              <div className="space-y-6">
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">Notificaciones</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">Notificaciones por email</h4>
-                        <p className="text-sm text-gray-500">Recibe actualizaciones sobre nuevos cursos y contenido</p>
-                      </div>
-                      <button className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <span className="translate-x-5 inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"></span>
-                      </button>
-                    </div>
-                    
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">Recordatorios de cursos</h4>
-                          <p className="text-sm text-gray-500">Recibe recordatorios para continuar tus cursos</p>
-                        </div>
-                        <button className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                          <span className="translate-x-0 inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"></span>
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">Notificaciones de logros</h4>
-                          <p className="text-sm text-gray-500">Recibe notificaciones cuando completes logros</p>
-                        </div>
-                        <button className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                          <span className="translate-x-5 inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"></span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">Preferencias de visualización</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">Mostrar progreso en dashboard</h4>
-                        <p className="text-sm text-gray-500">Ver tu progreso de cursos en el panel principal</p>
-                      </div>
-                      <button className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <span className="translate-x-5 inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"></span>
-                      </button>
-                    </div>
-                    
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">Modo oscuro</h4>
-                          <p className="text-sm text-gray-500">Cambiar entre modo claro y oscuro</p>
-                        </div>
-                        <button className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                          <span className="translate-x-0 inline-block h-5 w-5 rounded-full bg-white shadow transform transition ease-in-out duration-200"></span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-center text-yellow-600 mt-4">
-                    La funcionalidad de preferencias estará disponible próximamente.
+        {/* Preferences Tab */}
+        <TabsContent value="preferences" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notificaciones
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h4 className="text-sm font-medium">Notificaciones por email</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Recibe actualizaciones sobre nuevos cursos y contenido
                   </p>
                 </div>
+                <Switch defaultChecked />
               </div>
-            </div>
-          )}
-          
-          {/* Pestaña de seguridad */}
-          {activeTab === 'security' && (
-            <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-6">Seguridad de la cuenta</h2>
-              
-              <div className="space-y-6">
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">Cambiar contraseña</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">Contraseña actual</label>
-                      <input 
-                        type="password" 
-                        id="currentPassword"
-                        name="currentPassword" 
-                        className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
-                      <input 
-                        type="password" 
-                        id="newPassword"
-                        name="newPassword" 
-                        className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirmar nueva contraseña</label>
-                      <input 
-                        type="password" 
-                        id="confirmPassword"
-                        name="confirmPassword" 
-                        className="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" 
-                      />
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        className="mt-2 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                      >
-                        Actualizar contraseña
-                      </button>
-                    </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h4 className="text-sm font-medium">Recordatorios de cursos</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Recibe recordatorios para continuar tus cursos
+                  </p>
+                </div>
+                <Switch />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h4 className="text-sm font-medium">Notificaciones de logros</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Recibe notificaciones cuando completes logros
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Preferencias de visualización
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h4 className="text-sm font-medium">Mostrar progreso en dashboard</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Ver tu progreso de cursos en el panel principal
+                  </p>
+                </div>
+                <Switch defaultChecked />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5 flex items-center gap-2">
+                  <Moon className="w-4 h-4" />
+                  <div>
+                    <h4 className="text-sm font-medium">Modo oscuro</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Cambiar entre modo claro y oscuro
+                    </p>
                   </div>
                 </div>
-                
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="font-medium text-gray-900 mb-3">Verificación en dos pasos</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Activa la verificación en dos pasos para añadir una capa extra de seguridad a tu cuenta.
-                  </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Configurar verificación en dos pasos
-                  </button>
-                  <p className="text-xs text-center text-yellow-600 mt-4">
-                    La funcionalidad de seguridad estará disponible próximamente.
-                  </p>
-                </div>
-                
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                  <h3 className="font-medium text-red-800 mb-3">Zona de peligro</h3>
-                  <p className="text-sm text-red-600 mb-4">
+                <Switch />
+              </div>
+
+              <Alert className="mt-4">
+                <AlertDescription>
+                  La funcionalidad de preferencias estará disponible próximamente.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="w-5 h-5" />
+                Cambiar contraseña
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="currentPassword" className="text-sm font-medium">
+                  Contraseña actual
+                </label>
+                <input
+                  type="password"
+                  id="currentPassword"
+                  name="currentPassword"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="newPassword" className="text-sm font-medium">
+                  Nueva contraseña
+                </label>
+                <input
+                  type="password"
+                  id="newPassword"
+                  name="newPassword"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-medium">
+                  Confirmar nueva contraseña
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <Separator className="my-4" />
+              <Button>
+                <Lock className="w-4 h-4 mr-2" />
+                Actualizar contraseña
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Verificación en dos pasos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Activa la verificación en dos pasos para añadir una capa extra de seguridad a tu cuenta.
+              </p>
+              <Button>
+                <Shield className="w-4 h-4 mr-2" />
+                Configurar verificación en dos pasos
+              </Button>
+              <Alert className="mt-4">
+                <AlertDescription>
+                  La funcionalidad de seguridad estará disponible próximamente.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Alert variant="destructive">
+            <Trash2 className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-1">Zona de peligro</h3>
+                  <p className="text-sm">
                     Esta acción no se puede deshacer. Eliminará permanentemente tu cuenta y todos tus datos.
                   </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Eliminar cuenta
-                  </button>
                 </div>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar cuenta
+                </Button>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Sección de actividad reciente */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Actividad reciente</h2>
-          
+            </AlertDescription>
+          </Alert>
+        </TabsContent>
+      </Tabs>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Actividad reciente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="flow-root">
-            <ul className="-mb-8">
-              <li>
-                <div className="relative pb-8">
-                  <span className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
-                  <div className="relative flex items-start space-x-3">
-                    <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-primary-500 flex items-center justify-center ring-8 ring-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                      </div>
+            <ul className="-mb-8 space-y-6">
+              <li className="relative">
+                <span className="absolute top-10 left-5 -ml-px h-full w-0.5 bg-border" aria-hidden="true"></span>
+                <div className="relative flex items-start space-x-4">
+                  <div className="relative">
+                    <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-4 ring-background">
+                      <BookOpen className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div>
-                        <div className="text-sm">
-                          <a href="#" className="font-medium text-primary-600">Inscripción a curso</a>
-                        </div>
-                        <p className="mt-0.5 text-sm text-gray-500">Te has inscrito al curso "Introducción a la consultoría estratégica"</p>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>Hace 2 días</p>
-                      </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div>
+                      <p className="text-sm font-medium">Inscripción a curso</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        Te has inscrito al curso "Introducción a la consultoría estratégica"
+                      </p>
                     </div>
+                    <p className="mt-2 text-xs text-muted-foreground">Hace 2 días</p>
                   </div>
                 </div>
               </li>
-              
-              <li>
-                <div className="relative pb-8">
-                  <span className="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
-                  <div className="relative flex items-start space-x-3">
-                    <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
+
+              <li className="relative">
+                <span className="absolute top-10 left-5 -ml-px h-full w-0.5 bg-border" aria-hidden="true"></span>
+                <div className="relative flex items-start space-x-4">
+                  <div className="relative">
+                    <div className="h-10 w-10 rounded-full bg-green-500 text-white flex items-center justify-center ring-4 ring-background">
+                      <CheckCircle className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div>
-                        <div className="text-sm">
-                          <a href="#" className="font-medium text-primary-600">Verificación de cuenta</a>
-                        </div>
-                        <p className="mt-0.5 text-sm text-gray-500">Has verificado tu cuenta correctamente</p>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>Hace 3 días</p>
-                      </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div>
+                      <p className="text-sm font-medium">Verificación de cuenta</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        Has verificado tu cuenta correctamente
+                      </p>
                     </div>
+                    <p className="mt-2 text-xs text-muted-foreground">Hace 3 días</p>
                   </div>
                 </div>
               </li>
-              
-              <li>
-                <div className="relative">
-                  <div className="relative flex items-start space-x-3">
-                    <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
+
+              <li className="relative">
+                <div className="relative flex items-start space-x-4">
+                  <div className="relative">
+                    <div className="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center ring-4 ring-background">
+                      <User className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div>
-                        <div className="text-sm">
-                          <a href="#" className="font-medium text-primary-600">Registro de cuenta</a>
-                        </div>
-                        <p className="mt-0.5 text-sm text-gray-500">Te has registrado en la plataforma</p>
-                      </div>
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>Hace 7 días</p>
-                      </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div>
+                      <p className="text-sm font-medium">Registro de cuenta</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        Te has registrado en la plataforma
+                      </p>
                     </div>
+                    <p className="mt-2 text-xs text-muted-foreground">Hace 7 días</p>
                   </div>
                 </div>
               </li>
             </ul>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Profile Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Editar perfil
+            </DialogTitle>
+            <DialogDescription>
+              Actualiza tu información personal y avatar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                La funcionalidad de edición de perfil estará disponible próximamente.
+              </AlertDescription>
+            </Alert>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Avatar Upload Modal */}
+      <Dialog open={showAvatarModal} onOpenChange={(open) => {
+        setShowAvatarModal(open);
+        if (!open) {
+          setAvatarPreview(null);
+          setAvatarFile(null);
+          setUploadError(null);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5" />
+              Cambiar foto de perfil
+            </DialogTitle>
+            <DialogDescription>
+              Sube una nueva foto para tu perfil
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Error message */}
+            {uploadError && (
+              <Alert variant="destructive">
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Preview area */}
+            <div className="flex flex-col items-center gap-4">
+              {avatarPreview ? (
+                <div className="relative">
+                  <img
+                    src={avatarPreview}
+                    alt="Vista previa"
+                    className="h-32 w-32 rounded-full object-cover border-4 border-primary-200"
+                  />
+                  <button
+                    onClick={() => {
+                      setAvatarPreview(null);
+                      setAvatarFile(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-32 w-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <User className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+
+              {/* Upload input */}
+              <label className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+                  <Upload className="h-4 w-4" />
+                  <span>{avatarPreview ? 'Cambiar imagen' : 'Seleccionar imagen'}</span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Validate file size (5MB max)
+                      if (file.size > 5 * 1024 * 1024) {
+                        setUploadError('El archivo es demasiado grande. Tamaño máximo: 5MB');
+                        return;
+                      }
+                      setUploadError(null);
+                      setAvatarFile(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setAvatarPreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+              <p className="text-xs text-muted-foreground text-center">
+                Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAvatarModal(false);
+                  setAvatarPreview(null);
+                  setAvatarFile(null);
+                  setUploadError(null);
+                }}
+                disabled={isUploading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={!avatarFile || isUploading}
+                onClick={async () => {
+                  if (!avatarFile) return;
+
+                  setIsUploading(true);
+                  setUploadError(null);
+
+                  try {
+                    const response = await profileService.uploadAvatar(avatarFile);
+                    if (response.success) {
+                      // Update avatar URL in state
+                      if (response.data?.avatarUrl) {
+                        setProfileImage(response.data.avatarUrl);
+                      }
+                      setShowAvatarModal(false);
+                      setAvatarPreview(null);
+                      setAvatarFile(null);
+                    } else {
+                      setUploadError(response.message || 'Error al subir la imagen');
+                    }
+                  } catch (error: any) {
+                    console.error('Error uploading avatar:', error);
+                    setUploadError(
+                      error.response?.data?.message ||
+                      error.message ||
+                      'Error al subir la imagen. Intenta de nuevo.'
+                    );
+                  } finally {
+                    setIsUploading(false);
+                  }
+                }}
+              >
+                {isUploading ? 'Subiendo...' : 'Guardar foto'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

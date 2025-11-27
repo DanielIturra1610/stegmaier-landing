@@ -6,7 +6,7 @@ import { Menu, X, Phone, Calendar, LogIn, UserPlus, LogOut, User } from 'lucide-
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
-import Button from '../ui/button'
+import { Button } from '../ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 // @ts-ignore - Importar imágenes
 import StegmaierLogo from '../../assets/images/Stegmaierlogo.png'

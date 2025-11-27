@@ -1,68 +1,189 @@
 version: '3.8'
 
+# ============================================================================
+# CONFIGURACIÓN:
+# - Desarrollo: Usar valores por defecto (no necesitas .env)
+# - Producción: Crear archivo .env con las variables seguras
+# ============================================================================
+
 services:
-  # Frontend Service
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: stegmaier-frontend
-    # hot-reload montando SOLO el código, no node_modules
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/index.html:/app/index.html
-      - ./frontend/components.json:/app/components.json
-      # Configuración
-      - ./frontend/package.json:/app/package.json
-      - ./frontend/package-lock.json:/app/package-lock.json
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
-      - ./frontend/tsconfig.json:/app/tsconfig.json
-      - ./frontend/tsconfig.node.json:/app/tsconfig.node.json
-      - ./frontend/vite.config.ts:/app/vite.config.ts
-      - ./frontend/postcss.config.js:/app/postcss.config.js
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: stegmaier-postgres
+    restart: unless-stopped
     ports:
-      - "5173:5173"  # Puerto para frontend
+      - "${DB_EXPOSE_HOST:-0.0.0.0}:5432:5432"
     environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8000/api/v1
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-stegmaier_control}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations/control:/docker-entrypoint-initdb.d
     networks:
       - stegmaier-network
-      
-  # Backend API Service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: stegmaier-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "${REDIS_EXPOSE_HOST:-0.0.0.0}:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stegmaier-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "${REDIS_PASSWORD:+-a}", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # MinIO Object Storage (Solo desarrollo - en producción usar S3 o volumen local)
+  # ============================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: stegmaier-minio
+    restart: unless-stopped
+    profiles:
+      - dev
+      - development
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - stegmaier-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ============================================================================
+  # Backend Go API Service
+  # ============================================================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: stegmaier-api
+    restart: unless-stopped
     ports:
-      - "8000:8000"  # Puerto para backend API
-    volumes:
-      - ./backend/app:/app/app
-      - ./backend/requirements.txt:/app/requirements.txt
+      - "${BACKEND_PORT:-8080}:8000"
     environment:
-      - MONGODB_URL=mongodb://mongodb:27017
-      - MONGODB_DB_NAME=stegmaier_courses
-      - JWT_SECRET_KEY=your_jwt_secret_key_for_development
+      # Server Configuration
+      PORT: 8000
+      ENV: ${ENV:-development}
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+
+      # Control Database (PostgreSQL)
+      CONTROL_DB_HOST: postgres
+      CONTROL_DB_PORT: 5432
+      CONTROL_DB_NAME: ${POSTGRES_DB:-stegmaier_control}
+      CONTROL_DB_USER: ${POSTGRES_USER:-postgres}
+      CONTROL_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      CONTROL_DB_SSLMODE: ${DB_SSLMODE:-disable}
+
+      # Tenant Database (PostgreSQL)
+      TENANT_DB_HOST: postgres
+      TENANT_DB_PORT: 5432
+      TENANT_DB_USER: ${POSTGRES_USER:-postgres}
+      TENANT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      TENANT_DB_SSLMODE: ${DB_SSLMODE:-disable}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-min-32-characters-change-in-production-please}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-168h}
+
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: 0
+
+      # Storage Configuration (Local files in production, MinIO in dev)
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-minio:9000}
+      STORAGE_USE_SSL: ${STORAGE_USE_SSL:-false}
+      STORAGE_BUCKET_PREFIX: stegmaier
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-stegmaier-media}
+
+      # Email Configuration
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Stegmaier Learning <noreply@stegmaier.com>}
+
+      # Logging Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: json
+
+      # Legacy support (if still used in code)
+      SERVER_PORT: 8000
+      SERVER_HOST: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_NAME: ${POSTGRES_DB:-stegmaier_control}
+      DB_SSL_MODE: ${DB_SSLMODE:-disable}
+      DEBUG_MODE: ${DEBUG_MODE:-false}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
+      MIGRATIONS_DIR: ./migrations
     depends_on:
-      - mongodb
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - stegmaier-network
-
-  # MongoDB Service
-  mongodb:
-    image: mongo:5.0
-    container_name: stegmaier-mongodb
-    ports:
-      - "27017:27017"
     volumes:
-      - mongodb_data:/data/db
-    networks:
-      - stegmaier-network
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - backend_cache:/go/pkg/mod
 
+# ============================================================================
+# Networks
+# ============================================================================
 networks:
   stegmaier-network:
     driver: bridge
 
+# ============================================================================
+# Volumes
+# ============================================================================
 volumes:
-  mongodb_data:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  backend_cache:
+    driver: local

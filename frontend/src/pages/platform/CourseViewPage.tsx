@@ -9,12 +9,20 @@ import progressService, { VideoProgress } from '../../services/progressService';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import moduleService from '../../services/moduleService';
 import enrollmentService from '../../services/enrollmentService';
+import lessonService from '../../services/lessonService';
 import { ModuleWithLessons, CourseStructureResponse } from '../../types/module';
 import { ChevronDownIcon, ChevronRightIcon, BookOpenIcon, ClockIcon, CheckCircleIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
 import quizService from '../../services/quizService';
 import QuizCard from '../../components/course/QuizCard';
 import AssignmentLessonRenderer from '../../components/assignments/AssignmentLessonRenderer';
 import { buildApiUrl, getAuthHeaders, API_ENDPOINTS } from '../../config/api.config';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Lesson {
   id: string;
@@ -324,8 +332,8 @@ const CourseViewPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando curso...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando curso...</p>
         </div>
       </div>
     );
@@ -333,22 +341,22 @@ const CourseViewPage: React.FC = () => {
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error al cargar el curso</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => navigate('/platform/courses')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Volver a Cursos
-          </button>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6">
+            <Alert variant="destructive">
+              <AlertTitle className="text-lg font-semibold mb-2">Error al cargar el curso</AlertTitle>
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+            <div className="mt-6 flex justify-center">
+              <Button onClick={() => navigate('/platform/courses')}>
+                Volver a Cursos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -356,42 +364,45 @@ const CourseViewPage: React.FC = () => {
   // 🔥 FIX: Handle courses without lessons elegantly
   if (course && (!course.lessons || course.lessons.length === 0)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="text-yellow-500 mb-6">
-            <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Curso en Construcción</h2>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">{course.title}</h3>
-            <p className="text-gray-600 mb-3">
-              Este curso está siendo preparado por nuestro equipo. Las lecciones estarán disponibles muy pronto.
-            </p>
-            <div className="text-sm text-gray-500">
-              <p><strong>Instructor:</strong> {course.instructorName || course.instructor_name}</p>
-              <p><strong>Estado:</strong> {(course.totalLessons || course.total_lessons || 0) > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <div className="text-center">
+              <div className="text-yellow-500 mb-4">
+                <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <CardTitle className="text-2xl">Curso en Construcción</CardTitle>
             </div>
-          </div>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => navigate('/platform/courses')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Ver Otros Cursos
-            </button>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Actualizar
-            </button>
-          </div>
-          <div className="mt-6 text-sm text-gray-500">
-            <p>💡 Te notificaremos cuando el contenido esté listo</p>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Alert className="border-l-4 border-yellow-400 bg-yellow-50">
+              <AlertTitle className="text-lg font-semibold text-gray-800">{course.title}</AlertTitle>
+              <AlertDescription className="mt-2 space-y-2">
+                <p className="text-gray-600">
+                  Este curso está siendo preparado por nuestro equipo. Las lecciones estarán disponibles muy pronto.
+                </p>
+                <Separator className="my-2" />
+                <div className="text-sm text-gray-500 space-y-1">
+                  <p><strong>Instructor:</strong> {course.instructorName || course.instructor_name}</p>
+                  <p><strong>Estado:</strong> {(course.totalLessons || course.total_lessons || 0) > 0 ? 'Lecciones en desarrollo' : 'Contenido en preparación'}</p>
+                </div>
+              </AlertDescription>
+            </Alert>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate('/platform/courses')}>
+                Ver Otros Cursos
+              </Button>
+              <Button variant="secondary" onClick={() => window.location.reload()}>
+                Actualizar
+              </Button>
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              💡 Te notificaremos cuando el contenido esté listo
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -433,21 +444,16 @@ const CourseViewPage: React.FC = () => {
           <div className="mb-4">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
               <span>Progreso del curso</span>
-              <span>{courseProgress}%</span>
+              <span className="font-semibold">{courseProgress}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${courseProgress}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <Progress value={courseProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-1">
               {completedLessons.size} de {course.lessons.length} lecciones completadas
             </p>
           </div>
 
           {/* Lista de lecciones */}
-          <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
+          <ScrollArea className="h-[calc(100vh-200px)]">
           {useModularView && courseStructure ? (
             // Vista Modular
             <div className="space-y-2">
@@ -496,11 +502,11 @@ const CourseViewPage: React.FC = () => {
                       {/* Indicador de progreso del módulo */}
                       <div className="flex items-center gap-2">
                         {module.is_required && (
-                          <span className="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded">
+                          <Badge variant="destructive" className="text-xs">
                             Obligatorio
-                          </span>
+                          </Badge>
                         )}
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-muted-foreground">
                           Módulo {module.order}
                         </span>
                       </div>
@@ -671,7 +677,7 @@ const CourseViewPage: React.FC = () => {
             );
           })
           )}
-          </div>
+          </ScrollArea>
         </div>
       </div>
 
@@ -683,9 +689,10 @@ const CourseViewPage: React.FC = () => {
             {/* Controles izquierda: Toggle sidebar + Info lección */}
             <div className="flex items-center gap-3">
               {/* Botón toggle sidebar */}
-              <button
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="bg-white shadow-lg rounded-lg p-2 hover:bg-gray-50 transition-colors"
                 title={showSidebar ? 'Ocultar índice' : 'Mostrar índice'}
               >
                 {showSidebar ? (
@@ -697,12 +704,12 @@ const CourseViewPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 )}
-              </button>
+              </Button>
 
               {/* Información de la lección */}
               <div className="flex flex-col">
                 <h2 className="font-semibold text-base">{currentLesson?.title || 'Selecciona una lección'}</h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Lección {currentLessonIndex + 1} de {course?.lessons?.length || 0}
                 </p>
               </div>
@@ -712,49 +719,46 @@ const CourseViewPage: React.FC = () => {
             <div className="flex items-center gap-2">
               {/* Toggle vista modular */}
               {courseStructure && courseStructure.modules.length > 0 && (
-                <button
+                <Button
+                  variant={useModularView ? "default" : "secondary"}
+                  size="sm"
                   onClick={() => setUseModularView(!useModularView)}
-                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                    useModularView
-                      ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
                 >
                   {useModularView ? 'Vista Lista' : 'Vista Módulos'}
-                </button>
+                </Button>
               )}
 
               {/* Botón Volver a Explorar Cursos */}
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => navigate('/platform/courses')}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 title="Volver a explorar cursos"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 <span className="hidden sm:inline">Explorar Cursos</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Navegación de lecciones */}
         <div className="flex items-center justify-between mb-4 p-4">
-          <button
+          <Button
+            variant="outline"
             onClick={() => handleLessonSelect(Math.max(0, currentLessonIndex - 1))}
             disabled={currentLessonIndex === 0}
-            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             ← Lección Anterior
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleLessonSelect(Math.min((course?.lessons?.length || 0) - 1, currentLessonIndex + 1))}
             disabled={currentLessonIndex === (course?.lessons?.length || 0) - 1}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Siguiente Lección →
-          </button>
+          </Button>
         </div>
 
         {/* Contenido de la lección */}
@@ -788,13 +792,17 @@ const CourseViewPage: React.FC = () => {
               
               {/* Contenido adicional de la lección */}
               {currentLesson.content && (
-                <div className="mt-6 bg-white rounded-lg p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4">Descripción de la lección</h3>
-                  <div 
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
-                  />
-                </div>
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Descripción de la lección</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className="prose max-w-none"
+                      dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                    />
+                  </CardContent>
+                </Card>
               )}
               
               {/* Quizzes de la lección */}
@@ -829,58 +837,66 @@ const CourseViewPage: React.FC = () => {
               // Lección de texto
               return (
                 <div className="w-full max-w-7xl mx-auto">
-                  <div className="bg-white rounded-lg p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold mb-6">{currentLesson?.title}</h2>
-                    <div
-                      className="prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
-                    />
-                
-                {/* Quizzes de la lección */}
-                {lessonQuizzes[currentLesson?.id || ''] && lessonQuizzes[currentLesson?.id || ''].length > 0 && (
-                  <div className="mt-8 border-t pt-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <AcademicCapIcon className="h-6 w-6 text-blue-600" />
-                      <h3 className="text-lg font-semibold text-gray-900">Evaluaciones de esta lección</h3>
-                    </div>
-                    <div className="space-y-4">
-                      {lessonQuizzes[currentLesson?.id || ''].map((quiz) => {
-                        const attempts = userQuizAttempts[quiz.id] || [];
-                        const bestAttempt = attempts.length > 0 ? attempts.reduce((best: any, current: any) => 
-                          current.score > (best.score || 0) ? current : best
-                        ) : null;
-                        
-                        return (
-                          <QuizCard
-                            key={quiz.id}
-                            quiz={quiz}
-                            userAttempts={attempts.length}
-                            bestScore={bestAttempt?.score}
-                            canTake={attempts.length < quiz.max_attempts}
-                            lastAttemptPassed={bestAttempt?.score >= quiz.passing_score}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Botón para marcar como completada */}
-                <div className="mt-8 border-t pt-6">
-                  <button
-                    onClick={() => {
-                      if (currentLesson) {
-                        setCompletedLessons(prev => new Set([...prev, currentLesson.id]));
-                        handleLessonComplete();
-                      }
-                    }}
-                    disabled={completedLessons.has(currentLesson?.id || '')}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {completedLessons.has(currentLesson?.id || '') ? 'Lección Completada ✓' : 'Marcar como Completada'}
-                  </button>
-                </div>
-                  </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-2xl">{currentLesson?.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div
+                        className="prose max-w-none"
+                        dangerouslySetInnerHTML={{ __html: currentLesson?.content || '' }}
+                      />
+
+                      {/* Quizzes de la lección */}
+                      {lessonQuizzes[currentLesson?.id || ''] && lessonQuizzes[currentLesson?.id || ''].length > 0 && (
+                        <div className="border-t pt-6">
+                          <div className="flex items-center space-x-2 mb-4">
+                            <AcademicCapIcon className="h-6 w-6 text-blue-600" />
+                            <h3 className="text-lg font-semibold text-gray-900">Evaluaciones de esta lección</h3>
+                          </div>
+                          <div className="space-y-4">
+                            {lessonQuizzes[currentLesson?.id || ''].map((quiz) => {
+                              const attempts = userQuizAttempts[quiz.id] || [];
+                              const bestAttempt = attempts.length > 0 ? attempts.reduce((best: any, current: any) =>
+                                current.score > (best.score || 0) ? current : best
+                              ) : null;
+
+                              return (
+                                <QuizCard
+                                  key={quiz.id}
+                                  quiz={quiz}
+                                  userAttempts={attempts.length}
+                                  bestScore={bestAttempt?.score}
+                                  canTake={attempts.length < quiz.max_attempts}
+                                  lastAttemptPassed={bestAttempt?.score >= quiz.passing_score}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Botón para marcar como completada */}
+                      <Separator />
+                      <Button
+                        onClick={async () => {
+                          if (currentLesson) {
+                            try {
+                              await lessonService.markComplete(currentLesson.id);
+                              setCompletedLessons(prev => new Set([...prev, currentLesson.id]));
+                              handleLessonComplete();
+                            } catch (error) {
+                              console.error('Error marking lesson as complete:', error);
+                            }
+                          }
+                        }}
+                        disabled={completedLessons.has(currentLesson?.id || '')}
+                        className="w-full sm:w-auto"
+                      >
+                        {completedLessons.has(currentLesson?.id || '') ? 'Lección Completada ✓' : 'Marcar como Completada'}
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               );
             }

@@ -8,6 +8,7 @@ import { HomePage } from '../app';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ResendVerificationPage from '../pages/auth/ResendVerificationPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
+import TenantSelectionPage from '../pages/auth/TenantSelectionPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import CompanyPage from '../pages/CompanyPage';
 import ConsultingPage from '../pages/ConsultingPage';
@@ -48,11 +49,15 @@ import AdminModuleLessons from '../pages/admin/AdminModuleLessons';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminQuizzes from '../pages/admin/AdminQuizzes';
 import AdminQuizForm from '../pages/admin/AdminQuizForm';
+import AdminAssignments from '../pages/admin/AdminAssignments';
 import AdminAssignmentGrading from '../pages/admin/AdminAssignmentGrading';
 import CoursePreviewPage from '../pages/admin/CoursePreviewPage';
 import VideoPreviewPage from '../pages/admin/VideoPreviewPage';
 import QuizAnalyticsPage from '../pages/admin/QuizAnalyticsPage';
 import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashboard';
+import TenantManagement from '../pages/admin/TenantManagement';
+import TenantDetails from '../pages/admin/TenantDetails';
+import UserCreation from '../pages/admin/UserCreation';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional con validación robusta
@@ -97,11 +102,21 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        
+
         {/* Ruta 404 */}
         <Route path="/404" element={<NotFoundPage />} />
       </Route>
-      
+
+      {/* Ruta de selección de tenant (protegida, sin layout) */}
+      <Route
+        path="/select-tenant"
+        element={
+          <ProtectedRoute>
+            <TenantSelectionPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rutas de la plataforma (protegidas) */}
       <Route
         path="/platform"
@@ -133,6 +148,36 @@ const AppRoutes: React.FC = () => {
         {/* Rutas administrativas (usando mismo layout) */}
         <Route path="users" element={<AdminUsers />} />
         <Route path="admin/dashboard" element={<AdminDashboard />} />
+
+        {/* Gestión de Tenants (solo superadmin) */}
+        <Route
+          path="admin/tenants"
+          element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <TenantManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Detalles de Tenant (solo superadmin) */}
+        <Route
+          path="admin/tenants/:tenantId"
+          element={
+            <ProtectedRoute allowedRoles={['superadmin']}>
+              <TenantDetails />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Creación de Usuarios (admin e instructor) */}
+        <Route
+          path="admin/users/new"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'instructor', 'superadmin']}>
+              <UserCreation />
+            </ProtectedRoute>
+          }
+        />
         <Route path="admin/courses/new" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/edit" element={<AdminCourseForm />} />
         <Route path="admin/courses/:courseId/lessons" element={<AdminLessons />} />
@@ -140,6 +185,7 @@ const AppRoutes: React.FC = () => {
         <Route path="admin/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
         <Route path="admin/courses/:courseId/preview" element={<CoursePreviewPage />} />
         <Route path="admin/videos/:videoId/preview" element={<VideoPreviewPage />} />
+        <Route path="admin/courses/:courseId/assignments" element={<AdminAssignments />} />
         <Route path="admin/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="admin/quizzes" element={<AdminQuizzes />} />
         <Route path="admin/quizzes/new" element={<AdminQuizForm />} />
@@ -155,6 +201,7 @@ const AppRoutes: React.FC = () => {
         <Route path="instructor/courses/:courseId/modules/:moduleId/lessons" element={<AdminModuleLessons />} />
         <Route path="instructor/courses/:courseId/preview" element={<CoursePreviewPage />} />
         <Route path="instructor/videos/:videoId/preview" element={<VideoPreviewPage />} />
+        <Route path="instructor/courses/:courseId/assignments" element={<AdminAssignments />} />
         <Route path="instructor/assignments/:assignmentId/grading" element={<AdminAssignmentGrading />} />
         <Route path="instructor/quizzes" element={<AdminQuizzes />} />
         <Route path="instructor/quizzes/new" element={<AdminQuizForm />} />
