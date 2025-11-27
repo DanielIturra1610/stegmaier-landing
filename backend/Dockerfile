@@ -49,9 +49,6 @@ COPY --from=builder /build/migrations ./migrations
 # Copy email templates
 COPY --from=builder /build/internal/shared/email/templates ./internal/shared/email/templates
 
-# Copy certificate templates
-COPY --from=builder /build/internal/shared/certificates/templates ./internal/shared/certificates/templates
-
 # Create necessary directories
 RUN mkdir -p /app/uploads /app/logs && \
     chown -R appuser:appgroup /app
