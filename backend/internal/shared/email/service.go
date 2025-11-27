@@ -295,7 +295,25 @@ func (s *EmailService) renderTemplate(templateName string, data map[string]inter
 
 // loadTemplates carga todos los templates HTML
 func (s *EmailService) loadTemplates() {
-	templateDir := "backend/internal/shared/email/templates"
+	// Try multiple paths for compatibility between development and Docker
+	possiblePaths := []string{
+		"internal/shared/email/templates",         // Docker container (/app/internal/...)
+		"backend/internal/shared/email/templates", // Development from project root
+	}
+
+	var templateDir string
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			templateDir = path
+			log.Printf("INFO: Using email templates from: %s", path)
+			break
+		}
+	}
+
+	if templateDir == "" {
+		log.Printf("WARN: No email template directory found, will use fallback templates")
+		return
+	}
 
 	templates := []string{
 		"welcome",
