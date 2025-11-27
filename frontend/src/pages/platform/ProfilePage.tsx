@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import profileService, { ProfileResponse } from '../../services/profileService';
 import {
   User,
   Mail,
@@ -16,7 +17,9 @@ import {
   Trash2,
   Bell,
   Eye,
-  Moon
+  Moon,
+  Upload,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +45,32 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [showEditModal, setShowEditModal] = useState(false);
-  
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // Fetch user profile to get avatar URL
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await profileService.getMyProfile();
+        if (response.success && response.data?.avatarUrl) {
+          setProfileImage(response.data.avatarUrl);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   // En una implementación completa, aquí tendrías estados para los campos del formulario
   // y funciones para manejar la actualización del perfil
 
@@ -90,22 +118,28 @@ const ProfilePage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 -mt-16 md:-mt-12">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="h-28 w-28 md:h-32 md:w-32 bg-primary-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
-                {getUserInitials()}
-              </div>
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Avatar"
+                  className="h-28 w-28 md:h-32 md:w-32 rounded-full object-cover border-4 border-white shadow-lg"
+                />
+              ) : (
+                <div className="h-28 w-28 md:h-32 md:w-32 bg-primary-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
+                  {getUserInitials()}
+                </div>
+              )}
               {user?.verified && (
                 <div className="absolute bottom-1 right-1 bg-green-500 rounded-full p-1.5 border-2 border-white shadow-md">
                   <CheckCircle className="h-5 w-5 text-white" />
                 </div>
               )}
-              <Button
-                variant="secondary"
-                size="icon"
-                className="absolute bottom-0 right-0 rounded-full shadow-md"
-                onClick={() => setShowEditModal(true)}
+              <button
+                className="absolute bottom-1 left-1 bg-primary-500 rounded-full p-1.5 border-2 border-white shadow-md hover:bg-primary-600 transition-colors cursor-pointer"
+                onClick={() => setShowAvatarModal(true)}
               >
-                <Camera className="h-4 w-4" />
-              </Button>
+                <Camera className="h-5 w-5 text-white" />
+              </button>
             </div>
 
             {/* User Info */}
@@ -643,6 +677,147 @@ const ProfilePage: React.FC = () => {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowEditModal(false)}>
                 Cerrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Avatar Upload Modal */}
+      <Dialog open={showAvatarModal} onOpenChange={(open) => {
+        setShowAvatarModal(open);
+        if (!open) {
+          setAvatarPreview(null);
+          setAvatarFile(null);
+          setUploadError(null);
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5" />
+              Cambiar foto de perfil
+            </DialogTitle>
+            <DialogDescription>
+              Sube una nueva foto para tu perfil
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Error message */}
+            {uploadError && (
+              <Alert variant="destructive">
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Preview area */}
+            <div className="flex flex-col items-center gap-4">
+              {avatarPreview ? (
+                <div className="relative">
+                  <img
+                    src={avatarPreview}
+                    alt="Vista previa"
+                    className="h-32 w-32 rounded-full object-cover border-4 border-primary-200"
+                  />
+                  <button
+                    onClick={() => {
+                      setAvatarPreview(null);
+                      setAvatarFile(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 text-white hover:bg-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-32 w-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <User className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+
+              {/* Upload input */}
+              <label className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+                  <Upload className="h-4 w-4" />
+                  <span>{avatarPreview ? 'Cambiar imagen' : 'Seleccionar imagen'}</span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      // Validate file size (5MB max)
+                      if (file.size > 5 * 1024 * 1024) {
+                        setUploadError('El archivo es demasiado grande. Tamaño máximo: 5MB');
+                        return;
+                      }
+                      setUploadError(null);
+                      setAvatarFile(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setAvatarPreview(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+              <p className="text-xs text-muted-foreground text-center">
+                Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAvatarModal(false);
+                  setAvatarPreview(null);
+                  setAvatarFile(null);
+                  setUploadError(null);
+                }}
+                disabled={isUploading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={!avatarFile || isUploading}
+                onClick={async () => {
+                  if (!avatarFile) return;
+
+                  setIsUploading(true);
+                  setUploadError(null);
+
+                  try {
+                    const response = await profileService.uploadAvatar(avatarFile);
+                    if (response.success) {
+                      // Update avatar URL in state
+                      if (response.data?.avatarUrl) {
+                        setProfileImage(response.data.avatarUrl);
+                      }
+                      setShowAvatarModal(false);
+                      setAvatarPreview(null);
+                      setAvatarFile(null);
+                    } else {
+                      setUploadError(response.message || 'Error al subir la imagen');
+                    }
+                  } catch (error: any) {
+                    console.error('Error uploading avatar:', error);
+                    setUploadError(
+                      error.response?.data?.message ||
+                      error.message ||
+                      'Error al subir la imagen. Intenta de nuevo.'
+                    );
+                  } finally {
+                    setIsUploading(false);
+                  }
+                }}
+              >
+                {isUploading ? 'Subiendo...' : 'Guardar foto'}
               </Button>
             </div>
           </div>

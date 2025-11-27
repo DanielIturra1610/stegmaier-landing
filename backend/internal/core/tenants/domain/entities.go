@@ -55,10 +55,10 @@ type MemberWithUser struct {
 	CreatedAt    time.Time  `json:"created_at"`
 
 	// User fields
-	UserID    string  `json:"id"`        // Using "id" for frontend compatibility
-	Email     string  `json:"email"`
-	FullName  string  `json:"full_name"`
-	IsActive  bool    `json:"is_active"` // User's global active status
-	Verified  bool    `json:"verified"`
+	UserID        string    `json:"id"`        // Using "id" for frontend compatibility
+	Email         string    `json:"email"`
+	FullName      string    `json:"full_name"`
+	IsActive      bool      `json:"is_active"` // Derived from membership status == "active"
+	Verified      bool      `json:"verified"`
 	UserCreatedAt time.Time `json:"user_created_at"`
 }

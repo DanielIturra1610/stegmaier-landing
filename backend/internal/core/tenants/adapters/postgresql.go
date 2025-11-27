@@ -529,7 +529,7 @@ func (r *PostgresTenantRepository) GetTenantMembersWithUsers(ctx context.Context
 			u.id as user_id,
 			u.email,
 			u.full_name,
-			u.is_active,
+			(tm.status = 'active') as is_active,
 			u.is_verified,
 			u.created_at as user_created_at
 		FROM tenant_memberships tm

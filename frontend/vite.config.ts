@@ -80,6 +80,11 @@ export default defineConfig(({ command, mode }) => {
             }
           },
         },
+        '/uploads': {
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     

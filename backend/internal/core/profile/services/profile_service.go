@@ -136,10 +136,25 @@ func (s *ProfileServiceImpl) UploadAvatar(ctx context.Context, userID, tenantID 
 		return nil, ports.NewProfileError("UploadAvatar", ports.ErrInvalidFileFormat, err.Error())
 	}
 
-	// Get existing profile to check for old avatar
-	profile, err := s.profileRepo.GetProfile(ctx, userID, tenantID)
+	// Check if profile exists, create one if it doesn't
+	exists, err := s.profileRepo.ProfileExists(ctx, userID, tenantID)
 	if err != nil {
 		return nil, ports.NewProfileError("UploadAvatar", ports.ErrProfileNotFound, err.Error())
+	}
+
+	var profile *domain.UserProfile
+	if !exists {
+		// Create a new profile for this user
+		profile = domain.NewUserProfile(userID, &tenantID, nil)
+		if err := s.profileRepo.CreateProfile(ctx, profile); err != nil {
+			return nil, ports.NewProfileError("UploadAvatar", ports.ErrUpdateFailed, "failed to create profile: "+err.Error())
+		}
+	} else {
+		// Get existing profile to check for old avatar
+		profile, err = s.profileRepo.GetProfile(ctx, userID, tenantID)
+		if err != nil {
+			return nil, ports.NewProfileError("UploadAvatar", ports.ErrProfileNotFound, err.Error())
+		}
 	}
 
 	// Delete old avatar if it exists

@@ -94,8 +94,10 @@ type Server struct {
 	authRepo               ports.AuthRepository
 	// Tenant-aware controllers for dynamic DB connection
 	tenantAwareCourseController       *controllers.TenantAwareCourseController
+	tenantAwareCategoryController     *controllers.TenantAwareCategoryController
 	tenantAwareNotificationController *controllers.TenantAwareNotificationController
 	tenantAwareProgressController     *controllers.TenantAwareProgressController
+	tenantAwareProfileController      *controllers.TenantAwareProfileController
 }
 
 // New crea una nueva instancia del servidor con toda la configuración
@@ -169,9 +171,9 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	profileRepo := profileadapters.NewPostgreSQLProfileRepository(controlDB)
 
 	// 2. Initialize file storage service
-	// TODO: Move these to configuration
+	// Use relative URL so it works with proxies and different ports
 	uploadsPath := "./uploads"
-	uploadsURL := fmt.Sprintf("http://localhost:%s/uploads", cfg.Server.Port)
+	uploadsURL := "/uploads"
 	fileStorage, err := profileadapters.NewLocalFileStorage(uploadsPath, uploadsURL)
 	if err != nil {
 		log.Fatalf("❌ Failed to initialize file storage: %v", err)
@@ -435,8 +437,15 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	log.Println("🔧 Initializing tenant-aware controllers...")
 
 	tenantAwareCourseController := controllers.NewTenantAwareCourseController()
+	tenantAwareCategoryController := controllers.NewTenantAwareCategoryController()
 	tenantAwareNotificationController := controllers.NewTenantAwareNotificationController(emailServiceAdapter)
 	tenantAwareProgressController := controllers.NewTenantAwareProgressController()
+	tenantAwareProfileController := controllers.NewTenantAwareProfileController(
+		authRepo,
+		authUserRepo,
+		fileStorage,
+		passwordHasher,
+	)
 
 	log.Println("✅ Tenant-aware controllers initialized")
 
@@ -467,8 +476,10 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		authRepo:               authRepo,
 		// Tenant-aware controllers
 		tenantAwareCourseController:       tenantAwareCourseController,
+		tenantAwareCategoryController:     tenantAwareCategoryController,
 		tenantAwareNotificationController: tenantAwareNotificationController,
 		tenantAwareProgressController:     tenantAwareProgressController,
+		tenantAwareProfileController:      tenantAwareProfileController,
 	}
 
 	// Setup de middlewares
@@ -578,17 +589,18 @@ func (s *Server) setupRoutes() {
 	}
 
 	// ============================================================
-	// Profile Routes (Protected - Authentication required)
+	// Profile Routes (Protected - Authentication required + Tenant-aware)
 	// ============================================================
 	profile := v1.Group("/profile")
 	profile.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	profile.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
-		profile.Get("/me", s.profileController.GetMyProfile)
-		profile.Put("/me", s.profileController.UpdateMyProfile)
-		profile.Post("/change-password", s.profileController.ChangePassword)
-		profile.Post("/avatar", s.profileController.UploadAvatar)
-		profile.Delete("/avatar", s.profileController.DeleteAvatar)
-		profile.Put("/preferences", s.profileController.UpdatePreferences)
+		profile.Get("/me", s.tenantAwareProfileController.GetMyProfile)
+		profile.Put("/me", s.tenantAwareProfileController.UpdateMyProfile)
+		profile.Post("/change-password", s.tenantAwareProfileController.ChangePassword)
+		profile.Post("/avatar", s.tenantAwareProfileController.UploadAvatar)
+		profile.Delete("/avatar", s.tenantAwareProfileController.DeleteAvatar)
+		profile.Put("/preferences", s.tenantAwareProfileController.UpdatePreferences)
 	}
 
 	// ============================================================
@@ -625,9 +637,13 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	courses := v1.Group("/courses")
 
-	// Public course routes (read-only, no auth required)
-	// Note: Public routes still use the original controller as they use control DB
-	// When tenant context is available (via header or subdomain), use tenant-aware controller
+	// All course routes require auth and tenant context for proper tenant isolation
+	// This ensures courses are properly isolated per tenant
+	courses.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	courses.Use(middleware.TenantMiddleware(s.dbManager))
+	courses.Use(middleware.MembershipMiddleware(s.controlDB))
+
+	// Read-only course routes (all authenticated users with tenant membership)
 	{
 		courses.Get("/published", s.tenantAwareCourseController.GetPublishedCourses)
 		courses.Get("/slug/:slug", s.tenantAwareCourseController.GetCourseBySlug)
@@ -637,12 +653,9 @@ func (s *Server) setupRoutes() {
 		courses.Get("/", s.tenantAwareCourseController.ListCourses)
 	}
 
-	// Protected course routes (authentication + tenant membership required)
+	// Course action routes (authentication + tenant membership required)
 	// Using TenantAwareCourseController for dynamic tenant DB connection
 	coursesProtected := courses.Group("")
-	coursesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
-	coursesProtected.Use(middleware.TenantMiddleware(s.dbManager))
-	coursesProtected.Use(middleware.MembershipMiddleware(s.controlDB))
 	{
 		// Student actions - using tenant-aware controller
 		coursesProtected.Post("/:id/enroll", s.tenantAwareCourseController.EnrollCourse)
@@ -663,25 +676,29 @@ func (s *Server) setupRoutes() {
 	// ============================================================
 	categories := v1.Group("/categories")
 
-	// Public category routes (read-only, no auth required)
+	// All category routes require auth and tenant context for proper tenant isolation
+	categories.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	categories.Use(middleware.TenantMiddleware(s.dbManager))
+	categories.Use(middleware.MembershipMiddleware(s.controlDB))
+
+	// Read-only category routes (all authenticated users with tenant membership)
 	{
-		categories.Get("/active", s.categoryController.ListActiveCategories)
-		categories.Get("/slug/:slug", s.categoryController.GetCategoryBySlug)
-		categories.Get("/:id/subcategories", s.categoryController.GetSubcategories)
-		categories.Get("/:id", s.categoryController.GetCategory)
-		categories.Get("/", s.categoryController.ListCategories)
+		categories.Get("/active", s.tenantAwareCategoryController.ListActiveCategories)
+		categories.Get("/slug/:slug", s.tenantAwareCategoryController.GetCategoryBySlug)
+		categories.Get("/:id/subcategories", s.tenantAwareCategoryController.GetSubcategories)
+		categories.Get("/:id", s.tenantAwareCategoryController.GetCategory)
+		categories.Get("/", s.tenantAwareCategoryController.ListCategories)
 	}
 
-	// Protected category routes (admin only)
+	// Admin-only category routes
 	categoriesProtected := categories.Group("")
-	categoriesProtected.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
 	categoriesProtected.Use(middleware.RequireAdmin())
 	{
-		categoriesProtected.Post("/", s.categoryController.CreateCategory)
-		categoriesProtected.Put("/:id", s.categoryController.UpdateCategory)
-		categoriesProtected.Delete("/:id", s.categoryController.DeleteCategory)
-		categoriesProtected.Post("/:id/activate", s.categoryController.ActivateCategory)
-		categoriesProtected.Post("/:id/deactivate", s.categoryController.DeactivateCategory)
+		categoriesProtected.Post("/", s.tenantAwareCategoryController.CreateCategory)
+		categoriesProtected.Put("/:id", s.tenantAwareCategoryController.UpdateCategory)
+		categoriesProtected.Delete("/:id", s.tenantAwareCategoryController.DeleteCategory)
+		categoriesProtected.Post("/:id/activate", s.tenantAwareCategoryController.ActivateCategory)
+		categoriesProtected.Post("/:id/deactivate", s.tenantAwareCategoryController.DeactivateCategory)
 	}
 
 	// ============================================================
@@ -1111,11 +1128,11 @@ func (s *Server) setupRoutes() {
 		users.Get("/role/:role/count", s.userController.CountUsersByRole)
 	}
 
-	// Profile Management (Admin only)
+	// Profile Management (Admin only - Tenant-aware)
 	profiles := admin.Group("/profiles")
 	{
-		profiles.Get("/:id", s.profileController.GetProfile)
-		profiles.Put("/:id", s.profileController.UpdateProfile)
+		profiles.Get("/:id", s.tenantAwareProfileController.GetProfile)
+		profiles.Put("/:id", s.tenantAwareProfileController.UpdateProfile)
 	}
 
 	// Dashboard (Admin only)

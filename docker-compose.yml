@@ -1,5 +1,11 @@
 version: '3.8'
 
+# ============================================================================
+# CONFIGURACIÓN:
+# - Desarrollo: Usar valores por defecto (no necesitas .env)
+# - Producción: Crear archivo .env con las variables seguras
+# ============================================================================
+
 services:
   # ============================================================================
   # PostgreSQL Database
@@ -9,11 +15,11 @@ services:
     container_name: stegmaier-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "${DB_EXPOSE_HOST:-0.0.0.0}:5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: stegmaier_control
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      POSTGRES_DB: ${POSTGRES_DB:-stegmaier_control}
       POSTGRES_HOST_AUTH_METHOD: md5
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -21,7 +27,7 @@ services:
     networks:
       - stegmaier-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,30 +39,33 @@ services:
     image: redis:7-alpine
     container_name: stegmaier-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
     ports:
-      - "6379:6379"
+      - "${REDIS_EXPOSE_HOST:-0.0.0.0}:6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - stegmaier-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "${REDIS_PASSWORD:+-a}", "${REDIS_PASSWORD:-}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # ============================================================================
-  # MinIO Object Storage
+  # MinIO Object Storage (Solo desarrollo - en producción usar S3 o volumen local)
   # ============================================================================
   minio:
     image: minio/minio:latest
     container_name: stegmaier-minio
     restart: unless-stopped
+    profiles:
+      - dev
+      - development
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
       - "9000:9000"  # API
       - "9001:9001"  # Console
@@ -80,59 +89,59 @@ services:
     container_name: stegmaier-api
     restart: unless-stopped
     ports:
-      - "8080:8000"
+      - "${BACKEND_PORT:-8080}:8000"
     environment:
       # Server Configuration
       PORT: 8000
-      ENV: development
-      BASE_URL: http://localhost:8080
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      ENV: ${ENV:-development}
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
 
       # Control Database (PostgreSQL)
       CONTROL_DB_HOST: postgres
       CONTROL_DB_PORT: 5432
-      CONTROL_DB_NAME: stegmaier_control
-      CONTROL_DB_USER: postgres
-      CONTROL_DB_PASSWORD: postgres123
-      CONTROL_DB_SSLMODE: disable
+      CONTROL_DB_NAME: ${POSTGRES_DB:-stegmaier_control}
+      CONTROL_DB_USER: ${POSTGRES_USER:-postgres}
+      CONTROL_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      CONTROL_DB_SSLMODE: ${DB_SSLMODE:-disable}
 
       # Tenant Database (PostgreSQL)
       TENANT_DB_HOST: postgres
       TENANT_DB_PORT: 5432
-      TENANT_DB_USER: postgres
-      TENANT_DB_PASSWORD: postgres123
-      TENANT_DB_SSLMODE: disable
+      TENANT_DB_USER: ${POSTGRES_USER:-postgres}
+      TENANT_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      TENANT_DB_SSLMODE: ${DB_SSLMODE:-disable}
 
       # JWT Configuration
-      JWT_SECRET: dev-secret-key-min-32-characters-change-in-production-please
-      JWT_EXPIRATION: 24h
-      JWT_REFRESH_EXPIRATION: 168h
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-min-32-characters-change-in-production-please}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-24h}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-168h}
 
       # Redis Configuration
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       REDIS_DB: 0
 
-      # Storage Configuration (MinIO)
-      STORAGE_TYPE: minio
-      STORAGE_ENDPOINT: minio:9000
-      STORAGE_USE_SSL: "false"
+      # Storage Configuration (Local files in production, MinIO in dev)
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-minio:9000}
+      STORAGE_USE_SSL: ${STORAGE_USE_SSL:-false}
       STORAGE_BUCKET_PREFIX: stegmaier
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_REGION: us-east-1
-      AWS_S3_BUCKET: stegmaier-media
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-stegmaier-media}
 
-      # Email Configuration (Optional for development)
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: 587
-      SMTP_USER: ""
-      SMTP_PASSWORD: ""
-      SMTP_FROM: "Stegmaier Learning <noreply@stegmaier.com>"
+      # Email Configuration
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-Stegmaier Learning <noreply@stegmaier.com>}
 
       # Logging Configuration
-      LOG_LEVEL: info
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: json
 
       # Legacy support (if still used in code)
@@ -140,19 +149,17 @@ services:
       SERVER_HOST: 0.0.0.0
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
-      DB_NAME: stegmaier_control
-      DB_SSL_MODE: disable
-      DEBUG_MODE: "true"
-      AUTO_MIGRATE: "true"
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres123}
+      DB_NAME: ${POSTGRES_DB:-stegmaier_control}
+      DB_SSL_MODE: ${DB_SSLMODE:-disable}
+      DEBUG_MODE: ${DEBUG_MODE:-false}
+      AUTO_MIGRATE: ${AUTO_MIGRATE:-true}
       MIGRATIONS_DIR: ./migrations
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      minio:
         condition: service_healthy
     networks:
       - stegmaier-network
