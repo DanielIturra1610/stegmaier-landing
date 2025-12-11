@@ -41,6 +41,7 @@ CLAUDE.md
 *.md
 !README*.md
 !BACKLOG*.md
+.claude
 
 frontend/dist/
 frontend/build/

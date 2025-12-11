@@ -32,13 +32,14 @@ const VerifyEmailPage: React.FC = () => {
         throw new Error('Token de verificación inválido');
       }
 
-      console.log('🔍 [VerifyEmail] Calling API:', buildApiUrl(`/auth/verify-email/${verificationToken}`));
-      
-      const response = await fetch(buildApiUrl(`/auth/verify-email/${verificationToken}`), {
+      console.log('🔍 [VerifyEmail] Calling API:', buildApiUrl('/auth/verify-email'));
+
+      const response = await fetch(buildApiUrl('/auth/verify-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ token: verificationToken }),
         // Configuración de seguridad
         credentials: 'include',
       });
