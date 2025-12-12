@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { CheckCircleIcon, XCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { buildApiUrl } from '../../config/api.config';
 
 interface VerificationResponse {
@@ -9,13 +9,17 @@ interface VerificationResponse {
   user_id?: string;
 }
 
+type VerificationStatus = 'loading' | 'success' | 'error' | 'already_verified' | 'expired';
+
 const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<VerificationStatus>('loading');
   const [message, setMessage] = useState<string>('');
-  const [isRetrying, setIsRetrying] = useState(false);
   const [hasVerified, setHasVerified] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [resendMessage, setResendMessage] = useState('');
 
   const token = searchParams.get('token');
 
@@ -23,10 +27,10 @@ const VerifyEmailPage: React.FC = () => {
     // Prevenir múltiples llamadas
     if (hasVerified) return;
     setHasVerified(true);
-    
+
     try {
       setStatus('loading');
-      
+
       // Validar token antes de enviar
       if (!verificationToken || verificationToken.length < 10) {
         throw new Error('Token de verificación inválido');
@@ -40,54 +44,87 @@ const VerifyEmailPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token: verificationToken }),
-        // Configuración de seguridad
         credentials: 'include',
       });
 
       console.log('🔍 [VerifyEmail] Response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
-      }
 
       const data: VerificationResponse = await response.json();
       console.log('🔍 [VerifyEmail] Response data:', data);
-      
-      if (data.success) {
+
+      if (response.ok && data.success) {
         setStatus('success');
         setMessage(data.message || 'Email verificado correctamente');
-        
+
         // Redirigir al inicio después de 3 segundos
         setTimeout(() => {
-          navigate('/', { 
-            state: { 
+          navigate('/', {
+            state: {
               message: 'Email verificado correctamente. Ya puedes acceder a la plataforma.',
               type: 'success'
             }
           });
         }, 3000);
       } else {
-        setStatus('error');
-        setMessage(data.message || 'Error al verificar el email');
+        // Manejar diferentes tipos de errores
+        const errorMessage = data.message?.toLowerCase() || '';
+
+        if (errorMessage.includes('already verified') || errorMessage.includes('ya verificado')) {
+          setStatus('already_verified');
+          setMessage('Tu email ya fue verificado anteriormente. Puedes iniciar sesión normalmente.');
+        } else if (errorMessage.includes('expired') || errorMessage.includes('expirado')) {
+          setStatus('expired');
+          setMessage('El enlace de verificación ha expirado. Solicita uno nuevo.');
+        } else {
+          setStatus('error');
+          setMessage(data.message || 'No se pudo verificar tu email. El token puede ser inválido o haber expirado.');
+        }
       }
     } catch (error) {
       console.error('❌ [VerifyEmail] Error:', error);
       setStatus('error');
       setMessage(
-        error instanceof Error 
-          ? error.message 
+        error instanceof Error
+          ? error.message
           : 'Error de conexión. Verifica tu conexión a internet.'
       );
     }
   };
 
-  const handleRetry = async () => {
-    if (!token) return;
-    
-    setIsRetrying(true);
-    setHasVerified(false); // Reset para permitir retry
-    await verifyEmail(token);
-    setIsRetrying(false);
+  const handleResendVerification = async () => {
+    if (!resendEmail || !resendEmail.includes('@')) {
+      setResendMessage('Por favor ingresa un email válido');
+      setResendStatus('error');
+      return;
+    }
+
+    setResendStatus('loading');
+    try {
+      const response = await fetch(buildApiUrl('/auth/resend-verification'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resendEmail }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setResendStatus('success');
+        setResendMessage('Si existe una cuenta con ese email, recibirás un nuevo enlace de verificación.');
+      } else if (data.message?.toLowerCase().includes('already verified')) {
+        setResendStatus('success');
+        setResendMessage('Tu email ya está verificado. Puedes iniciar sesión directamente.');
+      } else {
+        setResendStatus('error');
+        setResendMessage(data.message || 'Error al enviar el email');
+      }
+    } catch {
+      setResendStatus('error');
+      setResendMessage('Error de conexión. Intenta nuevamente.');
+    }
   };
 
   useEffect(() => {
@@ -102,6 +139,35 @@ const VerifyEmailPage: React.FC = () => {
       verifyEmail(token);
     }
   }, [token, hasVerified]);
+
+  const renderResendForm = () => (
+    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+      <p className="text-sm text-gray-600 mb-3">
+        Ingresa tu email para recibir un nuevo enlace de verificación:
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          value={resendEmail}
+          onChange={(e) => setResendEmail(e.target.value)}
+          placeholder="tu@email.com"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        />
+        <button
+          onClick={handleResendVerification}
+          disabled={resendStatus === 'loading'}
+          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-colors"
+        >
+          {resendStatus === 'loading' ? 'Enviando...' : 'Reenviar'}
+        </button>
+      </div>
+      {resendMessage && (
+        <p className={`mt-2 text-sm ${resendStatus === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+          {resendMessage}
+        </p>
+      )}
+    </div>
+  );
 
   const renderContent = () => {
     switch (status) {
@@ -140,48 +206,66 @@ const VerifyEmailPage: React.FC = () => {
           </div>
         );
 
+      case 'already_verified':
+        return (
+          <div className="text-center">
+            <CheckCircleIcon className="mx-auto h-12 w-12 text-green-500 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              ¡Tu email ya está verificado!
+            </h2>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <Link
+              to="/login"
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              Iniciar sesión
+            </Link>
+          </div>
+        );
+
+      case 'expired':
+        return (
+          <div className="text-center">
+            <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Enlace expirado
+            </h2>
+            <p className="text-gray-600 mb-4">{message}</p>
+            {renderResendForm()}
+            <div className="mt-4">
+              <Link
+                to="/login"
+                className="text-gray-500 hover:text-gray-400 text-sm"
+              >
+                Volver a iniciar sesión
+              </Link>
+            </div>
+          </div>
+        );
+
       case 'error':
         return (
           <div className="text-center">
             <XCircleIcon className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Error en la verificación
+              Verificación de email
             </h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            
-            <div className="space-y-4">
-              {token && (
-                <button
-                  onClick={handleRetry}
-                  disabled={isRetrying}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isRetrying ? (
-                    <>
-                      <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
-                      Reintentando...
-                    </>
-                  ) : (
-                    'Reintentar verificación'
-                  )}
-                </button>
-              )}
-              
-              <div className="space-y-2">
-                <Link
-                  to="/resend-verification"
-                  className="block text-blue-600 hover:text-blue-500 text-sm underline"
-                >
-                  Solicitar un nuevo correo de verificación
-                </Link>
-                <Link
-                  to="/"
-                  className="block text-gray-500 hover:text-gray-400 text-sm"
-                >
-                  Volver al inicio
-                </Link>
-              </div>
+            <p className="text-red-600 bg-red-50 p-3 rounded-lg mb-4">{message}</p>
+
+            <p className="text-gray-600 text-sm mb-4">
+              Es posible que tu email ya esté verificado. Intenta iniciar sesión o solicita un nuevo enlace.
+            </p>
+
+            <div className="space-y-3">
+              <Link
+                to="/login"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                Intentar iniciar sesión
+              </Link>
             </div>
+
+            {renderResendForm()}
           </div>
         );
 

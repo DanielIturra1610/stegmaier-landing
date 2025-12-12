@@ -278,11 +278,19 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, dto *domain.VerifyEma
 	// Get verification token
 	token, err := s.repo.GetVerificationToken(ctx, dto.Token)
 	if err != nil {
+		// Token not found - this could mean:
+		// 1. Token was already used and deleted (user is verified)
+		// 2. Token never existed (invalid link)
+		// 3. Token expired and was cleaned up
+		// We can't determine which case without the user's email,
+		// so we return a specific error that the frontend can handle
 		return ports.ErrVerificationTokenInvalid
 	}
 
 	// Check if token is expired
 	if token.IsExpired() {
+		// Delete expired token
+		_ = s.repo.DeleteVerificationToken(ctx, token.ID)
 		return ports.ErrVerificationTokenExpired
 	}
 
@@ -294,6 +302,8 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, dto *domain.VerifyEma
 
 	// Check if already verified
 	if user.IsVerified {
+		// Delete the token since user is already verified
+		_ = s.repo.DeleteVerificationToken(ctx, token.ID)
 		return ports.ErrAlreadyVerified
 	}
 
