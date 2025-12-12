@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { buildApiUrl } from '../../config/api.config';
@@ -16,17 +16,19 @@ const VerifyEmailPage: React.FC = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState<VerificationStatus>('loading');
   const [message, setMessage] = useState<string>('');
-  const [hasVerified, setHasVerified] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
 
+  // Usar useRef para prevenir llamadas múltiples (especialmente en React StrictMode)
+  const verificationAttempted = useRef(false);
+
   const token = searchParams.get('token');
 
   const verifyEmail = async (verificationToken: string) => {
-    // Prevenir múltiples llamadas
-    if (hasVerified) return;
-    setHasVerified(true);
+    // Prevenir múltiples llamadas usando ref (funciona con React StrictMode)
+    if (verificationAttempted.current) return;
+    verificationAttempted.current = true;
 
     try {
       setStatus('loading');
@@ -135,10 +137,10 @@ const VerifyEmailPage: React.FC = () => {
     }
 
     // Verificar email automáticamente al cargar la página (solo una vez)
-    if (!hasVerified) {
+    if (!verificationAttempted.current) {
       verifyEmail(token);
     }
-  }, [token, hasVerified]);
+  }, [token]);
 
   const renderResendForm = () => (
     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
