@@ -12,15 +12,15 @@ import (
 func TestNewUserProfile(t *testing.T) {
 	userID := uuid.New()
 	tenantID := uuid.New()
-	firstName := "John"
-	lastName := "Doe"
+	fullName := "John Doe"
 
-	profile := NewUserProfile(userID, tenantID, firstName, lastName)
+	profile := NewUserProfile(userID, &tenantID, &fullName)
 
 	assert.Equal(t, userID, profile.UserID)
-	assert.Equal(t, tenantID, profile.TenantID)
-	assert.Equal(t, firstName, profile.FirstName)
-	assert.Equal(t, lastName, profile.LastName)
+	assert.NotNil(t, profile.TenantID)
+	assert.Equal(t, tenantID, *profile.TenantID)
+	assert.NotNil(t, profile.FullName)
+	assert.Equal(t, fullName, *profile.FullName)
 	assert.Equal(t, "UTC", profile.Timezone)
 	assert.Equal(t, LanguageEnglish, profile.Language)
 	assert.Equal(t, ThemeLight, profile.Theme)
@@ -44,93 +44,99 @@ func TestUserProfile_Validate(t *testing.T) {
 	}{
 		{
 			name: "valid profile",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				TenantID:  uuid.New(),
-				FirstName: "John",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     ThemeLight,
-			},
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := "John Doe"
+				return &UserProfile{
+					UserID:   uuid.New(),
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "en",
+					Theme:    ThemeLight,
+				}
+			}(),
 			wantErr: false,
 		},
 		{
 			name: "missing user ID",
-			profile: &UserProfile{
-				TenantID:  uuid.New(),
-				FirstName: "John",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     ThemeLight,
-			},
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := "John Doe"
+				return &UserProfile{
+					UserID:   uuid.Nil,
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "en",
+					Theme:    ThemeLight,
+				}
+			}(),
 			wantErr: true,
 			errMsg:  "user ID is required",
 		},
 		{
-			name: "missing tenant ID",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				FirstName: "John",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     ThemeLight,
-			},
-			wantErr: true,
-			errMsg:  "tenant ID is required",
-		},
-		{
-			name: "first name too short",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				TenantID:  uuid.New(),
-				FirstName: "J",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     ThemeLight,
-			},
+			name: "full name too short",
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := "J"
+				return &UserProfile{
+					UserID:   uuid.New(),
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "en",
+					Theme:    ThemeLight,
+				}
+			}(),
 			wantErr: true,
 		},
 		{
-			name: "last name too long",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				TenantID:  uuid.New(),
-				FirstName: "John",
-				LastName:  string(make([]byte, 101)),
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     ThemeLight,
-			},
+			name: "full name too long",
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := string(make([]byte, 256))
+				return &UserProfile{
+					UserID:   uuid.New(),
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "en",
+					Theme:    ThemeLight,
+				}
+			}(),
 			wantErr: true,
 		},
 		{
 			name: "invalid theme",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				TenantID:  uuid.New(),
-				FirstName: "John",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "en",
-				Theme:     "invalid",
-			},
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := "John Doe"
+				return &UserProfile{
+					UserID:   uuid.New(),
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "en",
+					Theme:    "invalid",
+				}
+			}(),
 			wantErr: true,
 		},
 		{
 			name: "invalid language",
-			profile: &UserProfile{
-				UserID:    uuid.New(),
-				TenantID:  uuid.New(),
-				FirstName: "John",
-				LastName:  "Doe",
-				Timezone:  "UTC",
-				Language:  "english",
-				Theme:     ThemeLight,
-			},
+			profile: func() *UserProfile {
+				tenantID := uuid.New()
+				fullName := "John Doe"
+				return &UserProfile{
+					UserID:   uuid.New(),
+					TenantID: &tenantID,
+					FullName: &fullName,
+					Timezone: "UTC",
+					Language: "english",
+					Theme:    ThemeLight,
+				}
+			}(),
 			wantErr: true,
 		},
 	}
@@ -151,12 +157,16 @@ func TestUserProfile_Validate(t *testing.T) {
 }
 
 func TestUserProfile_GetFullName(t *testing.T) {
+	fullName := "John Doe"
 	profile := &UserProfile{
-		FirstName: "John",
-		LastName:  "Doe",
+		FullName: &fullName,
 	}
 
 	assert.Equal(t, "John Doe", profile.GetFullName())
+
+	// Test with nil FullName
+	profileNil := &UserProfile{}
+	assert.Equal(t, "", profileNil.GetFullName())
 }
 
 func TestUserProfile_HasAvatar(t *testing.T) {
@@ -204,45 +214,22 @@ func TestUserProfile_UpdateTimestamp(t *testing.T) {
 	assert.True(t, profile.UpdatedAt.After(oldTime))
 }
 
-func TestValidateFirstName(t *testing.T) {
-	tests := []struct {
-		name      string
-		firstName string
-		wantErr   bool
-	}{
-		{"valid", "John", false},
-		{"too short", "J", true},
-		{"too long", string(make([]byte, 101)), true},
-		{"min length", "Jo", false},
-		{"max length", string(make([]byte, 100)), false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateFirstName(tt.firstName)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateLastName(t *testing.T) {
+func TestValidateFullName(t *testing.T) {
 	tests := []struct {
 		name     string
-		lastName string
+		fullName *string
 		wantErr  bool
 	}{
-		{"valid", "Doe", false},
-		{"too short", "D", true},
-		{"too long", string(make([]byte, 101)), true},
+		{"valid", func() *string { s := "John Doe"; return &s }(), false},
+		{"too short", func() *string { s := "J"; return &s }(), true},
+		{"too long", func() *string { s := string(make([]byte, 256)); return &s }(), true},
+		{"min length", func() *string { s := "Jo"; return &s }(), false},
+		{"nil", nil, false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateLastName(tt.lastName)
+			err := ValidateFullName(tt.fullName)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

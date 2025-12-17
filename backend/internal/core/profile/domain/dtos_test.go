@@ -18,8 +18,7 @@ func TestUpdateProfileRequest_Validate(t *testing.T) {
 		{
 			name: "valid request with all fields",
 			req: &UpdateProfileRequest{
-				FirstName:   strPtr("John"),
-				LastName:    strPtr("Doe"),
+				FullName:    strPtr("John Doe"),
 				Bio:         strPtr("Software developer"),
 				PhoneNumber: strPtr("+1234567890"),
 				DateOfBirth: strPtr("1990-01-15"),
@@ -34,15 +33,15 @@ func TestUpdateProfileRequest_Validate(t *testing.T) {
 		{
 			name: "valid request with partial fields",
 			req: &UpdateProfileRequest{
-				FirstName: strPtr("John"),
-				Theme:     strPtr(ThemeDark),
+				FullName: strPtr("John"),
+				Theme:    strPtr(ThemeDark),
 			},
 			wantErr: false,
 		},
 		{
-			name: "invalid first name",
+			name: "invalid full name",
 			req: &UpdateProfileRequest{
-				FirstName: strPtr("J"),
+				FullName: strPtr("J"),
 			},
 			wantErr: true,
 		},
@@ -86,9 +85,9 @@ func TestUpdateProfileRequest_HasUpdates(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "has first name update",
+			name: "has full name update",
 			req: &UpdateProfileRequest{
-				FirstName: strPtr("John"),
+				FullName: strPtr("John"),
 			},
 			want: true,
 		},
@@ -109,12 +108,13 @@ func TestUpdateProfileRequest_HasUpdates(t *testing.T) {
 }
 
 func TestUpdateProfileRequest_ApplyToProfile(t *testing.T) {
-	profile := NewUserProfile(uuid.New(), uuid.New(), "Old", "Name")
+	tenantID := uuid.New()
+	fullName := "Old Name"
+	profile := NewUserProfile(uuid.New(), &tenantID, &fullName)
 	oldUpdatedAt := profile.UpdatedAt
 
 	req := &UpdateProfileRequest{
-		FirstName:   strPtr("John"),
-		LastName:    strPtr("Doe"),
+		FullName:    strPtr("John Doe"),
 		Bio:         strPtr("New bio"),
 		DateOfBirth: strPtr("1990-01-15"),
 		Theme:       strPtr(ThemeDark),
@@ -124,8 +124,8 @@ func TestUpdateProfileRequest_ApplyToProfile(t *testing.T) {
 	err := req.ApplyToProfile(profile)
 	require.NoError(t, err)
 
-	assert.Equal(t, "John", profile.FirstName)
-	assert.Equal(t, "Doe", profile.LastName)
+	assert.NotNil(t, profile.FullName)
+	assert.Equal(t, "John Doe", *profile.FullName)
 	assert.NotNil(t, profile.Bio)
 	assert.Equal(t, "New bio", *profile.Bio)
 	assert.NotNil(t, profile.DateOfBirth)
@@ -400,12 +400,12 @@ func TestProfileToResponse(t *testing.T) {
 	avatarURL := "https://example.com/avatar.jpg"
 	bio := "Software developer"
 	dob := time.Date(1990, 1, 15, 0, 0, 0, 0, time.UTC)
+	fullName := "John Doe"
 
 	profile := &UserProfile{
 		UserID:      userID,
-		TenantID:    tenantID,
-		FirstName:   "John",
-		LastName:    "Doe",
+		TenantID:    &tenantID,
+		FullName:    &fullName,
 		AvatarURL:   &avatarURL,
 		Bio:         &bio,
 		DateOfBirth: &dob,
@@ -424,9 +424,8 @@ func TestProfileToResponse(t *testing.T) {
 
 	assert.Equal(t, userID, response.UserID)
 	assert.Equal(t, "john@example.com", response.Email)
-	assert.Equal(t, "John", response.FirstName)
-	assert.Equal(t, "Doe", response.LastName)
-	assert.Equal(t, "John Doe", response.FullName)
+	assert.NotNil(t, response.FullName)
+	assert.Equal(t, "John Doe", *response.FullName)
 	assert.NotNil(t, response.AvatarURL)
 	assert.Equal(t, avatarURL, *response.AvatarURL)
 	assert.NotNil(t, response.Bio)

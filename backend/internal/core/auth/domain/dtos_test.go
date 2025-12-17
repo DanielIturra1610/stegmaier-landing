@@ -7,9 +7,10 @@ import (
 
 func TestToUserDTO(t *testing.T) {
 	t.Run("Convert User to UserDTO", func(t *testing.T) {
+		tenantID := "tenant-456"
 		user := &User{
 			ID:           "user-123",
-			TenantID:     "tenant-456",
+			TenantID:     &tenantID,
 			Email:        "test@example.com",
 			PasswordHash: "$2a$10$secrethash", // Should not be in DTO
 			FullName:     "Test User",
@@ -56,9 +57,9 @@ func TestToUserDTO(t *testing.T) {
 
 func TestRegisterDTO_Validate(t *testing.T) {
 	tests := []struct {
-		name        string
-		dto         *RegisterDTO
-		expectError bool
+		name         string
+		dto          *RegisterDTO
+		expectError  bool
 		expectedRole string
 	}{
 		{
@@ -69,7 +70,7 @@ func TestRegisterDTO_Validate(t *testing.T) {
 				FullName: "Test User",
 				Role:     "student",
 			},
-			expectError: false,
+			expectError:  false,
 			expectedRole: "student",
 		},
 		{
@@ -80,7 +81,7 @@ func TestRegisterDTO_Validate(t *testing.T) {
 				FullName: "Instructor User",
 				Role:     "instructor",
 			},
-			expectError: false,
+			expectError:  false,
 			expectedRole: "instructor",
 		},
 		{
@@ -91,7 +92,7 @@ func TestRegisterDTO_Validate(t *testing.T) {
 				FullName: "Test User",
 				Role:     "",
 			},
-			expectError: false,
+			expectError:  false,
 			expectedRole: "student",
 		},
 		{
@@ -102,7 +103,7 @@ func TestRegisterDTO_Validate(t *testing.T) {
 				FullName: "Test User",
 				Role:     "superuser",
 			},
-			expectError: false,
+			expectError:  false,
 			expectedRole: "student",
 		},
 	}
@@ -221,9 +222,10 @@ func TestLoginDTO(t *testing.T) {
 }
 
 func TestAuthResponse(t *testing.T) {
+	tenantID := "tenant-456"
 	user := &User{
 		ID:         "user-123",
-		TenantID:   "tenant-456",
+		TenantID:   &tenantID,
 		Email:      "test@example.com",
 		FullName:   "Test User",
 		Role:       "student",

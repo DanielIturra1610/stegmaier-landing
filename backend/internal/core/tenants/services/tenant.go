@@ -219,6 +219,26 @@ func (s *TenantService) CreateUserInTenant(ctx context.Context, dto *domain.Crea
 		return nil, fmt.Errorf("only admins can create users in the tenant")
 	}
 
+	// Role hierarchy validation to prevent privilege escalation
+	// Tenant admins can create: student, instructor, admin (but NOT superadmin)
+	if dto.Role == "superadmin" {
+		log.Printf("⚠️  Role escalation attempt: tenant admin %s tried to create superadmin user", adminID)
+		return nil, fmt.Errorf("tenant admins cannot create superadmin users")
+	}
+
+	// Only allow valid roles for tenant context
+	validTenantRoles := map[string]bool{
+		"student":    true,
+		"instructor": true,
+		"admin":      true,
+	}
+	if !validTenantRoles[dto.Role] {
+		log.Printf("⚠️  Invalid role for tenant: %s", dto.Role)
+		return nil, fmt.Errorf("invalid role: %s. Allowed roles: student, instructor, admin", dto.Role)
+	}
+
+	log.Printf("✅ Role validation passed: tenant admin creating %s user", dto.Role)
+
 	// Create user using UserManagementService
 	userDTO := &userdomain.CreateUserDTO{
 		Email:    dto.Email,

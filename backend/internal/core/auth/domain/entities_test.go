@@ -256,9 +256,10 @@ func TestRefreshToken_IsValid(t *testing.T) {
 }
 
 func TestUser_SanitizeUser(t *testing.T) {
+	tenantID := "tenant-456"
 	user := &User{
 		ID:           "user-123",
-		TenantID:     "tenant-456",
+		TenantID:     &tenantID,
 		Email:        "test@example.com",
 		PasswordHash: "$2a$10$secrethash",
 		FullName:     "Test User",
@@ -285,9 +286,9 @@ func TestUser_SanitizeUser(t *testing.T) {
 
 func TestUser_HasRole(t *testing.T) {
 	user := &User{
-		ID:       "user-123",
-		Email:    "test@example.com",
-		Role:     "instructor",
+		ID:    "user-123",
+		Email: "test@example.com",
+		Role:  "instructor",
 	}
 
 	if !user.HasRole(RoleInstructor) {
