@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"log"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -10,6 +11,45 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 )
+
+// Regex patterns for valid tenant IDs
+var (
+	// UUID pattern: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	uuidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+	// Slug pattern: lowercase alphanumeric with hyphens (e.g., "my-tenant-name")
+	slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+)
+
+// isValidTenantID validates that the tenant ID is either a valid UUID or slug
+// This prevents invalid values (like HTTP headers) from being used as tenant IDs
+func isValidTenantID(id string) bool {
+	if id == "" {
+		return false
+	}
+
+	// Check length constraints
+	if len(id) > 100 {
+		return false
+	}
+
+	// Reject values that look like HTTP headers (contain spaces, commas, slashes, asterisks)
+	if strings.ContainsAny(id, " ,/*;:") {
+		log.Printf("⚠️  Rejected invalid tenant ID (contains HTTP header characters): %s", id)
+		return false
+	}
+
+	// Must be either a valid UUID or a valid slug
+	if uuidPattern.MatchString(id) {
+		return true
+	}
+
+	if slugPattern.MatchString(id) && len(id) >= 3 && len(id) <= 50 {
+		return true
+	}
+
+	log.Printf("⚠️  Rejected invalid tenant ID (not UUID or valid slug): %s", id)
+	return false
+}
 
 // Context keys for storing tenant information
 const (
@@ -169,25 +209,35 @@ func TenantMiddleware(dbManager *database.Manager) fiber.Handler {
 }
 
 // extractTenantID extracts tenant ID from multiple sources in priority order
+// Validates the tenant ID to prevent invalid values from being used
 func extractTenantID(c *fiber.Ctx) string {
 	// 1. Try X-Tenant-ID header (highest priority)
 	if tenantID := c.Get("X-Tenant-ID"); tenantID != "" {
-		return tenantID
+		if isValidTenantID(tenantID) {
+			return tenantID
+		}
+		// Invalid header value, continue to other sources
 	}
 
 	// 2. Try subdomain extraction (e.g., tenant.stegmaier.com)
 	if tenantID := extractFromSubdomain(c); tenantID != "" {
-		return tenantID
+		if isValidTenantID(tenantID) {
+			return tenantID
+		}
 	}
 
 	// 3. Try JWT claim (if JWT middleware was applied before this)
 	if tenantID := extractFromJWT(c); tenantID != "" {
-		return tenantID
+		if isValidTenantID(tenantID) {
+			return tenantID
+		}
 	}
 
 	// 4. Try query parameter (for testing/debugging)
 	if tenantID := c.Query("tenant_id"); tenantID != "" {
-		return tenantID
+		if isValidTenantID(tenantID) {
+			return tenantID
+		}
 	}
 
 	return ""

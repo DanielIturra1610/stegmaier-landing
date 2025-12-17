@@ -165,3 +165,12 @@ func (u *User) HasRoleOrHigher(role UserRole) bool {
 func (u *User) CanManageCourses() bool {
 	return u.IsAdmin() || u.IsInstructor() || u.IsSuperAdmin()
 }
+
+// UserMembership represents a user's membership in a tenant
+// This is used to retrieve tenant information during login when the user
+// doesn't have a direct tenant_id in their user record
+type UserMembership struct {
+	TenantID string `json:"tenant_id" db:"tenant_id"`
+	Role     string `json:"role" db:"role"`
+	Status   string `json:"status" db:"status"`
+}

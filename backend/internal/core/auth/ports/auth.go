@@ -123,6 +123,11 @@ type AuthRepository interface {
 	// EmailExistsExcludingUser checks if an email exists for any user except the specified one.
 	// This is useful when updating a user's email to ensure uniqueness.
 	EmailExistsExcludingUser(ctx context.Context, email string, userID string) (bool, error)
+
+	// GetFirstActiveMembership retrieves the first active tenant membership for a user.
+	// This is used during login to determine the user's tenant when they don't have
+	// a tenant_id set in their user record. Returns nil, nil if no membership exists.
+	GetFirstActiveMembership(ctx context.Context, userID string) (*domain.UserMembership, error)
 }
 
 // UserRepository defines extended user management operations.

@@ -501,6 +501,31 @@ func (r *PostgreSQLAuthRepository) EmailExistsExcludingUser(ctx context.Context,
 	return exists, nil
 }
 
+// GetFirstActiveMembership retrieves the first active tenant membership for a user
+// This is used during login to determine the user's tenant when they don't have
+// a tenant_id set in their user record
+func (r *PostgreSQLAuthRepository) GetFirstActiveMembership(ctx context.Context, userID string) (*domain.UserMembership, error) {
+	query := `
+		SELECT tenant_id, role, status
+		FROM tenant_memberships
+		WHERE user_id = $1 AND status = 'active'
+		ORDER BY joined_at DESC
+		LIMIT 1
+	`
+
+	var membership domain.UserMembership
+	err := r.db.GetContext(ctx, &membership, query, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No active membership found, this is OK
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get first active membership: %w", err)
+	}
+
+	return &membership, nil
+}
+
 // PostgreSQLUserRepository implements UserRepository interface for PostgreSQL
 type PostgreSQLUserRepository struct {
 	db *sqlx.DB
