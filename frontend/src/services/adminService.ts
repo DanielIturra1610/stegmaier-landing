@@ -402,7 +402,8 @@ class AdminService {
         throw new Error(errorData.detail || `Error fetching user: ${response.status}`);
       }
 
-      const user = await response.json();
+      const result = await response.json();
+      const user = result.data?.user || result;
       console.log('✅ [adminService] User loaded:', user.id);
 
       return user;
@@ -446,7 +447,8 @@ class AdminService {
         throw new Error(errorData.detail || `Error updating user: ${response.status}`);
       }
 
-      const user = await response.json();
+      const result = await response.json();
+      const user = result.data?.user || result;
       console.log('✅ [adminService] User updated successfully:', user.id);
 
       return user;

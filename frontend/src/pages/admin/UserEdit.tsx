@@ -268,7 +268,7 @@ const UserEdit: React.FC = () => {
             <div className="flex items-center justify-center mb-4">
               <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">
-                  {userData.full_name?.charAt(0).toUpperCase() || userData.email.charAt(0).toUpperCase()}
+                  {(userData?.full_name || userData?.email || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
             </div>
