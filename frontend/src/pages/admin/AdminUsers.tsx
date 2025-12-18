@@ -13,7 +13,6 @@ import {
   Filter,
   Edit,
   Trash2,
-  Eye,
   MoreVertical,
   CheckCircle,
   XCircle,
@@ -493,18 +492,6 @@ const AdminUsers: React.FC = () => {
                               />
                               <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                                 <div className="py-1">
-                                  <Button
-                                    variant="ghost"
-                                    onClick={() => {
-                                      console.log('View user:', user.id);
-                                      setOpenMenuId(null);
-                                    }}
-                                    className="w-full justify-start gap-2"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    Ver detalles
-                                  </Button>
-
                                   <Button
                                     variant="ghost"
                                     onClick={() => {
