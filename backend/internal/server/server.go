@@ -389,8 +389,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for progress module
 	log.Println("🔧 Initializing progress module...")
 
-	// 1. Initialize progress repository (TODO: refactor to tenant-aware)
-	progressRepo := progressadapters.NewPostgreSQLProgressRepository(tenantDB.DB)
+	// 1. Initialize progress repository (tenant-aware)
+	progressRepo := progressadapters.NewPostgreSQLProgressRepository(dbManager)
 
 	// 2. Initialize progress service
 	progressService := progressservices.NewProgressService(progressRepo)
@@ -446,7 +446,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	tenantAwareCourseController := controllers.NewTenantAwareCourseController()
 	tenantAwareCategoryController := controllers.NewTenantAwareCategoryController()
 	tenantAwareNotificationController := controllers.NewTenantAwareNotificationController(emailServiceAdapter)
-	tenantAwareProgressController := controllers.NewTenantAwareProgressController()
+	tenantAwareProgressController := controllers.NewTenantAwareProgressController(dbManager)
 	tenantAwareProfileController := controllers.NewTenantAwareProfileController(
 		authRepo,
 		authUserRepo,

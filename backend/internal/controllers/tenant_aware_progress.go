@@ -8,31 +8,29 @@ import (
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
 	progressservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/services"
-	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
 
-// TenantAwareProgressController handles progress-related HTTP requests with dynamic tenant DB connection
-// This controller creates repositories and services dynamically using the tenant DB from context
-type TenantAwareProgressController struct{}
-
-// NewTenantAwareProgressController creates a new TenantAwareProgressController
-func NewTenantAwareProgressController() *TenantAwareProgressController {
-	return &TenantAwareProgressController{}
+// TenantAwareProgressController handles progress-related HTTP requests with tenant-aware DB connections
+// This controller creates repositories and services dynamically using the database manager
+type TenantAwareProgressController struct {
+	dbManager *database.Manager
 }
 
-// getProgressService creates a progress service using the tenant DB from context
-func (ctrl *TenantAwareProgressController) getProgressService(c *fiber.Ctx) (ports.ProgressService, error) {
-	tenantDB, err := middleware.MustGetTenantDBFromContext(c)
-	if err != nil {
-		return nil, err
+// NewTenantAwareProgressController creates a new TenantAwareProgressController
+func NewTenantAwareProgressController(dbManager *database.Manager) *TenantAwareProgressController {
+	return &TenantAwareProgressController{
+		dbManager: dbManager,
 	}
+}
 
-	// sqlx.DB embeds *sql.DB, so we can access it directly
-	// The progress adapter uses *sql.DB
-	progressRepo := progressadapters.NewPostgreSQLProgressRepository(tenantDB.DB)
+// getProgressService creates a progress service using the database manager
+func (ctrl *TenantAwareProgressController) getProgressService(c *fiber.Ctx) (ports.ProgressService, error) {
+	// The progress adapter uses database.Manager for tenant-aware connections
+	progressRepo := progressadapters.NewPostgreSQLProgressRepository(ctrl.dbManager)
 
 	// Create and return service
 	return progressservices.NewProgressService(progressRepo), nil

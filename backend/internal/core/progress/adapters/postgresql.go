@@ -3,24 +3,35 @@ package adapters
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/google/uuid"
 )
 
 // PostgreSQLProgressRepository implements the ProgressRepository interface
 type PostgreSQLProgressRepository struct {
-	db *sql.DB
+	dbManager *database.Manager
 }
 
 // NewPostgreSQLProgressRepository creates a new PostgreSQL progress repository
-func NewPostgreSQLProgressRepository(db *sql.DB) ports.ProgressRepository {
+func NewPostgreSQLProgressRepository(dbManager *database.Manager) ports.ProgressRepository {
 	return &PostgreSQLProgressRepository{
-		db: db,
+		dbManager: dbManager,
 	}
+}
+
+// getTenantDB obtains the tenant database connection dynamically
+func (r *PostgreSQLProgressRepository) getTenantDB(tenantID uuid.UUID) (*sql.DB, error) {
+	db, err := r.dbManager.GetTenantConnection(tenantID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant connection: %w", err)
+	}
+	return db.DB, nil
 }
 
 // ============================================================
@@ -29,6 +40,11 @@ func NewPostgreSQLProgressRepository(db *sql.DB) ports.ProgressRepository {
 
 // CreateProgress creates a new course progress
 func (r *PostgreSQLProgressRepository) CreateProgress(ctx context.Context, progress *domain.CourseProgress) error {
+	db, err := r.getTenantDB(progress.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		INSERT INTO course_progress (
 			id, tenant_id, user_id, course_id, enrollment_id, status,
@@ -39,7 +55,7 @@ func (r *PostgreSQLProgressRepository) CreateProgress(ctx context.Context, progr
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		progress.ID,
 		progress.TenantID,
 		progress.UserID,
@@ -70,6 +86,11 @@ func (r *PostgreSQLProgressRepository) CreateProgress(ctx context.Context, progr
 
 // GetProgress retrieves a progress by ID
 func (r *PostgreSQLProgressRepository) GetProgress(ctx context.Context, progressID, tenantID uuid.UUID) (*domain.CourseProgress, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, status,
 			   progress_percentage, completed_lessons, total_lessons,
@@ -81,7 +102,7 @@ func (r *PostgreSQLProgressRepository) GetProgress(ctx context.Context, progress
 	`
 
 	progress := &domain.CourseProgress{}
-	err := r.db.QueryRowContext(ctx, query, progressID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, progressID, tenantID).Scan(
 		&progress.ID,
 		&progress.TenantID,
 		&progress.UserID,
@@ -115,6 +136,11 @@ func (r *PostgreSQLProgressRepository) GetProgress(ctx context.Context, progress
 
 // GetProgressByUserAndCourse retrieves progress by user and course
 func (r *PostgreSQLProgressRepository) GetProgressByUserAndCourse(ctx context.Context, userID, courseID, tenantID uuid.UUID) (*domain.CourseProgress, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, status,
 			   progress_percentage, completed_lessons, total_lessons,
@@ -126,7 +152,7 @@ func (r *PostgreSQLProgressRepository) GetProgressByUserAndCourse(ctx context.Co
 	`
 
 	progress := &domain.CourseProgress{}
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
 		&progress.ID,
 		&progress.TenantID,
 		&progress.UserID,
@@ -160,6 +186,11 @@ func (r *PostgreSQLProgressRepository) GetProgressByUserAndCourse(ctx context.Co
 
 // GetProgressByEnrollment retrieves progress by enrollment ID
 func (r *PostgreSQLProgressRepository) GetProgressByEnrollment(ctx context.Context, enrollmentID, tenantID uuid.UUID) (*domain.CourseProgress, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, status,
 			   progress_percentage, completed_lessons, total_lessons,
@@ -171,7 +202,7 @@ func (r *PostgreSQLProgressRepository) GetProgressByEnrollment(ctx context.Conte
 	`
 
 	progress := &domain.CourseProgress{}
-	err := r.db.QueryRowContext(ctx, query, enrollmentID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, enrollmentID, tenantID).Scan(
 		&progress.ID,
 		&progress.TenantID,
 		&progress.UserID,
@@ -205,10 +236,15 @@ func (r *PostgreSQLProgressRepository) GetProgressByEnrollment(ctx context.Conte
 
 // ListProgressByUser lists all progress for a user with pagination
 func (r *PostgreSQLProgressRepository) ListProgressByUser(ctx context.Context, userID, tenantID uuid.UUID, page, pageSize int) ([]*domain.CourseProgress, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	var totalCount int
 	countQuery := `SELECT COUNT(*) FROM course_progress WHERE user_id = $1 AND tenant_id = $2`
-	err := r.db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error counting progress by user: %v", err)
 		return nil, 0, err
@@ -228,7 +264,7 @@ func (r *PostgreSQLProgressRepository) ListProgressByUser(ctx context.Context, u
 		LIMIT $3 OFFSET $4
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error listing progress by user: %v", err)
 		return nil, 0, err
@@ -275,10 +311,15 @@ func (r *PostgreSQLProgressRepository) ListProgressByUser(ctx context.Context, u
 
 // ListProgressByCourse lists all progress for a course with pagination
 func (r *PostgreSQLProgressRepository) ListProgressByCourse(ctx context.Context, courseID, tenantID uuid.UUID, page, pageSize int) ([]*domain.CourseProgress, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	var totalCount int
 	countQuery := `SELECT COUNT(*) FROM course_progress WHERE course_id = $1 AND tenant_id = $2`
-	err := r.db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error counting progress by course: %v", err)
 		return nil, 0, err
@@ -298,7 +339,7 @@ func (r *PostgreSQLProgressRepository) ListProgressByCourse(ctx context.Context,
 		LIMIT $3 OFFSET $4
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error listing progress by course: %v", err)
 		return nil, 0, err
@@ -345,6 +386,11 @@ func (r *PostgreSQLProgressRepository) ListProgressByCourse(ctx context.Context,
 
 // UpdateProgress updates a course progress
 func (r *PostgreSQLProgressRepository) UpdateProgress(ctx context.Context, progress *domain.CourseProgress) error {
+	db, err := r.getTenantDB(progress.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE course_progress
 		SET status = $1, progress_percentage = $2,
@@ -356,7 +402,7 @@ func (r *PostgreSQLProgressRepository) UpdateProgress(ctx context.Context, progr
 		WHERE id = $13 AND tenant_id = $14
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		progress.Status,
 		progress.ProgressPercentage,
 		progress.CompletedLessons,
@@ -393,9 +439,14 @@ func (r *PostgreSQLProgressRepository) UpdateProgress(ctx context.Context, progr
 
 // DeleteProgress deletes a course progress
 func (r *PostgreSQLProgressRepository) DeleteProgress(ctx context.Context, progressID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM course_progress WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, progressID, tenantID)
+	result, err := db.ExecContext(ctx, query, progressID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error deleting progress: %v", err)
 		return ports.ErrProgressDeletionFailed
@@ -420,6 +471,11 @@ func (r *PostgreSQLProgressRepository) DeleteProgress(ctx context.Context, progr
 
 // MarkProgressAsStarted marks progress as started
 func (r *PostgreSQLProgressRepository) MarkProgressAsStarted(ctx context.Context, progressID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE course_progress
@@ -427,7 +483,7 @@ func (r *PostgreSQLProgressRepository) MarkProgressAsStarted(ctx context.Context
 		WHERE id = $5 AND tenant_id = $6 AND status = $7
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		domain.ProgressStatusInProgress,
 		now,
 		now,
@@ -457,6 +513,11 @@ func (r *PostgreSQLProgressRepository) MarkProgressAsStarted(ctx context.Context
 
 // MarkProgressAsCompleted marks progress as completed
 func (r *PostgreSQLProgressRepository) MarkProgressAsCompleted(ctx context.Context, progressID, tenantID uuid.UUID, certificateID *uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE course_progress
@@ -465,7 +526,7 @@ func (r *PostgreSQLProgressRepository) MarkProgressAsCompleted(ctx context.Conte
 		WHERE id = $7 AND tenant_id = $8
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		domain.ProgressStatusCompleted,
 		100,
 		now,
@@ -496,6 +557,11 @@ func (r *PostgreSQLProgressRepository) MarkProgressAsCompleted(ctx context.Conte
 
 // UpdateLastAccessed updates the last accessed timestamp
 func (r *PostgreSQLProgressRepository) UpdateLastAccessed(ctx context.Context, progressID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE course_progress
@@ -503,7 +569,7 @@ func (r *PostgreSQLProgressRepository) UpdateLastAccessed(ctx context.Context, p
 		WHERE id = $3 AND tenant_id = $4
 	`
 
-	result, err := r.db.ExecContext(ctx, query, now, now, progressID, tenantID)
+	result, err := db.ExecContext(ctx, query, now, now, progressID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error updating last accessed: %v", err)
 		return ports.ErrProgressUpdateFailed
@@ -524,6 +590,11 @@ func (r *PostgreSQLProgressRepository) UpdateLastAccessed(ctx context.Context, p
 
 // UpdateProgressData updates progress completion data
 func (r *PostgreSQLProgressRepository) UpdateProgressData(ctx context.Context, progressID, tenantID uuid.UUID, completedLessons, completedQuizzes, timeSpent int) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	now := time.Now().UTC()
 	query := `
 		UPDATE course_progress
@@ -532,7 +603,7 @@ func (r *PostgreSQLProgressRepository) UpdateProgressData(ctx context.Context, p
 		WHERE id = $6 AND tenant_id = $7
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		completedLessons,
 		completedQuizzes,
 		timeSpent,
@@ -566,6 +637,11 @@ func (r *PostgreSQLProgressRepository) UpdateProgressData(ctx context.Context, p
 
 // CreateSnapshot creates a new progress snapshot
 func (r *PostgreSQLProgressRepository) CreateSnapshot(ctx context.Context, snapshot *domain.ProgressSnapshot) error {
+	db, err := r.getTenantDB(snapshot.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		INSERT INTO progress_snapshots (
 			id, tenant_id, user_id, course_id, enrollment_id,
@@ -575,7 +651,7 @@ func (r *PostgreSQLProgressRepository) CreateSnapshot(ctx context.Context, snaps
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		snapshot.ID,
 		snapshot.TenantID,
 		snapshot.UserID,
@@ -601,6 +677,11 @@ func (r *PostgreSQLProgressRepository) CreateSnapshot(ctx context.Context, snaps
 
 // GetSnapshot retrieves a snapshot by ID
 func (r *PostgreSQLProgressRepository) GetSnapshot(ctx context.Context, snapshotID, tenantID uuid.UUID) (*domain.ProgressSnapshot, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id,
 			   progress_percentage, completed_lessons, completed_quizzes,
@@ -611,7 +692,7 @@ func (r *PostgreSQLProgressRepository) GetSnapshot(ctx context.Context, snapshot
 	`
 
 	snapshot := &domain.ProgressSnapshot{}
-	err := r.db.QueryRowContext(ctx, query, snapshotID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, snapshotID, tenantID).Scan(
 		&snapshot.ID,
 		&snapshot.TenantID,
 		&snapshot.UserID,
@@ -640,10 +721,15 @@ func (r *PostgreSQLProgressRepository) GetSnapshot(ctx context.Context, snapshot
 
 // ListSnapshotsByProgress lists snapshots for a user's progress in a course
 func (r *PostgreSQLProgressRepository) ListSnapshotsByProgress(ctx context.Context, userID, courseID, tenantID uuid.UUID, page, pageSize int) ([]*domain.ProgressSnapshot, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	var totalCount int
 	countQuery := `SELECT COUNT(*) FROM progress_snapshots WHERE user_id = $1 AND course_id = $2 AND tenant_id = $3`
-	err := r.db.QueryRowContext(ctx, countQuery, userID, courseID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, userID, courseID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error counting snapshots: %v", err)
 		return nil, 0, err
@@ -662,7 +748,7 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByProgress(ctx context.Conte
 		LIMIT $4 OFFSET $5
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, userID, courseID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userID, courseID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error listing snapshots: %v", err)
 		return nil, 0, err
@@ -704,6 +790,11 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByProgress(ctx context.Conte
 
 // ListSnapshotsByMilestone lists snapshots for a specific milestone type
 func (r *PostgreSQLProgressRepository) ListSnapshotsByMilestone(ctx context.Context, userID, courseID, tenantID uuid.UUID, milestoneType domain.MilestoneType) ([]*domain.ProgressSnapshot, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id,
 			   progress_percentage, completed_lessons, completed_quizzes,
@@ -714,7 +805,7 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByMilestone(ctx context.Cont
 		ORDER BY snapshot_date DESC
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, userID, courseID, tenantID, milestoneType)
+	rows, err := db.QueryContext(ctx, query, userID, courseID, tenantID, milestoneType)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error listing snapshots by milestone: %v", err)
 		return nil, err
@@ -756,6 +847,11 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByMilestone(ctx context.Cont
 
 // ListSnapshotsByDateRange lists snapshots within a date range
 func (r *PostgreSQLProgressRepository) ListSnapshotsByDateRange(ctx context.Context, userID, courseID, tenantID uuid.UUID, startDate, endDate time.Time, page, pageSize int) ([]*domain.ProgressSnapshot, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	var totalCount int
 	countQuery := `
@@ -763,7 +859,7 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByDateRange(ctx context.Cont
 		WHERE user_id = $1 AND course_id = $2 AND tenant_id = $3
 		AND snapshot_date >= $4 AND snapshot_date <= $5
 	`
-	err := r.db.QueryRowContext(ctx, countQuery, userID, courseID, tenantID, startDate, endDate).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, userID, courseID, tenantID, startDate, endDate).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error counting snapshots by date range: %v", err)
 		return nil, 0, err
@@ -783,7 +879,7 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByDateRange(ctx context.Cont
 		LIMIT $6 OFFSET $7
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, userID, courseID, tenantID, startDate, endDate, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userID, courseID, tenantID, startDate, endDate, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error listing snapshots by date range: %v", err)
 		return nil, 0, err
@@ -825,9 +921,14 @@ func (r *PostgreSQLProgressRepository) ListSnapshotsByDateRange(ctx context.Cont
 
 // DeleteSnapshot deletes a progress snapshot
 func (r *PostgreSQLProgressRepository) DeleteSnapshot(ctx context.Context, snapshotID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM progress_snapshots WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, snapshotID, tenantID)
+	result, err := db.ExecContext(ctx, query, snapshotID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error deleting snapshot: %v", err)
 		return ports.ErrSnapshotDeletionFailed
@@ -852,6 +953,11 @@ func (r *PostgreSQLProgressRepository) DeleteSnapshot(ctx context.Context, snaps
 
 // GetCourseStatistics retrieves statistics for a course
 func (r *PostgreSQLProgressRepository) GetCourseStatistics(ctx context.Context, courseID, tenantID uuid.UUID) (*domain.ProgressStatistics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			COUNT(*) as total_students,
@@ -868,7 +974,7 @@ func (r *PostgreSQLProgressRepository) GetCourseStatistics(ctx context.Context, 
 	stats := &domain.ProgressStatistics{}
 	var avgProgress float64
 
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
 		&stats.TotalStudents,
 		&stats.ActiveStudents,
 		&stats.CompletedStudents,
@@ -893,6 +999,11 @@ func (r *PostgreSQLProgressRepository) GetCourseStatistics(ctx context.Context, 
 
 // GetUserProgressSummary retrieves progress summary for a user across all courses
 func (r *PostgreSQLProgressRepository) GetUserProgressSummary(ctx context.Context, userID, tenantID uuid.UUID) (*domain.ProgressSummaryResponse, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			COUNT(*) as total_courses,
@@ -907,7 +1018,7 @@ func (r *PostgreSQLProgressRepository) GetUserProgressSummary(ctx context.Contex
 
 	summary := &domain.ProgressSummaryResponse{}
 
-	err := r.db.QueryRowContext(ctx, query, userID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, userID, tenantID).Scan(
 		&summary.TotalCourses,
 		&summary.InProgressCourses,
 		&summary.CompletedCourses,
@@ -926,13 +1037,18 @@ func (r *PostgreSQLProgressRepository) GetUserProgressSummary(ctx context.Contex
 
 // CountProgressByStatus counts progress entries by status for a course
 func (r *PostgreSQLProgressRepository) CountProgressByStatus(ctx context.Context, courseID, tenantID uuid.UUID, status domain.ProgressStatus) (int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT COUNT(*) FROM course_progress
 		WHERE course_id = $1 AND tenant_id = $2 AND status = $3
 	`
 
 	var count int
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID, status).Scan(&count)
+	err = db.QueryRowContext(ctx, query, courseID, tenantID, status).Scan(&count)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error counting progress by status: %v", err)
 		return 0, err
@@ -943,6 +1059,11 @@ func (r *PostgreSQLProgressRepository) CountProgressByStatus(ctx context.Context
 
 // GetAverageProgressPercentage gets the average progress percentage for a course
 func (r *PostgreSQLProgressRepository) GetAverageProgressPercentage(ctx context.Context, courseID, tenantID uuid.UUID) (float64, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT COALESCE(AVG(progress_percentage), 0)
 		FROM course_progress
@@ -950,7 +1071,7 @@ func (r *PostgreSQLProgressRepository) GetAverageProgressPercentage(ctx context.
 	`
 
 	var avgProgress float64
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&avgProgress)
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&avgProgress)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error getting average progress percentage: %v", err)
 		return 0, err
@@ -961,6 +1082,11 @@ func (r *PostgreSQLProgressRepository) GetAverageProgressPercentage(ctx context.
 
 // GetAverageTimeSpent gets the average time spent for a course
 func (r *PostgreSQLProgressRepository) GetAverageTimeSpent(ctx context.Context, courseID, tenantID uuid.UUID) (float64, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT COALESCE(AVG(total_time_spent), 0)
 		FROM course_progress
@@ -968,7 +1094,7 @@ func (r *PostgreSQLProgressRepository) GetAverageTimeSpent(ctx context.Context, 
 	`
 
 	var avgTimeSpent float64
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&avgTimeSpent)
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&avgTimeSpent)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error getting average time spent: %v", err)
 		return 0, err
@@ -983,6 +1109,11 @@ func (r *PostgreSQLProgressRepository) GetAverageTimeSpent(ctx context.Context, 
 
 // ProgressExists checks if progress exists for a user and course
 func (r *PostgreSQLProgressRepository) ProgressExists(ctx context.Context, userID, courseID, tenantID uuid.UUID) (bool, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT EXISTS(
 			SELECT 1 FROM course_progress
@@ -991,7 +1122,7 @@ func (r *PostgreSQLProgressRepository) ProgressExists(ctx context.Context, userI
 	`
 
 	var exists bool
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
 	if err != nil {
 		log.Printf("[PostgreSQLProgressRepository] Error checking progress exists: %v", err)
 		return false, err
