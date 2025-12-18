@@ -4,24 +4,35 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/google/uuid"
 )
 
 // PostgreSQLCertificateRepository implements the CertificateRepository interface
 type PostgreSQLCertificateRepository struct {
-	db *sql.DB
+	dbManager *database.Manager
 }
 
 // NewPostgreSQLCertificateRepository creates a new PostgreSQL certificate repository
-func NewPostgreSQLCertificateRepository(db *sql.DB) ports.CertificateRepository {
+func NewPostgreSQLCertificateRepository(dbManager *database.Manager) ports.CertificateRepository {
 	return &PostgreSQLCertificateRepository{
-		db: db,
+		dbManager: dbManager,
 	}
+}
+
+// getTenantDB obtains the tenant database connection dynamically
+func (r *PostgreSQLCertificateRepository) getTenantDB(tenantID uuid.UUID) (*sql.DB, error) {
+	db, err := r.dbManager.GetTenantConnection(tenantID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant connection: %w", err)
+	}
+	return db.DB, nil
 }
 
 // ============================================================
@@ -30,6 +41,11 @@ func NewPostgreSQLCertificateRepository(db *sql.DB) ports.CertificateRepository 
 
 // CreateCertificate creates a new certificate
 func (r *PostgreSQLCertificateRepository) CreateCertificate(ctx context.Context, certificate *domain.Certificate) error {
+	db, err := r.getTenantDB(certificate.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Marshal metadata to JSON
 	metadataJSON, err := json.Marshal(certificate.Metadata)
 	if err != nil {
@@ -47,7 +63,7 @@ func (r *PostgreSQLCertificateRepository) CreateCertificate(ctx context.Context,
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
 	`
 
-	_, err = r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		certificate.ID,
 		certificate.TenantID,
 		certificate.UserID,
@@ -81,6 +97,11 @@ func (r *PostgreSQLCertificateRepository) CreateCertificate(ctx context.Context,
 
 // GetCertificate retrieves a certificate by ID
 func (r *PostgreSQLCertificateRepository) GetCertificate(ctx context.Context, certificateID, tenantID uuid.UUID) (*domain.Certificate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -94,7 +115,7 @@ func (r *PostgreSQLCertificateRepository) GetCertificate(ctx context.Context, ce
 	certificate := &domain.Certificate{}
 	var metadataJSON []byte
 
-	err := r.db.QueryRowContext(ctx, query, certificateID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, certificateID, tenantID).Scan(
 		&certificate.ID,
 		&certificate.TenantID,
 		&certificate.UserID,
@@ -137,6 +158,11 @@ func (r *PostgreSQLCertificateRepository) GetCertificate(ctx context.Context, ce
 
 // GetCertificateByNumber retrieves a certificate by certificate number
 func (r *PostgreSQLCertificateRepository) GetCertificateByNumber(ctx context.Context, certificateNumber string, tenantID uuid.UUID) (*domain.Certificate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -150,7 +176,7 @@ func (r *PostgreSQLCertificateRepository) GetCertificateByNumber(ctx context.Con
 	certificate := &domain.Certificate{}
 	var metadataJSON []byte
 
-	err := r.db.QueryRowContext(ctx, query, certificateNumber, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, certificateNumber, tenantID).Scan(
 		&certificate.ID,
 		&certificate.TenantID,
 		&certificate.UserID,
@@ -193,6 +219,11 @@ func (r *PostgreSQLCertificateRepository) GetCertificateByNumber(ctx context.Con
 
 // GetCertificateByUserAndCourse retrieves a certificate by user and course
 func (r *PostgreSQLCertificateRepository) GetCertificateByUserAndCourse(ctx context.Context, userID, courseID, tenantID uuid.UUID) (*domain.Certificate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -208,7 +239,7 @@ func (r *PostgreSQLCertificateRepository) GetCertificateByUserAndCourse(ctx cont
 	certificate := &domain.Certificate{}
 	var metadataJSON []byte
 
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
 		&certificate.ID,
 		&certificate.TenantID,
 		&certificate.UserID,
@@ -251,6 +282,11 @@ func (r *PostgreSQLCertificateRepository) GetCertificateByUserAndCourse(ctx cont
 
 // ListCertificates retrieves a paginated list of certificates with filters
 func (r *PostgreSQLCertificateRepository) ListCertificates(ctx context.Context, tenantID uuid.UUID, req *domain.ListCertificatesRequest) ([]*domain.Certificate, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// This is a complex query builder - simplified version
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
@@ -265,7 +301,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificates(ctx context.Context, 
 	`
 
 	offset := (req.Page - 1) * req.PageSize
-	rows, err := r.db.QueryContext(ctx, query, tenantID, req.PageSize, offset)
+	rows, err := db.QueryContext(ctx, query, tenantID, req.PageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error listing certificates: %v", err)
 		return nil, 0, err
@@ -316,7 +352,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificates(ctx context.Context, 
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM certificates WHERE tenant_id = $1`
 	var totalCount int
-	err = r.db.QueryRowContext(ctx, countQuery, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error counting certificates: %v", err)
 		return certificates, 0, err
@@ -327,6 +363,11 @@ func (r *PostgreSQLCertificateRepository) ListCertificates(ctx context.Context, 
 
 // ListCertificatesByUser retrieves certificates for a user
 func (r *PostgreSQLCertificateRepository) ListCertificatesByUser(ctx context.Context, userID, tenantID uuid.UUID, page, pageSize int) ([]*domain.Certificate, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -340,7 +381,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByUser(ctx context.Con
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error listing certificates by user: %v", err)
 		return nil, 0, err
@@ -391,7 +432,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByUser(ctx context.Con
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM certificates WHERE user_id = $1 AND tenant_id = $2`
 	var totalCount int
-	err = r.db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error counting certificates by user: %v", err)
 		return certificates, 0, err
@@ -402,6 +443,11 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByUser(ctx context.Con
 
 // ListCertificatesByCourse retrieves certificates for a course
 func (r *PostgreSQLCertificateRepository) ListCertificatesByCourse(ctx context.Context, courseID, tenantID uuid.UUID, page, pageSize int) ([]*domain.Certificate, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -415,7 +461,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByCourse(ctx context.C
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error listing certificates by course: %v", err)
 		return nil, 0, err
@@ -466,7 +512,7 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByCourse(ctx context.C
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM certificates WHERE course_id = $1 AND tenant_id = $2`
 	var totalCount int
-	err = r.db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error counting certificates by course: %v", err)
 		return certificates, 0, err
@@ -477,6 +523,11 @@ func (r *PostgreSQLCertificateRepository) ListCertificatesByCourse(ctx context.C
 
 // UpdateCertificate updates a certificate
 func (r *PostgreSQLCertificateRepository) UpdateCertificate(ctx context.Context, certificate *domain.Certificate) error {
+	db, err := r.getTenantDB(certificate.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Marshal metadata to JSON
 	metadataJSON, err := json.Marshal(certificate.Metadata)
 	if err != nil {
@@ -492,7 +543,7 @@ func (r *PostgreSQLCertificateRepository) UpdateCertificate(ctx context.Context,
 		WHERE id = $11 AND tenant_id = $12
 	`
 
-	_, err = r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		certificate.Status,
 		certificate.ExpiresAt,
 		certificate.RevokedAt,
@@ -517,9 +568,14 @@ func (r *PostgreSQLCertificateRepository) UpdateCertificate(ctx context.Context,
 
 // DeleteCertificate deletes a certificate
 func (r *PostgreSQLCertificateRepository) DeleteCertificate(ctx context.Context, certificateID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM certificates WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, certificateID, tenantID)
+	result, err := db.ExecContext(ctx, query, certificateID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error deleting certificate: %v", err)
 		return ports.ErrCertificateDeletionFailed
@@ -542,6 +598,11 @@ func (r *PostgreSQLCertificateRepository) DeleteCertificate(ctx context.Context,
 
 // RevokeCertificate revokes a certificate
 func (r *PostgreSQLCertificateRepository) RevokeCertificate(ctx context.Context, certificateID, tenantID, revokedBy uuid.UUID, reason string) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE certificates SET
 			status = $1, revoked_at = $2, revoked_by = $3,
@@ -550,7 +611,7 @@ func (r *PostgreSQLCertificateRepository) RevokeCertificate(ctx context.Context,
 	`
 
 	now := time.Now().UTC()
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		domain.CertificateStatusRevoked,
 		now,
 		revokedBy,
@@ -570,6 +631,11 @@ func (r *PostgreSQLCertificateRepository) RevokeCertificate(ctx context.Context,
 
 // SetCertificateExpiration sets an expiration date for a certificate
 func (r *PostgreSQLCertificateRepository) SetCertificateExpiration(ctx context.Context, certificateID, tenantID uuid.UUID, expiresAt time.Time) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE certificates SET
 			expires_at = $1, updated_at = $2
@@ -577,7 +643,7 @@ func (r *PostgreSQLCertificateRepository) SetCertificateExpiration(ctx context.C
 	`
 
 	now := time.Now().UTC()
-	_, err := r.db.ExecContext(ctx, query, expiresAt, now, certificateID, tenantID)
+	_, err = db.ExecContext(ctx, query, expiresAt, now, certificateID, tenantID)
 
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error setting expiration: %v", err)
@@ -593,6 +659,11 @@ func (r *PostgreSQLCertificateRepository) SetCertificateExpiration(ctx context.C
 
 // VerifyCertificate verifies a certificate using certificate number and verification code
 func (r *PostgreSQLCertificateRepository) VerifyCertificate(ctx context.Context, certificateNumber, verificationCode string, tenantID uuid.UUID) (*domain.Certificate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, enrollment_id, progress_id,
 			   certificate_number, verification_code, status, issued_at, expires_at,
@@ -606,7 +677,7 @@ func (r *PostgreSQLCertificateRepository) VerifyCertificate(ctx context.Context,
 	certificate := &domain.Certificate{}
 	var metadataJSON []byte
 
-	err := r.db.QueryRowContext(ctx, query, certificateNumber, verificationCode, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, certificateNumber, verificationCode, tenantID).Scan(
 		&certificate.ID,
 		&certificate.TenantID,
 		&certificate.UserID,
@@ -648,10 +719,15 @@ func (r *PostgreSQLCertificateRepository) VerifyCertificate(ctx context.Context,
 
 // CertificateExists checks if a certificate exists for a user and course
 func (r *PostgreSQLCertificateRepository) CertificateExists(ctx context.Context, userID, courseID, tenantID uuid.UUID) (bool, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `SELECT EXISTS(SELECT 1 FROM certificates WHERE user_id = $1 AND course_id = $2 AND tenant_id = $3)`
 
 	var exists bool
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error checking certificate existence: %v", err)
 		return false, err
@@ -666,6 +742,11 @@ func (r *PostgreSQLCertificateRepository) CertificateExists(ctx context.Context,
 
 // GetCertificateStatistics retrieves certificate statistics
 func (r *PostgreSQLCertificateRepository) GetCertificateStatistics(ctx context.Context, tenantID uuid.UUID) (*domain.CertificateStatisticsResponse, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			COUNT(*) as total,
@@ -679,7 +760,7 @@ func (r *PostgreSQLCertificateRepository) GetCertificateStatistics(ctx context.C
 	`
 
 	stats := &domain.CertificateStatisticsResponse{}
-	err := r.db.QueryRowContext(ctx, query, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID).Scan(
 		&stats.TotalCertificates,
 		&stats.IssuedCertificates,
 		&stats.RevokedCertificates,
@@ -698,6 +779,11 @@ func (r *PostgreSQLCertificateRepository) GetCertificateStatistics(ctx context.C
 
 // GetCourseStatistics retrieves certificate statistics for a course
 func (r *PostgreSQLCertificateRepository) GetCourseStatistics(ctx context.Context, courseID, tenantID uuid.UUID) (*domain.CertificateStatisticsResponse, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			COUNT(*) as total,
@@ -711,7 +797,7 @@ func (r *PostgreSQLCertificateRepository) GetCourseStatistics(ctx context.Contex
 	`
 
 	stats := &domain.CertificateStatisticsResponse{}
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
 		&stats.TotalCertificates,
 		&stats.IssuedCertificates,
 		&stats.RevokedCertificates,
@@ -730,10 +816,15 @@ func (r *PostgreSQLCertificateRepository) GetCourseStatistics(ctx context.Contex
 
 // CountCertificatesByStatus counts certificates by status
 func (r *PostgreSQLCertificateRepository) CountCertificatesByStatus(ctx context.Context, tenantID uuid.UUID, status domain.CertificateStatus) (int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `SELECT COUNT(*) FROM certificates WHERE tenant_id = $1 AND status = $2`
 
 	var count int
-	err := r.db.QueryRowContext(ctx, query, tenantID, status).Scan(&count)
+	err = db.QueryRowContext(ctx, query, tenantID, status).Scan(&count)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error counting certificates by status: %v", err)
 		return 0, err
@@ -748,6 +839,11 @@ func (r *PostgreSQLCertificateRepository) CountCertificatesByStatus(ctx context.
 
 // CreateTemplate creates a new certificate template
 func (r *PostgreSQLCertificateRepository) CreateTemplate(ctx context.Context, template *domain.CertificateTemplate) error {
+	db, err := r.getTenantDB(template.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		INSERT INTO certificate_templates (
 			id, tenant_id, name, description, template_path, is_default,
@@ -755,7 +851,7 @@ func (r *PostgreSQLCertificateRepository) CreateTemplate(ctx context.Context, te
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		template.ID,
 		template.TenantID,
 		template.Name,
@@ -779,6 +875,11 @@ func (r *PostgreSQLCertificateRepository) CreateTemplate(ctx context.Context, te
 
 // GetTemplate retrieves a template by ID
 func (r *PostgreSQLCertificateRepository) GetTemplate(ctx context.Context, templateID, tenantID uuid.UUID) (*domain.CertificateTemplate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, name, description, template_path, is_default,
 			   is_active, configuration, created_by, created_at, updated_at
@@ -787,7 +888,7 @@ func (r *PostgreSQLCertificateRepository) GetTemplate(ctx context.Context, templ
 	`
 
 	template := &domain.CertificateTemplate{}
-	err := r.db.QueryRowContext(ctx, query, templateID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, templateID, tenantID).Scan(
 		&template.ID,
 		&template.TenantID,
 		&template.Name,
@@ -814,6 +915,11 @@ func (r *PostgreSQLCertificateRepository) GetTemplate(ctx context.Context, templ
 
 // GetDefaultTemplate retrieves the default template for a tenant
 func (r *PostgreSQLCertificateRepository) GetDefaultTemplate(ctx context.Context, tenantID uuid.UUID) (*domain.CertificateTemplate, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, name, description, template_path, is_default,
 			   is_active, configuration, created_by, created_at, updated_at
@@ -823,7 +929,7 @@ func (r *PostgreSQLCertificateRepository) GetDefaultTemplate(ctx context.Context
 	`
 
 	template := &domain.CertificateTemplate{}
-	err := r.db.QueryRowContext(ctx, query, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID).Scan(
 		&template.ID,
 		&template.TenantID,
 		&template.Name,
@@ -850,6 +956,11 @@ func (r *PostgreSQLCertificateRepository) GetDefaultTemplate(ctx context.Context
 
 // ListTemplates retrieves a paginated list of templates
 func (r *PostgreSQLCertificateRepository) ListTemplates(ctx context.Context, tenantID uuid.UUID, page, pageSize int) ([]*domain.CertificateTemplate, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, name, description, template_path, is_default,
 			   is_active, configuration, created_by, created_at, updated_at
@@ -860,7 +971,7 @@ func (r *PostgreSQLCertificateRepository) ListTemplates(ctx context.Context, ten
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error listing templates: %v", err)
 		return nil, 0, err
@@ -893,7 +1004,7 @@ func (r *PostgreSQLCertificateRepository) ListTemplates(ctx context.Context, ten
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM certificate_templates WHERE tenant_id = $1`
 	var totalCount int
-	err = r.db.QueryRowContext(ctx, countQuery, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error counting templates: %v", err)
 		return templates, 0, err
@@ -904,6 +1015,11 @@ func (r *PostgreSQLCertificateRepository) ListTemplates(ctx context.Context, ten
 
 // UpdateTemplate updates a certificate template
 func (r *PostgreSQLCertificateRepository) UpdateTemplate(ctx context.Context, template *domain.CertificateTemplate) error {
+	db, err := r.getTenantDB(template.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE certificate_templates SET
 			name = $1, description = $2, template_path = $3,
@@ -912,7 +1028,7 @@ func (r *PostgreSQLCertificateRepository) UpdateTemplate(ctx context.Context, te
 		WHERE id = $8 AND tenant_id = $9
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		template.Name,
 		template.Description,
 		template.TemplatePath,
@@ -934,9 +1050,14 @@ func (r *PostgreSQLCertificateRepository) UpdateTemplate(ctx context.Context, te
 
 // DeleteTemplate deletes a certificate template
 func (r *PostgreSQLCertificateRepository) DeleteTemplate(ctx context.Context, templateID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM certificate_templates WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, templateID, tenantID)
+	result, err := db.ExecContext(ctx, query, templateID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLCertificateRepository] Error deleting template: %v", err)
 		return ports.ErrTemplateDeletionFailed
@@ -955,8 +1076,13 @@ func (r *PostgreSQLCertificateRepository) DeleteTemplate(ctx context.Context, te
 
 // SetDefaultTemplate sets a template as the default (unsets others)
 func (r *PostgreSQLCertificateRepository) SetDefaultTemplate(ctx context.Context, templateID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Start transaction
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return ports.ErrTemplateUpdateFailed
 	}

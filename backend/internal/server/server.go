@@ -403,8 +403,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for certificates module
 	log.Println("🔧 Initializing certificates module...")
 
-	// 1. Initialize certificates repository (TODO: refactor to tenant-aware)
-	certificateRepo := certificateadapters.NewPostgreSQLCertificateRepository(tenantDB.DB)
+	// 1. Initialize certificates repository (tenant-aware)
+	certificateRepo := certificateadapters.NewPostgreSQLCertificateRepository(dbManager)
 
 	// 2. Initialize certificate generator (PDF generation with gofpdf)
 	certificateGenerator := certificateadapters.NewPDFGenerator()
