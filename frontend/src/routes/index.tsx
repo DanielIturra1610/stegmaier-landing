@@ -59,6 +59,7 @@ import SystemMonitoringDashboard from '../components/admin/SystemMonitoringDashb
 import TenantManagement from '../pages/admin/TenantManagement';
 import TenantDetails from '../pages/admin/TenantDetails';
 import UserCreation from '../pages/admin/UserCreation';
+import UserEdit from '../pages/admin/UserEdit';
 import { useAuth } from '../contexts/AuthContext';
 
 // Componente para redirección condicional con validación robusta
@@ -103,20 +104,20 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        
-        {/* Ruta de selección de rol (para usuarios con múltiples roles) */}
-        <Route 
-          path="/auth/role-selection" 
-          element={
-            <ProtectedRoute>
-              <RoleSelectionPage />
-            </ProtectedRoute>
-          } 
-        />
 
         {/* Ruta 404 */}
         <Route path="/404" element={<NotFoundPage />} />
       </Route>
+
+      {/* Ruta de selección de rol (protegida, sin layout/navbar) */}
+      <Route
+        path="/auth/role-selection"
+        element={
+          <ProtectedRoute>
+            <RoleSelectionPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Ruta de selección de tenant (protegida, sin layout) */}
       <Route
@@ -186,6 +187,16 @@ const AppRoutes: React.FC = () => {
           element={
             <ProtectedRoute allowedRoles={['admin', 'instructor', 'superadmin']}>
               <UserCreation />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Edición de Usuarios (admin y superadmin) */}
+        <Route
+          path="admin/users/:userId/edit"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+              <UserEdit />
             </ProtectedRoute>
           }
         />

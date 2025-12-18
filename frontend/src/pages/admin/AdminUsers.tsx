@@ -508,7 +508,7 @@ const AdminUsers: React.FC = () => {
                                   <Button
                                     variant="ghost"
                                     onClick={() => {
-                                      console.log('Edit user:', user.id);
+                                      navigate(`/platform/admin/users/${user.id}/edit`);
                                       setOpenMenuId(null);
                                     }}
                                     className="w-full justify-start gap-2"

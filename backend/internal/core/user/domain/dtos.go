@@ -13,9 +13,21 @@ type CreateUserDTO struct {
 
 // UpdateUserDTO represents the data that can be updated by an admin
 type UpdateUserDTO struct {
-	FullName   *string `json:"full_name,omitempty" validate:"omitempty,min=2,max=255"`
-	Role       *string `json:"role,omitempty" validate:"omitempty,oneof=student instructor admin superadmin"`
-	IsVerified *bool   `json:"is_verified,omitempty"`
+	FullName   *string  `json:"full_name,omitempty" validate:"omitempty,min=2,max=255"`
+	Role       *string  `json:"role,omitempty" validate:"omitempty,oneof=student instructor admin superadmin"`
+	Roles      []string `json:"roles,omitempty" validate:"omitempty,dive,oneof=student instructor admin superadmin"`
+	IsVerified *bool    `json:"is_verified,omitempty"`
+}
+
+// GetRoles returns the roles to assign, preferring Roles[] over Role
+func (dto *UpdateUserDTO) GetRoles() []string {
+	if len(dto.Roles) > 0 {
+		return dto.Roles
+	}
+	if dto.Role != nil && *dto.Role != "" {
+		return []string{*dto.Role}
+	}
+	return nil
 }
 
 // UserFiltersDTO represents filters for listing users

@@ -127,11 +127,12 @@ func (s *UserManagementService) UpdateUser(ctx context.Context, userID string, d
 		updated = true
 	}
 
-	if dto.Role != nil {
-		user.Roles = []string{*dto.Role}
-		user.ActiveRole = *dto.Role
+	// Handle roles update (supports both Role and Roles[])
+	if roles := dto.GetRoles(); len(roles) > 0 {
+		user.Roles = roles
+		user.ActiveRole = roles[0] // First role as active
 		updated = true
-		log.Printf("🔄 Changing user role to: %s", *dto.Role)
+		log.Printf("🔄 Changing user roles to: %v (active: %s)", roles, roles[0])
 	}
 
 	if dto.IsVerified != nil {
