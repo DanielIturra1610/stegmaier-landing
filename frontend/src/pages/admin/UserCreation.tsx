@@ -160,8 +160,22 @@ const UserCreation: React.FC = () => {
       setError(null);
       setSuccess(null);
 
+      // Combinar rol principal con roles adicionales (sin duplicados)
+      const allRoles = new Set<string>([values.role]);
+      if (values.roles && values.roles.length > 0) {
+        values.roles.forEach(r => allRoles.add(r));
+      }
+      
+      // Crear payload con roles combinados
+      const payload = {
+        ...values,
+        roles: Array.from(allRoles)
+      };
+
+      console.log('📤 Creating user with roles:', payload.roles);
+
       // Crear usuario
-      await adminService.createUser(values);
+      await adminService.createUser(payload);
 
       // Mostrar éxito
       setSuccess(`Usuario ${values.email} creado exitosamente`);
