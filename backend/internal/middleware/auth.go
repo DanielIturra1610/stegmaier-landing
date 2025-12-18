@@ -74,8 +74,8 @@ func AuthMiddleware(tokenService tokens.TokenService, authRepo ports.AuthReposit
 		c.Locals(UserEmailKey, user.Email)
 
 		// Use the role from JWT claims if available (tenant-specific role from membership)
-		// Otherwise fall back to the user's global role
-		roleToUse := user.Role
+		// Otherwise fall back to the user's primary role
+		roleToUse := user.GetPrimaryRole()
 		if claims.Role != "" {
 			roleToUse = claims.Role
 		}
@@ -131,7 +131,7 @@ func OptionalAuthMiddleware(tokenService tokens.TokenService, authRepo ports.Aut
 		// Inject user information into context
 		c.Locals(UserIDKey, user.ID)
 		c.Locals(UserEmailKey, user.Email)
-		c.Locals(UserRoleKey, string(user.Role))
+		c.Locals(UserRoleKey, user.GetPrimaryRole())
 		// Only inject tenant_id if user has one (it's a pointer that can be nil)
 		if user.TenantID != nil {
 			c.Locals(TenantIDKey, *user.TenantID) // Dereference the pointer

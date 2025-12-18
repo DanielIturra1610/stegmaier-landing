@@ -35,6 +35,8 @@ interface AuthContextType extends AuthState {
   verifyEmail: (token: string) => Promise<boolean>;
   resendVerification: (email: string) => Promise<boolean>;
   clearError: () => void;
+  setUser: (user: User) => void;
+  switchRole: (role: 'student' | 'instructor' | 'admin' | 'superadmin') => Promise<void>;
   // Tenant management
   currentTenantId: string | null;
   setCurrentTenantId: (tenantId: string) => Promise<void>;
@@ -199,17 +201,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Si hay error al cargar el perfil completo, usamos los datos básicos de la autenticación
         console.error('Error al cargar perfil completo:', profileError);
         
-        // Crear objeto de usuario a partir de los datos de la respuesta
+        // Crear usuario a partir de la respuesta del backend
+        const jwtPayload = decodeJwtPayload(authResponse.access_token);
         const user: User = {
-          id: authResponse.user_id,
+          id: jwtPayload?.user_id || authResponse.user_id,
           email: authResponse.email,
-          firstName: authResponse.first_name || '', 
-          lastName: authResponse.last_name || '', 
-          full_name: authResponse.full_name || `${authResponse.first_name || ''} ${authResponse.last_name || ''}`.trim(),
-          role: authResponse.role as any,
-          verified: true,
+          firstName: authResponse.first_name || authResponse.full_name?.split(' ')[0] || '',
+          lastName: authResponse.last_name || authResponse.full_name?.split(' ').slice(1).join(' ') || '',
+          full_name: authResponse.full_name || authResponse.username,
+          role: (jwtPayload?.role || authResponse.role) as any,
+          roles: (authResponse.user?.roles || authResponse.roles) as ('student' | 'instructor' | 'admin' | 'superadmin')[] | undefined,
+          active_role: (authResponse.user?.active_role || authResponse.active_role) as ('student' | 'instructor' | 'admin' | 'superadmin') | undefined,
+          has_multiple_roles: authResponse.user?.has_multiple_roles || authResponse.has_multiple_roles,
+          verified: authResponse.user?.verified || true,
           createdAt: authResponse.created_at || new Date().toISOString(),
-          updatedAt: authResponse.updated_at || new Date().toISOString()
+          updatedAt: authResponse.updated_at || new Date().toISOString(),
         };
         
         setState({
@@ -466,6 +472,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setCurrentTenantIdState(tenantId);
 
       console.log('✅ [AuthContext] Tenant selected successfully:', response.tenant_name, 'with role:', newRole);
+
+      // IMPORTANTE: Obtener datos completos del usuario desde /auth/me para refrescar roles, has_multiple_roles, etc.
+      console.log('🔄 [AuthContext] Fetching complete user data after tenant selection...');
+      const fullUserData = await authService.getCurrentUser();
+      
+      // Actualizar estado con datos completos (fullUserData ya es un User válido)
+      setState(prev => ({ ...prev, user: fullUserData }));
+      console.log('✅ [AuthContext] User data refreshed - has_multiple_roles:', fullUserData.has_multiple_roles, 'roles:', fullUserData.roles);
     } catch (error) {
       console.error('❌ [AuthContext] Error setting tenant:', error);
       throw error;
@@ -473,8 +487,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   /**
-   * Carga la lista de tenants disponibles para el usuario
-   * Usa el nuevo endpoint /api/v1/tenants que retorna tenants con memberships
+   * Cargar tenants disponibles para el usuario
    */
   const loadAvailableTenants = async () => {
     try {
@@ -497,6 +510,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Actualizar información del usuario manualmente
+   */
+  const setUser = (user: User) => {
+    setState(prev => ({
+      ...prev,
+      user,
+      isAuthenticated: true,
+      isVerified: user.verified || false
+    }));
+    
+    // Actualizar localStorage
+    localStorage.setItem('auth_user', JSON.stringify(user));
+  };
+
+  /**
+   * Cambiar el rol activo del usuario (para usuarios con múltiples roles)
+   */
+  const switchRole = async (role: 'student' | 'instructor' | 'admin' | 'superadmin') => {
+    try {
+      console.log('🔍 [AuthContext] Switching role to:', role);
+      
+      const response = await authService.switchRole(role);
+      
+      // Actualizar estado con nuevo token y rol activo
+      if (response && response.access_token) {
+        const updatedUser: User = {
+          ...state.user!,
+          role,
+          active_role: role,
+          roles: (response.user?.roles || response.roles || state.user?.roles) as ('student' | 'instructor' | 'admin' | 'superadmin')[] | undefined,
+          has_multiple_roles: response.user?.has_multiple_roles || response.has_multiple_roles
+        };
+
+        setState(prev => ({
+          ...prev,
+          user: updatedUser,
+          token: response.access_token
+        }));
+
+        console.log('✅ [AuthContext] Role switched successfully to:', role);
+      }
+    } catch (error) {
+      console.error('❌ [AuthContext] Error switching role:', error);
+      throw error;
+    }
+  };
+
   // Cargar tenants disponibles al autenticarse
   // DESACTIVADO: Ahora se carga manualmente después de login/register para evitar race conditions
   // useEffect(() => {
@@ -514,6 +575,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     verifyEmail,
     resendVerification,
     clearError,
+    setUser,
+    switchRole,
     // Tenant management
     currentTenantId,
     setCurrentTenantId,

@@ -41,18 +41,32 @@ func NewEnrollmentController(service ports.EnrollmentService) *EnrollmentControl
 // @Security Bearer
 func (c *EnrollmentController) EnrollInCourse(ctx *fiber.Ctx) error {
 	// Get tenant ID from context (injected by tenant middleware)
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
 	// Get user ID from context (injected by auth middleware)
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -116,17 +130,31 @@ func (c *EnrollmentController) EnrollInCourse(ctx *fiber.Ctx) error {
 // @Router /enrollments/my [get]
 // @Security Bearer
 func (c *EnrollmentController) GetMyEnrollments(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -168,17 +196,31 @@ func (c *EnrollmentController) GetMyEnrollments(ctx *fiber.Ctx) error {
 // @Router /enrollments/my/{enrollmentID} [get]
 // @Security Bearer
 func (c *EnrollmentController) GetMyEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -230,17 +272,31 @@ func (c *EnrollmentController) GetMyEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments/my/{enrollmentID}/cancel [post]
 // @Security Bearer
 func (c *EnrollmentController) CancelMyEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -310,17 +366,31 @@ func (c *EnrollmentController) CancelMyEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments/courses/{courseID}/access [get]
 // @Security Bearer
 func (c *EnrollmentController) CheckCourseAccess(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -360,17 +430,31 @@ func (c *EnrollmentController) CheckCourseAccess(ctx *fiber.Ctx) error {
 // @Router /enrollments/courses/{courseID}/access [post]
 // @Security Bearer
 func (c *EnrollmentController) RecordCourseAccess(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -415,17 +499,31 @@ func (c *EnrollmentController) RecordCourseAccess(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests [post]
 // @Security Bearer
 func (c *EnrollmentController) RequestEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -484,17 +582,31 @@ func (c *EnrollmentController) RequestEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests/my [get]
 // @Security Bearer
 func (c *EnrollmentController) GetMyEnrollmentRequests(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -536,17 +648,31 @@ func (c *EnrollmentController) GetMyEnrollmentRequests(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests/{requestID}/cancel [post]
 // @Security Bearer
 func (c *EnrollmentController) CancelEnrollmentRequest(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -606,10 +732,17 @@ func (c *EnrollmentController) CancelEnrollmentRequest(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID} [get]
 // @Security Bearer
 func (c *EnrollmentController) GetEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -660,10 +793,17 @@ func (c *EnrollmentController) GetEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments [get]
 // @Security Bearer
 func (c *EnrollmentController) ListEnrollments(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -738,10 +878,17 @@ func (c *EnrollmentController) ListEnrollments(ctx *fiber.Ctx) error {
 // @Router /enrollments/courses/{courseID} [get]
 // @Security Bearer
 func (c *EnrollmentController) GetCourseEnrollments(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -792,10 +939,17 @@ func (c *EnrollmentController) GetCourseEnrollments(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID}/progress [put]
 // @Security Bearer
 func (c *EnrollmentController) UpdateEnrollmentProgress(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -859,10 +1013,17 @@ func (c *EnrollmentController) UpdateEnrollmentProgress(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID}/complete [post]
 // @Security Bearer
 func (c *EnrollmentController) CompleteEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -923,10 +1084,17 @@ func (c *EnrollmentController) CompleteEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID}/cancel [post]
 // @Security Bearer
 func (c *EnrollmentController) CancelEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -994,10 +1162,17 @@ func (c *EnrollmentController) CancelEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID}/extend [post]
 // @Security Bearer
 func (c *EnrollmentController) ExtendEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1060,10 +1235,17 @@ func (c *EnrollmentController) ExtendEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollments/{enrollmentID} [delete]
 // @Security Bearer
 func (c *EnrollmentController) DeleteEnrollment(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1115,10 +1297,17 @@ func (c *EnrollmentController) DeleteEnrollment(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests/{requestID} [get]
 // @Security Bearer
 func (c *EnrollmentController) GetEnrollmentRequest(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1168,10 +1357,17 @@ func (c *EnrollmentController) GetEnrollmentRequest(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests [get]
 // @Security Bearer
 func (c *EnrollmentController) ListEnrollmentRequests(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1239,10 +1435,17 @@ func (c *EnrollmentController) ListEnrollmentRequests(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests/courses/{courseID}/pending [get]
 // @Security Bearer
 func (c *EnrollmentController) GetPendingEnrollmentRequests(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1292,10 +1495,17 @@ func (c *EnrollmentController) GetPendingEnrollmentRequests(ctx *fiber.Ctx) erro
 // @Router /enrollment-requests/{requestID}/approve [post]
 // @Security Bearer
 func (c *EnrollmentController) ApproveEnrollmentRequest(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1357,10 +1567,17 @@ func (c *EnrollmentController) ApproveEnrollmentRequest(ctx *fiber.Ctx) error {
 // @Router /enrollment-requests/{requestID}/reject [post]
 // @Security Bearer
 func (c *EnrollmentController) RejectEnrollmentRequest(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1437,10 +1654,17 @@ func (c *EnrollmentController) RejectEnrollmentRequest(ctx *fiber.Ctx) error {
 // @Router /enrollments/courses/{courseID}/stats [get]
 // @Security Bearer
 func (c *EnrollmentController) GetCourseEnrollmentStats(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1480,10 +1704,17 @@ func (c *EnrollmentController) GetCourseEnrollmentStats(ctx *fiber.Ctx) error {
 // @Router /enrollments/process-expired [post]
 // @Security Bearer
 func (c *EnrollmentController) ProcessExpiredEnrollments(ctx *fiber.Ctx) error {
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1506,52 +1737,45 @@ func (c *EnrollmentController) ProcessExpiredEnrollments(ctx *fiber.Ctx) error {
 // ============================================================================
 
 // RegisterRoutes registers all enrollment routes
+// NOTE: Middlewares (Auth, Tenant, Membership) are applied in server.go before calling this
 func (c *EnrollmentController) RegisterRoutes(router fiber.Router) {
-	// Student enrollment operations (protected)
-	enrollments := router.Group("/enrollments")
-	{
-		// Enroll in course
-		enrollments.Post("/enroll", c.EnrollInCourse)
+	// Student enrollment operations - register directly to inherit middlewares
+	router.Post("/enrollments/enroll", c.EnrollInCourse)
 
-		// My enrollments
-		enrollments.Get("/my", c.GetMyEnrollments)
-		enrollments.Get("/my/:enrollmentID", c.GetMyEnrollment)
-		enrollments.Post("/my/:enrollmentID/cancel", c.CancelMyEnrollment)
+	// My enrollments
+	router.Get("/enrollments/my", c.GetMyEnrollments)
+	router.Get("/enrollments/my/:enrollmentID", c.GetMyEnrollment)
+	router.Post("/enrollments/my/:enrollmentID/cancel", c.CancelMyEnrollment)
 
-		// Course access
-		enrollments.Get("/courses/:courseID/access", c.CheckCourseAccess)
-		enrollments.Post("/courses/:courseID/access", c.RecordCourseAccess)
+	// Course access
+	router.Get("/enrollments/courses/:courseID/access", c.CheckCourseAccess)
+	router.Post("/enrollments/courses/:courseID/access", c.RecordCourseAccess)
 
-		// Enrollment management (instructor/admin)
-		enrollments.Get("/:enrollmentID", c.GetEnrollment)
-		enrollments.Get("", c.ListEnrollments)
-		enrollments.Get("/courses/:courseID", c.GetCourseEnrollments)
-		enrollments.Put("/:enrollmentID/progress", c.UpdateEnrollmentProgress)
-		enrollments.Post("/:enrollmentID/complete", c.CompleteEnrollment)
-		enrollments.Post("/:enrollmentID/cancel", c.CancelEnrollment)
-		enrollments.Post("/:enrollmentID/extend", c.ExtendEnrollment)
-		enrollments.Delete("/:enrollmentID", c.DeleteEnrollment)
+	// Enrollment management (instructor/admin)
+	router.Get("/enrollments/:enrollmentID", c.GetEnrollment)
+	router.Get("/enrollments", c.ListEnrollments)
+	router.Get("/enrollments/courses/:courseID", c.GetCourseEnrollments)
+	router.Put("/enrollments/:enrollmentID/progress", c.UpdateEnrollmentProgress)
+	router.Post("/enrollments/:enrollmentID/complete", c.CompleteEnrollment)
+	router.Post("/enrollments/:enrollmentID/cancel", c.CancelEnrollment)
+	router.Post("/enrollments/:enrollmentID/extend", c.ExtendEnrollment)
+	router.Delete("/enrollments/:enrollmentID", c.DeleteEnrollment)
 
-		// Statistics
-		enrollments.Get("/courses/:courseID/stats", c.GetCourseEnrollmentStats)
+	// Statistics
+	router.Get("/enrollments/courses/:courseID/stats", c.GetCourseEnrollmentStats)
 
-		// Bulk operations
-		enrollments.Post("/process-expired", c.ProcessExpiredEnrollments)
-	}
+	// Bulk operations
+	router.Post("/enrollments/process-expired", c.ProcessExpiredEnrollments)
 
-	// Enrollment request operations (protected)
-	requests := router.Group("/enrollment-requests")
-	{
-		// Student operations
-		requests.Post("", c.RequestEnrollment)
-		requests.Get("/my", c.GetMyEnrollmentRequests)
-		requests.Post("/:requestID/cancel", c.CancelEnrollmentRequest)
+	// Enrollment request operations
+	router.Post("/enrollment-requests", c.RequestEnrollment)
+	router.Get("/enrollment-requests/my", c.GetMyEnrollmentRequests)
+	router.Post("/enrollment-requests/:requestID/cancel", c.CancelEnrollmentRequest)
 
-		// Instructor/admin operations
-		requests.Get("/:requestID", c.GetEnrollmentRequest)
-		requests.Get("", c.ListEnrollmentRequests)
-		requests.Get("/courses/:courseID/pending", c.GetPendingEnrollmentRequests)
-		requests.Post("/:requestID/approve", c.ApproveEnrollmentRequest)
-		requests.Post("/:requestID/reject", c.RejectEnrollmentRequest)
-	}
+	// Instructor/admin operations
+	router.Get("/enrollment-requests/:requestID", c.GetEnrollmentRequest)
+	router.Get("/enrollment-requests", c.ListEnrollmentRequests)
+	router.Get("/enrollment-requests/courses/:courseID/pending", c.GetPendingEnrollmentRequests)
+	router.Post("/enrollment-requests/:requestID/approve", c.ApproveEnrollmentRequest)
+	router.Post("/enrollment-requests/:requestID/reject", c.RejectEnrollmentRequest)
 }

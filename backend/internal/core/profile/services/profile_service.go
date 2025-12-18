@@ -47,19 +47,24 @@ func NewProfileService(
 // GetMyProfile retrieves the authenticated user's profile
 func (s *ProfileServiceImpl) GetMyProfile(ctx context.Context, userID, tenantID uuid.UUID) (*domain.GetProfileResponse, error) {
 	// Get profile from repository
-	profile, err := s.profileRepo.GetProfile(ctx, userID, tenantID)
-	if err != nil {
-		return nil, ports.NewProfileError("GetMyProfile", ports.ErrProfileNotFound, err.Error())
-	}
-
-	// Get user info for response
+	// Get user info first (needed for both existing and new profiles)
 	user, err := s.authRepo.GetUserByID(ctx, userID.String())
 	if err != nil {
 		return nil, ports.NewProfileError("GetMyProfile", ports.ErrProfileNotFound, "user not found")
 	}
 
+	// Try to get existing profile
+	profile, err := s.profileRepo.GetProfile(ctx, userID, tenantID)
+	if err != nil {
+		// Profile doesn't exist - create it automatically
+		profile = domain.NewUserProfile(userID, &tenantID, &user.FullName)
+		if createErr := s.profileRepo.CreateProfile(ctx, profile); createErr != nil {
+			return nil, ports.NewProfileError("GetMyProfile", ports.ErrUpdateFailed, "failed to auto-create profile: "+createErr.Error())
+		}
+	}
+
 	// Convert to response DTO
-	response := domain.ProfileToResponse(profile, user.Email, string(user.Role), user.IsVerified)
+	response := domain.ProfileToResponse(profile, user.Email, user.GetPrimaryRole(), user.IsVerified)
 	return response, nil
 }
 
@@ -70,10 +75,18 @@ func (s *ProfileServiceImpl) UpdateMyProfile(ctx context.Context, userID, tenant
 		return ports.NewProfileError("UpdateMyProfile", ports.ErrInvalidInput, err.Error())
 	}
 
-	// Get existing profile
+	// Get existing profile or create if doesn't exist
 	profile, err := s.profileRepo.GetProfile(ctx, userID, tenantID)
 	if err != nil {
-		return ports.NewProfileError("UpdateMyProfile", ports.ErrProfileNotFound, err.Error())
+		// Profile doesn't exist - get user info and create it
+		user, userErr := s.authRepo.GetUserByID(ctx, userID.String())
+		if userErr != nil {
+			return ports.NewProfileError("UpdateMyProfile", ports.ErrProfileNotFound, "user not found")
+		}
+		profile = domain.NewUserProfile(userID, &tenantID, &user.FullName)
+		if createErr := s.profileRepo.CreateProfile(ctx, profile); createErr != nil {
+			return ports.NewProfileError("UpdateMyProfile", ports.ErrUpdateFailed, "failed to auto-create profile: "+createErr.Error())
+		}
 	}
 
 	// Apply updates
@@ -254,7 +267,7 @@ func (s *ProfileServiceImpl) GetProfile(ctx context.Context, targetUserID, tenan
 	}
 
 	// Convert to response DTO
-	response := domain.ProfileToResponse(profile, user.Email, string(user.Role), user.IsVerified)
+	response := domain.ProfileToResponse(profile, user.Email, user.GetPrimaryRole(), user.IsVerified)
 	return response, nil
 }
 

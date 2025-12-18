@@ -62,6 +62,14 @@ const TenantSelectionPage: React.FC = () => {
       // Llamar al backend para seleccionar el tenant y obtener nuevo JWT
       await setCurrentTenantId(selectedTenantId);
 
+      // MULTI-ROLE: Verificar si el usuario tiene múltiples roles después de seleccionar tenant
+      const userData = JSON.parse(localStorage.getItem('auth_user') || '{}');
+      if (userData.has_multiple_roles && userData.roles && userData.roles.length > 1) {
+        console.log(`Usuario con múltiples roles detectado después de seleccionar tenant, redirigiendo a selección de rol`);
+        navigate('/auth/role-selection', { state: { from: '/platform' } });
+        return;
+      }
+
       // Navegar a la plataforma
       navigate('/platform');
     } catch (err: any) {

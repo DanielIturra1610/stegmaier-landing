@@ -1,18 +1,29 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+
+	"github.com/lib/pq"
+)
+
+// Multi-role related errors
+var (
+	ErrRoleNotAssigned = errors.New("role not assigned to user")
+)
 
 // User represents a user in the system
 type User struct {
-	ID           string    `json:"id" db:"id"`
-	TenantID     *string   `json:"tenant_id,omitempty" db:"tenant_id"` // Nullable - user can register without tenant
-	Email        string    `json:"email" db:"email"`
-	PasswordHash string    `json:"-" db:"password_hash"` // Never expose in JSON
-	FullName     string    `json:"full_name" db:"full_name"`
-	Role         string    `json:"role" db:"role"`
-	IsVerified   bool      `json:"is_verified" db:"is_verified"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	ID           string         `json:"id" db:"id"`
+	TenantID     *string        `json:"tenant_id,omitempty" db:"tenant_id"` // Nullable - user can register without tenant
+	Email        string         `json:"email" db:"email"`
+	PasswordHash string         `json:"-" db:"password_hash"` // Never expose in JSON
+	FullName     string         `json:"full_name" db:"full_name"`
+	Roles        pq.StringArray `json:"roles" db:"roles"`             // Array of all assigned roles - single source of truth
+	ActiveRole   string         `json:"active_role" db:"active_role"` // Currently active role (for multi-role users)
+	IsVerified   bool           `json:"is_verified" db:"is_verified"`
+	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at" db:"updated_at"`
 }
 
 // UserRole defines the possible user roles in the system
@@ -67,12 +78,12 @@ func (vt *VerificationToken) IsExpired() bool {
 
 // PasswordResetToken represents a password reset token
 type PasswordResetToken struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	Token     string    `json:"token" db:"token"`
-	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	ID        string     `json:"id" db:"id"`
+	UserID    string     `json:"user_id" db:"user_id"`
+	Token     string     `json:"token" db:"token"`
+	ExpiresAt time.Time  `json:"expires_at" db:"expires_at"`
 	UsedAt    *time.Time `json:"used_at,omitempty" db:"used_at"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 }
 
 // IsExpired checks if the password reset token has expired
@@ -92,12 +103,12 @@ func (prt *PasswordResetToken) IsValid() bool {
 
 // RefreshToken represents a JWT refresh token
 type RefreshToken struct {
-	ID        string    `json:"id" db:"id"`
-	UserID    string    `json:"user_id" db:"user_id"`
-	Token     string    `json:"token" db:"token"`
-	ExpiresAt time.Time `json:"expires_at" db:"expires_at"`
+	ID        string     `json:"id" db:"id"`
+	UserID    string     `json:"user_id" db:"user_id"`
+	Token     string     `json:"token" db:"token"`
+	ExpiresAt time.Time  `json:"expires_at" db:"expires_at"`
 	RevokedAt *time.Time `json:"revoked_at,omitempty" db:"revoked_at"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 }
 
 // IsExpired checks if the refresh token has expired
@@ -122,16 +133,17 @@ func (u *User) SanitizeUser() *User {
 		TenantID:   u.TenantID,
 		Email:      u.Email,
 		FullName:   u.FullName,
-		Role:       u.Role,
+		Roles:      u.Roles,
+		ActiveRole: u.ActiveRole,
 		IsVerified: u.IsVerified,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
 	}
 }
 
-// HasRole checks if the user has a specific role
+// HasRole checks if the user has a specific role (checks active role)
 func (u *User) HasRole(role UserRole) bool {
-	return UserRole(u.Role) == role
+	return UserRole(u.GetPrimaryRole()) == role
 }
 
 // IsSuperAdmin checks if the user is a superadmin
@@ -156,7 +168,7 @@ func (u *User) IsStudent() bool {
 
 // HasRoleOrHigher checks if user has specified role or higher in hierarchy
 func (u *User) HasRoleOrHigher(role UserRole) bool {
-	userRoleLevel := GetRoleHierarchy(UserRole(u.Role))
+	userRoleLevel := GetRoleHierarchy(UserRole(u.GetPrimaryRole()))
 	requiredRoleLevel := GetRoleHierarchy(role)
 	return userRoleLevel >= requiredRoleLevel
 }
@@ -164,6 +176,64 @@ func (u *User) HasRoleOrHigher(role UserRole) bool {
 // CanManageCourses checks if user can manage courses (admin or instructor)
 func (u *User) CanManageCourses() bool {
 	return u.IsAdmin() || u.IsInstructor() || u.IsSuperAdmin()
+}
+
+// ============================================
+// Multi-Role Support Methods
+// ============================================
+
+// GetPrimaryRole returns the primary role (active role or first in roles array)
+func (u *User) GetPrimaryRole() string {
+	if u.ActiveRole != "" {
+		return u.ActiveRole
+	}
+	if len(u.Roles) > 0 {
+		return u.Roles[0]
+	}
+	return string(RoleStudent) // Default fallback
+}
+
+// HasMultipleRoles checks if user has more than one role assigned
+func (u *User) HasMultipleRoles() bool {
+	return len(u.Roles) > 1
+}
+
+// HasRoleInList checks if user has a specific role in their roles list
+func (u *User) HasRoleInList(role UserRole) bool {
+	for _, r := range u.Roles {
+		if UserRole(r) == role {
+			return true
+		}
+	}
+	return false
+}
+
+// GetActiveRole returns the currently active role or first role
+func (u *User) GetActiveRole() UserRole {
+	if u.ActiveRole != "" {
+		return UserRole(u.ActiveRole)
+	}
+	if len(u.Roles) > 0 {
+		return UserRole(u.Roles[0])
+	}
+	return RoleStudent // Default fallback
+}
+
+// SetActiveRole sets the active role if it exists in the user's roles list
+func (u *User) SetActiveRole(role UserRole) error {
+	if !u.HasRoleInList(role) {
+		return ErrRoleNotAssigned
+	}
+	u.ActiveRole = string(role)
+	u.UpdatedAt = time.Now()
+	return nil
+}
+
+// InitializeRoles ensures active_role is set if empty
+func (u *User) InitializeRoles() {
+	if u.ActiveRole == "" && len(u.Roles) > 0 {
+		u.ActiveRole = u.Roles[0]
+	}
 }
 
 // UserMembership represents a user's membership in a tenant

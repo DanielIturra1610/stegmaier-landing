@@ -41,7 +41,8 @@ func (c *UserManagementController) CreateUser(ctx *fiber.Ctx) error {
 
 		// Role hierarchy validation to prevent privilege escalation
 		// Only superadmin can create superadmin users
-		if dto.Role == "superadmin" && creatorRole != "superadmin" {
+		primaryRole := dto.Roles[0] // Get first role for validation
+		if primaryRole == "superadmin" && creatorRole != "superadmin" {
 			log.Printf("⚠️  Role escalation attempt: %s tried to create superadmin user", creatorRole)
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
@@ -51,8 +52,8 @@ func (c *UserManagementController) CreateUser(ctx *fiber.Ctx) error {
 
 		// Admin can create: student, instructor, admin (but not superadmin)
 		// Instructor can create: student only
-		if creatorRole == "instructor" && dto.Role != "student" {
-			log.Printf("⚠️  Role escalation attempt: instructor tried to create %s user", dto.Role)
+		if creatorRole == "instructor" && primaryRole != "student" {
+			log.Printf("⚠️  Role escalation attempt: instructor tried to create %s user", primaryRole)
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,
 				"error":   "Instructors can only create student users",

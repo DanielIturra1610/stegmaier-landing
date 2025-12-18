@@ -43,18 +43,32 @@ func NewCertificateController(service ports.CertificateService) *CertificateCont
 // @Router /certificates/my/courses/{courseId} [get]
 func (c *CertificateController) GetMyCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
 	// Extract user ID from context
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -101,18 +115,32 @@ func (c *CertificateController) GetMyCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates/my [get]
 func (c *CertificateController) GetMyCertificates(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
 	// Extract user ID from context
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -155,18 +183,32 @@ func (c *CertificateController) GetMyCertificates(ctx *fiber.Ctx) error {
 // @Router /certificates/{certificateId}/download [get]
 func (c *CertificateController) DownloadCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
 	// Extract user ID from context
-	userID, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	userIDStr, ok := ctx.Locals("userID").(string)
+	if !ok || userIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -242,10 +284,17 @@ func (c *CertificateController) DownloadCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates [post]
 func (c *CertificateController) GenerateCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -302,10 +351,17 @@ func (c *CertificateController) GenerateCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates/{certificateId} [get]
 func (c *CertificateController) GetCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -353,10 +409,17 @@ func (c *CertificateController) GetCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates/courses/{courseId} [get]
 func (c *CertificateController) ListCourseCertificates(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -408,10 +471,17 @@ func (c *CertificateController) ListCourseCertificates(ctx *fiber.Ctx) error {
 // @Router /certificates/users/{userId} [get]
 func (c *CertificateController) ListUserCertificates(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -464,18 +534,32 @@ func (c *CertificateController) ListUserCertificates(ctx *fiber.Ctx) error {
 // @Router /certificates/{certificateId}/revoke [post]
 func (c *CertificateController) RevokeCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
 		})
 	}
 
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
+		})
+	}
+
 	// Extract user ID (who is revoking)
-	revokedBy, ok := ctx.Locals("userID").(uuid.UUID)
-	if !ok {
+	revokedByStr, ok := ctx.Locals("userID").(string)
+	if !ok || revokedByStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: user ID not found",
+		})
+	}
+
+	revokedBy, err := uuid.Parse(revokedByStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user ID",
 		})
 	}
 
@@ -543,10 +627,17 @@ func (c *CertificateController) RevokeCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates/{certificateId} [delete]
 func (c *CertificateController) DeleteCertificate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -660,10 +751,17 @@ func (c *CertificateController) VerifyCertificate(ctx *fiber.Ctx) error {
 // @Router /certificates/statistics [get]
 func (c *CertificateController) GetCertificateStatistics(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -693,10 +791,17 @@ func (c *CertificateController) GetCertificateStatistics(ctx *fiber.Ctx) error {
 // @Router /certificates/courses/{courseId}/statistics [get]
 func (c *CertificateController) GetCourseStatistics(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -739,10 +844,17 @@ func (c *CertificateController) GetCourseStatistics(ctx *fiber.Ctx) error {
 // @Router /certificates/templates [post]
 func (c *CertificateController) CreateTemplate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -796,10 +908,17 @@ func (c *CertificateController) CreateTemplate(ctx *fiber.Ctx) error {
 // @Router /certificates/templates/{templateId} [get]
 func (c *CertificateController) GetTemplate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -846,10 +965,17 @@ func (c *CertificateController) GetTemplate(ctx *fiber.Ctx) error {
 // @Router /certificates/templates [get]
 func (c *CertificateController) ListTemplates(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -901,10 +1027,17 @@ func (c *CertificateController) ListTemplates(ctx *fiber.Ctx) error {
 // @Router /certificates/templates/{templateId} [put]
 func (c *CertificateController) UpdateTemplate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -974,10 +1107,17 @@ func (c *CertificateController) UpdateTemplate(ctx *fiber.Ctx) error {
 // @Router /certificates/templates/{templateId} [delete]
 func (c *CertificateController) DeleteTemplate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1030,10 +1170,17 @@ func (c *CertificateController) DeleteTemplate(ctx *fiber.Ctx) error {
 // @Router /certificates/templates/{templateId}/set-default [post]
 func (c *CertificateController) SetDefaultTemplate(ctx *fiber.Ctx) error {
 	// Extract tenant ID from context
-	tenantID, ok := ctx.Locals("tenant_id").(uuid.UUID)
-	if !ok {
+	tenantIDStr, ok := ctx.Locals("tenant_id").(string)
+	if !ok || tenantIDStr == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized: tenant ID not found",
+		})
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tenant ID",
 		})
 	}
 
@@ -1071,55 +1218,37 @@ func (c *CertificateController) SetDefaultTemplate(ctx *fiber.Ctx) error {
 // ============================================================
 
 // RegisterRoutes registers all certificate routes
+// NOTE: Middlewares (Auth, Tenant, Membership) are applied in server.go before calling this
 func (c *CertificateController) RegisterRoutes(router fiber.Router) {
-	// ============================================================
-	// Student Certificate Routes
-	// ============================================================
-	studentCerts := router.Group("/certificates/my")
-	{
-		// Get all my certificates
-		studentCerts.Get("", c.GetMyCertificates)
+	// Student Certificate Routes - register directly to inherit middlewares
+	router.Get("/certificates/my", c.GetMyCertificates)
+	router.Get("/certificates/my/courses/:courseID", c.GetMyCertificate)
 
-		// Get certificate for specific course
-		studentCerts.Get("/courses/:courseID", c.GetMyCertificate)
-	}
-
-	// ============================================================
 	// Certificate Management Routes (Admin/Instructor)
-	// ============================================================
-	certificates := router.Group("/certificates")
-	{
-		// Certificate CRUD
-		certificates.Post("", c.GenerateCertificate)
-		certificates.Get("/:certificateID", c.GetCertificate)
-		certificates.Delete("/:certificateID", c.DeleteCertificate)
+	router.Post("/certificates", c.GenerateCertificate)
+	router.Get("/certificates/:certificateID", c.GetCertificate)
+	router.Delete("/certificates/:certificateID", c.DeleteCertificate)
 
-		// Certificate operations
-		certificates.Get("/:certificateID/download", c.DownloadCertificate)
-		certificates.Post("/:certificateID/revoke", c.RevokeCertificate)
+	// Certificate operations
+	router.Get("/certificates/:certificateID/download", c.DownloadCertificate)
+	router.Post("/certificates/:certificateID/revoke", c.RevokeCertificate)
 
-		// List certificates by course or user
-		certificates.Get("/courses/:courseID", c.ListCourseCertificates)
-		certificates.Get("/users/:userID", c.ListUserCertificates)
+	// List certificates by course or user
+	router.Get("/certificates/courses/:courseID", c.ListCourseCertificates)
+	router.Get("/certificates/users/:userID", c.ListUserCertificates)
 
-		// Statistics
-		certificates.Get("/statistics", c.GetCertificateStatistics)
-		certificates.Get("/courses/:courseID/statistics", c.GetCourseStatistics)
+	// Statistics
+	router.Get("/certificates/statistics", c.GetCertificateStatistics)
+	router.Get("/certificates/courses/:courseID/statistics", c.GetCourseStatistics)
 
-		// Public verification endpoint
-		certificates.Post("/verify", c.VerifyCertificate)
-	}
+	// Public verification endpoint
+	router.Post("/certificates/verify", c.VerifyCertificate)
 
-	// ============================================================
 	// Certificate Template Routes (Admin only)
-	// ============================================================
-	templates := router.Group("/certificates/templates")
-	{
-		templates.Post("", c.CreateTemplate)
-		templates.Get("", c.ListTemplates)
-		templates.Get("/:templateID", c.GetTemplate)
-		templates.Put("/:templateID", c.UpdateTemplate)
-		templates.Delete("/:templateID", c.DeleteTemplate)
-		templates.Post("/:templateID/set-default", c.SetDefaultTemplate)
-	}
+	router.Post("/certificates/templates", c.CreateTemplate)
+	router.Get("/certificates/templates", c.ListTemplates)
+	router.Get("/certificates/templates/:templateID", c.GetTemplate)
+	router.Put("/certificates/templates/:templateID", c.UpdateTemplate)
+	router.Delete("/certificates/templates/:templateID", c.DeleteTemplate)
+	router.Post("/certificates/templates/:templateID/set-default", c.SetDefaultTemplate)
 }

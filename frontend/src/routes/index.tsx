@@ -9,6 +9,7 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import ResendVerificationPage from '../pages/auth/ResendVerificationPage';
 import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
 import TenantSelectionPage from '../pages/auth/TenantSelectionPage';
+import RoleSelectionPage from '../pages/auth/RoleSelectionPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import CompanyPage from '../pages/CompanyPage';
 import ConsultingPage from '../pages/ConsultingPage';
@@ -102,6 +103,16 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/resend-verification" element={<ResendVerificationPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        
+        {/* Ruta de selección de rol (para usuarios con múltiples roles) */}
+        <Route 
+          path="/auth/role-selection" 
+          element={
+            <ProtectedRoute>
+              <RoleSelectionPage />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Ruta 404 */}
         <Route path="/404" element={<NotFoundPage />} />

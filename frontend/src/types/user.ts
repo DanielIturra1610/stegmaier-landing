@@ -5,8 +5,8 @@
 
 import { UserRole } from './tenant';
 
-// Re-export UserRole for backwards compatibility
-export { UserRole } from './tenant';
+// Re-export UserRole for convenience
+export type { UserRole } from './tenant';
 
 // ============================================
 // User Entity
@@ -18,6 +18,9 @@ export interface User {
   email: string;
   full_name: string;
   role: UserRole;
+  roles?: UserRole[]; // All assigned roles
+  active_role?: UserRole; // Currently active role
+  has_multiple_roles?: boolean; // Flag for multi-role users
   is_verified: boolean;
   is_active: boolean;
   last_login?: string;
@@ -33,7 +36,8 @@ export interface CreateUserDTO {
   email: string;
   password: string;
   full_name: string;
-  role: UserRole;
+  role: UserRole; // Primary role
+  roles?: UserRole[]; // Optional: multiple roles
 }
 
 export interface UpdateUserDTO {

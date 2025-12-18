@@ -4,11 +4,11 @@ import "github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/domain"
 
 // CreateUserDTO represents the data required to create a user (admin operation)
 type CreateUserDTO struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
-	FullName string `json:"full_name" validate:"required,min=2,max=255"`
-	Role     string `json:"role" validate:"required,oneof=student instructor admin superadmin"`
-	TenantID string `json:"tenant_id" validate:"required,uuid"`
+	Email    string   `json:"email" validate:"required,email"`
+	Password string   `json:"password" validate:"required,min=8"`
+	FullName string   `json:"full_name" validate:"required,min=2,max=255"`
+	Roles    []string `json:"roles" validate:"required,min=1,dive,oneof=student instructor admin superadmin"`
+	TenantID string   `json:"tenant_id" validate:"required,uuid"`
 }
 
 // UpdateUserDTO represents the data that can be updated by an admin
@@ -72,9 +72,11 @@ type ForcePasswordChangeDTO struct {
 
 // Validate performs validation on CreateUserDTO
 func (dto *CreateUserDTO) Validate() error {
-	// Check if role is valid
-	if !domain.IsValidRole(dto.Role) {
-		return domain.ErrInvalidRole
+	// Check if all roles are valid
+	for _, role := range dto.Roles {
+		if !domain.IsValidRole(role) {
+			return domain.ErrInvalidRole
+		}
 	}
 	return nil
 }
@@ -90,11 +92,11 @@ func (dto *UpdateUserDTO) Validate() error {
 
 // UserStatsDTO represents statistics about users
 type UserStatsDTO struct {
-	TotalUsers       int            `json:"total_users"`
-	VerifiedUsers    int            `json:"verified_users"`
-	UnverifiedUsers  int            `json:"unverified_users"`
-	UsersByRole      map[string]int `json:"users_by_role"`
-	RecentUsers      int            `json:"recent_users_7days"`
+	TotalUsers      int            `json:"total_users"`
+	VerifiedUsers   int            `json:"verified_users"`
+	UnverifiedUsers int            `json:"unverified_users"`
+	UsersByRole     map[string]int `json:"users_by_role"`
+	RecentUsers     int            `json:"recent_users_7days"`
 }
 
 // BulkDeleteDTO represents a bulk delete operation

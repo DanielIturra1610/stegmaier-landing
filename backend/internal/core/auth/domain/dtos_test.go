@@ -14,7 +14,8 @@ func TestToUserDTO(t *testing.T) {
 			Email:        "test@example.com",
 			PasswordHash: "$2a$10$secrethash", // Should not be in DTO
 			FullName:     "Test User",
-			Role:         "student",
+			Roles:        []string{"student"},
+			ActiveRole:   "student",
 			IsVerified:   true,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
@@ -38,8 +39,8 @@ func TestToUserDTO(t *testing.T) {
 			t.Errorf("Expected FullName %s, got %s", user.FullName, dto.FullName)
 		}
 
-		if dto.Role != user.Role {
-			t.Errorf("Expected Role %s, got %s", user.Role, dto.Role)
+		if dto.Role != user.ActiveRole {
+			t.Errorf("Expected Role %s, got %s", user.ActiveRole, dto.Role)
 		}
 
 		if dto.IsVerified != user.IsVerified {
@@ -228,7 +229,8 @@ func TestAuthResponse(t *testing.T) {
 		TenantID:   &tenantID,
 		Email:      "test@example.com",
 		FullName:   "Test User",
-		Role:       "student",
+		Roles:      []string{"student"},
+		ActiveRole: "student",
 		IsVerified: true,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),

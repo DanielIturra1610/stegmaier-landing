@@ -148,8 +148,12 @@ export const authService = {
       full_name: apiData.full_name || `${apiData.firstName || apiData.first_name || ''} ${apiData.lastName || apiData.last_name || ''}`.trim() || apiData.username || 'Usuario',
       firstName: apiData.firstName || apiData.first_name || (apiData.full_name ? apiData.full_name.split(' ')[0] : ''),
       lastName: apiData.lastName || apiData.last_name || (apiData.full_name ? apiData.full_name.split(' ').slice(1).join(' ') : ''),
-      // Otros campos
+      // Campos de rol (multi-rol support)
       role: apiData.role || 'student',
+      roles: apiData.roles || [apiData.role || 'student'],
+      active_role: apiData.active_role || apiData.role || 'student',
+      has_multiple_roles: apiData.has_multiple_roles || false,
+      // Otros campos
       verified: apiData.verified || apiData.is_verified || false,
       profileImage: apiData.profileImage || apiData.profile_picture || '',
       // Fechas
@@ -177,5 +181,40 @@ export const authService = {
    */
   getToken: (): string | null => {
     return localStorage.getItem('auth_token');
+  },
+
+  /**
+   * Cambiar el rol activo del usuario (para usuarios con múltiples roles)
+   */
+  switchRole: async (role: 'student' | 'instructor' | 'admin' | 'superadmin'): Promise<AuthResponse> => {
+    const response = await axios.post(
+      buildApiUrl('/auth/switch-role'),
+      { role },
+      { headers: getAuthHeaders() }
+    );
+
+    // El backend envuelve la respuesta en { success, message, data }
+    const authData = response.data.data as AuthResponse;
+
+    // Actualizar el token con el nuevo rol activo
+    if (authData && authData.access_token) {
+      localStorage.setItem('auth_token', authData.access_token);
+
+      // Actualizar información del usuario con el nuevo rol activo
+      if (authData.user) {
+        const userData = {
+          id: authData.user.id,
+          username: authData.user.full_name,
+          email: authData.user.email,
+          role: authData.user.role,
+          roles: authData.user.roles || authData.roles,
+          active_role: authData.user.active_role || authData.active_role,
+          has_multiple_roles: authData.user.has_multiple_roles || authData.has_multiple_roles
+        };
+        localStorage.setItem('auth_user', JSON.stringify(userData));
+      }
+    }
+
+    return authData;
   },
 };

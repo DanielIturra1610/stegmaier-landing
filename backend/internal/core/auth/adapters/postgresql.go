@@ -26,8 +26,8 @@ func NewPostgreSQLAuthRepository(db *sqlx.DB) ports.AuthRepository {
 // CreateUser persists a new user to the database
 func (r *PostgreSQLAuthRepository) CreateUser(ctx context.Context, user *domain.User) error {
 	query := `
-		INSERT INTO users (id, tenant_id, email, password_hash, full_name, role, is_verified, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO users (id, tenant_id, email, password_hash, full_name, roles, active_role, is_verified, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
 	// Convert *string to sql.NullString for proper NULL handling
@@ -36,13 +36,17 @@ func (r *PostgreSQLAuthRepository) CreateUser(ctx context.Context, user *domain.
 		tenantID = sql.NullString{String: *user.TenantID, Valid: true}
 	}
 
+	// Ensure roles are initialized
+	user.InitializeRoles()
+
 	_, err := r.db.ExecContext(ctx, query,
 		user.ID,
-		tenantID, // Use sql.NullString instead of *string
+		tenantID,
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
-		user.Role,
+		user.Roles,
+		user.ActiveRole,
 		user.IsVerified,
 		user.CreatedAt,
 		user.UpdatedAt,
@@ -58,7 +62,7 @@ func (r *PostgreSQLAuthRepository) CreateUser(ctx context.Context, user *domain.
 // GetUserByID retrieves a user by their unique identifier
 func (r *PostgreSQLAuthRepository) GetUserByID(ctx context.Context, userID string) (*domain.User, error) {
 	query := `
-		SELECT id, tenant_id, email, password_hash, full_name, role, is_verified, created_at, updated_at
+		SELECT id, tenant_id, email, password_hash, full_name, roles, active_role, is_verified, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -78,7 +82,7 @@ func (r *PostgreSQLAuthRepository) GetUserByID(ctx context.Context, userID strin
 // GetUserByEmail retrieves a user by their email address
 func (r *PostgreSQLAuthRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
-		SELECT id, tenant_id, email, password_hash, full_name, role, is_verified, created_at, updated_at
+		SELECT id, tenant_id, email, password_hash, full_name, roles, active_role, is_verified, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
@@ -99,7 +103,7 @@ func (r *PostgreSQLAuthRepository) GetUserByEmail(ctx context.Context, email str
 func (r *PostgreSQLAuthRepository) UpdateUser(ctx context.Context, user *domain.User) error {
 	query := `
 		UPDATE users
-		SET email = $2, password_hash = $3, full_name = $4, role = $5, is_verified = $6, updated_at = $7
+		SET email = $2, password_hash = $3, full_name = $4, roles = $5, active_role = $6, is_verified = $7, updated_at = $8
 		WHERE id = $1
 	`
 
@@ -108,7 +112,8 @@ func (r *PostgreSQLAuthRepository) UpdateUser(ctx context.Context, user *domain.
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
-		user.Role,
+		user.Roles,
+		user.ActiveRole,
 		user.IsVerified,
 		user.UpdatedAt,
 	)
@@ -154,7 +159,7 @@ func (r *PostgreSQLAuthRepository) DeleteUser(ctx context.Context, userID string
 func (r *PostgreSQLAuthRepository) ListUsers(ctx context.Context, filters *domain.UserListFilters, page, pageSize int) ([]*domain.User, int, error) {
 	// Build query with filters
 	query := `
-		SELECT id, tenant_id, email, password_hash, full_name, role, is_verified, created_at, updated_at
+		SELECT id, tenant_id, email, password_hash, full_name, roles, active_role, is_verified, created_at, updated_at
 		FROM users
 		WHERE 1=1
 	`
@@ -165,8 +170,8 @@ func (r *PostgreSQLAuthRepository) ListUsers(ctx context.Context, filters *domai
 	// Apply filters
 	if filters != nil {
 		if filters.Role != "" {
-			query += fmt.Sprintf(" AND role = $%d", argPosition)
-			countQuery += fmt.Sprintf(" AND role = $%d", argPosition)
+			query += fmt.Sprintf(" AND $%d = ANY(roles)", argPosition)
+			countQuery += fmt.Sprintf(" AND $%d = ANY(roles)", argPosition)
 			args = append(args, filters.Role)
 			argPosition++
 		}

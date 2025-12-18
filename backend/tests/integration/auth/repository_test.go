@@ -38,7 +38,8 @@ func TestAuthRepository_CreateUser(t *testing.T) {
 				Email:        "student@test.com",
 				PasswordHash: "hashedpassword123",
 				FullName:     "Test Student",
-				Role:         string(domain.RoleStudent),
+				Roles:        []string{string(domain.RoleStudent)},
+				ActiveRole:   string(domain.RoleStudent),
 				IsVerified:   false,
 			},
 			wantErr: false,
@@ -51,7 +52,8 @@ func TestAuthRepository_CreateUser(t *testing.T) {
 				Email:        "admin@test.com",
 				PasswordHash: "hashedpassword123",
 				FullName:     "Test Admin",
-				Role:         string(domain.RoleAdmin),
+				Roles:        []string{string(domain.RoleAdmin)},
+				ActiveRole:   string(domain.RoleAdmin),
 				IsVerified:   true,
 			},
 			wantErr: false,
@@ -64,7 +66,8 @@ func TestAuthRepository_CreateUser(t *testing.T) {
 				Email:        "superadmin@test.com",
 				PasswordHash: "hashedpassword123",
 				FullName:     "Test SuperAdmin",
-				Role:         string(domain.RoleSuperAdmin),
+				Roles:        []string{string(domain.RoleSuperAdmin)},
+				ActiveRole:   string(domain.RoleSuperAdmin),
 				IsVerified:   true,
 			},
 			wantErr: false,
@@ -77,7 +80,8 @@ func TestAuthRepository_CreateUser(t *testing.T) {
 				Email:        "student@test.com", // Duplicate
 				PasswordHash: "hashedpassword123",
 				FullName:     "Duplicate User",
-				Role:         string(domain.RoleStudent),
+				Roles:        []string{string(domain.RoleStudent)},
+				ActiveRole:   string(domain.RoleStudent),
 				IsVerified:   false,
 			},
 			wantErr: true,
@@ -103,8 +107,11 @@ func TestAuthRepository_CreateUser(t *testing.T) {
 					t.Errorf("Expected email %s, got %s", tt.user.Email, retrieved.Email)
 				}
 
-				if retrieved.Role != tt.user.Role {
-					t.Errorf("Expected role %s, got %s", tt.user.Role, retrieved.Role)
+				if len(retrieved.Roles) != len(tt.user.Roles) {
+					t.Errorf("Expected roles length %d, got %d", len(tt.user.Roles), len(retrieved.Roles))
+				}
+				if retrieved.ActiveRole != tt.user.ActiveRole {
+					t.Errorf("Expected active_role %s, got %s", tt.user.ActiveRole, retrieved.ActiveRole)
 				}
 
 				if retrieved.IsVerified != tt.user.IsVerified {
@@ -248,7 +255,8 @@ func TestAuthRepository_UpdateUser(t *testing.T) {
 		// Update user fields
 		user.FullName = "Updated Name"
 		user.IsVerified = true
-		user.Role = string(domain.RoleInstructor)
+		user.Roles = []string{string(domain.RoleInstructor)}
+		user.ActiveRole = string(domain.RoleInstructor)
 
 		// Perform update
 		err = repo.UpdateUser(ctx, user)
@@ -270,8 +278,8 @@ func TestAuthRepository_UpdateUser(t *testing.T) {
 			t.Error("Expected is_verified to be true")
 		}
 
-		if updated.Role != string(domain.RoleInstructor) {
-			t.Errorf("Expected role 'instructor', got '%s'", updated.Role)
+		if updated.ActiveRole != string(domain.RoleInstructor) {
+			t.Errorf("Expected active_role 'instructor', got '%s'", updated.ActiveRole)
 		}
 	})
 }
@@ -308,7 +316,8 @@ func TestAuthRepository_MultipleRoles(t *testing.T) {
 			Email:        r.email,
 			PasswordHash: "hash",
 			FullName:     string(r.role) + " User",
-			Role:         string(r.role),
+			Roles:        []string{string(r.role)},
+			ActiveRole:   string(r.role),
 			IsVerified:   true,
 		}
 
@@ -325,8 +334,8 @@ func TestAuthRepository_MultipleRoles(t *testing.T) {
 			t.Fatalf("Failed to retrieve user with role %s: %v", r.role, err)
 		}
 
-		if user.Role != string(r.role) {
-			t.Errorf("Expected role %s, got %s", r.role, user.Role)
+		if user.ActiveRole != string(r.role) {
+			t.Errorf("Expected active_role %s, got %s", r.role, user.ActiveRole)
 		}
 
 		if !user.IsVerified {

@@ -27,7 +27,8 @@ export interface CreateUserDTO {
   email: string;
   password: string;
   full_name: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'instructor' | 'admin' | 'superadmin';
+  roles?: ('student' | 'instructor' | 'admin' | 'superadmin')[];
 }
 
 export interface User {

@@ -25,7 +25,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import adminService from '../../services/adminService';
 import { CreateUserDTO, UserRole, validatePasswordRequirements, isPasswordStrong } from '../../types/user';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Componente de indicador de fortaleza de contraseña
 const PasswordStrengthIndicator: React.FC<{ password: string }> = ({ password }) => {
@@ -140,10 +140,13 @@ const UserCreation: React.FC = () => {
   if (!user || !['instructor', 'admin', 'superadmin'].includes(user.role)) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Alert
-          type="error"
-          message="No tienes permisos para acceder a esta página"
-        />
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>Acceso Denegado</AlertTitle>
+          <AlertDescription>
+            No tienes permisos para acceder a esta página
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -209,13 +212,21 @@ const UserCreation: React.FC = () => {
       {/* Alerts */}
       {error && (
         <div className="mb-6">
-          <Alert type="error" message={error} onClose={() => setError(null)} />
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         </div>
       )}
 
       {success && (
         <div className="mb-6">
-          <Alert type="success" message={success} onClose={() => setSuccess(null)} />
+          <Alert>
+            <CheckCircle className="h-4 w-4" />
+            <AlertTitle>Éxito</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
         </div>
       )}
 
@@ -227,7 +238,8 @@ const UserCreation: React.FC = () => {
               email: '',
               password: '',
               full_name: '',
-              role: availableRoles[0]?.value || 'student'
+              role: availableRoles[0]?.value || 'student',
+              roles: [] as UserRole[]
             }}
             validationSchema={UserSchema}
             onSubmit={handleSubmit}
@@ -327,10 +339,10 @@ const UserCreation: React.FC = () => {
                   )}
                 </div>
 
-                {/* Rol */}
+                {/* Rol Principal */}
                 <div>
                   <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                    Rol del Usuario
+                    Rol Principal
                   </label>
                   <div className="relative">
                     <Shield className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -365,6 +377,47 @@ const UserCreation: React.FC = () => {
                           </p>
                         </div>
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Roles Adicionales (Opcional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Roles Adicionales (Opcional)
+                  </label>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Selecciona roles adicionales si el usuario necesita acceso a múltiples funciones
+                  </p>
+                  <div className="space-y-3">
+                    {availableRoles.map((role) => (
+                      <label
+                        key={role.value}
+                        className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                      >
+                        <Field
+                          type="checkbox"
+                          name="roles"
+                          value={role.value}
+                          className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{role.label}</div>
+                          <div className="text-sm text-gray-600">{role.description}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {values.roles && values.roles.length > 0 && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm font-medium text-green-900">
+                        Roles seleccionados: {values.roles.length + 1} 
+                        (Principal: {availableRoles.find(r => r.value === values.role)?.label})
+                      </p>
+                      <p className="text-sm text-green-700 mt-1">
+                        El usuario podrá cambiar entre estos roles después de iniciar sesión
+                      </p>
                     </div>
                   )}
                 </div>

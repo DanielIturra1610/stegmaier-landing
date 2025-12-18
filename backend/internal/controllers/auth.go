@@ -257,3 +257,31 @@ func (ctrl *AuthController) RevokeAllSessions(c *fiber.Ctx) error {
 
 	return SuccessResponse(c, fiber.StatusOK, "All sessions revoked successfully", nil)
 }
+
+// SwitchRole handles switching between user's assigned roles
+// POST /api/v1/auth/switch-role
+func (ctrl *AuthController) SwitchRole(c *fiber.Ctx) error {
+	var dto domain.SwitchRoleDTO
+	if err := c.BodyParser(&dto); err != nil {
+		return ErrorResponse(c, fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	// Get user ID from context (set by auth middleware)
+	userID := c.Locals("userID").(string)
+
+	// Get tenant ID from context
+	tenantID := ""
+	if tid := c.Locals("tenant_id"); tid != nil {
+		if tidStr, ok := tid.(string); ok {
+			tenantID = tidStr
+		}
+	}
+
+	// Call service using Fiber's context
+	response, err := ctrl.authService.SwitchRole(c.Context(), userID, tenantID, &dto)
+	if err != nil {
+		return HandleError(c, err)
+	}
+
+	return SuccessResponse(c, fiber.StatusOK, "Role switched successfully", response)
+}

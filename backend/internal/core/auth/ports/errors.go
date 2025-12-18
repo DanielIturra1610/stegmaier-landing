@@ -105,6 +105,9 @@ var (
 
 	// ErrInvalidRole is returned when role is invalid
 	ErrInvalidRole = errors.New("invalid user role")
+
+	// ErrRoleNotAssigned is returned when trying to set an active role that user doesn't have
+	ErrRoleNotAssigned = errors.New("role not assigned to user")
 )
 
 // Validation errors

@@ -18,23 +18,26 @@ type LoginDTO struct {
 
 // AuthResponse represents the response after successful authentication
 type AuthResponse struct {
-	AccessToken  string    `json:"access_token"`
-	TokenType    string    `json:"token_type"`
-	ExpiresIn    int       `json:"expires_in"` // Seconds until expiration
-	RefreshToken string    `json:"refresh_token,omitempty"`
-	User         *UserDTO  `json:"user"`
+	AccessToken  string   `json:"access_token"`
+	TokenType    string   `json:"token_type"`
+	ExpiresIn    int      `json:"expires_in"` // Seconds until expiration
+	RefreshToken string   `json:"refresh_token,omitempty"`
+	User         *UserDTO `json:"user"`
 }
 
 // UserDTO represents a user without sensitive information
 type UserDTO struct {
-	ID         string    `json:"id"`
-	TenantID   *string   `json:"tenant_id,omitempty"` // Nullable - user might not have a tenant yet
-	Email      string    `json:"email"`
-	FullName   string    `json:"full_name"`
-	Role       string    `json:"role"`
-	IsVerified bool      `json:"is_verified"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID               string    `json:"id"`
+	TenantID         *string   `json:"tenant_id,omitempty"` // Nullable - user might not have a tenant yet
+	Email            string    `json:"email"`
+	FullName         string    `json:"full_name"`
+	Role             string    `json:"role"`               // Primary role for backwards compatibility
+	Roles            []string  `json:"roles"`              // All assigned roles
+	ActiveRole       string    `json:"active_role"`        // Currently active role
+	HasMultipleRoles bool      `json:"has_multiple_roles"` // Indicates if user has more than one role
+	IsVerified       bool      `json:"is_verified"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 // ToUserDTO converts a User entity to UserDTO
@@ -43,15 +46,29 @@ func ToUserDTO(user *User) *UserDTO {
 		return nil
 	}
 
+	// Ensure roles are initialized
+	roles := user.Roles
+	if len(roles) == 0 {
+		roles = []string{string(RoleStudent)} // Default fallback
+	}
+
+	activeRole := user.ActiveRole
+	if activeRole == "" && len(roles) > 0 {
+		activeRole = roles[0]
+	}
+
 	return &UserDTO{
-		ID:         user.ID,
-		TenantID:   user.TenantID, // Correctly pass *string pointer
-		Email:      user.Email,
-		FullName:   user.FullName,
-		Role:       user.Role,
-		IsVerified: user.IsVerified,
-		CreatedAt:  user.CreatedAt,
-		UpdatedAt:  user.UpdatedAt,
+		ID:               user.ID,
+		TenantID:         user.TenantID,
+		Email:            user.Email,
+		FullName:         user.FullName,
+		Role:             roles[0], // Primary role for frontend compatibility
+		Roles:            roles,
+		ActiveRole:       activeRole,
+		HasMultipleRoles: len(roles) > 1,
+		IsVerified:       user.IsVerified,
+		CreatedAt:        user.CreatedAt,
+		UpdatedAt:        user.UpdatedAt,
 	}
 }
 
@@ -95,19 +112,35 @@ type UpdateProfileDTO struct {
 
 // CreateUserDTO represents the data required for admin to create a user
 type CreateUserDTO struct {
-	Email      string `json:"email" validate:"required,email,max=255"`
-	Password   string `json:"password" validate:"required,min=8,max=72"`
-	FullName   string `json:"full_name" validate:"required,min=2,max=255"`
-	Role       string `json:"role" validate:"required,oneof=student instructor admin"`
-	IsVerified bool   `json:"is_verified,omitempty"`
+	Email      string   `json:"email" validate:"required,email,max=255"`
+	Password   string   `json:"password" validate:"required,min=8,max=72"`
+	FullName   string   `json:"full_name" validate:"required,min=2,max=255"`
+	Role       string   `json:"role" validate:"required,oneof=student instructor admin"`                  // Primary role
+	Roles      []string `json:"roles,omitempty" validate:"omitempty,dive,oneof=student instructor admin"` // Multiple roles (optional)
+	IsVerified bool     `json:"is_verified,omitempty"`
 }
 
 // UpdateUserDTO represents the data that admin can update for a user
 type UpdateUserDTO struct {
-	FullName   string `json:"full_name,omitempty" validate:"omitempty,min=2,max=255"`
-	Email      string `json:"email,omitempty" validate:"omitempty,email,max=255"`
-	Role       string `json:"role,omitempty" validate:"omitempty,oneof=student instructor admin"`
-	IsVerified *bool  `json:"is_verified,omitempty"`
+	FullName   string   `json:"full_name,omitempty" validate:"omitempty,min=2,max=255"`
+	Email      string   `json:"email,omitempty" validate:"omitempty,email,max=255"`
+	Role       string   `json:"role,omitempty" validate:"omitempty,oneof=student instructor admin"`
+	Roles      []string `json:"roles,omitempty" validate:"omitempty,dive,oneof=student instructor admin"` // Update multiple roles
+	IsVerified *bool    `json:"is_verified,omitempty"`
+}
+
+// SwitchRoleDTO represents the data required to switch active role
+type SwitchRoleDTO struct {
+	Role string `json:"role" validate:"required,oneof=student instructor admin"`
+}
+
+// SwitchRoleResponse represents the response after switching role
+type SwitchRoleResponse struct {
+	AccessToken string   `json:"access_token"`
+	TokenType   string   `json:"token_type"`
+	ExpiresIn   int      `json:"expires_in"`
+	ActiveRole  string   `json:"active_role"`
+	User        *UserDTO `json:"user"`
 }
 
 // UserListFilters represents filters for listing users

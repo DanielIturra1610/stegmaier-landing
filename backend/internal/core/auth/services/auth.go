@@ -97,7 +97,8 @@ func (s *AuthServiceImpl) Register(ctx context.Context, tenantID string, dto *do
 		Email:        dto.Email,
 		PasswordHash: passwordHash,
 		FullName:     dto.FullName,
-		Role:         dto.Role,
+		Roles:        []string{dto.Role},
+		ActiveRole:   dto.Role,
 		IsVerified:   false,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -572,6 +573,52 @@ func (s *AuthServiceImpl) UpdateProfile(ctx context.Context, userID string, dto 
 	return domain.ToUserDTO(user), nil
 }
 
+// SwitchRole allows a user with multiple roles to switch their active role
+func (s *AuthServiceImpl) SwitchRole(ctx context.Context, userID string, tenantID string, dto *domain.SwitchRoleDTO) (*domain.SwitchRoleResponse, error) {
+	// Validate DTO
+	if err := s.validator.Struct(dto); err != nil {
+		return nil, ports.ErrInvalidInput
+	}
+
+	// Get user
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, ports.ErrUserNotFound
+	}
+
+	// Initialize roles if needed
+	user.InitializeRoles()
+
+	// Validate that the requested role is assigned to the user
+	if !user.HasRoleInList(domain.UserRole(dto.Role)) {
+		return nil, ports.ErrRoleNotAssigned
+	}
+
+	// Set the active role
+	if err := user.SetActiveRole(domain.UserRole(dto.Role)); err != nil {
+		return nil, err
+	}
+
+	// Update user in database
+	if err := s.repo.UpdateUser(ctx, user); err != nil {
+		return nil, fmt.Errorf("failed to update user active role: %w", err)
+	}
+
+	// Generate new access token with the new active role
+	accessToken, err := s.generateAccessToken(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	return &domain.SwitchRoleResponse{
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(s.accessExpiry.Seconds()),
+		ActiveRole:  user.ActiveRole,
+		User:        domain.ToUserDTO(user),
+	}, nil
+}
+
 // Helper methods
 
 // stringPtrEquals safely compares a *string with a string
@@ -592,11 +639,16 @@ func stringPtrValue(ptr *string) string {
 
 // generateAccessToken creates a JWT access token for a user
 func (s *AuthServiceImpl) generateAccessToken(user *domain.User) (string, error) {
+	// Ensure roles are initialized
+	user.InitializeRoles()
+
 	claims := &tokens.Claims{
-		UserID:   user.ID,
-		TenantID: stringPtrValue(user.TenantID),
-		Email:    user.Email,
-		Role:     user.Role,
+		UserID:     user.ID,
+		TenantID:   stringPtrValue(user.TenantID),
+		Email:      user.Email,
+		Role:       user.GetPrimaryRole(), // Use primary role (active or first in array)
+		ActiveRole: user.ActiveRole,
+		Roles:      []string(user.Roles), // Convert pq.StringArray to []string
 	}
 
 	token, err := s.tokenService.Generate(claims)
@@ -639,9 +691,9 @@ func (s *AuthServiceImpl) generateSecureToken() string {
 
 // UserManagementServiceImpl implements the UserManagementService interface
 type UserManagementServiceImpl struct {
-	authRepo ports.AuthRepository
-	userRepo ports.UserRepository
-	hasher   hasher.PasswordHasher
+	authRepo  ports.AuthRepository
+	userRepo  ports.UserRepository
+	hasher    hasher.PasswordHasher
 	validator *validator.Validate
 }
 
@@ -691,17 +743,28 @@ func (s *UserManagementServiceImpl) CreateUser(ctx context.Context, tenantID str
 		tenantIDPtr = &tenantID
 	}
 
+	// Prepare roles array
+	roles := dto.Roles
+	if len(roles) == 0 {
+		// If no roles specified, use the primary role
+		roles = []string{dto.Role}
+	}
+
 	user := &domain.User{
 		ID:           uuid.New().String(),
 		TenantID:     tenantIDPtr,
 		Email:        dto.Email,
 		PasswordHash: passwordHash,
 		FullName:     dto.FullName,
-		Role:         dto.Role,
+		Roles:        roles,
+		ActiveRole:   dto.Role,       // Initially set active role to primary role
 		IsVerified:   dto.IsVerified, // Admin can create verified users
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
+
+	// Initialize roles array
+	user.InitializeRoles()
 
 	// Save user to database
 	if err := s.authRepo.CreateUser(ctx, user); err != nil {
@@ -762,7 +825,9 @@ func (s *UserManagementServiceImpl) UpdateUser(ctx context.Context, tenantID str
 	}
 
 	if dto.Role != "" {
-		user.Role = dto.Role
+		// Update roles array - replace or add the role
+		user.Roles = []string{dto.Role}
+		user.ActiveRole = dto.Role
 	}
 
 	if dto.IsVerified != nil {

@@ -244,6 +244,14 @@ type AuthService interface {
 	// It validates the input and checks for email uniqueness if email is being updated.
 	// Returns ErrEmailAlreadyExists if the new email is already in use.
 	UpdateProfile(ctx context.Context, userID string, dto *domain.UpdateProfileDTO) (*domain.UserDTO, error)
+
+	// Multi-role operations
+
+	// SwitchRole allows a user with multiple roles to switch their active role.
+	// It validates that the requested role is assigned to the user,
+	// updates the active role, and generates a new JWT token with the new active role.
+	// Returns ErrRoleNotAssigned if the role is not assigned to the user.
+	SwitchRole(ctx context.Context, userID string, tenantID string, dto *domain.SwitchRoleDTO) (*domain.SwitchRoleResponse, error)
 }
 
 // UserManagementService defines the interface for user management operations.

@@ -16,10 +16,12 @@ type TokenService interface {
 
 // Claims represents the JWT claims with custom fields
 type Claims struct {
-	UserID   string `json:"user_id"`
-	TenantID string `json:"tenant_id"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	UserID     string   `json:"user_id"`
+	TenantID   string   `json:"tenant_id"`
+	Email      string   `json:"email"`
+	Role       string   `json:"role"`        // Primary role for backwards compatibility
+	ActiveRole string   `json:"active_role"` // Currently active role (for multi-role users)
+	Roles      []string `json:"roles"`       // All assigned roles
 	jwt.RegisteredClaims
 }
 

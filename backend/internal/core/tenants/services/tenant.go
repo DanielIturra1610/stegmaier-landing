@@ -167,11 +167,12 @@ func (s *TenantService) SelectTenant(ctx context.Context, dto *domain.SelectTena
 		return nil, fmt.Errorf("failed to update user tenant: %w", err)
 	}
 
-	// Generate new JWT with tenant_id
+	// Generate new JWT with ALL user roles (not just membership role)
+	// Frontend will handle role selection if user has multiple roles
 	token, err := s.jwtService.Generate(&tokens.Claims{
 		UserID:   userID,
 		TenantID: dto.TenantID,
-		Role:     membership.Role,
+		Role:     membership.Role, // Current membership role in this tenant
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
@@ -244,7 +245,7 @@ func (s *TenantService) CreateUserInTenant(ctx context.Context, dto *domain.Crea
 		Email:    dto.Email,
 		Password: dto.Password,
 		FullName: dto.FullName,
-		Role:     dto.Role,
+		Roles:    []string{dto.Role},
 		TenantID: tenantID,
 	}
 

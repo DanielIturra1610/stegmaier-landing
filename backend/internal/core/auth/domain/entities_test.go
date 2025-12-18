@@ -263,7 +263,8 @@ func TestUser_SanitizeUser(t *testing.T) {
 		Email:        "test@example.com",
 		PasswordHash: "$2a$10$secrethash",
 		FullName:     "Test User",
-		Role:         "student",
+		Roles:        []string{"student"},
+		ActiveRole:   "student",
 		IsVerified:   true,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -286,9 +287,10 @@ func TestUser_SanitizeUser(t *testing.T) {
 
 func TestUser_HasRole(t *testing.T) {
 	user := &User{
-		ID:    "user-123",
-		Email: "test@example.com",
-		Role:  "instructor",
+		ID:         "user-123",
+		Email:      "test@example.com",
+		Roles:      []string{"instructor"},
+		ActiveRole: "instructor",
 	}
 
 	if !user.HasRole(RoleInstructor) {
@@ -301,8 +303,8 @@ func TestUser_HasRole(t *testing.T) {
 }
 
 func TestUser_IsAdmin(t *testing.T) {
-	admin := &User{Role: "admin"}
-	student := &User{Role: "student"}
+	admin := &User{Roles: []string{"admin"}, ActiveRole: "admin"}
+	student := &User{Roles: []string{"student"}, ActiveRole: "student"}
 
 	if !admin.IsAdmin() {
 		t.Error("Expected admin user to be identified as admin")
@@ -314,8 +316,8 @@ func TestUser_IsAdmin(t *testing.T) {
 }
 
 func TestUser_IsInstructor(t *testing.T) {
-	instructor := &User{Role: "instructor"}
-	student := &User{Role: "student"}
+	instructor := &User{Roles: []string{"instructor"}, ActiveRole: "instructor"}
+	student := &User{Roles: []string{"student"}, ActiveRole: "student"}
 
 	if !instructor.IsInstructor() {
 		t.Error("Expected instructor user to be identified as instructor")
@@ -327,8 +329,8 @@ func TestUser_IsInstructor(t *testing.T) {
 }
 
 func TestUser_IsStudent(t *testing.T) {
-	student := &User{Role: "student"}
-	admin := &User{Role: "admin"}
+	student := &User{Roles: []string{"student"}, ActiveRole: "student"}
+	admin := &User{Roles: []string{"admin"}, ActiveRole: "admin"}
 
 	if !student.IsStudent() {
 		t.Error("Expected student user to be identified as student")
@@ -352,7 +354,7 @@ func TestUser_CanManageCourses(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user := &User{Role: tt.role}
+			user := &User{Roles: []string{tt.role}, ActiveRole: tt.role}
 			result := user.CanManageCourses()
 
 			if result != tt.expected {

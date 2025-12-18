@@ -25,8 +25,8 @@ func NewPostgreSQLUserRepository(db *sqlx.DB) ports.UserRepository {
 // Create creates a new user
 func (r *PostgreSQLUserRepository) Create(ctx context.Context, user *authdomain.User) error {
 	query := `
-		INSERT INTO users (id, tenant_id, email, password_hash, full_name, role, is_verified, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO users (id, tenant_id, email, password_hash, full_name, roles, active_role, is_verified, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -35,7 +35,8 @@ func (r *PostgreSQLUserRepository) Create(ctx context.Context, user *authdomain.
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
-		user.Role,
+		user.Roles,
+		user.ActiveRole,
 		user.IsVerified,
 		user.CreatedAt,
 		user.UpdatedAt,
@@ -86,15 +87,16 @@ func (r *PostgreSQLUserRepository) GetByEmail(ctx context.Context, email string)
 func (r *PostgreSQLUserRepository) Update(ctx context.Context, user *authdomain.User) error {
 	query := `
 		UPDATE users
-		SET email = $1, password_hash = $2, full_name = $3, role = $4, is_verified = $5, updated_at = $6
-		WHERE id = $7
+		SET email = $1, password_hash = $2, full_name = $3, roles = $4, active_role = $5, is_verified = $6, updated_at = $7
+		WHERE id = $8
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
-		user.Role,
+		user.Roles,
+		user.ActiveRole,
 		user.IsVerified,
 		time.Now(),
 		user.ID,

@@ -89,19 +89,25 @@ func (m *Manager) GetControlDB() *sqlx.DB {
 
 // GetTenantConnection obtiene o crea una conexión a la base de datos de un tenant
 func (m *Manager) GetTenantConnection(tenantID string) (*sqlx.DB, error) {
-	// Intentar obtener conexión existente
-	m.tenantDBsMutex.RLock()
+	// FIX RACE CONDITION: Usar Lock completo durante verificación y posible recreación
+	m.tenantDBsMutex.Lock()
+	defer m.tenantDBsMutex.Unlock()
+
+	// Verificar si existe conexión
 	db, exists := m.tenantDBs[tenantID]
-	m.tenantDBsMutex.RUnlock()
 
 	if exists && db != nil {
-		// Verificar que la conexión siga activa
+		// Verificar que la conexión siga activa (pero mantener lock durante todo el proceso)
 		if err := db.Ping(); err == nil {
 			return db, nil
 		}
-		// Si el ping falla, eliminar la conexión y crear una nueva
+		// Si el ping falla, cerrar inmediatamente ANTES de liberar el lock
 		log.Printf("⚠️  Stale connection detected for tenant %s, reconnecting...", tenantID)
-		m.closeTenantConnection(tenantID)
+		if err := db.Close(); err != nil {
+			log.Printf("⚠️  Error closing stale connection %s: %v", tenantID, err)
+		}
+		delete(m.tenantDBs, tenantID)
+		log.Printf("🔒 Closed stale connection to tenant: %s", tenantID)
 	}
 
 	// Obtener información del tenant desde Control DB
@@ -110,8 +116,31 @@ func (m *Manager) GetTenantConnection(tenantID string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to get tenant info: %w", err)
 	}
 
-	// Crear nueva conexión
-	return m.createTenantConnection(tenantID, tenantInfo.DatabaseName)
+	// Crear nueva conexión (ahora directamente sin llamar a createTenantConnection)
+	dsn := m.config.Database.Tenant.GetTenantDSN(tenantInfo.DatabaseName)
+
+	newDB, err := sqlx.Connect("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to tenant database: %w", err)
+	}
+
+	// Configurar pool de conexiones (AUMENTAR timeouts para evitar reconexiones frecuentes)
+	newDB.SetMaxOpenConns(15)
+	newDB.SetMaxIdleConns(8)
+	newDB.SetConnMaxLifetime(10 * time.Minute) // Aumentado de 3min a 10min
+	newDB.SetConnMaxIdleTime(5 * time.Minute)  // Aumentado de 30s a 5min
+
+	// Verificar conexión
+	if err := newDB.Ping(); err != nil {
+		newDB.Close()
+		return nil, fmt.Errorf("failed to ping tenant database: %w", err)
+	}
+
+	// Guardar en caché
+	m.tenantDBs[tenantID] = newDB
+	log.Printf("✅ Connected to Tenant DB: %s (tenant: %s)", tenantInfo.DatabaseName, tenantID)
+
+	return newDB, nil
 }
 
 // getTenantInfo obtiene información del tenant desde Control DB
@@ -129,44 +158,6 @@ func (m *Manager) getTenantInfo(tenantID string) (*TenantInfo, error) {
 	}
 
 	return &tenant, nil
-}
-
-// createTenantConnection crea una nueva conexión a la base de datos de un tenant
-func (m *Manager) createTenantConnection(tenantID, dbName string) (*sqlx.DB, error) {
-	m.tenantDBsMutex.Lock()
-	defer m.tenantDBsMutex.Unlock()
-
-	// Double-check para evitar race conditions
-	if db, exists := m.tenantDBs[tenantID]; exists {
-		return db, nil
-	}
-
-	// Construir DSN para el tenant
-	dsn := m.config.Database.Tenant.GetTenantDSN(dbName)
-
-	// Conectar
-	db, err := sqlx.Connect("postgres", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to tenant database: %w", err)
-	}
-
-	// Configurar pool de conexiones (más conservador que Control DB)
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(3 * time.Minute)
-	db.SetConnMaxIdleTime(30 * time.Second)
-
-	// Verificar conexión
-	if err := db.Ping(); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to ping tenant database: %w", err)
-	}
-
-	// Guardar en caché
-	m.tenantDBs[tenantID] = db
-	log.Printf("✅ Connected to Tenant DB: %s (tenant: %s)", dbName, tenantID)
-
-	return db, nil
 }
 
 // closeTenantConnection cierra la conexión a un tenant específico

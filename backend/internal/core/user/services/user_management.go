@@ -72,8 +72,9 @@ func (s *UserManagementService) CreateUser(ctx context.Context, dto *domain.Crea
 		Email:        dto.Email,
 		PasswordHash: hashedPassword,
 		FullName:     dto.FullName,
-		Role:         dto.Role,
-		IsVerified:   true, // Admin-created users are auto-verified
+		Roles:        dto.Roles,    // Multi-role support
+		ActiveRole:   dto.Roles[0], // Set first role as active
+		IsVerified:   true,         // Admin-created users are auto-verified
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -127,7 +128,8 @@ func (s *UserManagementService) UpdateUser(ctx context.Context, userID string, d
 	}
 
 	if dto.Role != nil {
-		user.Role = *dto.Role
+		user.Roles = []string{*dto.Role}
+		user.ActiveRole = *dto.Role
 		updated = true
 		log.Printf("🔄 Changing user role to: %s", *dto.Role)
 	}
@@ -315,7 +317,8 @@ func (s *UserManagementService) ChangeUserRole(ctx context.Context, userID strin
 	}
 
 	// Update role
-	user.Role = dto.Role
+	user.Roles = []string{dto.Role}
+	user.ActiveRole = dto.Role
 	user.UpdatedAt = time.Now()
 
 	if err := s.authRepo.UpdateUser(ctx, user); err != nil {
