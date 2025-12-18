@@ -220,32 +220,36 @@ func (s *TenantService) CreateUserInTenant(ctx context.Context, dto *domain.Crea
 		return nil, fmt.Errorf("only admins can create users in the tenant")
 	}
 
+	// Get roles from DTO (supports both legacy Role and new Roles[])
+	roles := dto.GetRoles()
+
 	// Role hierarchy validation to prevent privilege escalation
 	// Tenant admins can create: student, instructor, admin (but NOT superadmin)
-	if dto.Role == "superadmin" {
-		log.Printf("⚠️  Role escalation attempt: tenant admin %s tried to create superadmin user", adminID)
-		return nil, fmt.Errorf("tenant admins cannot create superadmin users")
-	}
-
-	// Only allow valid roles for tenant context
 	validTenantRoles := map[string]bool{
 		"student":    true,
 		"instructor": true,
 		"admin":      true,
 	}
-	if !validTenantRoles[dto.Role] {
-		log.Printf("⚠️  Invalid role for tenant: %s", dto.Role)
-		return nil, fmt.Errorf("invalid role: %s. Allowed roles: student, instructor, admin", dto.Role)
+
+	for _, role := range roles {
+		if role == "superadmin" {
+			log.Printf("⚠️  Role escalation attempt: tenant admin %s tried to create superadmin user", adminID)
+			return nil, fmt.Errorf("tenant admins cannot create superadmin users")
+		}
+		if !validTenantRoles[role] {
+			log.Printf("⚠️  Invalid role for tenant: %s", role)
+			return nil, fmt.Errorf("invalid role: %s. Allowed roles: student, instructor, admin", role)
+		}
 	}
 
-	log.Printf("✅ Role validation passed: tenant admin creating %s user", dto.Role)
+	log.Printf("✅ Role validation passed: tenant admin creating user with roles %v", roles)
 
 	// Create user using UserManagementService
 	userDTO := &userdomain.CreateUserDTO{
 		Email:    dto.Email,
 		Password: dto.Password,
 		FullName: dto.FullName,
-		Roles:    []string{dto.Role},
+		Roles:    roles,
 		TenantID: tenantID,
 	}
 
@@ -254,8 +258,9 @@ func (s *TenantService) CreateUserInTenant(ctx context.Context, dto *domain.Crea
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Create membership for the new user in the tenant
-	if err := s.CreateMembershipForUser(ctx, user.ID, tenantID, dto.Role, adminID); err != nil {
+	// Create membership for the new user in the tenant (use first role as primary)
+	primaryRole := roles[0]
+	if err := s.CreateMembershipForUser(ctx, user.ID, tenantID, primaryRole, adminID); err != nil {
 		// If membership creation fails, we should ideally rollback user creation
 		// For now, just log the error and continue
 		return nil, fmt.Errorf("user created but failed to create membership: %w", err)
@@ -265,9 +270,9 @@ func (s *TenantService) CreateUserInTenant(ctx context.Context, dto *domain.Crea
 		UserID:   user.ID,
 		Email:    user.Email,
 		FullName: user.FullName,
-		Role:     dto.Role,
+		Role:     primaryRole,
 		TenantID: tenantID,
-		Message:  fmt.Sprintf("User %s created successfully in tenant with role %s", user.Email, dto.Role),
+		Message:  fmt.Sprintf("User %s created successfully in tenant with roles %v", user.Email, roles),
 	}, nil
 }
 

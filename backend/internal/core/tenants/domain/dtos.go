@@ -38,10 +38,25 @@ type InviteUserResponse struct {
 
 // CreateUserInTenantDTO represents data to create a user directly in a tenant (by admin)
 type CreateUserInTenantDTO struct {
-	FullName string `json:"full_name" validate:"required,min=4,max=100"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
-	Role     string `json:"role" validate:"required,oneof=admin instructor student"`
+	FullName string   `json:"full_name" validate:"required,min=4,max=100"`
+	Email    string   `json:"email" validate:"required,email"`
+	Password string   `json:"password" validate:"required,min=8"`
+	Role     string   `json:"role" validate:"omitempty,oneof=admin instructor student"`       // Legacy single role (optional)
+	Roles    []string `json:"roles" validate:"omitempty,dive,oneof=admin instructor student"` // Multi-role support (optional)
+}
+
+// GetRoles returns the roles to assign, preferring Roles[] over Role
+func (dto *CreateUserInTenantDTO) GetRoles() []string {
+	// If Roles array is provided and not empty, use it
+	if len(dto.Roles) > 0 {
+		return dto.Roles
+	}
+	// Fallback to legacy Role field
+	if dto.Role != "" {
+		return []string{dto.Role}
+	}
+	// Default to student if nothing provided
+	return []string{"student"}
 }
 
 // CreateUserInTenantResponse represents the response after creating a user in tenant
@@ -71,9 +86,9 @@ type SelectTenantDTO struct {
 
 // SelectTenantResponse represents response after selecting a tenant
 type SelectTenantResponse struct {
-	TenantID  string `json:"tenant_id"`
+	TenantID   string `json:"tenant_id"`
 	TenantName string `json:"tenant_name"`
-	Role      string `json:"role"`
-	Token     string `json:"token"` // New JWT with tenant_id populated
-	Message   string `json:"message"`
+	Role       string `json:"role"`
+	Token      string `json:"token"` // New JWT with tenant_id populated
+	Message    string `json:"message"`
 }
