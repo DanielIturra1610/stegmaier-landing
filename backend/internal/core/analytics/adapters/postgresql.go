@@ -8,19 +8,29 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/google/uuid"
 )
 
 // PostgreSQLAnalyticsRepository implements the AnalyticsRepository interface
 type PostgreSQLAnalyticsRepository struct {
-	db *sql.DB
+	dbManager *database.Manager
 }
 
 // NewPostgreSQLAnalyticsRepository creates a new PostgreSQL analytics repository
-func NewPostgreSQLAnalyticsRepository(db *sql.DB) ports.AnalyticsRepository {
+func NewPostgreSQLAnalyticsRepository(dbManager *database.Manager) ports.AnalyticsRepository {
 	return &PostgreSQLAnalyticsRepository{
-		db: db,
+		dbManager: dbManager,
 	}
+}
+
+// getTenantDB obtains the tenant database connection dynamically
+func (r *PostgreSQLAnalyticsRepository) getTenantDB(tenantID uuid.UUID) (*sql.DB, error) {
+	db, err := r.dbManager.GetTenantConnection(tenantID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant connection: %w", err)
+	}
+	return db.DB, nil
 }
 
 // ============================================================================
@@ -29,6 +39,11 @@ func NewPostgreSQLAnalyticsRepository(db *sql.DB) ports.AnalyticsRepository {
 
 // GetStudentAnalytics retrieves comprehensive analytics for a student
 func (r *PostgreSQLAnalyticsRepository) GetStudentAnalytics(ctx context.Context, tenantID, studentID uuid.UUID) (*domain.StudentAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			$1 as tenant_id,
@@ -91,7 +106,7 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentAnalytics(ctx context.Context,
 	`
 
 	analytics := &domain.StudentAnalytics{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, studentID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, studentID).Scan(
 		&analytics.TenantID,
 		&analytics.StudentID,
 		&analytics.StudentName,
@@ -125,6 +140,11 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentAnalytics(ctx context.Context,
 
 // GetStudentCourseProgress retrieves student progress for a specific course
 func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgress(ctx context.Context, tenantID, studentID, courseID uuid.UUID) (*domain.StudentCourseProgress, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			e.tenant_id,
@@ -207,7 +227,7 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgress(ctx context.Con
 	`
 
 	progress := &domain.StudentCourseProgress{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, studentID, courseID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, studentID, courseID).Scan(
 		&progress.TenantID,
 		&progress.StudentID,
 		&progress.CourseID,
@@ -241,6 +261,11 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgress(ctx context.Con
 
 // GetStudentCourseProgressList retrieves student progress for all enrolled courses
 func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgressList(ctx context.Context, tenantID, studentID uuid.UUID) ([]domain.StudentCourseProgress, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			e.tenant_id,
@@ -323,7 +348,7 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgressList(ctx context
 		ORDER BY e.enrolled_at DESC
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, studentID)
+	rows, err := db.QueryContext(ctx, query, tenantID, studentID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get student course progress list: %w", err)
 	}
@@ -372,6 +397,11 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentCourseProgressList(ctx context
 
 // GetCourseAnalytics retrieves comprehensive analytics for a course
 func (r *PostgreSQLAnalyticsRepository) GetCourseAnalytics(ctx context.Context, tenantID, courseID uuid.UUID) (*domain.CourseAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			c.tenant_id,
@@ -405,7 +435,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseAnalytics(ctx context.Context, 
 	`
 
 	analytics := &domain.CourseAnalytics{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, courseID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, courseID).Scan(
 		&analytics.TenantID,
 		&analytics.CourseID,
 		&analytics.CourseName,
@@ -440,6 +470,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseAnalytics(ctx context.Context, 
 
 // GetCourseEngagement retrieves engagement metrics for a course over time
 func (r *PostgreSQLAnalyticsRepository) GetCourseEngagement(ctx context.Context, tenantID, courseID uuid.UUID, startDate, endDate time.Time) ([]domain.CourseEngagement, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// This is a simplified version - in production, you'd aggregate daily/weekly data
 	// For now, we'll return a single engagement record for the period
 	query := `
@@ -471,7 +506,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseEngagement(ctx context.Context,
 	`
 
 	engagement := domain.CourseEngagement{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, courseID, startDate, endDate).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, courseID, startDate, endDate).Scan(
 		&engagement.TenantID,
 		&engagement.CourseID,
 		&engagement.Date,
@@ -497,6 +532,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseEngagement(ctx context.Context,
 
 // GetLessonAnalytics retrieves analytics for a specific lesson
 func (r *PostgreSQLAnalyticsRepository) GetLessonAnalytics(ctx context.Context, tenantID, lessonID uuid.UUID) (*domain.LessonAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			l.tenant_id,
@@ -526,7 +566,7 @@ func (r *PostgreSQLAnalyticsRepository) GetLessonAnalytics(ctx context.Context, 
 	`
 
 	analytics := &domain.LessonAnalytics{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, lessonID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, lessonID).Scan(
 		&analytics.TenantID,
 		&analytics.LessonID,
 		&analytics.LessonTitle,
@@ -553,6 +593,11 @@ func (r *PostgreSQLAnalyticsRepository) GetLessonAnalytics(ctx context.Context, 
 
 // GetCourseLessonAnalytics retrieves analytics for all lessons in a course
 func (r *PostgreSQLAnalyticsRepository) GetCourseLessonAnalytics(ctx context.Context, tenantID, courseID uuid.UUID) ([]domain.LessonAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			l.tenant_id,
@@ -582,7 +627,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseLessonAnalytics(ctx context.Con
 		ORDER BY l.order_index
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, courseID)
+	rows, err := db.QueryContext(ctx, query, tenantID, courseID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get course lesson analytics: %w", err)
 	}
@@ -624,6 +669,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseLessonAnalytics(ctx context.Con
 
 // GetInstructorAnalytics retrieves comprehensive analytics for an instructor
 func (r *PostgreSQLAnalyticsRepository) GetInstructorAnalytics(ctx context.Context, tenantID, instructorID uuid.UUID) (*domain.InstructorAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			$1 as tenant_id,
@@ -653,7 +703,7 @@ func (r *PostgreSQLAnalyticsRepository) GetInstructorAnalytics(ctx context.Conte
 	`
 
 	analytics := &domain.InstructorAnalytics{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, instructorID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, instructorID).Scan(
 		&analytics.TenantID,
 		&analytics.InstructorID,
 		&analytics.InstructorName,
@@ -684,6 +734,11 @@ func (r *PostgreSQLAnalyticsRepository) GetInstructorAnalytics(ctx context.Conte
 
 // GetInstructorCourseAnalytics retrieves analytics for all courses by an instructor
 func (r *PostgreSQLAnalyticsRepository) GetInstructorCourseAnalytics(ctx context.Context, tenantID, instructorID uuid.UUID) ([]domain.CourseAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			c.tenant_id,
@@ -717,7 +772,7 @@ func (r *PostgreSQLAnalyticsRepository) GetInstructorCourseAnalytics(ctx context
 		ORDER BY c.created_at DESC
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, instructorID)
+	rows, err := db.QueryContext(ctx, query, tenantID, instructorID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get instructor course analytics: %w", err)
 	}
@@ -767,6 +822,11 @@ func (r *PostgreSQLAnalyticsRepository) GetInstructorCourseAnalytics(ctx context
 
 // GetPlatformAnalytics retrieves overall platform analytics for a specific date
 func (r *PostgreSQLAnalyticsRepository) GetPlatformAnalytics(ctx context.Context, tenantID uuid.UUID, date time.Time) (*domain.PlatformAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			$1 as tenant_id,
@@ -797,7 +857,7 @@ func (r *PostgreSQLAnalyticsRepository) GetPlatformAnalytics(ctx context.Context
 	`
 
 	analytics := &domain.PlatformAnalytics{}
-	err := r.db.QueryRowContext(ctx, query, tenantID, date).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, date).Scan(
 		&analytics.TenantID,
 		&analytics.Date,
 		&analytics.TotalUsers,
@@ -860,6 +920,11 @@ func (r *PostgreSQLAnalyticsRepository) GetPlatformAnalyticsRange(ctx context.Co
 
 // GetTimeSeriesData retrieves time series data for a specific metric
 func (r *PostgreSQLAnalyticsRepository) GetTimeSeriesData(ctx context.Context, tenantID uuid.UUID, metric string, startDate, endDate time.Time, period string) (*domain.TimeSeriesData, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// This is a simplified implementation
 	// In production, you'd have a more sophisticated time series aggregation
 
@@ -906,7 +971,7 @@ func (r *PostgreSQLAnalyticsRepository) GetTimeSeriesData(ctx context.Context, t
 		return nil, domain.ErrInvalidMetric
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, startDate, endDate, period)
+	rows, err := db.QueryContext(ctx, query, tenantID, startDate, endDate, period)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get time series data: %w", err)
 	}
@@ -930,6 +995,11 @@ func (r *PostgreSQLAnalyticsRepository) GetTimeSeriesData(ctx context.Context, t
 
 // GetCourseTimeSeriesData retrieves time series data for a course metric
 func (r *PostgreSQLAnalyticsRepository) GetCourseTimeSeriesData(ctx context.Context, tenantID, courseID uuid.UUID, metric string, startDate, endDate time.Time, period string) (*domain.TimeSeriesData, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	timeSeriesData := &domain.TimeSeriesData{
 		Metric:     metric,
 		StartDate:  startDate,
@@ -964,7 +1034,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseTimeSeriesData(ctx context.Cont
 		return nil, domain.ErrInvalidMetric
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, courseID, startDate, endDate, period)
+	rows, err := db.QueryContext(ctx, query, tenantID, courseID, startDate, endDate, period)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get course time series data: %w", err)
 	}
@@ -988,6 +1058,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseTimeSeriesData(ctx context.Cont
 
 // GetStudentTimeSeriesData retrieves time series data for a student metric
 func (r *PostgreSQLAnalyticsRepository) GetStudentTimeSeriesData(ctx context.Context, tenantID, studentID uuid.UUID, metric string, startDate, endDate time.Time, period string) (*domain.TimeSeriesData, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	timeSeriesData := &domain.TimeSeriesData{
 		Metric:     metric,
 		StartDate:  startDate,
@@ -1022,7 +1097,7 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentTimeSeriesData(ctx context.Con
 		return nil, domain.ErrInvalidMetric
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, studentID, startDate, endDate, period)
+	rows, err := db.QueryContext(ctx, query, tenantID, studentID, startDate, endDate, period)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get student time series data: %w", err)
 	}
@@ -1050,6 +1125,11 @@ func (r *PostgreSQLAnalyticsRepository) GetStudentTimeSeriesData(ctx context.Con
 
 // GetLeaderboard retrieves leaderboard data for a specific metric
 func (r *PostgreSQLAnalyticsRepository) GetLeaderboard(ctx context.Context, tenantID uuid.UUID, metric string, limit int, period string) ([]domain.LeaderboardEntry, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	var query string
 	var whereClause string
 
@@ -1135,7 +1215,7 @@ func (r *PostgreSQLAnalyticsRepository) GetLeaderboard(ctx context.Context, tena
 		return nil, domain.ErrInvalidMetric
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, limit)
+	rows, err := db.QueryContext(ctx, query, tenantID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get leaderboard: %w", err)
 	}
@@ -1168,6 +1248,11 @@ func (r *PostgreSQLAnalyticsRepository) GetLeaderboard(ctx context.Context, tena
 
 // GetCourseLeaderboard retrieves leaderboard data for a specific course
 func (r *PostgreSQLAnalyticsRepository) GetCourseLeaderboard(ctx context.Context, tenantID, courseID uuid.UUID, metric string, limit int) ([]domain.LeaderboardEntry, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	var query string
 
 	switch metric {
@@ -1208,7 +1293,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseLeaderboard(ctx context.Context
 		return nil, domain.ErrInvalidMetric
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, courseID, limit)
+	rows, err := db.QueryContext(ctx, query, tenantID, courseID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get course leaderboard: %w", err)
 	}
@@ -1245,6 +1330,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseLeaderboard(ctx context.Context
 
 // GetQuizAnalytics retrieves analytics for a specific quiz
 func (r *PostgreSQLAnalyticsRepository) GetQuizAnalytics(ctx context.Context, tenantID, quizID uuid.UUID) (*domain.QuizAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			q.tenant_id,
@@ -1273,7 +1363,7 @@ func (r *PostgreSQLAnalyticsRepository) GetQuizAnalytics(ctx context.Context, te
 
 	analytics := &domain.QuizAnalytics{}
 	var avgTimeSeconds float64
-	err := r.db.QueryRowContext(ctx, query, tenantID, quizID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, quizID).Scan(
 		&analytics.TenantID,
 		&analytics.QuizID,
 		&analytics.QuizTitle,
@@ -1302,6 +1392,11 @@ func (r *PostgreSQLAnalyticsRepository) GetQuizAnalytics(ctx context.Context, te
 
 // GetQuestionAnalytics retrieves analytics for quiz questions
 func (r *PostgreSQLAnalyticsRepository) GetQuestionAnalytics(ctx context.Context, tenantID, quizID uuid.UUID) ([]domain.QuestionAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			qq.tenant_id,
@@ -1321,7 +1416,7 @@ func (r *PostgreSQLAnalyticsRepository) GetQuestionAnalytics(ctx context.Context
 		ORDER BY success_rate ASC
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, quizID)
+	rows, err := db.QueryContext(ctx, query, tenantID, quizID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get question analytics: %w", err)
 	}
@@ -1357,6 +1452,11 @@ func (r *PostgreSQLAnalyticsRepository) GetQuestionAnalytics(ctx context.Context
 
 // GetCourseQuizAnalytics retrieves analytics for all quizzes in a course
 func (r *PostgreSQLAnalyticsRepository) GetCourseQuizAnalytics(ctx context.Context, tenantID, courseID uuid.UUID) ([]domain.QuizAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			q.tenant_id,
@@ -1378,7 +1478,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseQuizAnalytics(ctx context.Conte
 		ORDER BY q.created_at
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, courseID)
+	rows, err := db.QueryContext(ctx, query, tenantID, courseID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get course quiz analytics: %w", err)
 	}
@@ -1422,6 +1522,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseQuizAnalytics(ctx context.Conte
 
 // GetAssignmentAnalytics retrieves analytics for a specific assignment
 func (r *PostgreSQLAnalyticsRepository) GetAssignmentAnalytics(ctx context.Context, tenantID, assignmentID uuid.UUID) (*domain.AssignmentAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			a.tenant_id,
@@ -1451,7 +1556,7 @@ func (r *PostgreSQLAnalyticsRepository) GetAssignmentAnalytics(ctx context.Conte
 
 	analytics := &domain.AssignmentAnalytics{}
 	var avgTimeHours float64
-	err := r.db.QueryRowContext(ctx, query, tenantID, assignmentID).Scan(
+	err = db.QueryRowContext(ctx, query, tenantID, assignmentID).Scan(
 		&analytics.TenantID,
 		&analytics.AssignmentID,
 		&analytics.AssignmentTitle,
@@ -1482,6 +1587,11 @@ func (r *PostgreSQLAnalyticsRepository) GetAssignmentAnalytics(ctx context.Conte
 
 // GetCourseAssignmentAnalytics retrieves analytics for all assignments in a course
 func (r *PostgreSQLAnalyticsRepository) GetCourseAssignmentAnalytics(ctx context.Context, tenantID, courseID uuid.UUID) ([]domain.AssignmentAnalytics, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			a.tenant_id,
@@ -1509,7 +1619,7 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseAssignmentAnalytics(ctx context
 		ORDER BY a.created_at
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, courseID)
+	rows, err := db.QueryContext(ctx, query, tenantID, courseID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get course assignment analytics: %w", err)
 	}
@@ -1553,6 +1663,11 @@ func (r *PostgreSQLAnalyticsRepository) GetCourseAssignmentAnalytics(ctx context
 
 // GetRecentActivity retrieves recent activity logs
 func (r *PostgreSQLAnalyticsRepository) GetRecentActivity(ctx context.Context, tenantID uuid.UUID, limit int) ([]domain.ActivityLog, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			id,
@@ -1582,7 +1697,7 @@ func (r *PostgreSQLAnalyticsRepository) GetRecentActivity(ctx context.Context, t
 		LIMIT $2
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, limit)
+	rows, err := db.QueryContext(ctx, query, tenantID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent activity: %w", err)
 	}
@@ -1614,6 +1729,11 @@ func (r *PostgreSQLAnalyticsRepository) GetRecentActivity(ctx context.Context, t
 
 // GetUserRecentActivity retrieves recent activity logs for a specific user
 func (r *PostgreSQLAnalyticsRepository) GetUserRecentActivity(ctx context.Context, tenantID, userID uuid.UUID, limit int) ([]domain.ActivityLog, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			id,
@@ -1640,7 +1760,7 @@ func (r *PostgreSQLAnalyticsRepository) GetUserRecentActivity(ctx context.Contex
 		LIMIT $3
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, userID, limit)
+	rows, err := db.QueryContext(ctx, query, tenantID, userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user recent activity: %w", err)
 	}
@@ -1672,6 +1792,11 @@ func (r *PostgreSQLAnalyticsRepository) GetUserRecentActivity(ctx context.Contex
 
 // GetUpcomingDeadlines retrieves upcoming deadlines for a student
 func (r *PostgreSQLAnalyticsRepository) GetUpcomingDeadlines(ctx context.Context, tenantID, studentID uuid.UUID, limit int) ([]domain.UpcomingDeadline, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			a.id,
@@ -1691,7 +1816,7 @@ func (r *PostgreSQLAnalyticsRepository) GetUpcomingDeadlines(ctx context.Context
 		LIMIT $3
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, tenantID, studentID, limit)
+	rows, err := db.QueryContext(ctx, query, tenantID, studentID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get upcoming deadlines: %w", err)
 	}

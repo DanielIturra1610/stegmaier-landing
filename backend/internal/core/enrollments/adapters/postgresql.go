@@ -9,19 +9,29 @@ import (
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/domain"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/ports"
+	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
 	"github.com/google/uuid"
 )
 
 // PostgreSQLEnrollmentRepository implements the EnrollmentRepository interface
 type PostgreSQLEnrollmentRepository struct {
-	db *sql.DB
+	dbManager *database.Manager
 }
 
 // NewPostgreSQLEnrollmentRepository creates a new PostgreSQL enrollment repository
-func NewPostgreSQLEnrollmentRepository(db *sql.DB) ports.EnrollmentRepository {
+func NewPostgreSQLEnrollmentRepository(dbManager *database.Manager) ports.EnrollmentRepository {
 	return &PostgreSQLEnrollmentRepository{
-		db: db,
+		dbManager: dbManager,
 	}
+}
+
+// getTenantDB obtains the tenant database connection dynamically
+func (r *PostgreSQLEnrollmentRepository) getTenantDB(tenantID uuid.UUID) (*sql.DB, error) {
+	db, err := r.dbManager.GetTenantConnection(tenantID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant connection: %w", err)
+	}
+	return db.DB, nil
 }
 
 // ============================================================
@@ -30,6 +40,11 @@ func NewPostgreSQLEnrollmentRepository(db *sql.DB) ports.EnrollmentRepository {
 
 // CreateEnrollment creates a new enrollment
 func (r *PostgreSQLEnrollmentRepository) CreateEnrollment(ctx context.Context, enrollment *domain.Enrollment) error {
+	db, err := r.getTenantDB(enrollment.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		INSERT INTO enrollments (
 			id, tenant_id, user_id, course_id, status, progress_percentage,
@@ -38,7 +53,7 @@ func (r *PostgreSQLEnrollmentRepository) CreateEnrollment(ctx context.Context, e
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		enrollment.ID,
 		enrollment.TenantID,
 		enrollment.UserID,
@@ -66,6 +81,11 @@ func (r *PostgreSQLEnrollmentRepository) CreateEnrollment(ctx context.Context, e
 
 // GetEnrollment retrieves an enrollment by ID
 func (r *PostgreSQLEnrollmentRepository) GetEnrollment(ctx context.Context, enrollmentID, tenantID uuid.UUID) (*domain.Enrollment, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, progress_percentage,
 			   enrolled_at, started_at, completed_at, expires_at, last_accessed_at,
@@ -75,7 +95,7 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollment(ctx context.Context, enro
 	`
 
 	enrollment := &domain.Enrollment{}
-	err := r.db.QueryRowContext(ctx, query, enrollmentID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, enrollmentID, tenantID).Scan(
 		&enrollment.ID,
 		&enrollment.TenantID,
 		&enrollment.UserID,
@@ -106,6 +126,11 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollment(ctx context.Context, enro
 
 // GetEnrollmentByUserAndCourse retrieves an enrollment by user and course
 func (r *PostgreSQLEnrollmentRepository) GetEnrollmentByUserAndCourse(ctx context.Context, userID, courseID, tenantID uuid.UUID) (*domain.Enrollment, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, progress_percentage,
 			   enrolled_at, started_at, completed_at, expires_at, last_accessed_at,
@@ -117,7 +142,7 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentByUserAndCourse(ctx contex
 	`
 
 	enrollment := &domain.Enrollment{}
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
 		&enrollment.ID,
 		&enrollment.TenantID,
 		&enrollment.UserID,
@@ -148,6 +173,11 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentByUserAndCourse(ctx contex
 
 // ListEnrollments retrieves enrollments with filters and pagination
 func (r *PostgreSQLEnrollmentRepository) ListEnrollments(ctx context.Context, tenantID uuid.UUID, filters *domain.ListEnrollmentsRequest) ([]*domain.Enrollment, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Build query with filters
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, progress_percentage,
@@ -186,7 +216,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollments(ctx context.Context, te
 
 	// Get total count
 	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting enrollments: %v", err)
 		return nil, 0, err
@@ -211,7 +241,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollments(ctx context.Context, te
 	args = append(args, filters.PageSize, offset)
 
 	// Execute query
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error listing enrollments: %v", err)
 		return nil, 0, err
@@ -250,10 +280,15 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollments(ctx context.Context, te
 
 // ListEnrollmentsByUser retrieves all enrollments for a user
 func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByUser(ctx context.Context, userID, tenantID uuid.UUID, page, pageSize int) ([]*domain.Enrollment, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM enrollments WHERE user_id = $1 AND tenant_id = $2`
 	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, userID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting user enrollments: %v", err)
 		return nil, 0, err
@@ -271,7 +306,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByUser(ctx context.Conte
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error listing user enrollments: %v", err)
 		return nil, 0, err
@@ -310,10 +345,15 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByUser(ctx context.Conte
 
 // ListEnrollmentsByCourse retrieves all enrollments for a course
 func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByCourse(ctx context.Context, courseID, tenantID uuid.UUID, page, pageSize int) ([]*domain.Enrollment, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM enrollments WHERE course_id = $1 AND tenant_id = $2`
 	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting course enrollments: %v", err)
 		return nil, 0, err
@@ -331,7 +371,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByCourse(ctx context.Con
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error listing course enrollments: %v", err)
 		return nil, 0, err
@@ -370,6 +410,11 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentsByCourse(ctx context.Con
 
 // UpdateEnrollment updates an enrollment
 func (r *PostgreSQLEnrollmentRepository) UpdateEnrollment(ctx context.Context, enrollment *domain.Enrollment) error {
+	db, err := r.getTenantDB(enrollment.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollments SET
 			status = $1,
@@ -384,7 +429,7 @@ func (r *PostgreSQLEnrollmentRepository) UpdateEnrollment(ctx context.Context, e
 		WHERE id = $10 AND tenant_id = $11
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		enrollment.Status,
 		enrollment.ProgressPercentage,
 		enrollment.StartedAt,
@@ -417,9 +462,14 @@ func (r *PostgreSQLEnrollmentRepository) UpdateEnrollment(ctx context.Context, e
 
 // DeleteEnrollment deletes an enrollment
 func (r *PostgreSQLEnrollmentRepository) DeleteEnrollment(ctx context.Context, enrollmentID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM enrollments WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, enrollmentID, tenantID)
+	result, err := db.ExecContext(ctx, query, enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error deleting enrollment: %v", err)
 		return ports.ErrEnrollmentDeletionFailed
@@ -437,15 +487,16 @@ func (r *PostgreSQLEnrollmentRepository) DeleteEnrollment(ctx context.Context, e
 	return nil
 }
 
-// ============================================================
-// Enrollment status operations
-// ============================================================
-
-// UpdateEnrollmentStatus updates an enrollment's status
+// UpdateEnrollmentStatus updates the status of an enrollment
 func (r *PostgreSQLEnrollmentRepository) UpdateEnrollmentStatus(ctx context.Context, enrollmentID, tenantID uuid.UUID, status domain.EnrollmentStatus) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `UPDATE enrollments SET status = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4`
 
-	result, err := r.db.ExecContext(ctx, query, status, time.Now().UTC(), enrollmentID, tenantID)
+	result, err := db.ExecContext(ctx, query, status, time.Now().UTC(), enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error updating status: %v", err)
 		return ports.ErrEnrollmentUpdateFailed
@@ -463,11 +514,16 @@ func (r *PostgreSQLEnrollmentRepository) UpdateEnrollmentStatus(ctx context.Cont
 	return nil
 }
 
-// UpdateProgress updates an enrollment's progress percentage
+// UpdateProgress updates the progress percentage of an enrollment
 func (r *PostgreSQLEnrollmentRepository) UpdateProgress(ctx context.Context, enrollmentID, tenantID uuid.UUID, progressPercentage int) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `UPDATE enrollments SET progress_percentage = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4`
 
-	result, err := r.db.ExecContext(ctx, query, progressPercentage, time.Now().UTC(), enrollmentID, tenantID)
+	result, err := db.ExecContext(ctx, query, progressPercentage, time.Now().UTC(), enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error updating progress: %v", err)
 		return ports.ErrEnrollmentUpdateFailed
@@ -487,10 +543,15 @@ func (r *PostgreSQLEnrollmentRepository) UpdateProgress(ctx context.Context, enr
 
 // UpdateLastAccessed updates the last accessed timestamp
 func (r *PostgreSQLEnrollmentRepository) UpdateLastAccessed(ctx context.Context, enrollmentID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `UPDATE enrollments SET last_accessed_at = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4`
 
 	now := time.Now().UTC()
-	result, err := r.db.ExecContext(ctx, query, now, now, enrollmentID, tenantID)
+	result, err := db.ExecContext(ctx, query, now, now, enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error updating last accessed: %v", err)
 		return ports.ErrEnrollmentUpdateFailed
@@ -510,10 +571,15 @@ func (r *PostgreSQLEnrollmentRepository) UpdateLastAccessed(ctx context.Context,
 
 // MarkAsStarted marks an enrollment as started
 func (r *PostgreSQLEnrollmentRepository) MarkAsStarted(ctx context.Context, enrollmentID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `UPDATE enrollments SET started_at = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4 AND started_at IS NULL`
 
 	now := time.Now().UTC()
-	_, err := r.db.ExecContext(ctx, query, now, now, enrollmentID, tenantID)
+	_, err = db.ExecContext(ctx, query, now, now, enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error marking as started: %v", err)
 		return ports.ErrEnrollmentUpdateFailed
@@ -524,6 +590,11 @@ func (r *PostgreSQLEnrollmentRepository) MarkAsStarted(ctx context.Context, enro
 
 // MarkAsCompleted marks an enrollment as completed
 func (r *PostgreSQLEnrollmentRepository) MarkAsCompleted(ctx context.Context, enrollmentID, tenantID uuid.UUID, certificateID *uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollments SET
 			status = $1,
@@ -535,7 +606,7 @@ func (r *PostgreSQLEnrollmentRepository) MarkAsCompleted(ctx context.Context, en
 	`
 
 	now := time.Now().UTC()
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		domain.EnrollmentStatusCompleted,
 		now,
 		certificateID,
@@ -562,6 +633,11 @@ func (r *PostgreSQLEnrollmentRepository) MarkAsCompleted(ctx context.Context, en
 
 // CancelEnrollment cancels an enrollment
 func (r *PostgreSQLEnrollmentRepository) CancelEnrollment(ctx context.Context, enrollmentID, tenantID uuid.UUID, reason *string) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollments SET
 			status = $1,
@@ -570,7 +646,7 @@ func (r *PostgreSQLEnrollmentRepository) CancelEnrollment(ctx context.Context, e
 		WHERE id = $4 AND tenant_id = $5
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		domain.EnrollmentStatusCancelled,
 		reason,
 		time.Now().UTC(),
@@ -596,6 +672,11 @@ func (r *PostgreSQLEnrollmentRepository) CancelEnrollment(ctx context.Context, e
 
 // ExtendEnrollment extends an enrollment's expiration date
 func (r *PostgreSQLEnrollmentRepository) ExtendEnrollment(ctx context.Context, enrollmentID, tenantID uuid.UUID, newExpiresAt time.Time) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollments SET
 			expires_at = $1,
@@ -607,7 +688,7 @@ func (r *PostgreSQLEnrollmentRepository) ExtendEnrollment(ctx context.Context, e
 		WHERE id = $3 AND tenant_id = $4
 	`
 
-	result, err := r.db.ExecContext(ctx, query, newExpiresAt, time.Now().UTC(), enrollmentID, tenantID)
+	result, err := db.ExecContext(ctx, query, newExpiresAt, time.Now().UTC(), enrollmentID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error extending enrollment: %v", err)
 		return ports.ErrEnrollmentUpdateFailed
@@ -631,10 +712,15 @@ func (r *PostgreSQLEnrollmentRepository) ExtendEnrollment(ctx context.Context, e
 
 // IsUserEnrolled checks if a user is enrolled in a course
 func (r *PostgreSQLEnrollmentRepository) IsUserEnrolled(ctx context.Context, userID, courseID, tenantID uuid.UUID) (bool, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = $1 AND course_id = $2 AND tenant_id = $3)`
 
 	var exists bool
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&exists)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error checking enrollment: %v", err)
 		return false, err
@@ -645,6 +731,11 @@ func (r *PostgreSQLEnrollmentRepository) IsUserEnrolled(ctx context.Context, use
 
 // CanUserAccessCourse checks if a user can access a course
 func (r *PostgreSQLEnrollmentRepository) CanUserAccessCourse(ctx context.Context, userID, courseID, tenantID uuid.UUID) (bool, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT EXISTS(
 			SELECT 1 FROM enrollments
@@ -655,7 +746,7 @@ func (r *PostgreSQLEnrollmentRepository) CanUserAccessCourse(ctx context.Context
 	`
 
 	var canAccess bool
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&canAccess)
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(&canAccess)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error checking access: %v", err)
 		return false, err
@@ -666,10 +757,15 @@ func (r *PostgreSQLEnrollmentRepository) CanUserAccessCourse(ctx context.Context
 
 // GetActiveEnrollmentCount returns the count of active enrollments for a course
 func (r *PostgreSQLEnrollmentRepository) GetActiveEnrollmentCount(ctx context.Context, courseID, tenantID uuid.UUID) (int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `SELECT COUNT(*) FROM enrollments WHERE course_id = $1 AND tenant_id = $2 AND status = 'active'`
 
 	var count int
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&count)
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(&count)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting active enrollments: %v", err)
 		return 0, err
@@ -684,6 +780,11 @@ func (r *PostgreSQLEnrollmentRepository) GetActiveEnrollmentCount(ctx context.Co
 
 // CreateEnrollmentRequest creates a new enrollment request
 func (r *PostgreSQLEnrollmentRepository) CreateEnrollmentRequest(ctx context.Context, request *domain.EnrollmentRequest) error {
+	db, err := r.getTenantDB(request.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		INSERT INTO enrollment_requests (
 			id, tenant_id, user_id, course_id, status, request_message,
@@ -692,7 +793,7 @@ func (r *PostgreSQLEnrollmentRepository) CreateEnrollmentRequest(ctx context.Con
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err = db.ExecContext(ctx, query,
 		request.ID,
 		request.TenantID,
 		request.UserID,
@@ -717,6 +818,11 @@ func (r *PostgreSQLEnrollmentRepository) CreateEnrollmentRequest(ctx context.Con
 
 // GetEnrollmentRequest retrieves an enrollment request by ID
 func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequest(ctx context.Context, requestID, tenantID uuid.UUID) (*domain.EnrollmentRequest, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, request_message,
 			   reviewed_by, rejection_reason, requested_at, reviewed_at,
@@ -726,7 +832,7 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequest(ctx context.Contex
 	`
 
 	request := &domain.EnrollmentRequest{}
-	err := r.db.QueryRowContext(ctx, query, requestID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, requestID, tenantID).Scan(
 		&request.ID,
 		&request.TenantID,
 		&request.UserID,
@@ -754,6 +860,11 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequest(ctx context.Contex
 
 // GetEnrollmentRequestByUserAndCourse retrieves an enrollment request by user and course
 func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequestByUserAndCourse(ctx context.Context, userID, courseID, tenantID uuid.UUID) (*domain.EnrollmentRequest, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, request_message,
 			   reviewed_by, rejection_reason, requested_at, reviewed_at,
@@ -765,7 +876,7 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequestByUserAndCourse(ctx
 	`
 
 	request := &domain.EnrollmentRequest{}
-	err := r.db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, userID, courseID, tenantID).Scan(
 		&request.ID,
 		&request.TenantID,
 		&request.UserID,
@@ -793,6 +904,11 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentRequestByUserAndCourse(ctx
 
 // ListEnrollmentRequests retrieves enrollment requests with filters and pagination
 func (r *PostgreSQLEnrollmentRepository) ListEnrollmentRequests(ctx context.Context, tenantID uuid.UUID, filters *domain.ListEnrollmentRequestsRequest) ([]*domain.EnrollmentRequest, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Build query with filters
 	query := `
 		SELECT id, tenant_id, user_id, course_id, status, request_message,
@@ -824,7 +940,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentRequests(ctx context.Cont
 
 	// Get total count
 	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting enrollment requests: %v", err)
 		return nil, 0, err
@@ -849,7 +965,7 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentRequests(ctx context.Cont
 	args = append(args, filters.PageSize, offset)
 
 	// Execute query
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error listing enrollment requests: %v", err)
 		return nil, 0, err
@@ -885,10 +1001,15 @@ func (r *PostgreSQLEnrollmentRepository) ListEnrollmentRequests(ctx context.Cont
 
 // ListPendingEnrollmentRequestsByCourse retrieves pending enrollment requests for a course
 func (r *PostgreSQLEnrollmentRepository) ListPendingEnrollmentRequestsByCourse(ctx context.Context, courseID, tenantID uuid.UUID, page, pageSize int) ([]*domain.EnrollmentRequest, int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM enrollment_requests WHERE course_id = $1 AND tenant_id = $2 AND status = 'pending'`
 	var totalCount int
-	err := r.db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
+	err = db.QueryRowContext(ctx, countQuery, courseID, tenantID).Scan(&totalCount)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting pending requests: %v", err)
 		return nil, 0, err
@@ -906,7 +1027,7 @@ func (r *PostgreSQLEnrollmentRepository) ListPendingEnrollmentRequestsByCourse(c
 	`
 
 	offset := (page - 1) * pageSize
-	rows, err := r.db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, courseID, tenantID, pageSize, offset)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error listing pending requests: %v", err)
 		return nil, 0, err
@@ -942,6 +1063,11 @@ func (r *PostgreSQLEnrollmentRepository) ListPendingEnrollmentRequestsByCourse(c
 
 // UpdateEnrollmentRequest updates an enrollment request
 func (r *PostgreSQLEnrollmentRepository) UpdateEnrollmentRequest(ctx context.Context, request *domain.EnrollmentRequest) error {
+	db, err := r.getTenantDB(request.TenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollment_requests SET
 			status = $1,
@@ -952,7 +1078,7 @@ func (r *PostgreSQLEnrollmentRepository) UpdateEnrollmentRequest(ctx context.Con
 		WHERE id = $6 AND tenant_id = $7
 	`
 
-	result, err := r.db.ExecContext(ctx, query,
+	result, err := db.ExecContext(ctx, query,
 		request.Status,
 		request.ReviewedBy,
 		request.RejectionReason,
@@ -981,9 +1107,14 @@ func (r *PostgreSQLEnrollmentRepository) UpdateEnrollmentRequest(ctx context.Con
 
 // DeleteEnrollmentRequest deletes an enrollment request
 func (r *PostgreSQLEnrollmentRepository) DeleteEnrollmentRequest(ctx context.Context, requestID, tenantID uuid.UUID) error {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `DELETE FROM enrollment_requests WHERE id = $1 AND tenant_id = $2`
 
-	result, err := r.db.ExecContext(ctx, query, requestID, tenantID)
+	result, err := db.ExecContext(ctx, query, requestID, tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error deleting enrollment request: %v", err)
 		return ports.ErrEnrollmentRequestUpdateFailed
@@ -1007,6 +1138,11 @@ func (r *PostgreSQLEnrollmentRepository) DeleteEnrollmentRequest(ctx context.Con
 
 // GetEnrollmentStats returns enrollment statistics for a course
 func (r *PostgreSQLEnrollmentRepository) GetEnrollmentStats(ctx context.Context, courseID, tenantID uuid.UUID) (*domain.EnrollmentStatsResponse, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		SELECT
 			COUNT(*) as total_enrollments,
@@ -1022,7 +1158,7 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentStats(ctx context.Context,
 		CourseID: courseID,
 	}
 
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
+	err = db.QueryRowContext(ctx, query, courseID, tenantID).Scan(
 		&stats.TotalEnrollments,
 		&stats.ActiveEnrollments,
 		&stats.CompletedEnrollments,
@@ -1045,10 +1181,15 @@ func (r *PostgreSQLEnrollmentRepository) GetEnrollmentStats(ctx context.Context,
 
 // CountEnrollmentsByStatus counts enrollments by status
 func (r *PostgreSQLEnrollmentRepository) CountEnrollmentsByStatus(ctx context.Context, courseID, tenantID uuid.UUID, status domain.EnrollmentStatus) (int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `SELECT COUNT(*) FROM enrollments WHERE course_id = $1 AND tenant_id = $2 AND status = $3`
 
 	var count int
-	err := r.db.QueryRowContext(ctx, query, courseID, tenantID, status).Scan(&count)
+	err = db.QueryRowContext(ctx, query, courseID, tenantID, status).Scan(&count)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error counting enrollments by status: %v", err)
 		return 0, err
@@ -1063,6 +1204,11 @@ func (r *PostgreSQLEnrollmentRepository) CountEnrollmentsByStatus(ctx context.Co
 
 // MarkExpiredEnrollments marks expired enrollments as expired
 func (r *PostgreSQLEnrollmentRepository) MarkExpiredEnrollments(ctx context.Context, tenantID uuid.UUID) (int, error) {
+	db, err := r.getTenantDB(tenantID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get tenant DB: %w", err)
+	}
+
 	query := `
 		UPDATE enrollments SET
 			status = 'expired',
@@ -1073,7 +1219,7 @@ func (r *PostgreSQLEnrollmentRepository) MarkExpiredEnrollments(ctx context.Cont
 		AND expires_at < NOW()
 	`
 
-	result, err := r.db.ExecContext(ctx, query, time.Now().UTC(), tenantID)
+	result, err := db.ExecContext(ctx, query, time.Now().UTC(), tenantID)
 	if err != nil {
 		log.Printf("[PostgreSQLEnrollmentRepository] Error marking expired enrollments: %v", err)
 		return 0, err

@@ -8,44 +8,44 @@ import (
 	"time"
 
 	"github.com/DanielIturra1610/stegmaier-landing/internal/controllers"
+	analyticsadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/adapters"
+	analyticscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/controllers"
+	analyticsservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/services"
+	assignmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/adapters"
+	assignmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/services"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/adapters"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/ports"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/core/auth/services"
+	certificateadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/adapters"
+	certificatecontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/controllers"
+	certificateservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/services"
 	courseadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/adapters"
 	courseservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/courses/services"
+	enrollmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/adapters"
+	enrollmentcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/controllers"
+	enrollmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/services"
 	lessonadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/adapters"
 	lessonservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/lessons/services"
-	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
-	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
-	quizadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/adapters"
-	quizservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/services"
-	assignmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/adapters"
-	assignmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/assignments/services"
-	notificationadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/adapters"
-	notificationservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/services"
 	mediaadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/adapters"
 	mediaservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/media/services"
 	moduleadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/modules/adapters"
 	moduleservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/modules/services"
+	notificationadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/adapters"
+	notificationservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/notifications/services"
+	profileadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/adapters"
+	profileservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/profile/services"
+	progressadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/adapters"
+	progresscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/controllers"
+	progressservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/services"
+	quizadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/adapters"
+	quizservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/quizzes/services"
 	reviewadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/reviews/adapters"
 	reviewservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/reviews/services"
-	analyticsadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/adapters"
-	analyticsservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/services"
-	analyticscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/analytics/controllers"
-	enrollmentadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/adapters"
-	enrollmentservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/services"
-	enrollmentcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/enrollments/controllers"
-	progressadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/adapters"
-	progressservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/services"
-	progresscontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/progress/controllers"
-	certificateadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/adapters"
-	certificateservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/services"
-	certificatecontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/certificates/controllers"
+	tenantadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/adapters"
+	tenantcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/controllers"
+	tenantservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/services"
 	useradapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/adapters"
 	userservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/user/services"
-	tenantadapters "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/adapters"
-	tenantservices "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/services"
-	tenantcontrollers "github.com/DanielIturra1610/stegmaier-landing/internal/core/tenants/controllers"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/middleware"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/config"
 	"github.com/DanielIturra1610/stegmaier-landing/internal/shared/database"
@@ -62,9 +62,9 @@ import (
 
 const (
 	// Token expiration durations
-	verificationTokenExpiry   = 24 * time.Hour  // 24 hours for email verification
-	passwordResetTokenExpiry  = 1 * time.Hour   // 1 hour for password reset
-	bcryptCost               = 12               // Bcrypt cost factor
+	verificationTokenExpiry  = 24 * time.Hour // 24 hours for email verification
+	passwordResetTokenExpiry = 1 * time.Hour  // 1 hour for password reset
+	bcryptCost               = 12             // Bcrypt cost factor
 )
 
 // Server representa el servidor Fiber con toda su configuración
@@ -107,16 +107,16 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 		AppName:               "Stegmaier Learning Platform API",
 		ServerHeader:          "Fiber",
 		StrictRouting:         false,
-		CaseSensitive:        false,
-		EnablePrintRoutes:    true,
+		CaseSensitive:         false,
+		EnablePrintRoutes:     true,
 		DisableStartupMessage: false,
 		// Timeouts
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 		// Buffer sizes - Fix 431 error
-		ReadBufferSize:  16384, // 16KB (default is 4096)
-		WriteBufferSize: 16384, // 16KB
+		ReadBufferSize:  16384,            // 16KB (default is 4096)
+		WriteBufferSize: 16384,            // 16KB
 		BodyLimit:       10 * 1024 * 1024, // 10MB max body size
 		// Error handling
 		ErrorHandler: customErrorHandler,
@@ -361,8 +361,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for analytics module
 	log.Println("🔧 Initializing analytics module...")
 
-	// 1. Initialize analytics repository
-	analyticsRepo := analyticsadapters.NewPostgreSQLAnalyticsRepository(tenantDB.DB)
+	// 1. Initialize analytics repository (tenant-aware)
+	analyticsRepo := analyticsadapters.NewPostgreSQLAnalyticsRepository(dbManager)
 
 	// 2. Initialize analytics service
 	analyticsService := analyticsservices.NewAnalyticsService(analyticsRepo)
@@ -375,8 +375,8 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for enrollments module
 	log.Println("🔧 Initializing enrollments module...")
 
-	// 1. Initialize enrollments repository
-	enrollmentRepo := enrollmentadapters.NewPostgreSQLEnrollmentRepository(tenantDB.DB)
+	// 1. Initialize enrollments repository (tenant-aware)
+	enrollmentRepo := enrollmentadapters.NewPostgreSQLEnrollmentRepository(dbManager)
 
 	// 2. Initialize enrollments service
 	enrollmentService := enrollmentservices.NewEnrollmentService(enrollmentRepo)
@@ -389,7 +389,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for progress module
 	log.Println("🔧 Initializing progress module...")
 
-	// 1. Initialize progress repository
+	// 1. Initialize progress repository (TODO: refactor to tenant-aware)
 	progressRepo := progressadapters.NewPostgreSQLProgressRepository(tenantDB.DB)
 
 	// 2. Initialize progress service
@@ -403,7 +403,7 @@ func New(cfg *config.Config, dbManager *database.Manager) *Server {
 	// Initialize dependency injection for certificates module
 	log.Println("🔧 Initializing certificates module...")
 
-	// 1. Initialize certificates repository
+	// 1. Initialize certificates repository (TODO: refactor to tenant-aware)
 	certificateRepo := certificateadapters.NewPostgreSQLCertificateRepository(tenantDB.DB)
 
 	// 2. Initialize certificate generator (PDF generation with gofpdf)
@@ -593,6 +593,7 @@ func (s *Server) setupRoutes() {
 		authProtected.Get("/me", s.authController.GetCurrentUser)
 		authProtected.Put("/profile", s.authController.UpdateProfile)
 		authProtected.Post("/revoke-sessions", s.authController.RevokeAllSessions)
+		authProtected.Post("/switch-role", s.authController.SwitchRole) // Multi-role support
 	}
 
 	// ============================================================
@@ -1080,7 +1081,11 @@ func (s *Server) setupRoutes() {
 	// Note: All enrollment routes are protected by authentication
 	// Students can enroll themselves and view their own enrollments
 	// Instructors/Admins can manage all enrollments for their courses
-	s.enrollmentController.RegisterRoutes(v1)
+	enrollments := v1.Group("")
+	enrollments.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	enrollments.Use(middleware.TenantMiddleware(s.dbManager))
+	enrollments.Use(middleware.MembershipMiddleware(s.controlDB))
+	s.enrollmentController.RegisterRoutes(enrollments)
 
 	// ============================================================
 	// Progress Routes (Protected - Authentication required)
@@ -1102,16 +1107,20 @@ func (s *Server) setupRoutes() {
 	// Students can view and download their own certificates
 	// Instructors/Admins can generate, manage, and revoke certificates
 	// Certificate verification endpoint is available for public use
-	s.certificateController.RegisterRoutes(v1)
+	certificates := v1.Group("")
+	certificates.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
+	certificates.Use(middleware.TenantMiddleware(s.dbManager))
+	certificates.Use(middleware.MembershipMiddleware(s.controlDB))
+	s.certificateController.RegisterRoutes(certificates)
 
 	// ============================================================
 	// Admin Routes (Protected - Authentication + RBAC required)
 	// ============================================================
 	admin := v1.Group("/admin")
 	admin.Use(middleware.AuthMiddleware(s.tokenService, s.authRepo))
-	admin.Use(middleware.TenantMiddleware(s.dbManager)) // Require tenant context for admin routes
+	admin.Use(middleware.TenantMiddleware(s.dbManager))     // Require tenant context for admin routes
 	admin.Use(middleware.MembershipMiddleware(s.controlDB)) // Verify membership in tenant
-	admin.Use(middleware.RequireAdmin()) // Requires admin or higher (superadmin)
+	admin.Use(middleware.RequireAdmin())                    // Requires admin or higher (superadmin)
 
 	// User Management
 	users := admin.Group("/users")

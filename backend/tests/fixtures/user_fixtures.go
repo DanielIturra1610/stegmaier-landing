@@ -29,7 +29,8 @@ func (f *UserFixture) ToUser() *domain.User {
 		Email:        f.Email,
 		PasswordHash: f.PasswordHash,
 		FullName:     f.FullName,
-		Role:         f.Role,
+		Roles:        []string{f.Role}, // Convert single role to array
+		ActiveRole:   f.Role,           // Set as active role
 		IsVerified:   f.IsVerified,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -38,15 +39,15 @@ func (f *UserFixture) ToUser() *domain.User {
 
 // WithEmail sets the email and returns the fixture for chaining
 func (f *UserFixture) WithEmail(email string) *UserFixture {
-	newFixture := *f  // Copy
+	newFixture := *f // Copy
 	newFixture.Email = email
-	newFixture.ID = uuid.New().String()  // Generate new ID to avoid conflicts
+	newFixture.ID = uuid.New().String() // Generate new ID to avoid conflicts
 	return &newFixture
 }
 
 // WithVerified sets the verification status and returns the fixture for chaining
 func (f *UserFixture) WithVerified(verified bool) *UserFixture {
-	newFixture := *f  // Copy
+	newFixture := *f // Copy
 	newFixture.IsVerified = verified
 	return &newFixture
 }
